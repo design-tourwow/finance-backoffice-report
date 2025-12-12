@@ -1,20 +1,8 @@
 {
-  "buildCommand": "echo 'No build needed'",
-  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/tour-image-manager",
       "destination": "/tour-image-manager.html"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/tour-image-manager",
-      "dest": "/tour-image-manager.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
     }
   ],
   "headers": [
