@@ -53,12 +53,22 @@ const TourImageAPI = {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Response error:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const error = new Error(`HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        throw error;
       }
 
       const data = await response.json();
       
       console.log('✅ API Response:', data);
+      
+      // Check if API returned error in response body
+      if (data.status === 'error' || data.status === 'fail') {
+        console.error('❌ API returned error:', data);
+        const error = new Error(data.message || 'API Error');
+        error.status = 401; // Treat as unauthorized
+        throw error;
+      }
       
       return data;
     } catch (error) {
@@ -86,7 +96,9 @@ const TourImageAPI = {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const error = new Error(`HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        throw error;
       }
 
       const data = await response.json();
@@ -123,7 +135,9 @@ const TourImageAPI = {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const error = new Error(`HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        throw error;
       }
 
       const data = await response.json();
@@ -154,7 +168,9 @@ const TourImageAPI = {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const error = new Error(`HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        throw error;
       }
 
       const data = await response.json();

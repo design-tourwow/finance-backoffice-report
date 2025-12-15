@@ -1402,7 +1402,7 @@ function initShowAllButtons() {
     if (!modal || !tokenInput || !tokenSubmit) return;
 
     // Submit token
-    tokenSubmit.addEventListener('click', function() {
+    tokenSubmit.addEventListener('click', async function() {
       const token = tokenInput.value.trim();
       
       if (!token) {
@@ -1416,11 +1416,16 @@ function initShowAllButtons() {
       // Close modal
       modal.style.display = 'none';
       
-      // Load data
-      loadInitialData();
-      
       // Clear input
       tokenInput.value = '';
+      
+      // Try to load data (will show modal again if token is invalid)
+      try {
+        await loadInitialData();
+      } catch (error) {
+        // Error already handled in loadInitialData
+        console.error('Failed to load data with new token:', error);
+      }
     });
 
     // Allow Enter key to submit
@@ -1470,9 +1475,11 @@ function initShowAllButtons() {
       await loadImages();
     } catch (error) {
       console.error('Failed to load initial data:', error);
+      console.error('Error status:', error.status);
       
       // If error is 401/403, token is invalid
-      if (error.message.includes('401') || error.message.includes('403')) {
+      if (error.status === 401 || error.status === 403 || 
+          error.message.includes('401') || error.message.includes('403')) {
         alert('Token ไม่ถูกต้องหรือหมดอายุ กรุณากรอก Token ใหม่');
         TourImageAPI.removeToken();
         showTokenModal();
@@ -1484,61 +1491,53 @@ function initShowAllButtons() {
 
   // Load suppliers (wholesale) into dropdown
   async function loadSuppliers() {
-    try {
-      // Get suppliers from API
-      const response = await TourImageAPI.getSuppliers();
-      const wholesaleOptions = document.querySelector('#wholesaleMultiSelect .multi-select-options');
+    // Get suppliers from API
+    const response = await TourImageAPI.getSuppliers();
+    const wholesaleOptions = document.querySelector('#wholesaleMultiSelect .multi-select-options');
+    
+    if (response && response.status === 'success' && response.data && wholesaleOptions) {
+      // Clear existing options
+      wholesaleOptions.innerHTML = '';
       
-      if (response && response.status === 'success' && response.data && wholesaleOptions) {
-        // Clear existing options
-        wholesaleOptions.innerHTML = '';
-        
-        // Add suppliers from API response
-        response.data.forEach(supplier => {
-          const optionDiv = document.createElement('div');
-          optionDiv.className = 'multi-select-option';
-          optionDiv.dataset.value = supplier.id;
-          optionDiv.innerHTML = `
-            <input type="checkbox" id="wholesale-${supplier.id}" value="${supplier.id}">
-            <label for="wholesale-${supplier.id}">${supplier.name_en} (${supplier.name_th})</label>
-          `;
-          wholesaleOptions.appendChild(optionDiv);
-        });
-        
-        console.log('✅ Loaded suppliers:', response.data.length);
-      }
-    } catch (error) {
-      console.error('Failed to load suppliers:', error);
+      // Add suppliers from API response
+      response.data.forEach(supplier => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'multi-select-option';
+        optionDiv.dataset.value = supplier.id;
+        optionDiv.innerHTML = `
+          <input type="checkbox" id="wholesale-${supplier.id}" value="${supplier.id}">
+          <label for="wholesale-${supplier.id}">${supplier.name_en} (${supplier.name_th})</label>
+        `;
+        wholesaleOptions.appendChild(optionDiv);
+      });
+      
+      console.log('✅ Loaded suppliers:', response.data.length);
     }
   }
 
   // Load countries into dropdown
   async function loadCountries() {
-    try {
-      // Get countries from API
-      const response = await TourImageAPI.getCountries('country_name_th_by_asc');
-      const countryOptions = document.getElementById('countryOptions');
+    // Get countries from API
+    const response = await TourImageAPI.getCountries('country_name_th_by_asc');
+    const countryOptions = document.getElementById('countryOptions');
+    
+    if (response && response.status === 'success' && response.data && countryOptions) {
+      // Clear existing options
+      countryOptions.innerHTML = '';
       
-      if (response && response.status === 'success' && response.data && countryOptions) {
-        // Clear existing options
-        countryOptions.innerHTML = '';
-        
-        // Add countries from API response
-        response.data.forEach(country => {
-          const optionDiv = document.createElement('div');
-          optionDiv.className = 'multi-select-option';
-          optionDiv.dataset.value = country.id;
-          optionDiv.innerHTML = `
-            <input type="checkbox" id="country-${country.id}" value="${country.id}">
-            <label for="country-${country.id}">${country.name_th} (${country.name_en})</label>
-          `;
-          countryOptions.appendChild(optionDiv);
-        });
-        
-        console.log('✅ Loaded countries:', response.data.length);
-      }
-    } catch (error) {
-      console.error('Failed to load countries:', error);
+      // Add countries from API response
+      response.data.forEach(country => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'multi-select-option';
+        optionDiv.dataset.value = country.id;
+        optionDiv.innerHTML = `
+          <input type="checkbox" id="country-${country.id}" value="${country.id}">
+          <label for="country-${country.id}">${country.name_th} (${country.name_en})</label>
+        `;
+        countryOptions.appendChild(optionDiv);
+      });
+      
+      console.log('✅ Loaded countries:', response.data.length);
     }
   }
 
