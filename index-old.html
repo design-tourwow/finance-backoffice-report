@@ -27,10 +27,12 @@
     />
     
     <!-- Styles -->
-    <link rel="stylesheet" href="tour-image-manager.css" />
+    <link rel="stylesheet" href="styles.css" />
     
     <!-- Configuration -->
-    <script src="tour-image-manager-api.js"></script>
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+    <!-- <script src="mock-api.js"></script> --> <!-- Disabled: Using real API now -->
   </head>
   <body>
     <!-- Skip to main content -->
@@ -69,14 +71,14 @@
               <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <button class="nav-item expandable active" aria-expanded="true" aria-controls="product-submenu">
+          <button class="nav-item expandable" aria-expanded="false" aria-controls="product-submenu">
             Product Management
             <svg class="nav-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
           <div class="sub-menu" id="product-submenu" role="menu">
-            <a href="/tour-image-manager" class="nav-item sub-item active" aria-current="page">Tour Image Manager</a>
+            <a href="/tour-image-manager" class="nav-item sub-item">Tour Image Manager</a>
             <a href="#" class="nav-item sub-item">Product List</a>
             <a href="#" class="nav-item sub-item">Keyword List</a>
             <a href="#" class="nav-item sub-item">Period Management</a>
@@ -185,13 +187,7 @@
                 </div>
                 <div class="form-group">
                   <label for="tourCode">รหัสทัวร์</label>
-                  <div class="autocomplete-wrapper">
-                    <input type="text" id="tourCode" name="tourCode" placeholder="กรอกรหัสทัวร์" aria-label="กรอกรหัสทัวร์" autocomplete="off" />
-                    <div class="autocomplete-spinner" style="display: none;">
-                      <div class="spinner"></div>
-                    </div>
-                    <div class="autocomplete-dropdown" id="tourCodeAutocomplete" style="display: none;"></div>
-                  </div>
+                  <input type="text" id="tourCode" name="tourCode" placeholder="กรอกรหัสทัวร์" aria-label="กรอกรหัสทัวร์" />
                   <span class="error-message" role="alert"></span>
                 </div>
               </div>
@@ -200,13 +196,7 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="imageName">ชื่อรูป</label>
-                  <div class="autocomplete-wrapper">
-                    <input type="text" id="imageName" name="imageName" placeholder="กรอกชื่อรูป" aria-label="กรอกชื่อรูป" autocomplete="off" />
-                    <div class="autocomplete-spinner" style="display: none;">
-                      <div class="spinner"></div>
-                    </div>
-                    <div class="autocomplete-dropdown" id="imageNameAutocomplete" style="display: none;"></div>
-                  </div>
+                  <input type="text" id="imageName" name="imageName" placeholder="กรอกชื่อรูป" aria-label="กรอกชื่อรูป" />
                   <span class="error-message" role="alert"></span>
                 </div>
                 <div class="form-group">
@@ -261,7 +251,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M3 6h18M7 12h10M11 18h2"/>
                     </svg>
-                    <span class="sort-btn-text">เรียงลำดับ</span>
+                    เรียงลำดับ
                     <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2"/>
                     </svg>
@@ -320,6 +310,15 @@
                       </svg>
                       Export เป็น CSV
                     </button>
+                    <button type="button" class="export-option" data-format="excel">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <line x1="9" y1="15" x2="15" y2="15"/>
+                      </svg>
+                      Export เป็น Excel
+                    </button>
                     <button type="button" class="export-option" data-format="pdf">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -345,6 +344,7 @@
                   ข้อมูลการใช้รูปภาพ (เฉพาะโปรแกรมที่ Active)
                 </div>
                 <div class="th th-programs" role="columnheader">ข้อมูลโปรแกรมที่ใช้รูปนี้</div>
+                <div class="th th-usage" role="columnheader">ประวัติการใช้งาน</div>
               </div>
 
               <!-- Loading State (inside table, below header) -->
@@ -528,6 +528,6 @@
       </div>
     </div>
 
-    <script src="tour-image-manager.js"></script>
+    <script src="script.js"></script>
   </body>
 </html>

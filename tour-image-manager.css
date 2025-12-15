@@ -169,6 +169,15 @@ body {
 
 .sub-menu {
   background: #fafafa;
+  display: none;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease;
+}
+
+.nav-item.expandable[aria-expanded="true"] + .sub-menu {
+  display: block;
+  max-height: 500px;
 }
 
 .sub-item {
