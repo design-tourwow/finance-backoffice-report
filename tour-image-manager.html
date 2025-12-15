@@ -340,11 +340,12 @@
               <!-- Table Header -->
               <div class="table-header" role="row">
                 <div class="th th-number" role="columnheader">ลำดับ</div>
-                <div class="th th-image" role="columnheader">ข้อมูลรูปภาพ</div>
+                <div class="th th-image" role="columnheader">รูปภาพ</div>
                 <div class="th th-details" role="columnheader">
                   ข้อมูลการใช้รูปภาพ (เฉพาะโปรแกรมที่ Active)
                 </div>
                 <div class="th th-programs" role="columnheader">ข้อมูลโปรแกรมที่ใช้รูปนี้</div>
+                <div class="th th-updated" role="columnheader">วันและเวลาอัปเดตล่าสุด</div>
               </div>
 
               <!-- Loading State (inside table, below header) -->
@@ -524,6 +525,33 @@
             </div>
 
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Token Input Modal -->
+    <div id="tokenModal" class="modal" style="display: none;">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-icon">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#4a7ba7" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="modal-header">
+          <h3 class="modal-title">กรอก API Token</h3>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom: 16px; color: #6b7280;">กรุณากรอก Token เพื่อเข้าถึงข้อมูล</p>
+          <textarea 
+            id="tokenInput" 
+            placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." 
+            style="width: 100%; min-height: 120px; padding: 12px; border: 1px solid #d1d5db; border-radius: 4px; font-family: monospace; font-size: 13px; resize: vertical;"
+          ></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="tokenSubmit">ยืนยัน</button>
         </div>
       </div>
     </div>

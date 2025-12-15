@@ -1,7 +1,26 @@
 // Tour Image Manager API Service
 const TourImageAPI = {
   baseURL: 'https://fin-api-staging2.tourwow.com',
-  token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0b3Vyd293IiwiYXVkIjoiZmluYW5jZSIsImV4cCI6MTc5NzA4MTc3NSwidXNlciI6eyJhZ2VuY3kiOnsiaWQiOjE3M30sImFnZW5jeV9tZW1iZXIiOnsiaWQiOjU1NSwicm9sZXNfc2x1ZyI6ImFkbWluIiwidGVhbSI6NSwibW9iaWxlX251bWJlciI6IjA4NTU5Nzk5NTkiLCJmaXJzdF9uYW1lIjoiTnV0dGhhcGhvbiIsImxhc3RfbmFtZSI6IlQiLCJuaWNrX25hbWUiOiJHQVAiLCJqb2JfcG9zaXRpb24iOm51bGx9LCJhZ2VuY3lfY29uZmlnIjp7ImlkIjoxNzN9fX0.M4VfWWp_pSUT-tDz9N-Z4yRe-QhiIA5JR0UHnNebxB0',
+  
+  // Get token from localStorage
+  getToken() {
+    return localStorage.getItem('token');
+  },
+  
+  // Set token to localStorage
+  setToken(token) {
+    localStorage.setItem('token', token);
+  },
+  
+  // Check if token exists
+  hasToken() {
+    return !!localStorage.getItem('token');
+  },
+  
+  // Remove token from localStorage
+  removeToken() {
+    localStorage.removeItem('token');
+  },
 
   /**
    * Get Pre Product File Reports
@@ -25,7 +44,7 @@ const TourImageAPI = {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'authorization': this.token
+          'authorization': this.getToken()
         }
       });
 
@@ -62,7 +81,7 @@ const TourImageAPI = {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'authorization': this.token
+          'authorization': this.getToken()
         }
       });
 
@@ -99,7 +118,7 @@ const TourImageAPI = {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'authorization': this.token
+          'authorization': this.getToken()
         }
       });
 
@@ -130,7 +149,7 @@ const TourImageAPI = {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'authorization': this.token
+          'authorization': this.getToken()
         }
       });
 

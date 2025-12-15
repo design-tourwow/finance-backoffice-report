@@ -16,6 +16,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    initTokenModal();
     initMobileMenu();
     initCustomDateRangePicker();
     initMultiSelect();
@@ -28,7 +29,7 @@
     initSorting();
     initImageNameAutocomplete();
     initTourCodeAutocomplete();
-    loadInitialData();
+    checkTokenAndLoadData();
   });
 
   // Mobile Menu
@@ -1392,6 +1393,70 @@ function initShowAllButtons() {
     });
   }
 
+  // Token Modal Management
+  function initTokenModal() {
+    const modal = document.getElementById('tokenModal');
+    const tokenInput = document.getElementById('tokenInput');
+    const tokenSubmit = document.getElementById('tokenSubmit');
+
+    if (!modal || !tokenInput || !tokenSubmit) return;
+
+    // Submit token
+    tokenSubmit.addEventListener('click', function() {
+      const token = tokenInput.value.trim();
+      
+      if (!token) {
+        alert('กรุณากรอก Token');
+        return;
+      }
+
+      // Save token to localStorage
+      TourImageAPI.setToken(token);
+      
+      // Close modal
+      modal.style.display = 'none';
+      
+      // Load data
+      loadInitialData();
+      
+      // Clear input
+      tokenInput.value = '';
+    });
+
+    // Allow Enter key to submit
+    tokenInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        tokenSubmit.click();
+      }
+    });
+  }
+
+  // Check token and load data
+  async function checkTokenAndLoadData() {
+    // Check if token exists in localStorage
+    if (!TourImageAPI.hasToken()) {
+      // No token, show modal
+      showTokenModal();
+      return;
+    }
+    
+    // Token exists, validate by trying to load data
+    try {
+      await loadInitialData();
+    } catch (error) {
+      // If error, token might be invalid
+      console.error('Token validation failed:', error);
+    }
+  }
+  
+  // Show token modal
+  function showTokenModal() {
+    const modal = document.getElementById('tokenModal');
+    if (modal) {
+      modal.style.display = 'flex';
+    }
+  }
+
   // Load initial data on page load
   async function loadInitialData() {
     try {
@@ -1405,6 +1470,15 @@ function initShowAllButtons() {
       await loadImages();
     } catch (error) {
       console.error('Failed to load initial data:', error);
+      
+      // If error is 401/403, token is invalid
+      if (error.message.includes('401') || error.message.includes('403')) {
+        alert('Token ไม่ถูกต้องหรือหมดอายุ กรุณากรอก Token ใหม่');
+        TourImageAPI.removeToken();
+        showTokenModal();
+      }
+      
+      throw error; // Re-throw to be caught by checkTokenAndLoadData
     }
   }
 
@@ -1730,13 +1804,12 @@ function initShowAllButtons() {
             src="${imageUrl}"
             alt="${imageName}"
             loading="lazy"
-            style="width: 100%; max-width: 300px; height: 200px; object-fit: cover; border-radius: 8px;"
-            onerror="this.src='https://via.placeholder.com/300x200?text=Error'"
+            style="width: 100%; height: 133px; object-fit: cover; border-radius: 8px;"
+            onerror="this.src='https://via.placeholder.com/200x133?text=Error'"
           />
-          <div class="image-name">${imageName}</div>
-          ${updateDate ? `<div class="image-update-date">อัปเดต: ${updateDate}</div>` : ''}
         </div>
         <div class="td td-details" role="cell">
+          <div class="image-name-header">${imageName}</div>
           <div class="detail-main">
             <span class="detail-label">รวมใช้ซ้ำ :</span>
             <span class="detail-value text-orange" aria-label="รวมใช้ซ้ำ ${fileCount} โปรแกรมทัวร์">${fileCount} โปรแกรมทัวร์</span>
@@ -1764,6 +1837,9 @@ function initShowAllButtons() {
           <div class="programs-list-visible">
             ${programsContent}
           </div>
+        </div>
+        <div class="td td-updated" role="cell">
+          ${updateDate ? `<div class="image-update-date">อัปเดต: ${updateDate}</div>` : '-'}
         </div>
       </div>
     `;
