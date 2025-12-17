@@ -18,6 +18,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     initTokenModal();
     initMobileMenu();
+    initSidebarToggle();
     initCustomDateRangePicker();
     initMultiSelect();
     initFormHandler();
@@ -34,33 +35,108 @@
 
   // Mobile Menu
   function initMobileMenu() {
+    // Sidebar mobile menu
     const menuToggle = document.querySelector('.mobile-menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const appWrapper = document.querySelector('.app-wrapper');
 
-    if (!menuToggle || !sidebar) return;
+    if (menuToggle && sidebar) {
+      menuToggle.addEventListener('click', function () {
+        const isOpen = sidebar.classList.toggle('open');
+        appWrapper.classList.toggle('menu-open', isOpen);
+        menuToggle.setAttribute('aria-expanded', isOpen);
+      });
 
-    menuToggle.addEventListener('click', function () {
-      const isOpen = sidebar.classList.toggle('open');
-      appWrapper.classList.toggle('menu-open', isOpen);
-      menuToggle.setAttribute('aria-expanded', isOpen);
+      // Close menu when clicking overlay
+      appWrapper.addEventListener('click', function (e) {
+        if (e.target === appWrapper && sidebar.classList.contains('open')) {
+          sidebar.classList.remove('open');
+          appWrapper.classList.remove('menu-open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Close menu on escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+          sidebar.classList.remove('open');
+          appWrapper.classList.remove('menu-open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+
+    // Dropdown menu functionality
+    const dropdownToggles = document.querySelectorAll('.navbar-dropdown-toggle');
+    dropdownToggles.forEach(toggle => {
+      toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const dropdownId = this.getAttribute('data-dropdown');
+        const dropdown = document.getElementById(dropdownId);
+        
+        if (dropdown) {
+          const isOpen = dropdown.classList.toggle('open');
+          this.setAttribute('aria-expanded', isOpen);
+          
+          // Close other dropdowns
+          document.querySelectorAll('.navbar-dropdown').forEach(dd => {
+            if (dd !== dropdown) {
+              dd.classList.remove('open');
+            }
+          });
+        }
+      });
     });
 
-    // Close menu when clicking overlay
-    appWrapper.addEventListener('click', function (e) {
-      if (e.target === appWrapper && sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        appWrapper.classList.remove('menu-open');
-        menuToggle.setAttribute('aria-expanded', 'false');
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.navbar-item')) {
+        document.querySelectorAll('.navbar-dropdown').forEach(dropdown => {
+          dropdown.classList.remove('open');
+        });
+        dropdownToggles.forEach(toggle => {
+          toggle.setAttribute('aria-expanded', 'false');
+        });
       }
     });
+  }
 
-    // Close menu on escape key
+  // Sidebar Toggle (Desktop)
+  function initSidebarToggle() {
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const appWrapper = document.querySelector('.app-wrapper');
+    const STORAGE_KEY = 'sidebar-collapsed';
+
+    if (!toggleBtn || !appWrapper) return;
+
+    // Remove init class and apply proper class
+    document.documentElement.classList.remove('sidebar-collapsed-init');
+    
+    // Load saved state from localStorage
+    const savedState = localStorage.getItem(STORAGE_KEY);
+    if (savedState === 'true') {
+      appWrapper.classList.add('sidebar-collapsed');
+    }
+
+    // Toggle sidebar
+    toggleBtn.addEventListener('click', function () {
+      const isCollapsed = appWrapper.classList.toggle('sidebar-collapsed');
+      
+      // Save state to localStorage
+      localStorage.setItem(STORAGE_KEY, isCollapsed);
+      
+      // Update aria-label
+      toggleBtn.setAttribute('aria-label', isCollapsed ? 'แสดงเมนู' : 'ซ่อนเมนู');
+      toggleBtn.setAttribute('title', isCollapsed ? 'แสดงเมนู' : 'ซ่อนเมนู');
+      
+      console.log(`Sidebar ${isCollapsed ? 'collapsed' : 'expanded'}`);
+    });
+
+    // Keyboard shortcut: Ctrl/Cmd + B
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        appWrapper.classList.remove('menu-open');
-        menuToggle.setAttribute('aria-expanded', 'false');
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        toggleBtn.click();
       }
     });
   }
