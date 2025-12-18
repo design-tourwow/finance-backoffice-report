@@ -1,4 +1,18 @@
-# คำสั่งสำหรับ Deploy โค้ดขึ้น GitHub
+# คำสั่งสำหรับ Deploy โค้ดขึ้น GitHub และ Vercel
+
+## 🌿 Git Branches & Environments
+
+โปรเจคนี้ใช้ 2 environments:
+
+- **staging** → Vercel Preview (สำหรับทดสอบ)
+- **main** → Vercel Production (สำหรับ production)
+
+### Workflow:
+```
+Feature → staging (ทดสอบ) → main (deploy จริง)
+```
+
+---
 
 ## 📦 Frontend Repository
 
@@ -30,9 +44,12 @@ Features:
 # Add remote
 git remote add origin https://github.com/design-tourwow/finance-backoffice-front-end.git
 
-# Push to GitHub
-git branch -M main
+# Create staging branch
+git branch staging
+
+# Push both branches to GitHub
 git push -u origin main
+git push -u origin staging
 ```
 
 ### ไฟล์ที่จะถูก push (Frontend):
@@ -171,11 +188,44 @@ const CONFIG = {
 
 ---
 
+## 🚀 Vercel Deployment Setup
+
+### ตั้งค่า Vercel:
+
+1. **เชื่อม GitHub Repository** กับ Vercel
+2. **Production Branch**: ตั้งเป็น `main`
+3. **Preview Branches**: เลือก `staging`
+4. **Build Settings**:
+   - Framework Preset: Other
+   - Build Command: (ไม่ต้องใส่)
+   - Output Directory: (ไม่ต้องใส่)
+   - Install Command: (ไม่ต้องใส่)
+
+### Deployment Workflow:
+
+```bash
+# ทำงานใน staging
+git checkout staging
+git add .
+git commit -m "Add new feature"
+git push origin staging
+# → Vercel จะ deploy preview environment อัตโนมัติ
+
+# ทดสอบใน staging แล้วโอเค → merge ไป main
+git checkout main
+git merge staging
+git push origin main
+# → Vercel จะ deploy production อัตโนมัติ
+```
+
+---
+
 ## 📝 หลังจาก Push แล้ว
 
 ### 1. ตรวจสอบ GitHub:
 - เข้าไปดูที่ https://github.com/design-tourwow/finance-backoffice-front-end
 - เข้าไปดูที่ https://github.com/design-tourwow/finance-backoffice-back-end
+- ตรวจสอบว่ามี branches: `main` และ `staging`
 
 ### 2. เพิ่ม Description:
 - Frontend: "Tour Image Manager - Frontend application for Tourwow Finance Backoffice"
@@ -189,20 +239,20 @@ const CONFIG = {
 - เปิด Issues (ถ้าต้องการ)
 - เปิด Discussions (ถ้าต้องการ)
 - เพิ่ม LICENSE file (ถ้าต้องการ)
+- ตั้งค่า Branch Protection Rules สำหรับ `main` (แนะนำ)
 
 ---
 
 ## 🚀 Next Steps
 
-1. **Deploy Frontend:**
-   - GitHub Pages
-   - Netlify
-   - Vercel
+1. **Vercel Environments:**
+   - ✅ staging → Preview deployments
+   - ✅ main → Production deployments
 
-2. **Setup CI/CD:**
-   - GitHub Actions
-   - Automated testing
-   - Automated deployment
+2. **Optional - Branch Protection:**
+   - GitHub Settings → Branches → Add rule for `main`
+   - Require pull request reviews
+   - Require status checks to pass
 
 3. **Documentation:**
    - Wiki pages
