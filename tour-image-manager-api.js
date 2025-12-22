@@ -1,25 +1,61 @@
 // Tour Image Manager API Service
 const TourImageAPI = {
-  baseURL: 'https://fin-api-staging2.tourwow.com',
-  
-  // Get token from localStorage
-  getToken() {
-    return localStorage.getItem('token');
+  // Auto-detect environment from URL or use sessionStorage
+  getEnvironmentFromURL() {
+    const hostname = window.location.hostname;
+    
+    // Check if running on staging Vercel URL
+    if (hostname.includes('staging-finance-backoffice-report.vercel.app')) {
+      return 'staging';
+    }
+    
+    // Check if running on production Vercel URL
+    if (hostname.includes('finance-backoffice-report.vercel.app')) {
+      return 'production';
+    }
+    
+    // For localhost or other domains, check sessionStorage
+    return sessionStorage.getItem('env') || 'production';
   },
   
-  // Set token to localStorage
+  // Dynamic baseURL based on environment
+  get baseURL() {
+    const env = this.getEnvironmentFromURL();
+    const urls = {
+      staging: 'https://fin-api-staging2.tourwow.com',
+      production: 'https://fin-api.tourwow.com'
+    };
+    
+    console.log(`🌍 Environment detected: ${env} (URL: ${window.location.hostname})`);
+    console.log(`📡 Using API: ${urls[env]}`);
+    
+    return urls[env];
+  },
+  
+  // Get token from sessionStorage
+  getToken() {
+    return sessionStorage.getItem('authToken');
+  },
+  
+  // Set token to sessionStorage
   setToken(token) {
-    localStorage.setItem('token', token);
+    sessionStorage.setItem('authToken', token);
   },
   
   // Check if token exists
   hasToken() {
-    return !!localStorage.getItem('token');
+    return !!sessionStorage.getItem('authToken');
   },
   
-  // Remove token from localStorage
+  // Remove token from sessionStorage
   removeToken() {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('env');
+  },
+  
+  // Get current environment
+  getEnvironment() {
+    return this.getEnvironmentFromURL();
   },
 
   /**
