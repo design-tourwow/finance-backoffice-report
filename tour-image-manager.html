@@ -30,7 +30,16 @@
     <link rel="stylesheet" href="tour-image-manager.css" />
     
     <!-- Configuration -->
-    <script src="tour-image-manager-api.js?v=20241222-2"></script>
+    <script src="tour-image-manager-api.js?v=20241222-3"></script>
+    
+    <!-- Clear sessionStorage env to force hostname detection -->
+    <script>
+      // CRITICAL: Remove env from sessionStorage to allow hostname detection
+      if (sessionStorage.getItem('env')) {
+        console.log('🗑️ Clearing sessionStorage env to force hostname detection');
+        sessionStorage.removeItem('env');
+      }
+    </script>
     
     <!-- Authentication Handler -->
     <script>
@@ -629,6 +638,6 @@
       </div>
     </div>
 
-    <script src="tour-image-manager.js?v=20241222-2"></script>
+    <script src="tour-image-manager.js?v=20241222-3"></script>
   </body>
 </html>
