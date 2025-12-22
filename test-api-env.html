@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test API Environment Detection</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+    }
+    
+    .test-section h2 {
+      color: #4a7ba7;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .status.pending {
+      background: #ffc107;
+      color: #000;
+    }
+    
+    .status.pass {
+      background: #4caf50;
+      color: white;
+    }
+    
+    .status.fail {
+      background: #f44336;
+      color: white;
+    }
+    
+    .test-info {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    
+    .test-info div {
+      margin: 5px 0;
+    }
+    
+    .test-info strong {
+      color: #4a7ba7;
+      display: inline-block;
+      width: 180px;
+    }
+    
+    button {
+      background: #4a7ba7;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    
+    button:hover {
+      background: #3a6a97;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+    
+    .log div {
+      margin: 3px 0;
+      line-height: 1.5;
+    }
+    
+    .log .success { color: #4ec9b0; }
+    .log .error { color: #f48771; }
+    .log .info { color: #9cdcfe; }
+    .log .warning { color: #dcdcaa; }
+    
+    .summary {
+      background: #e3f2fd;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 30px;
+    }
+    
+    .summary h3 {
+      color: #1976d2;
+      margin-bottom: 15px;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    
+    .summary-item {
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    
+    .summary-item .label {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    
+    .summary-item .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 API Environment Detection Test</h1>
+    <p class="subtitle">ทดสอบว่าระบบเรียก API ถูก environment หรือไม่</p>
+    
+    <!-- Current Environment -->
+    <div class="test-section">
+      <h2>📍 Current Environment</h2>
+      <div class="test-info">
+        <div><strong>Hostname:</strong> <span id="currentHostname">-</span></div>
+        <div><strong>Detected Environment:</strong> <span id="currentEnv">-</span></div>
+        <div><strong>Expected API URL:</strong> <span id="expectedAPI">-</span></div>
+        <div><strong>Actual API URL:</strong> <span id="actualAPI">-</span></div>
+      </div>
+    </div>
+    
+    <!-- Test Controls -->
+    <div class="test-section">
+      <h2>🎮 Test Controls</h2>
+      <button onclick="runAllTests()">▶️ Run All Tests</button>
+      <button onclick="testLocalhost()">🏠 Test Localhost</button>
+      <button onclick="testStaging()">🔧 Test Staging</button>
+      <button onclick="testProduction()">🚀 Test Production</button>
+      <button onclick="clearLogs()">🗑️ Clear Logs</button>
+    </div>
+    
+    <!-- Test Results -->
+    <div class="test-section">
+      <h2>
+        📊 Test Results
+        <span id="localhostStatus" class="status pending">PENDING</span>
+        <span id="stagingStatus" class="status pending">PENDING</span>
+        <span id="productionStatus" class="status pending">PENDING</span>
+      </h2>
+      <div id="testLog" class="log"></div>
+    </div>
+    
+    <!-- Summary -->
+    <div class="summary" id="summary" style="display: none;">
+      <h3>📈 Test Summary</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="label">Total Tests</div>
+          <div class="value" id="totalTests">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">Passed</div>
+          <div class="value" style="color: #4caf50;" id="passedTests">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">Failed</div>
+          <div class="value" style="color: #f44336;" id="failedTests">0</div>
+        </div>
+        <div class="summary-item">
+          <div class="label">Success Rate</div>
+          <div class="value" style="color: #2196f3;" id="successRate">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Test configuration
+    const TEST_CONFIG = {
+      localhost: {
+        hostname: 'localhost',
+        expectedAPI: 'https://fin-api.tourwow.com', // default to production
+        environment: 'production'
+      },
+      staging: {
+        hostname: 'staging-finance-backoffice-report.vercel.app',
+        expectedAPI: 'https://fin-api-staging2.tourwow.com',
+        environment: 'staging'
+      },
+      production: {
+        hostname: 'finance-backoffice-report.vercel.app',
+        expectedAPI: 'https://fin-api.tourwow.com',
+        environment: 'production'
+      }
+    };
+
+    let testResults = {
+      total: 0,
+      passed: 0,
+      failed: 0
+    };
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      displayCurrentEnvironment();
+    });
+
+    function displayCurrentEnvironment() {
+      const hostname = window.location.hostname;
+      document.getElementById('currentHostname').textContent = hostname;
+      
+      // Simulate the detection logic from tour-image-manager.html
+      let detectedEnv = 'production';
+      let expectedAPI = 'https://fin-api.tourwow.com';
+      
+      if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+        detectedEnv = 'staging';
+        expectedAPI = 'https://fin-api-staging2.tourwow.com';
+      } else if (hostname === 'finance-backoffice-report.vercel.app') {
+        detectedEnv = 'production';
+        expectedAPI = 'https://fin-api.tourwow.com';
+      } else {
+        // Localhost - check sessionStorage
+        const sessionEnv = sessionStorage.getItem('env') || 'production';
+        detectedEnv = sessionEnv;
+        expectedAPI = sessionEnv === 'staging' 
+          ? 'https://fin-api-staging2.tourwow.com'
+          : 'https://fin-api.tourwow.com';
+      }
+      
+      document.getElementById('currentEnv').textContent = detectedEnv;
+      document.getElementById('expectedAPI').textContent = expectedAPI;
+      
+      // Check if window.API_BASE_URL is set
+      if (window.API_BASE_URL) {
+        document.getElementById('actualAPI').textContent = window.API_BASE_URL;
+        document.getElementById('actualAPI').style.color = 
+          window.API_BASE_URL === expectedAPI ? '#4caf50' : '#f44336';
+      } else {
+        document.getElementById('actualAPI').textContent = 'Not set yet';
+        document.getElementById('actualAPI').style.color = '#ff9800';
+      }
+    }
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('testLog');
+      const timestamp = new Date().toLocaleTimeString('th-TH');
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${timestamp}] ${message}`;
+      logDiv.appendChild(div);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('testLog').innerHTML = '';
+      testResults = { total: 0, passed: 0, failed: 0 };
+      document.getElementById('summary').style.display = 'none';
+      
+      // Reset status badges
+      ['localhost', 'staging', 'production'].forEach(env => {
+        const badge = document.getElementById(`${env}Status`);
+        badge.className = 'status pending';
+        badge.textContent = 'PENDING';
+      });
+    }
+
+    function updateStatus(env, passed) {
+      const badge = document.getElementById(`${env}Status`);
+      badge.className = `status ${passed ? 'pass' : 'fail'}`;
+      badge.textContent = passed ? 'PASS' : 'FAIL';
+    }
+
+    function updateSummary() {
+      document.getElementById('summary').style.display = 'block';
+      document.getElementById('totalTests').textContent = testResults.total;
+      document.getElementById('passedTests').textContent = testResults.passed;
+      document.getElementById('failedTests').textContent = testResults.failed;
+      
+      const successRate = testResults.total > 0 
+        ? Math.round((testResults.passed / testResults.total) * 100)
+        : 0;
+      document.getElementById('successRate').textContent = `${successRate}%`;
+    }
+
+    function simulateEnvironment(hostname) {
+      log(`🔄 Simulating hostname: ${hostname}`, 'info');
+      
+      let detectedEnv, expectedAPI;
+      
+      if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+        detectedEnv = 'staging';
+        expectedAPI = 'https://fin-api-staging2.tourwow.com';
+        log(`🎯 Detected STAGING from hostname`, 'success');
+      } else if (hostname === 'finance-backoffice-report.vercel.app') {
+        detectedEnv = 'production';
+        expectedAPI = 'https://fin-api.tourwow.com';
+        log(`🎯 Detected PRODUCTION from hostname`, 'success');
+      } else {
+        // Localhost
+        const sessionEnv = sessionStorage.getItem('env') || 'production';
+        detectedEnv = sessionEnv;
+        expectedAPI = sessionEnv === 'staging' 
+          ? 'https://fin-api-staging2.tourwow.com'
+          : 'https://fin-api.tourwow.com';
+        log(`🎯 Using ${detectedEnv} from sessionStorage (localhost)`, 'info');
+      }
+      
+      return { detectedEnv, expectedAPI };
+    }
+
+    function testLocalhost() {
+      log('', 'info');
+      log('='.repeat(60), 'info');
+      log('🏠 Testing LOCALHOST Environment', 'info');
+      log('='.repeat(60), 'info');
+      
+      const config = TEST_CONFIG.localhost;
+      const result = simulateEnvironment(config.hostname);
+      
+      log(`📋 Expected Environment: ${config.environment}`, 'info');
+      log(`📋 Expected API: ${config.expectedAPI}`, 'info');
+      log(`✅ Detected Environment: ${result.detectedEnv}`, 'success');
+      log(`✅ Detected API: ${result.expectedAPI}`, 'success');
+      
+      const passed = result.expectedAPI === config.expectedAPI;
+      
+      testResults.total++;
+      if (passed) {
+        testResults.passed++;
+        log(`✅ LOCALHOST TEST PASSED`, 'success');
+      } else {
+        testResults.failed++;
+        log(`❌ LOCALHOST TEST FAILED`, 'error');
+        log(`   Expected: ${config.expectedAPI}`, 'error');
+        log(`   Got: ${result.expectedAPI}`, 'error');
+      }
+      
+      updateStatus('localhost', passed);
+      updateSummary();
+    }
+
+    function testStaging() {
+      log('', 'info');
+      log('='.repeat(60), 'info');
+      log('🔧 Testing STAGING Environment', 'info');
+      log('='.repeat(60), 'info');
+      
+      const config = TEST_CONFIG.staging;
+      const result = simulateEnvironment(config.hostname);
+      
+      log(`📋 Expected Environment: ${config.environment}`, 'info');
+      log(`📋 Expected API: ${config.expectedAPI}`, 'info');
+      log(`✅ Detected Environment: ${result.detectedEnv}`, 'success');
+      log(`✅ Detected API: ${result.expectedAPI}`, 'success');
+      
+      const passed = result.expectedAPI === config.expectedAPI && 
+                     result.detectedEnv === config.environment;
+      
+      testResults.total++;
+      if (passed) {
+        testResults.passed++;
+        log(`✅ STAGING TEST PASSED`, 'success');
+      } else {
+        testResults.failed++;
+        log(`❌ STAGING TEST FAILED`, 'error');
+        log(`   Expected API: ${config.expectedAPI}`, 'error');
+        log(`   Got API: ${result.expectedAPI}`, 'error');
+        log(`   Expected Env: ${config.environment}`, 'error');
+        log(`   Got Env: ${result.detectedEnv}`, 'error');
+      }
+      
+      updateStatus('staging', passed);
+      updateSummary();
+    }
+
+    function testProduction() {
+      log('', 'info');
+      log('='.repeat(60), 'info');
+      log('🚀 Testing PRODUCTION Environment', 'info');
+      log('='.repeat(60), 'info');
+      
+      const config = TEST_CONFIG.production;
+      const result = simulateEnvironment(config.hostname);
+      
+      log(`📋 Expected Environment: ${config.environment}`, 'info');
+      log(`📋 Expected API: ${config.expectedAPI}`, 'info');
+      log(`✅ Detected Environment: ${result.detectedEnv}`, 'success');
+      log(`✅ Detected API: ${result.expectedAPI}`, 'success');
+      
+      const passed = result.expectedAPI === config.expectedAPI && 
+                     result.detectedEnv === config.environment;
+      
+      testResults.total++;
+      if (passed) {
+        testResults.passed++;
+        log(`✅ PRODUCTION TEST PASSED`, 'success');
+      } else {
+        testResults.failed++;
+        log(`❌ PRODUCTION TEST FAILED`, 'error');
+        log(`   Expected API: ${config.expectedAPI}`, 'error');
+        log(`   Got API: ${result.expectedAPI}`, 'error');
+        log(`   Expected Env: ${config.environment}`, 'error');
+        log(`   Got Env: ${result.detectedEnv}`, 'error');
+      }
+      
+      updateStatus('production', passed);
+      updateSummary();
+    }
+
+    function runAllTests() {
+      clearLogs();
+      log('🚀 Starting All Tests...', 'info');
+      log('', 'info');
+      
+      testLocalhost();
+      testStaging();
+      testProduction();
+      
+      log('', 'info');
+      log('='.repeat(60), 'info');
+      log('🏁 All Tests Completed', 'info');
+      log('='.repeat(60), 'info');
+      
+      if (testResults.failed === 0) {
+        log(`🎉 All tests passed! (${testResults.passed}/${testResults.total})`, 'success');
+      } else {
+        log(`⚠️ Some tests failed: ${testResults.failed}/${testResults.total}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
