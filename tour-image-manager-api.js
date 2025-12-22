@@ -4,13 +4,13 @@ const TourImageAPI = {
   getEnvironmentFromURL() {
     const hostname = window.location.hostname;
     
-    // Check if running on staging Vercel URL
-    if (hostname.includes('staging-finance-backoffice-report.vercel.app')) {
+    // IMPORTANT: Check staging FIRST (before production) because staging URL contains production URL
+    if (hostname === 'staging-finance-backoffice-report.vercel.app') {
       return 'staging';
     }
     
     // Check if running on production Vercel URL
-    if (hostname.includes('finance-backoffice-report.vercel.app')) {
+    if (hostname === 'finance-backoffice-report.vercel.app') {
       return 'production';
     }
     
