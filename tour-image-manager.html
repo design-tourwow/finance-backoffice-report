@@ -32,6 +32,64 @@
     <!-- Configuration -->
     <script src="tour-image-manager-api.js"></script>
     
+    <!-- Authentication Handler -->
+    <script>
+      (function() {
+        // Handle authentication from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const envParam = urlParams.get('env');
+        
+        if (token) {
+          // Store token in sessionStorage
+          sessionStorage.setItem('authToken', token);
+          
+          // Only store env in sessionStorage if NOT on Vercel (for localhost testing)
+          const hostname = window.location.hostname;
+          const isVercel = hostname.includes('vercel.app');
+          
+          if (!isVercel && envParam) {
+            // For localhost: use env from URL parameter
+            sessionStorage.setItem('env', envParam);
+            console.log('💾 Stored env in sessionStorage (localhost):', envParam);
+          } else {
+            // For Vercel: auto-detect from hostname, don't store in sessionStorage
+            console.log('🚫 Skipped storing env (Vercel - will auto-detect from hostname)');
+          }
+          
+          // Remove token from URL for security
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        // Check if authenticated
+        const storedToken = sessionStorage.getItem('authToken');
+        
+        if (!storedToken) {
+          // Auto-detect environment for redirect
+          const hostname = window.location.hostname;
+          let redirectEnv = 'production';
+          
+          if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+            redirectEnv = 'staging';
+          } else if (hostname === 'finance-backoffice-report.vercel.app') {
+            redirectEnv = 'production';
+          } else {
+            // For localhost, check sessionStorage
+            redirectEnv = sessionStorage.getItem('env') || 'production';
+          }
+          
+          // Redirect to login if no authentication
+          const loginUrls = {
+            staging: 'https://financebackoffice-staging2.tourwow.com',
+            production: 'https://financebackoffice.tourwow.com'
+          };
+          const loginUrl = loginUrls[redirectEnv];
+          console.log(`🔐 Redirecting to ${redirectEnv} login:`, loginUrl);
+          window.location.href = loginUrl;
+        }
+      })();
+    </script>
+    
     <!-- Load sidebar state before page renders to prevent flash -->
     <script>
       (function() {

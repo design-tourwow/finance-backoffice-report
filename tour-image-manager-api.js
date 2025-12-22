@@ -1,21 +1,26 @@
 // Tour Image Manager API Service
 const TourImageAPI = {
-  // Auto-detect environment from URL or use sessionStorage
+  // Auto-detect environment from URL (hostname has highest priority)
   getEnvironmentFromURL() {
     const hostname = window.location.hostname;
     
-    // IMPORTANT: Check staging FIRST (before production) because staging URL contains production URL
+    // IMPORTANT: Hostname detection has HIGHEST priority
+    // Check staging FIRST (before production)
     if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+      console.log('🎯 Detected STAGING from hostname');
       return 'staging';
     }
     
     // Check if running on production Vercel URL
     if (hostname === 'finance-backoffice-report.vercel.app') {
+      console.log('🎯 Detected PRODUCTION from hostname');
       return 'production';
     }
     
-    // For localhost or other domains, check sessionStorage
-    return sessionStorage.getItem('env') || 'production';
+    // For localhost or other domains, use sessionStorage as fallback
+    const sessionEnv = sessionStorage.getItem('env');
+    console.log(`🎯 Using ${sessionEnv || 'production'} from sessionStorage (localhost)`);
+    return sessionEnv || 'production';
   },
   
   // Dynamic baseURL based on environment
