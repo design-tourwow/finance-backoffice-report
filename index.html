@@ -14,6 +14,28 @@
     <!-- Styles -->
     <link rel="stylesheet" href="tour-image-manager.css" />
     
+    <!-- Configuration -->
+    <script src="tour-image-manager-api.js"></script>
+    
+    <!-- Authentication Handler -->
+    <script>
+      (function() {
+        // Handle authentication from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const env = urlParams.get('env');
+        
+        if (token && env) {
+          // Store token and environment in sessionStorage
+          sessionStorage.setItem('authToken', token);
+          sessionStorage.setItem('env', env);
+          
+          // Remove token from URL for security
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      })();
+    </script>
+    
     <!-- Load sidebar state before page renders to prevent flash -->
     <script>
       (function() {

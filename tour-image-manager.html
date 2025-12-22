@@ -30,16 +30,32 @@
     <link rel="stylesheet" href="tour-image-manager.css" />
     
     <!-- Configuration -->
-    <script src="tour-image-manager-api.js?v=20241222-3"></script>
-    
-    <!-- Clear sessionStorage env to force hostname detection -->
+    <!-- CRITICAL: Set API URL based on hostname BEFORE loading any other scripts -->
     <script>
-      // CRITICAL: Remove env from sessionStorage to allow hostname detection
-      if (sessionStorage.getItem('env')) {
-        console.log('🗑️ Clearing sessionStorage env to force hostname detection');
-        sessionStorage.removeItem('env');
-      }
+      (function() {
+        const hostname = window.location.hostname;
+        
+        // Hardcode API URLs based on hostname
+        if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://fin-api-staging2.tourwow.com';
+          window.ENVIRONMENT = 'staging';
+          console.log('🎯 STAGING Environment - API:', window.API_BASE_URL);
+        } else if (hostname === 'finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://fin-api.tourwow.com';
+          window.ENVIRONMENT = 'production';
+          console.log('🎯 PRODUCTION Environment - API:', window.API_BASE_URL);
+        } else {
+          // Localhost fallback
+          const sessionEnv = sessionStorage.getItem('env') || 'production';
+          window.ENVIRONMENT = sessionEnv;
+          window.API_BASE_URL = sessionEnv === 'staging' 
+            ? 'https://fin-api-staging2.tourwow.com'
+            : 'https://fin-api.tourwow.com';
+          console.log('🎯 LOCALHOST Environment:', window.ENVIRONMENT, '- API:', window.API_BASE_URL);
+        }
+      })();
     </script>
+    <script src="tour-image-manager-api.js?v=20241222-5"></script>
     
     <!-- Authentication Handler -->
     <script>
@@ -638,6 +654,6 @@
       </div>
     </div>
 
-    <script src="tour-image-manager.js?v=20241222-3"></script>
+    <script src="tour-image-manager.js?v=20241222-5"></script>
   </body>
 </html>

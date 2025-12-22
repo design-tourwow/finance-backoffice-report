@@ -1,40 +1,10 @@
 // Tour Image Manager API Service
 const TourImageAPI = {
-  // Auto-detect environment from URL (hostname has highest priority)
-  getEnvironmentFromURL() {
-    const hostname = window.location.hostname;
-    
-    // IMPORTANT: Hostname detection has HIGHEST priority
-    // Check staging FIRST (before production)
-    if (hostname === 'staging-finance-backoffice-report.vercel.app') {
-      console.log('🎯 Detected STAGING from hostname');
-      return 'staging';
-    }
-    
-    // Check if running on production Vercel URL
-    if (hostname === 'finance-backoffice-report.vercel.app') {
-      console.log('🎯 Detected PRODUCTION from hostname');
-      return 'production';
-    }
-    
-    // For localhost or other domains, use sessionStorage as fallback
-    const sessionEnv = sessionStorage.getItem('env');
-    console.log(`🎯 Using ${sessionEnv || 'production'} from sessionStorage (localhost)`);
-    return sessionEnv || 'production';
-  },
-  
-  // Dynamic baseURL based on environment
+  // Use global API_BASE_URL set by inline script in HTML
   get baseURL() {
-    const env = this.getEnvironmentFromURL();
-    const urls = {
-      staging: 'https://fin-api-staging2.tourwow.com',
-      production: 'https://fin-api.tourwow.com'
-    };
-    
-    console.log(`🌍 Environment detected: ${env} (URL: ${window.location.hostname})`);
-    console.log(`📡 Using API: ${urls[env]}`);
-    
-    return urls[env];
+    const url = window.API_BASE_URL || 'https://fin-api.tourwow.com';
+    console.log('📡 Using API URL:', url);
+    return url;
   },
   
   // Get token from sessionStorage
