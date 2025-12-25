@@ -7,25 +7,27 @@ const TourImageAPI = {
     return url;
   },
   
-  // Get token from sessionStorage
+  // Get token from sessionStorage or localStorage (fallback)
   getToken() {
-    return sessionStorage.getItem('authToken');
+    return sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
   },
   
-  // Set token to sessionStorage
+  // Set token to both sessionStorage and localStorage
   setToken(token) {
     sessionStorage.setItem('authToken', token);
+    localStorage.setItem('authToken', token);
   },
   
-  // Check if token exists
+  // Check if token exists in either storage
   hasToken() {
-    return !!sessionStorage.getItem('authToken');
+    return !!(sessionStorage.getItem('authToken') || localStorage.getItem('authToken'));
   },
   
-  // Remove token from sessionStorage
+  // Remove token from both storages
   removeToken() {
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('env');
+    localStorage.removeItem('authToken');
   },
   
   // Get current environment

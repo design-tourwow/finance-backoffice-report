@@ -149,11 +149,9 @@
             localStorage.clear();
             console.log('🧹 Cleared sessionStorage and localStorage');
             
-            // Store NEW token in BOTH sessionStorage (for API) and localStorage (for debugging)
+            // Store NEW token in BOTH sessionStorage AND localStorage (same key)
             sessionStorage.setItem('authToken', token);
-            localStorage.setItem('authToken_debug', token);
-            localStorage.setItem('authToken_receivedAt', new Date().toISOString());
-            localStorage.setItem('authToken_fromURL', window.location.href);
+            localStorage.setItem('authToken', token);
             
             console.log('📥 Token received from URL:', token);
             console.log('📏 Token length:', token.length);
@@ -161,11 +159,12 @@
             
             // Verify token was stored correctly
             const storedSessionToken = sessionStorage.getItem('authToken');
-            const storedLocalToken = localStorage.getItem('authToken_debug');
+            const storedLocalToken = localStorage.getItem('authToken');
             
             if (storedSessionToken === token && storedLocalToken === token) {
               console.log('✅ Token stored successfully in sessionStorage');
-              console.log('✅ Token stored successfully in localStorage (debug)');
+              console.log('✅ Token stored successfully in localStorage');
+              console.log('✅ Both tokens match the URL token');
               
               // Decode and log token expiry for debugging
               try {
@@ -198,8 +197,9 @@
               debugContent.innerHTML = `
                 <div style="margin-bottom: 8px;"><strong>Token from URL:</strong><br/>${token.substring(0, 80)}...</div>
                 <div style="margin-bottom: 8px;"><strong>Token length:</strong> ${token.length}</div>
-                <div style="margin-bottom: 8px;"><strong>Stored in sessionStorage:</strong> ✅</div>
-                <div style="margin-bottom: 8px;"><strong>Stored in localStorage (debug):</strong> ✅</div>
+                <div style="margin-bottom: 8px;"><strong>Stored in sessionStorage:</strong> ✅ authToken</div>
+                <div style="margin-bottom: 8px;"><strong>Stored in localStorage:</strong> ✅ authToken</div>
+                <div style="margin-bottom: 8px;"><strong>Tokens match:</strong> ✅ 100%</div>
                 <div style="margin-bottom: 8px;"><strong>Environment:</strong> ${environment}</div>
                 <div style="margin-bottom: 8px;"><strong>Redirecting in:</strong> <span id="countdown">0.8</span>s</div>
               `;
