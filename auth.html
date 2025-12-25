@@ -138,16 +138,30 @@
 
         if (token && token.trim() !== '') {
           try {
-            // Store token in sessionStorage (matching API expectations)
+            // Clear all existing tokens first to prevent conflicts
+            sessionStorage.clear();
+            console.log('🧹 Cleared sessionStorage');
+            
+            // Store NEW token in sessionStorage (matching API expectations)
             sessionStorage.setItem('authToken', token);
             
-            // Verify token was stored
+            // Verify token was stored correctly
             const storedToken = sessionStorage.getItem('authToken');
             if (storedToken === token) {
               console.log('✅ Token stored successfully in sessionStorage');
               console.log('✅ Token length:', storedToken.length);
+              console.log('🔑 Token preview:', token.substring(0, 50) + '...');
+              
+              // Decode and log token expiry for debugging
+              try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const expDate = new Date(payload.exp * 1000);
+                console.log('⏰ Token expires at:', expDate.toLocaleString('th-TH'));
+              } catch (e) {
+                console.log('⚠️ Could not decode token expiry');
+              }
             } else {
-              throw new Error('Token verification failed');
+              throw new Error('Token verification failed - stored token does not match');
             }
 
             // Detect environment from hostname
