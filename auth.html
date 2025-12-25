@@ -115,12 +115,6 @@
       <h1>กำลังเข้าสู่ระบบ...</h1>
       <p>กรุณารอสักครู่</p>
       
-      <!-- Debug Info -->
-      <div id="debugInfo" style="display: none; margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px; text-align: left; font-size: 12px; font-family: monospace; max-width: 100%; overflow-x: auto;">
-        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">🔍 Debug Information:</div>
-        <div id="debugContent"></div>
-      </div>
-      
       <div class="error-message" id="errorMessage">
         เกิดข้อผิดพลาด: ไม่พบ Token หรือ Token ไม่ถูกต้อง
       </div>
@@ -189,31 +183,6 @@
             
             console.log('🎯 Environment detected:', environment);
             console.log('🔄 Redirecting to tour-image-manager...');
-
-            // Show debug info on screen
-            const debugInfo = document.getElementById('debugInfo');
-            const debugContent = document.getElementById('debugContent');
-            if (debugInfo && debugContent) {
-              debugContent.innerHTML = `
-                <div style="margin-bottom: 8px;"><strong>Token from URL:</strong><br/>${token.substring(0, 80)}...</div>
-                <div style="margin-bottom: 8px;"><strong>Token length:</strong> ${token.length}</div>
-                <div style="margin-bottom: 8px;"><strong>Stored in sessionStorage:</strong> ✅ authToken</div>
-                <div style="margin-bottom: 8px;"><strong>Stored in localStorage:</strong> ✅ authToken</div>
-                <div style="margin-bottom: 8px;"><strong>Tokens match:</strong> ✅ 100%</div>
-                <div style="margin-bottom: 8px;"><strong>Environment:</strong> ${environment}</div>
-                <div style="margin-bottom: 8px;"><strong>Redirecting in:</strong> <span id="countdown">0.8</span>s</div>
-              `;
-              debugInfo.style.display = 'block';
-              
-              // Countdown
-              let countdown = 0.8;
-              const countdownEl = document.getElementById('countdown');
-              const interval = setInterval(() => {
-                countdown -= 0.1;
-                if (countdownEl) countdownEl.textContent = countdown.toFixed(1);
-                if (countdown <= 0) clearInterval(interval);
-              }, 100);
-            }
 
             // Redirect to main page (clean URL) - use full path
             setTimeout(() => {
