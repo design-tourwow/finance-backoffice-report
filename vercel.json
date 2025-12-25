@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/auth",
+      "destination": "/auth.html"
+    },
+    {
       "source": "/tour-image-manager",
       "destination": "/tour-image-manager.html"
     }

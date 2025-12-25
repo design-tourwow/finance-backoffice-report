@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>กำลังเข้าสู่ระบบ... - Tourwow</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: #333;
+      }
+
+      .auth-container {
+        text-align: center;
+        background: white;
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        width: 90%;
+      }
+
+      .logo {
+        margin-bottom: 2rem;
+      }
+
+      .logo img {
+        max-width: 200px;
+        height: auto;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        margin: 0 auto 1.5rem;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+
+      p {
+        color: #666;
+        font-size: 0.95rem;
+      }
+
+      .error-message {
+        display: none;
+        background: #fee;
+        color: #c33;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+
+      .error-message.show {
+        display: block;
+      }
+
+      .btn-retry {
+        display: none;
+        margin-top: 1rem;
+        padding: 0.75rem 2rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: 'Kanit', sans-serif;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .btn-retry:hover {
+        background: #5568d3;
+      }
+
+      .btn-retry.show {
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-container">
+      <div class="logo">
+        <img src="https://financebackoffice-staging2.tourwow.com/assets/images/tourwow-logo.png" alt="Tourwow Logo" />
+      </div>
+      
+      <div class="spinner"></div>
+      
+      <h1>กำลังเข้าสู่ระบบ...</h1>
+      <p>กรุณารอสักครู่</p>
+      
+      <div class="error-message" id="errorMessage">
+        เกิดข้อผิดพลาด: ไม่พบ Token หรือ Token ไม่ถูกต้อง
+      </div>
+      
+      <button class="btn-retry" id="btnRetry" onclick="redirectToLogin()">
+        กลับไปหน้า Login
+      </button>
+    </div>
+
+    <script>
+      (function() {
+        'use strict';
+
+        // Get token from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        console.log('🔐 Auth page loaded');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('🎫 Token received:', token ? 'Yes (length: ' + token.length + ')' : 'No');
+
+        if (token && token.trim() !== '') {
+          try {
+            // Store token in localStorage
+            localStorage.setItem('authToken', token);
+            console.log('✅ Token stored successfully');
+
+            // Detect environment from hostname
+            const hostname = window.location.hostname;
+            let environment = 'production';
+            
+            if (hostname.includes('staging')) {
+              environment = 'staging';
+            }
+            
+            console.log('🎯 Environment detected:', environment);
+            console.log('🔄 Redirecting to tour-image-manager.html...');
+
+            // Redirect to main page (clean URL)
+            setTimeout(() => {
+              window.location.replace('/tour-image-manager.html');
+            }, 500); // Small delay for better UX
+
+          } catch (error) {
+            console.error('❌ Error storing token:', error);
+            showError('เกิดข้อผิดพลาดในการบันทึก Token');
+          }
+        } else {
+          console.error('❌ No token found in URL');
+          showError('ไม่พบ Token ในระบบ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+        }
+
+        function showError(message) {
+          const spinner = document.querySelector('.spinner');
+          const heading = document.querySelector('h1');
+          const paragraph = document.querySelector('p');
+          const errorMessage = document.getElementById('errorMessage');
+          const btnRetry = document.getElementById('btnRetry');
+
+          spinner.style.display = 'none';
+          heading.textContent = 'เกิดข้อผิดพลาด';
+          paragraph.style.display = 'none';
+          errorMessage.textContent = message;
+          errorMessage.classList.add('show');
+          btnRetry.classList.add('show');
+        }
+
+        window.redirectToLogin = function() {
+          // Redirect to main login page based on environment
+          const hostname = window.location.hostname;
+          let loginUrl = 'https://financebackoffice.tourwow.com/login';
+          
+          if (hostname.includes('staging')) {
+            loginUrl = 'https://financebackoffice-staging2.tourwow.com/login';
+          }
+          
+          console.log('🔙 Redirecting to login:', loginUrl);
+          window.location.href = loginUrl;
+        };
+
+      })();
+    </script>
+  </body>
+</html>

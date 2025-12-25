@@ -16,7 +16,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    initTokenModal();
     initMobileMenu();
     initSidebarToggle();
     initCustomDateRangePicker();
@@ -1467,78 +1466,56 @@ function initShowAllButtons() {
     });
   }
 
-  // Token Modal Management
-  function initTokenModal() {
-    const modal = document.getElementById('tokenModal');
-    const tokenInput = document.getElementById('tokenInput');
-    const tokenSubmit = document.getElementById('tokenSubmit');
-
-    if (!modal || !tokenInput || !tokenSubmit) return;
-
-    // Submit token
-    tokenSubmit.addEventListener('click', async function() {
-      const token = tokenInput.value.trim();
-      
-      if (!token) {
-        alert('กรุณากรอก Token');
-        return;
-      }
-
-      // Save token to localStorage
-      TourImageAPI.setToken(token);
-      
-      // Close modal
-      modal.style.display = 'none';
-      
-      // Clear input
-      tokenInput.value = '';
-      
-      // Try to load data (will show modal again if token is invalid)
-      try {
-        await loadInitialData();
-      } catch (error) {
-        // Error already handled in loadInitialData
-        console.error('Failed to load data with new token:', error);
-      }
-    });
-
-    // Allow Enter key to submit
-    tokenInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter' && e.ctrlKey) {
-        tokenSubmit.click();
-      }
-    });
-  }
-
   // Check token and load data
   async function checkTokenAndLoadData() {
+    console.log('🔐 Checking authentication...');
+    
     // Check if token exists in localStorage
     if (!TourImageAPI.hasToken()) {
-      // No token, show modal
-      showTokenModal();
+      console.error('❌ No token found - redirecting to login');
+      redirectToLogin();
       return;
     }
+    
+    console.log('✅ Token found - loading data...');
     
     // Token exists, validate by trying to load data
     try {
       await loadInitialData();
     } catch (error) {
-      // If error, token might be invalid
-      console.error('Token validation failed:', error);
+      console.error('❌ Token validation failed:', error);
+      // Token is invalid, redirect to login
+      redirectToLogin();
     }
   }
   
-  // Show token modal
-  function showTokenModal() {
-    const modal = document.getElementById('tokenModal');
-    if (modal) {
-      modal.style.display = 'flex';
+  // Redirect to login page
+  function redirectToLogin() {
+    // Detect environment from hostname
+    const hostname = window.location.hostname;
+    let loginUrl = 'https://financebackoffice.tourwow.com/login';
+    
+    if (hostname.includes('staging')) {
+      loginUrl = 'https://financebackoffice-staging2.tourwow.com/login';
     }
+    
+    console.log('🔙 Redirecting to login:', loginUrl);
+    
+    // Show alert before redirect
+    alert('ไม่พบ Token หรือ Token หมดอายุ\nกรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+    
+    // Clear token
+    TourImageAPI.removeToken();
+    
+    // Redirect
+    window.location.href = loginUrl;
   }
 
   // Load initial data on page load
   async function loadInitialData() {
     try {
+      console.log('📊 Loading initial data...');
+      
       // Load dropdowns
       await Promise.all([
         loadSuppliers(),
@@ -1547,19 +1524,20 @@ function initShowAllButtons() {
       
       // Load initial images
       await loadImages();
+      
+      console.log('✅ Initial data loaded successfully');
     } catch (error) {
-      console.error('Failed to load initial data:', error);
+      console.error('❌ Failed to load initial data:', error);
       console.error('Error status:', error.status);
       
       // If error is 401/403, token is invalid
       if (error.status === 401 || error.status === 403 || 
           error.message.includes('401') || error.message.includes('403')) {
-        alert('Token ไม่ถูกต้องหรือหมดอายุ กรุณากรอก Token ใหม่');
-        TourImageAPI.removeToken();
-        showTokenModal();
+        console.error('❌ Authentication error - token invalid');
+        throw error; // Re-throw to trigger redirect
       }
       
-      throw error; // Re-throw to be caught by checkTokenAndLoadData
+      throw error;
     }
   }
 
