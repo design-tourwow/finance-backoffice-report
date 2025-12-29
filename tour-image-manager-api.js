@@ -43,7 +43,7 @@ const TourImageAPI = {
   async getPreProductFileReports(filters = {}) {
     try {
       console.log('🔄 Calling API with filters:', filters);
-      const url = new URL(`${this.baseURL}/pre_product_file_reports`);
+      const url = new URL(`${this.baseURL}/vibecode/pre_product_file_reports`);
       
       // Add filters as query parameter if provided
       if (Object.keys(filters).length > 0) {
@@ -97,7 +97,7 @@ const TourImageAPI = {
    */
   async remakePreProductFileReports() {
     try {
-      const url = `${this.baseURL}/pre_product_file_reports`;
+      const url = `${this.baseURL}/vibecode/pre_product_file_reports`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -132,7 +132,7 @@ const TourImageAPI = {
    */
   async getCountries(sortBy = 'country_name_th_by_asc') {
     try {
-      const url = new URL(`${this.baseURL}/pre_product_file_reports/countries`);
+      const url = new URL(`${this.baseURL}/vibecode/pre_product_file_reports/countries`);
       
       // Add sort_by parameter if provided
       if (sortBy) {
@@ -170,7 +170,7 @@ const TourImageAPI = {
    */
   async getSuppliers() {
     try {
-      const url = `${this.baseURL}/pre_product_file_reports/suppliers`;
+      const url = `${this.baseURL}/vibecode/pre_product_file_reports/suppliers`;
 
       const response = await fetch(url, {
         method: 'GET',
