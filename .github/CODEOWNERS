@@ -1,0 +1,179 @@
+# CODEOWNERS
+# 
+# This file defines code ownership for the Finance Backoffice Report project.
+# When a Pull Request modifies files, GitHub will automatically request reviews
+# from the code owners listed here.
+#
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Format: <file-pattern> <owner1> <owner2> ...
+# Owners must be GitHub usernames (@username) or teams (@org/team-name)
+#
+# Rules are evaluated from bottom to top, so the last matching pattern takes precedence.
+# More specific rules should be placed at the bottom of the file.
+
+# ============================================
+# DEFAULT OWNERS
+# ============================================
+# These owners will be requested for review when no other rule matches
+# TODO: Replace with your team lead's GitHub username
+* @team-lead
+
+# ============================================
+# CRITICAL INFRASTRUCTURE FILES
+# ============================================
+# These files affect the entire project and require careful review
+
+# Deployment configuration
+/vercel.json @team-lead
+/.vercel/ @team-lead
+
+# Package management
+/package.json @team-lead
+/package-lock.json @team-lead
+/yarn.lock @team-lead
+
+# Git configuration
+/.gitignore @team-lead
+/.gitattributes @team-lead
+
+# GitHub workflows and actions
+/.github/ @team-lead
+/.github/workflows/ @team-lead
+
+# ============================================
+# SHARED CODE (USED BY MULTIPLE MODULES)
+# ============================================
+# Changes to shared code affect all modules - requires team lead approval
+
+/shared/ @team-lead
+/shared/* @team-lead
+
+# Authentication (critical for all modules)
+/auth.html @team-lead
+/auth.js @team-lead
+/auth-demo.html @team-lead
+
+# ============================================
+# CONFIGURATION FILES
+# ============================================
+# Config files should be reviewed by team lead and module owner
+
+/config/ @team-lead
+*.config.js @team-lead
+
+# ============================================
+# DOCUMENTATION
+# ============================================
+# Documentation changes should be reviewed by team lead
+
+/*.md @team-lead
+/DEPLOYMENT_WORKFLOW.md @team-lead
+/DEVELOPER_GUIDE.md @team-lead
+/MIDDLEWARE_GUIDE.md @team-lead
+/SETUP_GUIDE.md @team-lead
+/TESTING.md @team-lead
+
+# ============================================
+# TOUR IMAGE MANAGER MODULE
+# ============================================
+# TODO: Replace @current-maintainer with the actual GitHub username
+
+/tour-image-manager.html @current-maintainer
+/tour-image-manager.js @current-maintainer
+/tour-image-manager-api.js @current-maintainer
+/tour-image-manager.css @current-maintainer
+/tour-image-manager-local.html @current-maintainer
+/tour-image-manager-local.js @current-maintainer
+/tour-image-manager* @current-maintainer
+
+# Backup files (for reference only)
+/tour-image-manager-api.js.backup-* @current-maintainer
+/tour-image-manager-api-staging.js @current-maintainer
+
+# ============================================
+# VIBE CODE MODULES
+# ============================================
+# Each Vibe Code team member owns their respective module
+
+# Payment Module
+# TODO: Replace @vibe-payment-dev with actual GitHub username
+/modules/payment/ @vibe-payment-dev
+/payment.html @vibe-payment-dev
+/payment.js @vibe-payment-dev
+/payment-api.js @vibe-payment-dev
+/payment.css @vibe-payment-dev
+/payment* @vibe-payment-dev
+/config/payment.* @vibe-payment-dev
+
+# Inventory Module
+# TODO: Replace @vibe-inventory-dev with actual GitHub username
+/modules/inventory/ @vibe-inventory-dev
+/inventory.html @vibe-inventory-dev
+/inventory.js @vibe-inventory-dev
+/inventory-api.js @vibe-inventory-dev
+/inventory.css @vibe-inventory-dev
+/inventory* @vibe-inventory-dev
+/config/inventory.* @vibe-inventory-dev
+
+# Analytics Module
+# TODO: Replace @vibe-analytics-dev with actual GitHub username
+/modules/analytics/ @vibe-analytics-dev
+/analytics.html @vibe-analytics-dev
+/analytics.js @vibe-analytics-dev
+/analytics-api.js @vibe-analytics-dev
+/analytics.css @vibe-analytics-dev
+/analytics* @vibe-analytics-dev
+/config/analytics.* @vibe-analytics-dev
+
+# ============================================
+# LEGACY/DEPRECATED FILES
+# ============================================
+# These files are kept for reference but should not be modified
+
+/index-old.html @team-lead
+/mock-api.js @team-lead
+/proxy-server.js @team-lead
+/api-service.js @team-lead
+
+# ============================================
+# ASSETS
+# ============================================
+# Design assets should be reviewed by designer or team lead
+
+/assets/ @team-lead
+/assets/* @team-lead
+*.css @team-lead
+
+# ============================================
+# TESTING FILES
+# ============================================
+# Test files should be reviewed by the module owner
+
+/test-api-env.html @team-lead
+/TESTING.md @team-lead
+
+# ============================================
+# NOTES FOR TEAM
+# ============================================
+#
+# How to use this file:
+# 1. Replace all @username placeholders with actual GitHub usernames
+# 2. When creating a Pull Request, GitHub will automatically assign reviewers
+# 3. PRs cannot be merged until code owners approve
+# 4. To override, you need admin permissions
+#
+# Best Practices:
+# - Keep this file updated when adding new modules
+# - Use specific patterns for better control
+# - Document why certain files need specific owners
+# - Review this file quarterly to ensure it's still accurate
+#
+# Common Patterns:
+# - /path/to/file.js          → Specific file
+# - /path/to/folder/          → All files in folder (recursive)
+# - /path/to/folder/*         → All files in folder (non-recursive)
+# - *.js                      → All JS files in repo
+# - /path/**/*.js             → All JS files in path and subfolders
+# - /path/file-*.js           → Files matching pattern
+#
