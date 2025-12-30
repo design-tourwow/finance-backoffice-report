@@ -7,25 +7,27 @@ const TourImageAPI = {
     return url;
   },
   
-  // Get token from sessionStorage
+  // Get token from sessionStorage or localStorage (fallback)
   getToken() {
-    return sessionStorage.getItem('authToken');
+    return sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
   },
   
-  // Set token to sessionStorage
+  // Set token to both sessionStorage and localStorage
   setToken(token) {
     sessionStorage.setItem('authToken', token);
+    localStorage.setItem('authToken', token);
   },
   
-  // Check if token exists
+  // Check if token exists in either storage
   hasToken() {
-    return !!sessionStorage.getItem('authToken');
+    return !!(sessionStorage.getItem('authToken') || localStorage.getItem('authToken'));
   },
   
-  // Remove token from sessionStorage
+  // Remove token from both storages
   removeToken() {
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('env');
+    localStorage.removeItem('authToken');
   },
   
   // Get current environment
@@ -41,7 +43,7 @@ const TourImageAPI = {
   async getPreProductFileReports(filters = {}) {
     try {
       console.log('🔄 Calling API with filters:', filters);
-      const url = new URL(`${this.baseURL}/pre_product_file_reports`);
+      const url = new URL(`${this.baseURL}/vibecode/pre_product_file_reports`);
       
       // Add filters as query parameter if provided
       if (Object.keys(filters).length > 0) {
@@ -95,7 +97,7 @@ const TourImageAPI = {
    */
   async remakePreProductFileReports() {
     try {
-      const url = `${this.baseURL}/pre_product_file_reports`;
+      const url = `${this.baseURL}/vibecode/pre_product_file_reports`;
 
       const response = await fetch(url, {
         method: 'POST',
@@ -130,7 +132,7 @@ const TourImageAPI = {
    */
   async getCountries(sortBy = 'country_name_th_by_asc') {
     try {
-      const url = new URL(`${this.baseURL}/pre_product_file_reports/countries`);
+      const url = new URL(`${this.baseURL}/vibecode/pre_product_file_reports/countries`);
       
       // Add sort_by parameter if provided
       if (sortBy) {
@@ -168,7 +170,7 @@ const TourImageAPI = {
    */
   async getSuppliers() {
     try {
-      const url = `${this.baseURL}/pre_product_file_reports/suppliers`;
+      const url = `${this.baseURL}/vibecode/pre_product_file_reports/suppliers`;
 
       const response = await fetch(url, {
         method: 'GET',
