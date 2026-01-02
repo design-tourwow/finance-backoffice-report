@@ -1,6 +1,35 @@
-# Tour Image Manager - Tourwow
+# 🎨 Tour Image Manager - Tourwow
 
 ระบบจัดการรูปภาพทัวร์สำหรับ Tourwow พัฒนาด้วย HTML, CSS และ JavaScript ตาม Best Practices
+
+## 🚀 Quick Start
+
+```bash
+# 1. Clone repository
+git clone https://github.com/design-tourwow/finance-backoffice-report.git
+cd finance-backoffice-report
+
+# 2. ตั้งค่า Git
+git config user.name "your-name"
+git config user.email "your-email@example.com"
+
+# 3. เริ่มทำงาน
+git checkout staging
+git pull origin staging
+git checkout -b feature/my-feature-myname
+
+# 4. เปิดโปรเจค
+open index.html
+# หรือใช้ development server
+python -m http.server 8080
+```
+
+## 📚 เอกสาร
+
+- **[WORKFLOW.md](WORKFLOW.md)** - Workflow การทำงาน 7 ขั้นตอน + การทำงาน 3 คน + Deployment
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - แก้ปัญหา + FAQ + Pull vs PR
+- **[CODEOWNERS.md](CODEOWNERS.md)** - คู่มือ CODEOWNERS และการจัดการสิทธิ์
+- **[CHANGELOG.md](CHANGELOG.md)** - ประวัติการเปลี่ยนแปลง
 
 ## ✨ คุณสมบัติหลัก
 
@@ -69,25 +98,34 @@ tour-image-manager/
 └── README.md           # เอกสารนี้
 ```
 
-## 🚀 การใช้งาน
+## 🎯 Workflow สั้นๆ
 
-### เปิดไฟล์โดยตรง
-เปิดไฟล์ `index.html` ในเว็บเบราว์เซอร์
-
-### ใช้ Development Server (แนะนำ)
-
-```bash
-# Python
-python -m http.server 8080
-
-# Node.js
-npx http-server -p 8080
-
-# PHP
-php -S localhost:8080
+```
+Pull → Branch → Code → Commit → Push → PR → Merge
 ```
 
-จากนั้นเปิดเบราว์เซอร์ที่ `http://localhost:8080`
+**อ่านเพิ่มเติม:** [WORKFLOW.md](WORKFLOW.md)
+
+## 🛠️ Development
+
+### เปิดโปรเจค
+
+```bash
+# เปิดไฟล์โดยตรง
+open index.html
+
+# หรือใช้ Development Server (แนะนำ)
+python -m http.server 8080
+# จากนั้นเปิด http://localhost:8080
+```
+
+### Scripts ช่วยเหลือ
+
+```bash
+./scripts/check-before-commit.sh  # เช็คก่อน commit
+./scripts/safe-push.sh            # Push แบบปลอดภัย
+./scripts/who-owns.sh <file>      # เช็คเจ้าของไฟล์
+```
 
 ## 🎯 คุณสมบัติเด่น
 
@@ -172,15 +210,91 @@ php -S localhost:8080
 - XSS protection
 - CSRF protection ready
 
+## 🔑 API Configuration
+
+### การตั้งค่า API Key
+
+1. ไปที่ [NoCodeBackend.com](https://nocodebackend.com)
+2. Login และเลือกโปรเจกต์ `54566_tourwow`
+3. ไปที่เมนู **Settings** → **API Keys**
+4. Copy API Key ของคุณ
+5. แก้ไขไฟล์ `config.js`:
+
+```javascript
+const CONFIG = {
+  API_BASE_URL: 'https://openapi.nocodebackend.com',
+  INSTANCE_ID: '54566_tourwow',
+  API_KEY: 'YOUR_ACTUAL_API_KEY_HERE',  // แทนที่ตรงนี้
+};
+```
+
+⚠️ **อย่าแชร์ API Key กับใครก็ตาม!**
+
+### การตั้งค่า CORS
+
+ถ้าเจอ CORS Error:
+
+1. เข้า NoCodeBackend Dashboard
+2. ไปที่ **Settings** → **Secret Keys**
+3. หาส่วน **Allowed domains**
+4. ใส่ `*` (สำหรับ development) หรือ domain ของคุณ
+5. กด **Save**
+
+### โครงสร้างฐานข้อมูล
+
+**Table: images**
+```json
+{
+  "id": 1,
+  "file_name": "ภูเขาไฟฟูจิ-1",
+  "file_path": "https://...",
+  "country_id": 1,
+  "updated_at": "2024-11-15T10:30:00Z"
+}
+```
+
+**Table: tour_images** (ความสัมพันธ์)
+```json
+{
+  "id": 1,
+  "tour_id": 10,
+  "image_id": 1,
+  "usage_type": "banner",  // "banner" หรือ "detail"
+  "sequence": 1            // ลำดับที่
+}
+```
+
+**หมายเหตุ:** UI แสดงข้อมูลที่คำนวณจาก relationships เหล่านี้
+
+## 👥 Team Collaboration
+
+โปรเจคนี้ใช้ระบบ **CODEOWNERS** เพื่อจัดการสิทธิ์การแก้ไขไฟล์:
+
+- ✅ แต่ละคนรับผิดชอบไฟล์ของตัวเอง
+- ✅ GitHub auto-assign reviewers อัตโนมัติ
+- ✅ ต้องได้รับ approval ก่อน merge
+- ✅ ป้องกันการแก้ไฟล์ผิดคน
+
+**อ่านเพิ่มเติม:** [CODEOWNERS.md](CODEOWNERS.md)
+
+## 🐛 Troubleshooting
+
+เจอปัญหา? อ่าน [TROUBLESHOOTING.md](TROUBLESHOOTING.md) สำหรับ:
+
+- Pull Code vs Pull Request
+- แก้ปัญหา Sync
+- ปัญหาที่พบบ่อย 13 ข้อ
+- FAQ
+
 ## 📝 License
 
 © 2024 Tourwow. All rights reserved.
 
-## 👨‍💻 Development
+## 👨‍💻 Development Team
 
-พัฒนาโดยทีม Tourwow ตาม Web Accessibility Guidelines (WCAG 2.1) และ Best Practices
+พัฒนาโดยทีม Vibe Code ตาม Web Accessibility Guidelines (WCAG 2.1) และ Best Practices
 
 ---
 
 **Version:** 2.0.0  
-**Last Updated:** December 2024
+**Last Updated:** 2 มกราคม 2026

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CODEOWNERS Viewer - Finance Backoffice Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4a7ba7 0%, #2c5f8d 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .search-box {
+            padding: 2rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-family: 'Kanit', sans-serif;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4a7ba7;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #4a7ba7;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 2rem;
+            min-height: 400px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .ownership-card {
+            background: #f8f9fa;
+            border-left: 4px solid #4a7ba7;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .ownership-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .ownership-card.hidden {
+            display: none;
+        }
+
+        .pattern {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: #2c5f8d;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .owners {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .owner-badge {
+            background: #4a7ba7;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #2c5f8d;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .owner-group {
+            margin-bottom: 2rem;
+        }
+
+        .owner-name {
+            font-size: 1.2rem;
+            color: #4a7ba7;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .pattern-list {
+            list-style: none;
+            padding-left: 1rem;
+        }
+
+        .pattern-list li {
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 CODEOWNERS Viewer</h1>
+            <p>ดูว่าไฟล์ไหนใครเป็นเจ้าของ</p>
+        </div>
+
+        <div class="search-box">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchInput" 
+                placeholder="🔎 ค้นหาไฟล์หรือเจ้าของ... (เช่น tour-image-manager.js หรือ @username)"
+            >
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('all')">ทั้งหมด</button>
+            <button class="tab" onclick="showTab('by-owner')">แยกตามเจ้าของ</button>
+            <button class="tab" onclick="showTab('stats')">สถิติ</button>
+        </div>
+
+        <div class="content">
+            <!-- All Rules Tab -->
+            <div id="all-tab" class="tab-content active">
+                <div class="section-title">กฎทั้งหมด</div>
+                <div id="all-rules"></div>
+            </div>
+
+            <!-- By Owner Tab -->
+            <div id="by-owner-tab" class="tab-content">
+                <div class="section-title">แยกตามเจ้าของ</div>
+                <div id="by-owner"></div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="stats-tab" class="tab-content">
+                <div class="section-title">สถิติ</div>
+                <div class="stats" id="stats"></div>
+                <div id="stats-details"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Parse CODEOWNERS file
+        const codeownersContent = `
+# Default owner
+* @team-lead
+
+# Shared Code
+/shared/ @team-lead
+/shared/* @team-lead
+/auth.html @team-lead
+
+# Tour Image Manager
+/tour-image-manager* @current-maintainer
+
+# Payment Module
+/modules/payment/ @vibe-payment-dev
+/payment* @vibe-payment-dev
+
+# Inventory Module
+/modules/inventory/ @vibe-inventory-dev
+/inventory* @vibe-inventory-dev
+
+# Analytics Module
+/modules/analytics/ @vibe-analytics-dev
+/analytics* @vibe-analytics-dev
+
+# Config Files
+/config/ @team-lead
+*.config.js @team-lead
+/vercel.json @team-lead
+        `.trim();
+
+        function parseCodeowners(content) {
+            const rules = [];
+            const lines = content.split('\n');
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                
+                // Skip comments and empty lines
+                if (trimmed.startsWith('#') || trimmed === '') continue;
+
+                const parts = trimmed.split(/\s+/);
+                if (parts.length < 2) continue;
+
+                const pattern = parts[0];
+                const owners = parts.slice(1);
+
+                rules.push({ pattern, owners });
+            }
+
+            return rules;
+        }
+
+        const rules = parseCodeowners(codeownersContent);
+
+        function renderAllRules() {
+            const container = document.getElementById('all-rules');
+            container.innerHTML = '';
+
+            rules.forEach(rule => {
+                const card = document.createElement('div');
+                card.className = 'ownership-card';
+                card.dataset.pattern = rule.pattern;
+                card.dataset.owners = rule.owners.join(' ');
+
+                card.innerHTML = `
+                    <div class="pattern">${rule.pattern}</div>
+                    <div class="owners">
+                        ${rule.owners.map(owner => `<span class="owner-badge">${owner}</span>`).join('')}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function renderByOwner() {
+            const container = document.getElementById('by-owner');
+            container.innerHTML = '';
+
+            // Group by owner
+            const byOwner = {};
+            rules.forEach(rule => {
+                rule.owners.forEach(owner => {
+                    if (!byOwner[owner]) {
+                        byOwner[owner] = [];
+                    }
+                    byOwner[owner].push(rule.pattern);
+                });
+            });
+
+            // Render
+            Object.entries(byOwner).forEach(([owner, patterns]) => {
+                const group = document.createElement('div');
+                group.className = 'owner-group';
+
+                group.innerHTML = `
+                    <div class="owner-name">${owner} (${patterns.length} rules)</div>
+                    <ul class="pattern-list">
+                        ${patterns.map(p => `<li>${p}</li>`).join('')}
+                    </ul>
+                `;
+
+                container.appendChild(group);
+            });
+        }
+
+        function renderStats() {
+            const statsContainer = document.getElementById('stats');
+            const detailsContainer = document.getElementById('stats-details');
+
+            // Calculate stats
+            const totalRules = rules.length;
+            const uniqueOwners = new Set();
+            const ownerCounts = {};
+
+            rules.forEach(rule => {
+                rule.owners.forEach(owner => {
+                    uniqueOwners.add(owner);
+                    ownerCounts[owner] = (ownerCounts[owner] || 0) + 1;
+                });
+            });
+
+            // Render stat cards
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalRules}</div>
+                    <div class="stat-label">กฎทั้งหมด</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${uniqueOwners.size}</div>
+                    <div class="stat-label">เจ้าของทั้งหมด</div>
+                </div>
+            `;
+
+            // Render details
+            const sorted = Object.entries(ownerCounts).sort((a, b) => b[1] - a[1]);
+            detailsContainer.innerHTML = `
+                <div class="section-title">รายละเอียด</div>
+                ${sorted.map(([owner, count]) => `
+                    <div class="ownership-card">
+                        <div class="pattern">${owner}</div>
+                        <div class="owners">
+                            <span class="owner-badge">${count} rules</span>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.ownership-card');
+
+            cards.forEach(card => {
+                const pattern = card.dataset.pattern?.toLowerCase() || '';
+                const owners = card.dataset.owners?.toLowerCase() || '';
+                const text = card.textContent.toLowerCase();
+
+                if (pattern.includes(query) || owners.includes(query) || text.includes(query)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        });
+
+        // Initialize
+        renderAllRules();
+        renderByOwner();
+        renderStats();
+    </script>
+</body>
+</html>
