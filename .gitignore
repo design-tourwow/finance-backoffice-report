@@ -45,3 +45,4 @@ simple-test.html
 *.tmp
 console_log.txt
 .vercel
+.env*.local

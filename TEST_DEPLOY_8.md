@@ -19,6 +19,13 @@
 
 ## 📝 Test: Push to staging
 
+**Test 1:** Push to staging → Auto-deploy ✅  
+**Test 2:** Deploy prod manual with `vercel --prod` 🚀
+
+---
+
+**Update:** 6 มกราคม 2026 - 23:55 น.
+
 ---
 
 **Test by:** GAP + Kiro  
