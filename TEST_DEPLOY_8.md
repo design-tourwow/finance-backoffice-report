@@ -26,9 +26,9 @@
 
 **Update:** 7 มกราคม 2026 - 00:15 น.
 
-## 🔄 Test Round 2: Vercel CLI Deploy
+## 🔄 Test Round 3: Final Test
 
-ทดสอบ workflow ด้วย Vercel CLI อีกครั้ง
+ทดสอบ workflow ครั้งสุดท้าย - finance-backoffice-report
 
 ---
 
