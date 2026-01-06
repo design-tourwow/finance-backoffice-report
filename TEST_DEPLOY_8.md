@@ -1,27 +1,23 @@
 # 🧪 Test Deploy Round 8
 
-ทดสอบ workflow ครั้งที่ 8 - Final test with VERCEL_ENV check
+ทดสอบ workflow ครั้งที่ 8 - Test ignore-build.sh script
 
-**วันที่:** 5 มกราคม 2026  
-**เวลา:** 23:10 น.
+**วันที่:** 6 มกราคม 2026  
+**เวลา:** 23:45 น.
 
-## ✅ Final Script
+## 🔄 Update: ใช้ ignore-build.sh แทน
 
-```bash
-if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_REF" = "main" ] && [[ "$VERCEL_GIT_COMMIT_MESSAGE" != *"[deploy]"* ]]; then 
-  exit 0
-else 
-  exit 1
-fi
-```
+## ✅ ใช้ ignore-build.sh
+
+ตั้งค่าใน Vercel: `bash ignore-build.sh`
 
 ## 🎯 คาดหวัง
 
-- Push staging → Auto-build + Auto-deploy ✅
-- Push main (ไม่มี [deploy]) → ไม่ auto-deploy ❌
-- Manual deploy (ปิด checkbox) → Build ได้ ✅
+- Push staging → Auto-deploy ✅
+- Push main (ไม่มี [deploy]) → ไม่ deploy ❌
+- Push main (มี [deploy]) → Deploy ได้ ✅
 
-## 🙏 ขอให้สำเร็จครั้งนี้!
+## 📝 Test: Push to staging
 
 ---
 
