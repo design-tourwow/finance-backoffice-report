@@ -1,0 +1,11 @@
+Test Deploy - Ignore Build Step Configuration
+==============================================
+
+Test Date: 2026-01-08
+Purpose: ทดสอบการ deploy หลังจากลบ Ignored Build Step ออก
+
+Expected Behavior:
+- Push to staging → Auto-deploy ✅
+- Push to main → ไม่มี build/cancel status เลย ❌
+
+Test by: Kiro
