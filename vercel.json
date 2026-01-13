@@ -7,6 +7,10 @@
     {
       "source": "/tour-image-manager",
       "destination": "/tour-image-manager.html"
+    },
+    {
+      "source": "/order-report",
+      "destination": "/order-report.html"
     }
   ],
   "headers": [

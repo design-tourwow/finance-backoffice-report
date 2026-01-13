@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Order Report - รายงานคำสั่งซื้อ Tourwow" />
+    <title>Order Report - Tourwow</title>
+    
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="tour-image-manager.css" />
+    
+    <!-- Configuration -->
+    <script>
+      (function() {
+        const hostname = window.location.hostname;
+        
+        if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://fin-api-staging2.tourwow.com';
+          window.ENVIRONMENT = 'staging';
+          console.log('🎯 STAGING Environment - API:', window.API_BASE_URL);
+        } else if (hostname === 'finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://fin-api.tourwow.com';
+          window.ENVIRONMENT = 'production';
+          console.log('🎯 PRODUCTION Environment - API:', window.API_BASE_URL);
+        } else {
+          const sessionEnv = sessionStorage.getItem('env') || 'production';
+          window.ENVIRONMENT = sessionEnv;
+          window.API_BASE_URL = sessionEnv === 'staging' 
+            ? 'https://fin-api-staging2.tourwow.com'
+            : 'https://fin-api.tourwow.com';
+          console.log('🎯 LOCALHOST Environment:', window.ENVIRONMENT, '- API:', window.API_BASE_URL);
+        }
+      })();
+    </script>
+    
+    <!-- Load sidebar state -->
+    <script>
+      (function() {
+        const savedState = localStorage.getItem('sidebar-collapsed');
+        if (savedState === 'true') {
+          document.documentElement.classList.add('sidebar-collapsed-init');
+        }
+      })();
+    </script>
+    <style>
+      .sidebar-collapsed-init .app-wrapper {
+        margin-left: 0 !important;
+      }
+      .sidebar-collapsed-init .sidebar {
+        width: 0 !important;
+        overflow: hidden !important;
+        border-right: none !important;
+      }
+      .sidebar-collapsed-init .main-content {
+        margin-left: 0 !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Skip to main content -->
+    <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+    <div class="app-wrapper">
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle" aria-label="เปิด/ปิดเมนู" aria-expanded="false">
+        <span class="hamburger-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar" role="navigation" aria-label="เมนูหลัก">
+        <div class="logo">
+          <img src="https://financebackoffice-staging2.tourwow.com/assets/images/tourwow-logo.png" alt="Tourwow Logo" />
+        </div>
+        <nav class="nav-menu">
+          <a href="/tour-image-manager" class="nav-item">Tour Image Manager</a>
+          <a href="/order-report" class="nav-item active" aria-current="page">Order Report</a>
+        </nav>
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="ซ่อนเมนู" title="ซ่อนเมนู">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>ซ่อนเมนู</span>
+        </button>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content" id="main-content" role="main">
+        <!-- Top Bar -->
+        <nav class="top-bar" role="banner">
+          <div class="top-bar-container">
+            <!-- Navigation Menu -->
+            <ul class="navbar-list">
+              <li class="navbar-item">
+                <a href="/tour-image-manager" class="navbar-link">Tour Image Manager</a>
+              </li>
+              <li class="navbar-item">
+                <a href="/order-report" class="navbar-link active" aria-current="page">Order Report</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Content Area -->
+        <div class="content-area">
+          <!-- Breadcrumb -->
+          <nav class="breadcrumb" aria-label="breadcrumb">
+            <ol>
+              <li><a href="#">หน้าแรก</a></li>
+              <li aria-current="page">Order Report</li>
+            </ol>
+          </nav>
+
+          <!-- Page Header -->
+          <header class="page-header">
+            <svg class="page-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1>Order Report</h1>
+          </header>
+
+          <!-- Content Section -->
+          <section class="filter-section" aria-label="รายงานคำสั่งซื้อ">
+            <h2>รายงานคำสั่งซื้อ</h2>
+            <div style="padding: 2rem; text-align: center; color: #6b7280;">
+              <p style="font-size: 1.125rem; margin-bottom: 1rem;">🚧 หน้านี้อยู่ระหว่างการพัฒนา</p>
+              <p>ฟีเจอร์รายงานคำสั่งซื้อจะเปิดให้ใช้งานเร็วๆ นี้</p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="tour-image-manager.js"></script>
+  </body>
+</html>
