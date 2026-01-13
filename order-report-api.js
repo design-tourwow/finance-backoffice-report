@@ -9,7 +9,10 @@ const OrderReportAPI = {
   
   // Get token from sessionStorage or localStorage (fallback)
   getToken() {
-    return sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    // For testing, use test token
+    const testToken = 'sk_test_9a7b5c3d1e2f4a6b8c0d2e4f6a8b0c2d';
+    const storedToken = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    return storedToken || testToken;
   },
   
   /**
@@ -19,12 +22,16 @@ const OrderReportAPI = {
    */
   async getAllOrders(filters = {}) {
     try {
+      console.log('🔄 Fetching all orders with filters:', filters);
       const url = new URL(`${this.baseURL}/api/orders`);
       url.searchParams.append('limit', '10000'); // Get all orders
       
       // Add filters
       if (filters.supplier_id) url.searchParams.append('supplier_id', filters.supplier_id);
       if (filters.country_id) url.searchParams.append('country_id', filters.country_id);
+
+      console.log('📡 Request URL:', url.toString());
+      console.log('🔑 Auth Token:', this.getToken() ? 'Present' : 'Missing');
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -35,11 +42,18 @@ const OrderReportAPI = {
         }
       });
 
+      console.log('📥 Response Status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Response Error:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('✅ Orders Response:', result);
+      console.log('📊 Orders Count:', result.data?.length || 0);
+      
       return result.data || [];
     } catch (error) {
       console.error('❌ Get Orders Error:', error);
@@ -128,7 +142,10 @@ const OrderReportAPI = {
       console.log('🔄 Calculating Order Summary with filters:', filters);
       
       const allOrders = await this.getAllOrders(filters);
+      console.log('📊 Total orders fetched:', allOrders.length);
+      
       const filteredOrders = this.filterOrders(allOrders, filters);
+      console.log('📊 Filtered orders:', filteredOrders.length);
 
       // Calculate summary
       const totalOrders = filteredOrders.length;
@@ -138,7 +155,7 @@ const OrderReportAPI = {
       const uniqueCustomers = new Set(filteredOrders.map(o => o.customer_id)).size;
       const avgNetAmount = totalOrders > 0 ? totalNetAmount / totalOrders : 0;
 
-      return {
+      const summary = {
         status: 'success',
         data: {
           total_orders: totalOrders,
@@ -147,6 +164,9 @@ const OrderReportAPI = {
           avg_net_amount: avgNetAmount
         }
       };
+      
+      console.log('✅ Summary calculated:', summary);
+      return summary;
     } catch (error) {
       console.error('❌ Order Summary Error:', error);
       throw error;
