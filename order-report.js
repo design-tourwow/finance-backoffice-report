@@ -236,25 +236,45 @@
     try {
       let response;
       
+      // Call API with minimum loading time for better UX
+      const apiCall = async () => {
+        switch(tabName) {
+          case 'country':
+            return await OrderReportAPI.getReportByCountry(currentFilters);
+          case 'supplier':
+            return await OrderReportAPI.getReportBySupplier(currentFilters);
+          case 'travel-date':
+            return await OrderReportAPI.getReportByTravelDate(currentFilters);
+          case 'booking-date':
+            return await OrderReportAPI.getReportByBookingDate(currentFilters);
+          case 'repeat-customers':
+            return await OrderReportAPI.getRepeatCustomers(currentFilters);
+        }
+      };
+      
+      // Minimum 800ms loading for better UX
+      const [apiResponse] = await Promise.all([
+        apiCall(),
+        new Promise(resolve => setTimeout(resolve, 800))
+      ]);
+      
+      response = apiResponse;
+      
+      // Render based on tab
       switch(tabName) {
         case 'country':
-          response = await OrderReportAPI.getReportByCountry(currentFilters);
           renderCountryReport(response);
           break;
         case 'supplier':
-          response = await OrderReportAPI.getReportBySupplier(currentFilters);
           renderSupplierReport(response);
           break;
         case 'travel-date':
-          response = await OrderReportAPI.getReportByTravelDate(currentFilters);
           renderTravelDateReport(response);
           break;
         case 'booking-date':
-          response = await OrderReportAPI.getReportByBookingDate(currentFilters);
           renderBookingDateReport(response);
           break;
         case 'repeat-customers':
-          response = await OrderReportAPI.getRepeatCustomers(currentFilters);
           renderRepeatCustomersReport(response);
           break;
       }
