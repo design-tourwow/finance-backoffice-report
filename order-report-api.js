@@ -1,5 +1,10 @@
 // Order Report API Service
 const OrderReportAPI = {
+  // Cache for orders data
+  _ordersCache: null,
+  _cacheTimestamp: null,
+  _cacheDuration: 5 * 60 * 1000, // 5 minutes
+  
   // Use global API_BASE_URL set by inline script in HTML
   get baseURL() {
     const url = window.API_BASE_URL || 'https://finance-backoffice-report-api.vercel.app';
@@ -15,6 +20,11 @@ const OrderReportAPI = {
     return storedToken || testToken;
   },
 
+  // Helper function to delay execution
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  },
+
   // Helper function to make API calls with minimal headers to avoid CORS preflight
   async fetchAPI(url) {
     return fetch(url.toString(), {
@@ -26,18 +36,30 @@ const OrderReportAPI = {
   },
   
   /**
-   * Get all orders from API with pagination
+   * Get all orders from API with pagination, caching, delay, and retry logic
    * @param {Object} filters - Filter parameters
    * @returns {Promise<Array>}
    */
   async getAllOrders(filters = {}) {
     try {
+      // Check cache first (only if no filters)
+      const hasFilters = filters.supplier_id || filters.country_id;
+      if (!hasFilters && this._ordersCache && this._cacheTimestamp) {
+        const cacheAge = Date.now() - this._cacheTimestamp;
+        if (cacheAge < this._cacheDuration) {
+          console.log('✅ Using cached orders:', this._ordersCache.length);
+          return this._ordersCache;
+        }
+      }
+
       console.log('🔄 Fetching all orders with filters:', filters);
       
       let allOrders = [];
       let page = 1;
       let hasMore = true;
-      const limit = 100; // API default limit
+      const limit = 100;
+      let retryCount = 0;
+      const maxRetries = 3;
       
       while (hasMore) {
         const url = new URL(`${this.baseURL}/api/orders`);
@@ -49,85 +71,124 @@ const OrderReportAPI = {
         if (filters.country_id) url.searchParams.append('country_id', filters.country_id);
 
         console.log(`📡 Request URL (Page ${page}):`, url.toString());
-        console.log('🔑 Auth Token:', this.getToken() ? 'Present' : 'Missing');
 
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          headers: {
-            'authorization': this.getToken()
-          }
-        });
-
-        console.log('📥 Response Status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Response Error:', errorText);
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        const orders = result.data || [];
-        
-        console.log(`✅ Page ${page} - Orders fetched:`, orders.length);
-        
-        // Parse product_snapshot for each order
-        const parsedOrders = orders.map(order => {
-          try {
-            // Parse product_snapshot if it's a string
-            if (order.product_snapshot && typeof order.product_snapshot === 'string') {
-              const snapshot = JSON.parse(order.product_snapshot);
-              
-              // Extract country info from snapshot
-              if (snapshot.countries && snapshot.countries.length > 0) {
-                const country = snapshot.countries[0];
-                order.country_id = country.id;
-                order.country_name = country.name_th || country.name_en;
-                order.country_name_en = country.name_en;
-              }
-              
-              // Extract supplier info if available
-              if (snapshot.suppliers_id) {
-                order.product_owner_supplier_id = snapshot.suppliers_id;
-              }
-              
-              // Store parsed snapshot
-              order.product_snapshot_parsed = snapshot;
-            } else if (order.product_snapshot && typeof order.product_snapshot === 'object') {
-              // Already parsed
-              const snapshot = order.product_snapshot;
-              
-              if (snapshot.countries && snapshot.countries.length > 0) {
-                const country = snapshot.countries[0];
-                order.country_id = country.id;
-                order.country_name = country.name_th || country.name_en;
-                order.country_name_en = country.name_en;
-              }
-              
-              if (snapshot.suppliers_id) {
-                order.product_owner_supplier_id = snapshot.suppliers_id;
-              }
-              
-              order.product_snapshot_parsed = snapshot;
+        try {
+          const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+              'authorization': this.getToken()
             }
-          } catch (e) {
-            console.warn('⚠️ Failed to parse product_snapshot for order:', order.id, e);
+          });
+
+          console.log('📥 Response Status:', response.status);
+
+          // Handle rate limit
+          if (response.status === 429) {
+            const errorData = await response.json();
+            const retryAfter = (errorData.retryAfter || 30) * 1000; // Convert to ms
+            
+            if (retryCount < maxRetries) {
+              retryCount++;
+              console.warn(`⚠️ Rate limit hit. Waiting ${retryAfter}ms before retry ${retryCount}/${maxRetries}...`);
+              await this.delay(retryAfter);
+              continue; // Retry same page
+            } else {
+              console.error('❌ Max retries reached for rate limit');
+              throw new Error('Rate limit exceeded. Please try again later.');
+            }
           }
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Response Error:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          const orders = result.data || [];
           
-          return order;
-        });
-        
-        allOrders = allOrders.concat(parsedOrders);
-        
-        // Check if there are more pages
-        if (orders.length < limit) {
-          hasMore = false;
-        } else {
-          page++;
+          console.log(`✅ Page ${page} - Orders fetched:`, orders.length);
+          
+          // Parse product_snapshot for each order
+          const parsedOrders = orders.map(order => {
+            try {
+              // Parse product_snapshot if it's a string
+              if (order.product_snapshot && typeof order.product_snapshot === 'string') {
+                const snapshot = JSON.parse(order.product_snapshot);
+                
+                // Extract country info from snapshot
+                if (snapshot.countries && snapshot.countries.length > 0) {
+                  const country = snapshot.countries[0];
+                  order.country_id = country.id;
+                  order.country_name = country.name_th || country.name_en;
+                  order.country_name_en = country.name_en;
+                }
+                
+                // Extract supplier info if available
+                if (snapshot.suppliers_id) {
+                  order.product_owner_supplier_id = snapshot.suppliers_id;
+                }
+                
+                // Store parsed snapshot
+                order.product_snapshot_parsed = snapshot;
+              } else if (order.product_snapshot && typeof order.product_snapshot === 'object') {
+                // Already parsed
+                const snapshot = order.product_snapshot;
+                
+                if (snapshot.countries && snapshot.countries.length > 0) {
+                  const country = snapshot.countries[0];
+                  order.country_id = country.id;
+                  order.country_name = country.name_th || country.name_en;
+                  order.country_name_en = country.name_en;
+                }
+                
+                if (snapshot.suppliers_id) {
+                  order.product_owner_supplier_id = snapshot.suppliers_id;
+                }
+                
+                order.product_snapshot_parsed = snapshot;
+              }
+            } catch (e) {
+              console.warn('⚠️ Failed to parse product_snapshot for order:', order.id, e);
+            }
+            
+            return order;
+          });
+          
+          allOrders = allOrders.concat(parsedOrders);
+          
+          // Reset retry count on success
+          retryCount = 0;
+          
+          // Check if there are more pages
+          if (orders.length < limit) {
+            hasMore = false;
+          } else {
+            page++;
+            // Add delay between requests to avoid rate limit (150ms)
+            await this.delay(150);
+          }
+        } catch (fetchError) {
+          // If it's a network error, retry
+          if (retryCount < maxRetries) {
+            retryCount++;
+            console.warn(`⚠️ Network error. Retrying ${retryCount}/${maxRetries}...`);
+            await this.delay(2000);
+            continue;
+          } else {
+            throw fetchError;
+          }
         }
       }
       
       console.log('📊 Total Orders fetched:', allOrders.length);
+      
+      // Cache the result (only if no filters)
+      if (!hasFilters) {
+        this._ordersCache = allOrders;
+        this._cacheTimestamp = Date.now();
+        console.log('💾 Orders cached');
+      }
       
       return allOrders;
     } catch (error) {
@@ -137,7 +198,13 @@ const OrderReportAPI = {
   },
 
   /**
-   * Get all customers from API with pagination
+   * Clear cache (useful for refresh)
+   */
+  clearCache() {
+    this._ordersCache = null;
+    this._cacheTimestamp = null;
+    console.log('🗑️ Cache cleared');
+  },
    * @returns {Promise<Array>}
    */
   async getAllCustomers() {
