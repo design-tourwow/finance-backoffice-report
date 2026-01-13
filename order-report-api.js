@@ -14,46 +14,122 @@ const OrderReportAPI = {
     const storedToken = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
     return storedToken || testToken;
   },
+
+  // Helper function to make API calls with minimal headers to avoid CORS preflight
+  async fetchAPI(url) {
+    return fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'authorization': this.getToken()
+      }
+    });
+  },
   
   /**
-   * Get all orders from API
+   * Get all orders from API with pagination
    * @param {Object} filters - Filter parameters
    * @returns {Promise<Array>}
    */
   async getAllOrders(filters = {}) {
     try {
       console.log('🔄 Fetching all orders with filters:', filters);
-      const url = new URL(`${this.baseURL}/api/orders`);
       
-      // Add filters
-      if (filters.supplier_id) url.searchParams.append('supplier_id', filters.supplier_id);
-      if (filters.country_id) url.searchParams.append('country_id', filters.country_id);
+      let allOrders = [];
+      let page = 1;
+      let hasMore = true;
+      const limit = 100; // API default limit
+      
+      while (hasMore) {
+        const url = new URL(`${this.baseURL}/api/orders`);
+        url.searchParams.append('page', page);
+        url.searchParams.append('limit', limit);
+        
+        // Add filters
+        if (filters.supplier_id) url.searchParams.append('supplier_id', filters.supplier_id);
+        if (filters.country_id) url.searchParams.append('country_id', filters.country_id);
 
-      console.log('📡 Request URL:', url.toString());
-      console.log('🔑 Auth Token:', this.getToken() ? 'Present' : 'Missing');
+        console.log(`📡 Request URL (Page ${page}):`, url.toString());
+        console.log('🔑 Auth Token:', this.getToken() ? 'Present' : 'Missing');
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'authorization': this.getToken()
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'authorization': this.getToken()
+          }
+        });
+
+        console.log('📥 Response Status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Response Error:', errorText);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      });
 
-      console.log('📥 Response Status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Response Error:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        const orders = result.data || [];
+        
+        console.log(`✅ Page ${page} - Orders fetched:`, orders.length);
+        
+        // Parse product_snapshot for each order
+        const parsedOrders = orders.map(order => {
+          try {
+            // Parse product_snapshot if it's a string
+            if (order.product_snapshot && typeof order.product_snapshot === 'string') {
+              const snapshot = JSON.parse(order.product_snapshot);
+              
+              // Extract country info from snapshot
+              if (snapshot.countries && snapshot.countries.length > 0) {
+                const country = snapshot.countries[0];
+                order.country_id = country.id;
+                order.country_name = country.name_th || country.name_en;
+                order.country_name_en = country.name_en;
+              }
+              
+              // Extract supplier info if available
+              if (snapshot.suppliers_id) {
+                order.product_owner_supplier_id = snapshot.suppliers_id;
+              }
+              
+              // Store parsed snapshot
+              order.product_snapshot_parsed = snapshot;
+            } else if (order.product_snapshot && typeof order.product_snapshot === 'object') {
+              // Already parsed
+              const snapshot = order.product_snapshot;
+              
+              if (snapshot.countries && snapshot.countries.length > 0) {
+                const country = snapshot.countries[0];
+                order.country_id = country.id;
+                order.country_name = country.name_th || country.name_en;
+                order.country_name_en = country.name_en;
+              }
+              
+              if (snapshot.suppliers_id) {
+                order.product_owner_supplier_id = snapshot.suppliers_id;
+              }
+              
+              order.product_snapshot_parsed = snapshot;
+            }
+          } catch (e) {
+            console.warn('⚠️ Failed to parse product_snapshot for order:', order.id, e);
+          }
+          
+          return order;
+        });
+        
+        allOrders = allOrders.concat(parsedOrders);
+        
+        // Check if there are more pages
+        if (orders.length < limit) {
+          hasMore = false;
+        } else {
+          page++;
+        }
       }
-
-      const result = await response.json();
-      console.log('✅ Orders Response:', result);
-      console.log('📊 Orders Count:', result.data?.length || 0);
       
-      return result.data || [];
+      console.log('📊 Total Orders fetched:', allOrders.length);
+      
+      return allOrders;
     } catch (error) {
       console.error('❌ Get Orders Error:', error);
       throw error;
@@ -61,28 +137,46 @@ const OrderReportAPI = {
   },
 
   /**
-   * Get all customers from API
+   * Get all customers from API with pagination
    * @returns {Promise<Array>}
    */
   async getAllCustomers() {
     try {
-      const url = new URL(`${this.baseURL}/api/customers`);
+      let allCustomers = [];
+      let page = 1;
+      let hasMore = true;
+      const limit = 100;
+      
+      while (hasMore) {
+        const url = new URL(`${this.baseURL}/api/customers`);
+        url.searchParams.append('page', page);
+        url.searchParams.append('limit', limit);
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'authorization': this.getToken()
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'authorization': this.getToken()
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        const customers = result.data || [];
+        
+        allCustomers = allCustomers.concat(customers);
+        
+        if (customers.length < limit) {
+          hasMore = false;
+        } else {
+          page++;
+        }
       }
-
-      const result = await response.json();
-      return result.data || [];
+      
+      console.log('📊 Total Customers fetched:', allCustomers.length);
+      return allCustomers;
     } catch (error) {
       console.error('❌ Get Customers Error:', error);
       throw error;
@@ -455,30 +549,49 @@ const OrderReportAPI = {
   },
 
   /**
-   * Get Suppliers List
+   * Get Suppliers List with pagination
    * @returns {Promise<Object>}
    */
   async getSuppliers() {
     try {
-      const url = new URL(`${this.baseURL}/api/suppliers`);
+      let allSuppliers = [];
+      let page = 1;
+      let hasMore = true;
+      const limit = 100;
+      
+      while (hasMore) {
+        const url = new URL(`${this.baseURL}/api/suppliers`);
+        url.searchParams.append('page', page);
+        url.searchParams.append('limit', limit);
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'authorization': this.getToken()
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'authorization': this.getToken()
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        const suppliers = result.data || [];
+        
+        allSuppliers = allSuppliers.concat(suppliers);
+        
+        if (suppliers.length < limit) {
+          hasMore = false;
+        } else {
+          page++;
+        }
       }
-
-      const result = await response.json();
+      
+      console.log('📊 Total Suppliers fetched:', allSuppliers.length);
+      
       return {
         status: 'success',
-        data: result.data || []
+        data: allSuppliers
       };
     } catch (error) {
       console.error('❌ Suppliers Error:', error);
