@@ -24,7 +24,6 @@ const OrderReportAPI = {
     try {
       console.log('🔄 Fetching all orders with filters:', filters);
       const url = new URL(`${this.baseURL}/api/orders`);
-      url.searchParams.append('limit', '10000'); // Get all orders
       
       // Add filters
       if (filters.supplier_id) url.searchParams.append('supplier_id', filters.supplier_id);
@@ -68,7 +67,6 @@ const OrderReportAPI = {
   async getAllCustomers() {
     try {
       const url = new URL(`${this.baseURL}/api/customers`);
-      url.searchParams.append('limit', '10000');
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -463,7 +461,6 @@ const OrderReportAPI = {
   async getSuppliers() {
     try {
       const url = new URL(`${this.baseURL}/api/suppliers`);
-      url.searchParams.append('limit', '1000');
 
       const response = await fetch(url.toString(), {
         method: 'GET',
