@@ -205,6 +205,9 @@ const OrderReportAPI = {
     this._cacheTimestamp = null;
     console.log('🗑️ Cache cleared');
   },
+
+  /**
+   * Get all customers from API with pagination
    * @returns {Promise<Array>}
    */
   async getAllCustomers() {
