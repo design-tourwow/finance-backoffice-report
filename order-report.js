@@ -208,8 +208,12 @@
     try {
       const response = await OrderReportAPI.getOrderSummary(currentFilters);
       
-      if (response && response.status === 'success' && response.data) {
+      console.log('📊 Summary Response:', response);
+      
+      if (response && response.success && response.data) {
         const data = response.data;
+        
+        console.log('📊 Summary Data:', data);
         
         document.getElementById('summaryTotalOrders').textContent = 
           formatNumber(data.total_orders || 0);
@@ -219,6 +223,9 @@
           formatCurrency(data.total_net_amount || 0);
         document.getElementById('summaryAvgAmount').textContent = 
           formatCurrency(data.avg_net_amount || 0);
+      } else {
+        console.warn('⚠️ Invalid summary response format:', response);
+        throw new Error('Invalid response format');
       }
     } catch (error) {
       console.error('❌ Failed to load summary:', error);
