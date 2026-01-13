@@ -6,18 +6,9 @@
   let currentTab = 'country';
   let currentFilters = {};
   
-  // Date picker states
-  let travelDatePicker = {
-    startDate: null,
-    endDate: null,
-    currentMonth: new Date()
-  };
-  
-  let bookingDatePicker = {
-    startDate: null,
-    endDate: null,
-    currentMonth: new Date()
-  };
+  // Date picker instances
+  let travelDatePickerInstance = null;
+  let bookingDatePickerInstance = null;
 
   document.addEventListener('DOMContentLoaded', function () {
     initOrderReport();
@@ -149,15 +140,23 @@
       if (supplier) currentFilters.supplier_id = supplier;
       
       // Travel dates
-      if (travelDatePicker.startDate && travelDatePicker.endDate) {
-        currentFilters.travel_date_from = formatDateToAPI(travelDatePicker.startDate);
-        currentFilters.travel_date_to = formatDateToAPI(travelDatePicker.endDate);
+      if (travelDatePickerInstance) {
+        const startDate = travelDatePickerInstance.getStartDate();
+        const endDate = travelDatePickerInstance.getEndDate();
+        if (startDate && endDate) {
+          currentFilters.travel_date_from = DatePickerComponent.formatDateToAPI(startDate);
+          currentFilters.travel_date_to = DatePickerComponent.formatDateToAPI(endDate);
+        }
       }
       
       // Booking dates
-      if (bookingDatePicker.startDate && bookingDatePicker.endDate) {
-        currentFilters.booking_date_from = formatDateToAPI(bookingDatePicker.startDate);
-        currentFilters.booking_date_to = formatDateToAPI(bookingDatePicker.endDate);
+      if (bookingDatePickerInstance) {
+        const startDate = bookingDatePickerInstance.getStartDate();
+        const endDate = bookingDatePickerInstance.getEndDate();
+        if (startDate && endDate) {
+          currentFilters.booking_date_from = DatePickerComponent.formatDateToAPI(startDate);
+          currentFilters.booking_date_to = DatePickerComponent.formatDateToAPI(endDate);
+        }
       }
       
       console.log('🔍 Applying filters:', currentFilters);
@@ -168,260 +167,31 @@
 
     form.addEventListener('reset', function() {
       currentFilters = {};
-      travelDatePicker.startDate = null;
-      travelDatePicker.endDate = null;
-      bookingDatePicker.startDate = null;
-      bookingDatePicker.endDate = null;
-      document.getElementById('travelDateRangePicker').value = '';
-      document.getElementById('bookingDateRangePicker').value = '';
+      if (travelDatePickerInstance) travelDatePickerInstance.clear();
+      if (bookingDatePickerInstance) bookingDatePickerInstance.clear();
       setTimeout(() => loadTabData(currentTab), 100);
     });
-  }
-  
-  // Format date to API format (YYYY-MM-DD)
-  function formatDateToAPI(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   // Initialize date pickers
   function initDatePickers() {
-    initDateRangePicker('travel', travelDatePicker);
-    initDateRangePicker('booking', bookingDatePicker);
-  }
-
-  // Initialize date range picker
-  function initDateRangePicker(type, pickerState) {
-    const inputId = `${type}DateRangePicker`;
-    const dropdownId = `${type}CalendarDropdown`;
-    const wrapperId = `${type}DatePicker`;
-    
-    const input = document.getElementById(inputId);
-    const dropdown = document.getElementById(dropdownId);
-    const wrapper = document.getElementById(wrapperId);
-
-    if (!input || !dropdown) return;
-
-    const thaiMonths = [
-      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-    ];
-
-    const thaiDays = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-
-    // Toggle calendar
-    input.addEventListener('click', function (e) {
-      e.stopPropagation();
-      const isVisible = dropdown.style.display === 'block';
-      dropdown.style.display = isVisible ? 'none' : 'block';
-      input.setAttribute('aria-expanded', !isVisible);
-      if (!isVisible) {
-        renderCalendar();
+    travelDatePickerInstance = DatePickerComponent.initDateRangePicker({
+      inputId: 'travelDateRangePicker',
+      dropdownId: 'travelCalendarDropdown',
+      wrapperId: 'travelDatePicker',
+      onChange: (startDate, endDate) => {
+        console.log('Travel dates changed:', startDate, endDate);
       }
     });
 
-    // Close calendar when clicking outside
-    document.addEventListener('click', function (e) {
-      if (!wrapper.contains(e.target)) {
-        dropdown.style.display = 'none';
-        input.setAttribute('aria-expanded', 'false');
+    bookingDatePickerInstance = DatePickerComponent.initDateRangePicker({
+      inputId: 'bookingDateRangePicker',
+      dropdownId: 'bookingCalendarDropdown',
+      wrapperId: 'bookingDatePicker',
+      onChange: (startDate, endDate) => {
+        console.log('Booking dates changed:', startDate, endDate);
       }
     });
-
-    function renderCalendar() {
-      const year = pickerState.currentMonth.getFullYear();
-      const month = pickerState.currentMonth.getMonth();
-      const buddhistYear = year + 543;
-
-      const nextMonthDate = new Date(year, month + 1, 1);
-      const nextYear = nextMonthDate.getFullYear();
-      const nextMonth = nextMonthDate.getMonth();
-      const nextBuddhistYear = nextYear + 543;
-
-      let html = `
-        <div class="calendar-dual">
-          <div class="calendar-month">
-            <div class="calendar-header">
-              <button type="button" class="calendar-nav-btn prev-month">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-              </button>
-              <div class="calendar-title">${thaiMonths[month]} ${buddhistYear}</div>
-              <div style="width: 36px;"></div>
-            </div>
-            <div class="calendar-days-header">
-              ${thaiDays.map((day) => `<div class="calendar-day-name">${day}</div>`).join('')}
-            </div>
-            <div class="calendar-days">${renderDays(year, month)}</div>
-          </div>
-          <div class="calendar-month">
-            <div class="calendar-header">
-              <div style="width: 36px;"></div>
-              <div class="calendar-title">${thaiMonths[nextMonth]} ${nextBuddhistYear}</div>
-              <button type="button" class="calendar-nav-btn next-month">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-              </button>
-            </div>
-            <div class="calendar-days-header">
-              ${thaiDays.map((day) => `<div class="calendar-day-name">${day}</div>`).join('')}
-            </div>
-            <div class="calendar-days">${renderDays(nextYear, nextMonth)}</div>
-          </div>
-        </div>
-        <div class="calendar-actions">
-          <button type="button" class="calendar-btn clear">ล้าง</button>
-          <button type="button" class="calendar-btn apply">ตกลง</button>
-        </div>
-      `;
-
-      dropdown.innerHTML = html;
-
-      // Event listeners
-      dropdown.querySelector('.prev-month').addEventListener('click', (e) => {
-        e.stopPropagation();
-        pickerState.currentMonth.setMonth(pickerState.currentMonth.getMonth() - 1);
-        renderCalendar();
-      });
-
-      dropdown.querySelector('.next-month').addEventListener('click', (e) => {
-        e.stopPropagation();
-        pickerState.currentMonth.setMonth(pickerState.currentMonth.getMonth() + 1);
-        renderCalendar();
-      });
-
-      dropdown.querySelector('.clear').addEventListener('click', (e) => {
-        e.stopPropagation();
-        pickerState.startDate = null;
-        pickerState.endDate = null;
-        input.value = '';
-        renderCalendar();
-      });
-
-      dropdown.querySelector('.apply').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (pickerState.startDate && pickerState.endDate) {
-          updateInputValue();
-          dropdown.style.display = 'none';
-        } else if (pickerState.startDate) {
-          alert('กรุณาเลือกวันที่สิ้นสุด');
-        } else {
-          dropdown.style.display = 'none';
-        }
-      });
-
-      // Day click handlers
-      dropdown.querySelectorAll('.calendar-day:not(.other-month)').forEach((cell) => {
-        cell.addEventListener('click', function (e) {
-          e.stopPropagation();
-          const dateStr = this.dataset.date;
-          if (!dateStr) return;
-
-          const [y, m, d] = dateStr.split('-').map(Number);
-          const selectedDate = new Date(y, m, d);
-
-          if (!pickerState.startDate || (pickerState.startDate && pickerState.endDate)) {
-            pickerState.startDate = selectedDate;
-            pickerState.endDate = null;
-            updateInputValue();
-            renderCalendar();
-          } else {
-            if (selectedDate >= pickerState.startDate) {
-              pickerState.endDate = selectedDate;
-            } else {
-              pickerState.endDate = pickerState.startDate;
-              pickerState.startDate = selectedDate;
-            }
-            updateInputValue();
-            renderCalendar();
-            setTimeout(() => {
-              dropdown.style.display = 'none';
-            }, 300);
-          }
-        });
-      });
-    }
-
-    function updateInputValue() {
-      if (pickerState.startDate && pickerState.endDate) {
-        const start = formatDateToBuddhistEra(pickerState.startDate);
-        const end = formatDateToBuddhistEra(pickerState.endDate);
-        input.value = `${start} ถึง ${end}`;
-      } else if (pickerState.startDate) {
-        const start = formatDateToBuddhistEra(pickerState.startDate);
-        input.value = `${start} - เลือกวันที่สิ้นสุด`;
-      }
-    }
-
-    function formatDateToBuddhistEra(date) {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear() + 543;
-      return `${day}/${month}/${year}`;
-    }
-
-    function renderDays(year, month) {
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const prevLastDay = new Date(year, month, 0);
-
-      const firstDayOfWeek = firstDay.getDay();
-      const lastDate = lastDay.getDate();
-      const prevLastDate = prevLastDay.getDate();
-
-      let days = '';
-
-      // Previous month days
-      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-        const day = prevLastDate - i;
-        days += `<div class="calendar-day other-month">${day}</div>`;
-      }
-
-      // Current month days
-      for (let day = 1; day <= lastDate; day++) {
-        const date = new Date(year, month, day);
-        const dateStr = `${year}-${month}-${day}`;
-        const isStart = pickerState.startDate && isSameDay(date, pickerState.startDate);
-        const isEnd = pickerState.endDate && isSameDay(date, pickerState.endDate);
-        const isInRange = pickerState.startDate && pickerState.endDate && 
-                         date > pickerState.startDate && date < pickerState.endDate;
-        const isToday = isSameDay(date, new Date());
-
-        let classes = 'calendar-day';
-        if (isStart || isEnd) {
-          classes += ' selected';
-        } else if (isInRange) {
-          classes += ' in-range';
-        } else if (isToday) {
-          classes += ' today';
-        }
-
-        days += `<div class="${classes}" data-date="${dateStr}">${day}</div>`;
-      }
-
-      // Next month days
-      const totalCells = firstDayOfWeek + lastDate;
-      const remainingCells = 7 - (totalCells % 7);
-      if (remainingCells < 7) {
-        for (let day = 1; day <= remainingCells; day++) {
-          days += `<div class="calendar-day other-month">${day}</div>`;
-        }
-      }
-
-      return days;
-    }
-
-    function isSameDay(date1, date2) {
-      return (
-        date1.getFullYear() === date2.getFullYear() &&
-        date1.getMonth() === date2.getMonth() &&
-        date1.getDate() === date2.getDate()
-      );
-    }
   }
 
   // Load initial data
