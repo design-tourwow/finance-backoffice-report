@@ -14,6 +14,7 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="tour-image-manager.css" />
+    <link rel="stylesheet" href="order-report.css" />
     
     <!-- Configuration -->
     <script>
@@ -39,6 +40,7 @@
       })();
     </script>
     <script src="tour-image-manager-api.js"></script>
+    <script src="order-report-api.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Load sidebar state -->
@@ -124,18 +126,198 @@
             <h1>Order Report</h1>
           </header>
 
-          <!-- Content Section -->
-          <section class="filter-section" aria-label="รายงานคำสั่งซื้อ">
-            <h2>รายงานคำสั่งซื้อ</h2>
-            <div style="padding: 2rem; text-align: center; color: #6b7280;">
-              <p style="font-size: 1.125rem; margin-bottom: 1rem;">🚧 หน้านี้อยู่ระหว่างการพัฒนา</p>
-              <p>ฟีเจอร์รายงานคำสั่งซื้อจะเปิดให้ใช้งานเร็วๆ นี้</p>
+          <!-- Filter Section -->
+          <section class="filter-section" aria-label="ฟอร์มค้นหา">
+            <h2>ค้นหาข้อมูล</h2>
+            <form class="filter-form" id="reportFilterForm" novalidate>
+              <!-- Row 1 -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="filterCountry">ประเทศ</label>
+                  <select id="filterCountry" name="country_id" class="form-select">
+                    <option value="">ทั้งหมด</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="filterSupplier">Supplier</label>
+                  <select id="filterSupplier" name="supplier_id" class="form-select">
+                    <option value="">ทั้งหมด</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="filterTravelDateFrom">วันที่เดินทาง (จาก)</label>
+                  <input type="date" id="filterTravelDateFrom" name="travel_date_from" class="form-input" />
+                </div>
+              </div>
+
+              <!-- Row 2 -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="filterTravelDateTo">วันที่เดินทาง (ถึง)</label>
+                  <input type="date" id="filterTravelDateTo" name="travel_date_to" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label for="filterBookingDateFrom">วันที่จอง (จาก)</label>
+                  <input type="date" id="filterBookingDateFrom" name="booking_date_from" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label for="filterBookingDateTo">วันที่จอง (ถึง)</label>
+                  <input type="date" id="filterBookingDateTo" name="booking_date_to" class="form-input" />
+                </div>
+              </div>
+
+              <!-- Row 3: Buttons -->
+              <div class="form-row form-row-actions">
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary">
+                    <span class="btn-text">ค้นหา</span>
+                  </button>
+                  <button type="reset" class="btn btn-secondary">รีเซ็ต</button>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <!-- Summary Cards -->
+          <section class="summary-cards" aria-label="สรุปข้อมูล">
+            <div class="summary-card">
+              <div class="summary-card-icon" style="background: #e3f2fd;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <div class="summary-card-content">
+                <div class="summary-card-label">จำนวน Orders</div>
+                <div class="summary-card-value" id="summaryTotalOrders">-</div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-card-icon" style="background: #f3e5f5;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7b1fa2" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                </svg>
+              </div>
+              <div class="summary-card-content">
+                <div class="summary-card-label">จำนวนลูกค้า</div>
+                <div class="summary-card-value" id="summaryTotalCustomers">-</div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-card-icon" style="background: #e8f5e9;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#388e3c" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                </svg>
+              </div>
+              <div class="summary-card-content">
+                <div class="summary-card-label">ยอดรวม (Net Amount)</div>
+                <div class="summary-card-value" id="summaryTotalAmount">-</div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-card-icon" style="background: #fff3e0;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f57c00" stroke-width="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+              </div>
+              <div class="summary-card-content">
+                <div class="summary-card-label">ค่าเฉลี่ย/Order</div>
+                <div class="summary-card-value" id="summaryAvgAmount">-</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Tabs Section -->
+          <section class="report-tabs-section">
+            <div class="report-tabs">
+              <button class="report-tab active" data-tab="country">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                </svg>
+                ตามประเทศ
+              </button>
+              <button class="report-tab" data-tab="supplier">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                ตาม Supplier
+              </button>
+              <button class="report-tab" data-tab="travel-date">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                ตามวันเดินทาง
+              </button>
+              <button class="report-tab" data-tab="booking-date">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                ตามวันจอง
+              </button>
+              <button class="report-tab" data-tab="repeat-customers">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+                </svg>
+                ลูกค้าซื้อซ้ำ
+              </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="report-tab-content">
+              <!-- Loading State -->
+              <div class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>กำลังโหลดข้อมูล...</p>
+              </div>
+
+              <!-- Empty State -->
+              <div class="empty-state" style="display: none;">
+                <div class="empty-state-content">
+                  <div class="empty-icon-wrapper">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 8v4M12 16h.01"/>
+                    </svg>
+                  </div>
+                  <div class="empty-text">
+                    <h3>ไม่พบข้อมูล</h3>
+                    <p>ลองปรับเงื่อนไขการค้นหาใหม่</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chart Container -->
+              <div class="chart-container" id="chartContainer" style="display: none;">
+                <canvas id="reportChart"></canvas>
+              </div>
+
+              <!-- Table Container -->
+              <div class="table-container" id="tableContainer" style="display: none;">
+                <table class="report-table" id="reportTable">
+                  <thead id="reportTableHead"></thead>
+                  <tbody id="reportTableBody"></tbody>
+                </table>
+              </div>
             </div>
           </section>
         </div>
       </main>
     </div>
 
-    <script src="tour-image-manager.js"></script>
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="order-report.js"></script>
   </body>
 </html>
