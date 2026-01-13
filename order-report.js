@@ -23,14 +23,16 @@
       return;
     }
 
-    // Initialize components
+    // Initialize components (without loading data)
     initTabs();
-    initFilters();
     initDatePickers();
     initFormHandler();
     
-    // Load initial data
+    // Load initial data first (this will cache orders)
     await loadInitialData();
+    
+    // Then initialize filters (will use cached orders)
+    await initFilters();
     
     console.log('✅ Order Report initialized');
   }
@@ -196,10 +198,21 @@
 
   // Load initial data
   async function loadInitialData() {
-    await Promise.all([
-      loadSummary(),
-      loadTabData('country')
-    ]);
+    showLoading();
+    
+    try {
+      // Pre-load all orders once (will be cached)
+      console.log('🔄 Pre-loading all orders...');
+      await OrderReportAPI.getAllOrders();
+      console.log('✅ Orders pre-loaded and cached');
+      
+      // Now load summary and tab data (will use cache)
+      await loadSummary();
+      await loadTabData('country');
+    } catch (error) {
+      console.error('❌ Failed to load initial data:', error);
+      showEmpty();
+    }
   }
 
   // Load summary
