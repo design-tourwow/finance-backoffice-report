@@ -2,7 +2,7 @@
 const OrderReportAPI = {
   // Use global API_BASE_URL set by inline script in HTML
   get baseURL() {
-    const url = window.API_BASE_URL || 'https://fin-api.tourwow.com';
+    const url = window.API_BASE_URL || 'https://finance-backoffice-report-api.vercel.app';
     console.log('📡 Using API URL:', url);
     return url;
   },

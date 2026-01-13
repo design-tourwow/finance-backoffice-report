@@ -23,19 +23,19 @@
         const hostname = window.location.hostname;
         
         if (hostname === 'staging-finance-backoffice-report.vercel.app') {
-          window.API_BASE_URL = 'https://fin-api-staging2.tourwow.com';
+          window.API_BASE_URL = 'https://staging-finance-backoffice-report-api.vercel.app';
           window.ENVIRONMENT = 'staging';
           console.log('🎯 STAGING Environment - API:', window.API_BASE_URL);
         } else if (hostname === 'finance-backoffice-report.vercel.app') {
-          window.API_BASE_URL = 'https://fin-api.tourwow.com';
+          window.API_BASE_URL = 'https://finance-backoffice-report-api.vercel.app';
           window.ENVIRONMENT = 'production';
           console.log('🎯 PRODUCTION Environment - API:', window.API_BASE_URL);
         } else {
-          const sessionEnv = sessionStorage.getItem('env') || 'production';
+          const sessionEnv = sessionStorage.getItem('env') || 'staging';
           window.ENVIRONMENT = sessionEnv;
           window.API_BASE_URL = sessionEnv === 'staging' 
-            ? 'https://fin-api-staging2.tourwow.com'
-            : 'https://fin-api.tourwow.com';
+            ? 'https://staging-finance-backoffice-report-api.vercel.app'
+            : 'https://finance-backoffice-report-api.vercel.app';
           console.log('🎯 LOCALHOST Environment:', window.ENVIRONMENT, '- API:', window.API_BASE_URL);
         }
       })();
