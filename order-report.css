@@ -80,6 +80,7 @@
   color: #6b7280;
   font-size: 14px;
   font-weight: 500;
+  font-family: 'Kanit', sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
