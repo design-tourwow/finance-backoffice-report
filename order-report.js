@@ -23,16 +23,14 @@
       return;
     }
 
-    // Initialize components (without loading data)
+    // Initialize components
     initTabs();
+    initFilters();
     initDatePickers();
     initFormHandler();
     
-    // Load initial data first (this will cache orders)
+    // Load initial data
     await loadInitialData();
-    
-    // Then initialize filters (will use cached orders)
-    await initFilters();
     
     console.log('✅ Order Report initialized');
   }
@@ -198,21 +196,11 @@
 
   // Load initial data
   async function loadInitialData() {
-    showLoading();
-    
-    try {
-      // Pre-load all orders once (will be cached)
-      console.log('🔄 Pre-loading all orders...');
-      await OrderReportAPI.getAllOrders();
-      console.log('✅ Orders pre-loaded and cached');
-      
-      // Now load summary and tab data (will use cache)
-      await loadSummary();
-      await loadTabData('country');
-    } catch (error) {
-      console.error('❌ Failed to load initial data:', error);
-      showEmpty();
-    }
+    // Load summary and tab data in parallel (now using report endpoints - fast!)
+    await Promise.all([
+      loadSummary(),
+      loadTabData('country')
+    ]);
   }
 
   // Load summary
@@ -410,7 +398,7 @@
     
     // Render chart
     renderChart({
-      labels: data.map(item => item.travel_month || 'ไม่ระบุ'),
+      labels: data.map(item => item.travel_month_label || item.travel_month || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
@@ -425,7 +413,7 @@
     renderTable(
       ['เดือน/ปี', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'],
       data.map(item => [
-        item.travel_month || 'ไม่ระบุ',
+        item.travel_month_label || item.travel_month || 'ไม่ระบุ',
         formatNumber(item.total_orders),
         formatNumber(item.total_customers),
         formatCurrency(item.total_net_amount)
@@ -446,7 +434,7 @@
     
     // Render chart
     renderChart({
-      labels: data.map(item => item.booking_month || 'ไม่ระบุ'),
+      labels: data.map(item => item.booking_month_label || item.booking_month || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
@@ -461,7 +449,7 @@
     renderTable(
       ['เดือน/ปี', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'],
       data.map(item => [
-        item.booking_month || 'ไม่ระบุ',
+        item.booking_month_label || item.booking_month || 'ไม่ระบุ',
         formatNumber(item.total_orders),
         formatNumber(item.total_customers),
         formatCurrency(item.total_net_amount)
