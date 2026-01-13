@@ -54,6 +54,48 @@ const OrderReportAPI = {
 
       console.log('🔄 Fetching all orders with filters:', filters);
       
+      // Try without limit first (single request)
+      try {
+        const url = new URL(`${this.baseURL}/api/orders`);
+        
+        // Add filters
+        if (filters.supplier_id) url.searchParams.append('supplier_id', filters.supplier_id);
+        if (filters.country_id) url.searchParams.append('country_id', filters.country_id);
+
+        console.log('📡 Trying to fetch all orders without limit:', url.toString());
+
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'authorization': this.getToken()
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const orders = result.data || [];
+          
+          console.log('✅ Fetched all orders without pagination:', orders.length);
+          
+          // Parse product_snapshot for each order
+          const parsedOrders = orders.map(order => this.parseOrderSnapshot(order));
+          
+          // Cache the result (only if no filters)
+          if (!hasFilters) {
+            this._ordersCache = parsedOrders;
+            this._cacheTimestamp = Date.now();
+            console.log('💾 Orders cached');
+          }
+          
+          return parsedOrders;
+        } else {
+          console.log('⚠️ No-limit request failed, falling back to pagination');
+        }
+      } catch (e) {
+        console.log('⚠️ No-limit request error, falling back to pagination:', e.message);
+      }
+      
+      // Fallback to pagination if no-limit doesn't work
       let allOrders = [];
       let page = 1;
       let hasMore = true;
@@ -110,50 +152,7 @@ const OrderReportAPI = {
           console.log(`✅ Page ${page} - Orders fetched:`, orders.length);
           
           // Parse product_snapshot for each order
-          const parsedOrders = orders.map(order => {
-            try {
-              // Parse product_snapshot if it's a string
-              if (order.product_snapshot && typeof order.product_snapshot === 'string') {
-                const snapshot = JSON.parse(order.product_snapshot);
-                
-                // Extract country info from snapshot
-                if (snapshot.countries && snapshot.countries.length > 0) {
-                  const country = snapshot.countries[0];
-                  order.country_id = country.id;
-                  order.country_name = country.name_th || country.name_en;
-                  order.country_name_en = country.name_en;
-                }
-                
-                // Extract supplier info if available
-                if (snapshot.suppliers_id) {
-                  order.product_owner_supplier_id = snapshot.suppliers_id;
-                }
-                
-                // Store parsed snapshot
-                order.product_snapshot_parsed = snapshot;
-              } else if (order.product_snapshot && typeof order.product_snapshot === 'object') {
-                // Already parsed
-                const snapshot = order.product_snapshot;
-                
-                if (snapshot.countries && snapshot.countries.length > 0) {
-                  const country = snapshot.countries[0];
-                  order.country_id = country.id;
-                  order.country_name = country.name_th || country.name_en;
-                  order.country_name_en = country.name_en;
-                }
-                
-                if (snapshot.suppliers_id) {
-                  order.product_owner_supplier_id = snapshot.suppliers_id;
-                }
-                
-                order.product_snapshot_parsed = snapshot;
-              }
-            } catch (e) {
-              console.warn('⚠️ Failed to parse product_snapshot for order:', order.id, e);
-            }
-            
-            return order;
-          });
+          const parsedOrders = orders.map(order => this.parseOrderSnapshot(order));
           
           allOrders = allOrders.concat(parsedOrders);
           
@@ -195,6 +194,56 @@ const OrderReportAPI = {
       console.error('❌ Get Orders Error:', error);
       throw error;
     }
+  },
+
+  /**
+   * Parse order snapshot to extract country and supplier info
+   * @param {Object} order - Order object
+   * @returns {Object} - Parsed order
+   */
+  parseOrderSnapshot(order) {
+    try {
+      // Parse product_snapshot if it's a string
+      if (order.product_snapshot && typeof order.product_snapshot === 'string') {
+        const snapshot = JSON.parse(order.product_snapshot);
+        
+        // Extract country info from snapshot
+        if (snapshot.countries && snapshot.countries.length > 0) {
+          const country = snapshot.countries[0];
+          order.country_id = country.id;
+          order.country_name = country.name_th || country.name_en;
+          order.country_name_en = country.name_en;
+        }
+        
+        // Extract supplier info if available
+        if (snapshot.suppliers_id) {
+          order.product_owner_supplier_id = snapshot.suppliers_id;
+        }
+        
+        // Store parsed snapshot
+        order.product_snapshot_parsed = snapshot;
+      } else if (order.product_snapshot && typeof order.product_snapshot === 'object') {
+        // Already parsed
+        const snapshot = order.product_snapshot;
+        
+        if (snapshot.countries && snapshot.countries.length > 0) {
+          const country = snapshot.countries[0];
+          order.country_id = country.id;
+          order.country_name = country.name_th || country.name_en;
+          order.country_name_en = country.name_en;
+        }
+        
+        if (snapshot.suppliers_id) {
+          order.product_owner_supplier_id = snapshot.suppliers_id;
+        }
+        
+        order.product_snapshot_parsed = snapshot;
+      }
+    } catch (e) {
+      console.warn('⚠️ Failed to parse product_snapshot for order:', order.id, e);
+    }
+    
+    return order;
   },
 
   /**
