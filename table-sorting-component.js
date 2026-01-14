@@ -74,9 +74,13 @@ const TableSortingComponent = {
           const sortLabel = sortIcon.querySelector('.sort-label');
           if (state.sortColumn === index) {
             if (state.sortDirection === 'asc') {
-              sortLabel.textContent = column.type === 'number' || column.type === 'currency' ? '1-9' : 'A-Z';
+              const topChar = column.type === 'number' || column.type === 'currency' ? '1' : 'A';
+              const bottomChar = column.type === 'number' || column.type === 'currency' ? '9' : 'Z';
+              sortLabel.innerHTML = `<span class="sort-top">${topChar}</span><span class="sort-bottom">${bottomChar}</span>`;
             } else if (state.sortDirection === 'desc') {
-              sortLabel.textContent = column.type === 'number' || column.type === 'currency' ? '9-1' : 'Z-A';
+              const topChar = column.type === 'number' || column.type === 'currency' ? '9' : 'Z';
+              const bottomChar = column.type === 'number' || column.type === 'currency' ? '1' : 'A';
+              sortLabel.innerHTML = `<span class="sort-top">${topChar}</span><span class="sort-bottom">${bottomChar}</span>`;
             }
           }
           
