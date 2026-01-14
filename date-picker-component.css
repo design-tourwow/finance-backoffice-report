@@ -58,6 +58,12 @@
   overflow: visible;
 }
 
+/* Auto-adjust position if near right edge */
+.date-picker-wrapper:last-child .calendar-dropdown {
+  left: auto;
+  right: 0;
+}
+
 /* Dual Calendar (Date Range) */
 .calendar-dual {
   display: flex;
