@@ -5,6 +5,7 @@
   let currentChart = null;
   let currentTab = 'country';
   let currentFilters = {};
+  let currentTableInstance = null;
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -367,17 +368,20 @@
       }]
     }, 'bar');
     
-    // Render table
-    renderTable(
-      ['ประเทศ', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)', 'ค่าเฉลี่ย/Order'],
-      data.map(item => [
-        item.country_name || 'ไม่ระบุ',
-        formatNumber(item.total_orders),
-        formatNumber(item.total_customers),
-        formatCurrency(item.total_net_amount),
-        formatCurrency(item.avg_net_amount)
-      ])
-    );
+    // Render sortable table
+    renderSortableTable([
+      { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
+      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
+      { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
+      { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' },
+      { key: 'avg_net_amount', label: 'ค่าเฉลี่ย/Order', type: 'currency', align: 'right' }
+    ], data.map(item => ({
+      country_name: item.country_name || 'ไม่ระบุ',
+      total_orders: item.total_orders,
+      total_customers: item.total_customers,
+      total_net_amount: item.total_net_amount,
+      avg_net_amount: item.avg_net_amount
+    })));
   }
 
   // Render Supplier Report
@@ -403,17 +407,20 @@
       }]
     }, 'bar');
     
-    // Render table
-    renderTable(
-      ['Supplier', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)', 'ค่าเฉลี่ย/Order'],
-      data.map(item => [
-        item.supplier_name || 'ไม่ระบุ',
-        formatNumber(item.total_orders),
-        formatNumber(item.total_customers),
-        formatCurrency(item.total_net_amount),
-        formatCurrency(item.avg_net_amount)
-      ])
-    );
+    // Render sortable table
+    renderSortableTable([
+      { key: 'supplier_name', label: 'Supplier', type: 'text', align: 'left' },
+      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
+      { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
+      { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' },
+      { key: 'avg_net_amount', label: 'ค่าเฉลี่ย/Order', type: 'currency', align: 'right' }
+    ], data.map(item => ({
+      supplier_name: item.supplier_name || 'ไม่ระบุ',
+      total_orders: item.total_orders,
+      total_customers: item.total_customers,
+      total_net_amount: item.total_net_amount,
+      avg_net_amount: item.avg_net_amount
+    })));
   }
 
   // Render Travel Date Report
@@ -440,16 +447,18 @@
       }]
     }, 'line');
     
-    // Render table
-    renderTable(
-      ['เดือน/ปี', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'],
-      data.map(item => [
-        item.travel_month_label || item.travel_month || 'ไม่ระบุ',
-        formatNumber(item.total_orders),
-        formatNumber(item.total_customers),
-        formatCurrency(item.total_net_amount)
-      ])
-    );
+    // Render sortable table
+    renderSortableTable([
+      { key: 'travel_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
+      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
+      { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
+      { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
+    ], data.map(item => ({
+      travel_month_label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
+      total_orders: item.total_orders,
+      total_customers: item.total_customers,
+      total_net_amount: item.total_net_amount
+    })));
   }
 
   // Render Booking Date Report
@@ -476,16 +485,18 @@
       }]
     }, 'line');
     
-    // Render table
-    renderTable(
-      ['เดือน/ปี', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'],
-      data.map(item => [
-        item.booking_month_label || item.booking_month || 'ไม่ระบุ',
-        formatNumber(item.total_orders),
-        formatNumber(item.total_customers),
-        formatCurrency(item.total_net_amount)
-      ])
-    );
+    // Render sortable table
+    renderSortableTable([
+      { key: 'booking_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
+      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
+      { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
+      { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
+    ], data.map(item => ({
+      booking_month_label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
+      total_orders: item.total_orders,
+      total_customers: item.total_customers,
+      total_net_amount: item.total_net_amount
+    })));
   }
 
   // Render Repeat Customers Report
@@ -519,18 +530,22 @@
       }]
     }, 'pie');
     
-    // Render table
-    renderTable(
-      ['รหัสลูกค้า', 'ชื่อลูกค้า', 'เบอร์โทร', 'จำนวน Orders', 'ประเทศ', 'ยอดรวม'],
-      data.map(item => [
-        item.customer_code || '-',
-        item.customer_name || 'ไม่ระบุ',
-        item.phone_number || '-',
-        formatNumber(item.total_orders),
-        item.countries || '-',
-        formatCurrency(item.total_spent)
-      ])
-    );
+    // Render sortable table
+    renderSortableTable([
+      { key: 'customer_code', label: 'รหัสลูกค้า', type: 'text', align: 'left' },
+      { key: 'customer_name', label: 'ชื่อลูกค้า', type: 'text', align: 'left' },
+      { key: 'phone_number', label: 'เบอร์โทร', type: 'text', align: 'left' },
+      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
+      { key: 'countries', label: 'ประเทศ', type: 'text', align: 'left' },
+      { key: 'total_spent', label: 'ยอดรวม', type: 'currency', align: 'right' }
+    ], data.map(item => ({
+      customer_code: item.customer_code || '-',
+      customer_name: item.customer_name || 'ไม่ระบุ',
+      phone_number: item.phone_number || '-',
+      total_orders: item.total_orders,
+      countries: item.countries || '-',
+      total_spent: item.total_spent
+    })));
   }
 
   // Render chart
@@ -589,8 +604,8 @@
     });
   }
 
-  // Render table
-  function renderTable(headers, rows) {
+  // Render sortable table
+  function renderSortableTable(columns, data) {
     const thead = document.getElementById('reportTableHead');
     const tbody = document.getElementById('reportTableBody');
     
@@ -598,30 +613,14 @@
     thead.innerHTML = '';
     tbody.innerHTML = '';
     
-    // Render headers
-    const headerRow = document.createElement('tr');
-    headers.forEach(header => {
-      const th = document.createElement('th');
-      th.textContent = header;
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    
-    // Render rows
-    rows.forEach((row) => {
-      const tr = document.createElement('tr');
-      row.forEach((cell, cellIndex) => {
-        const td = document.createElement('td');
-        td.textContent = cell;
-        
-        // Add classes for number/currency columns
-        if (cellIndex > 0 && typeof cell === 'string' && (cell.includes(',') || cell.includes('฿'))) {
-          td.classList.add(cell.includes('฿') ? 'currency' : 'number');
-        }
-        
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
+    // Initialize sortable table
+    currentTableInstance = TableSortingComponent.initSortableTable({
+      tableId: 'reportTable',
+      columns: columns,
+      data: data,
+      onSort: (sortedData, sortColumn, sortDirection) => {
+        console.log('Table sorted:', { sortColumn, sortDirection });
+      }
     });
   }
 
