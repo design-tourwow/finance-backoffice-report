@@ -57,7 +57,14 @@ const DatePickerComponent = {
     // Toggle calendar
     input.addEventListener('click', function (e) {
       e.stopPropagation();
+      
       const isVisible = dropdown.style.display === 'block';
+      
+      // Close all other pickers first (but not this one if it's already open)
+      if (!isVisible) {
+        DatePickerComponent.closeAllPickers();
+      }
+      
       dropdown.style.display = isVisible ? 'none' : 'block';
       state.isOpen = !isVisible;
       input.setAttribute('aria-expanded', state.isOpen);
@@ -359,8 +366,6 @@ const DatePickerComponent = {
     DatePickerComponent._openPickers.push(pickerInstance);
     
     return pickerInstance;
-      close: closeCalendar
-    };
   },
 
   /**
@@ -400,7 +405,14 @@ const DatePickerComponent = {
     // Toggle calendar
     input.addEventListener('click', function (e) {
       e.stopPropagation();
+      
       const isVisible = dropdown.style.display === 'block';
+      
+      // Close all other pickers first (but not this one if it's already open)
+      if (!isVisible) {
+        DatePickerComponent.closeAllPickers();
+      }
+      
       dropdown.style.display = isVisible ? 'none' : 'block';
       state.isOpen = !isVisible;
       input.setAttribute('aria-expanded', state.isOpen);
@@ -572,7 +584,7 @@ const DatePickerComponent = {
     }
 
     // Public API
-    return {
+    const pickerInstance = {
       getDate: () => state.selectedDate,
       setDate: (date) => {
         state.selectedDate = date;
@@ -584,6 +596,11 @@ const DatePickerComponent = {
       },
       close: closeCalendar
     };
+    
+    // Register this picker
+    DatePickerComponent._openPickers.push(pickerInstance);
+    
+    return pickerInstance;
   },
 
   /**
