@@ -66,8 +66,19 @@ const TableSortingComponent = {
               <path class="sort-asc-arrow" d="M7 9l5-5 5 5" opacity="0" stroke="#4a7ba7"/>
               <path class="sort-desc-arrow" d="M7 15l5 5 5-5" opacity="0" stroke="#4a7ba7"/>
             </svg>
+            <span class="sort-label"></span>
           `;
           headerContent.appendChild(sortIcon);
+          
+          // Update sort label
+          const sortLabel = sortIcon.querySelector('.sort-label');
+          if (state.sortColumn === index) {
+            if (state.sortDirection === 'asc') {
+              sortLabel.textContent = column.type === 'number' || column.type === 'currency' ? '1-9' : 'A-Z';
+            } else if (state.sortDirection === 'desc') {
+              sortLabel.textContent = column.type === 'number' || column.type === 'currency' ? '9-1' : 'Z-A';
+            }
+          }
           
           th.appendChild(headerContent);
           

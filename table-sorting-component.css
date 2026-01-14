@@ -37,10 +37,22 @@
 
 .sort-icon {
   display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   opacity: 0.4;
   transition: opacity 0.2s;
   margin-left: 4px;
+}
+
+.sort-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a7ba7;
+  opacity: 0;
+  transition: opacity 0.2s;
+  min-width: 24px;
+  text-align: center;
 }
 
 .sortable-header.sortable:hover .sort-icon {
@@ -49,6 +61,10 @@
 
 /* Active sort state */
 .sortable-header.sorted .sort-icon {
+  opacity: 1;
+}
+
+.sortable-header.sorted .sort-label {
   opacity: 1;
 }
 
