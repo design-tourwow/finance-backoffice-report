@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend API Architecture - Before & After</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Kanit', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .section-title {
+      font-size: 1.8em;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #ddd;
+    }
+
+    .before .section-title {
+      color: #e74c3c;
+    }
+
+    .after .section-title {
+      color: #27ae60;
+    }
+
+    .flow-item {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .flow-item::after {
+      content: '↓';
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      color: #667eea;
+    }
+
+    .flow-item:last-child::after {
+      content: '';
+    }
+
+    .flow-item h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+
+    .flow-item p {
+      color: #7f8c8d;
+      line-height: 1.6;
+    }
+
+    .problem {
+      background: #fee;
+      border-left-color: #e74c3c;
+    }
+
+    .solution {
+      background: #efe;
+      border-left-color: #27ae60;
+    }
+
+    .endpoints {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      margin-bottom: 40px;
+    }
+
+    .endpoints h2 {
+      color: #2c3e50;
+      margin-bottom: 25px;
+      font-size: 2em;
+      text-align: center;
+    }
+
+    .endpoint-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .endpoint-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+    }
+
+    .endpoint-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .endpoint-card h3 {
+      font-size: 1.3em;
+      margin-bottom: 10px;
+      border-bottom: 2px solid rgba(255,255,255,0.3);
+      padding-bottom: 10px;
+    }
+
+    .endpoint-card .method {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+
+    .endpoint-card .path {
+      font-family: 'Courier New', monospace;
+      background: rgba(0,0,0,0.2);
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-size: 0.9em;
+    }
+
+    .endpoint-card .description {
+      font-size: 0.95em;
+      opacity: 0.9;
+      line-height: 1.5;
+    }
+
+    .benefits {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .benefits h2 {
+      color: #2c3e50;
+      margin-bottom: 25px;
+      font-size: 2em;
+      text-align: center;
+    }
+
+    .benefit-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .benefit-item {
+      background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .benefit-item .icon {
+      font-size: 3em;
+      margin-bottom: 15px;
+    }
+
+    .benefit-item h3 {
+      font-size: 1.3em;
+      margin-bottom: 10px;
+    }
+
+    .benefit-item p {
+      font-size: 0.95em;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 768px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1>🏗️ Backend API Architecture - Before & After</h1>
+
+    <div class="comparison">
+      <!-- BEFORE -->
+      <div class="section before">
+        <div class="section-title">❌ ก่อนแก้ไข (มีปัญหา)</div>
+        
+        <div class="flow-item problem">
+          <h3>1. Frontend Request</h3>
+          <p>Frontend ส่ง request ไปที่ <code>/api/orders</code> เพื่อดึงข้อมูล Orders ทั้งหมด</p>
+        </div>
+
+        <div class="flow-item problem">
+          <h3>2. Backend Response</h3>
+          <p>Backend ส่งข้อมูล Orders ทั้งหมดกลับมา (อาจเป็นพัน records)</p>
+        </div>
+
+        <div class="flow-item problem">
+          <h3>3. Frontend Processing</h3>
+          <p>Frontend ต้องคำนวณ Report เอง:
+            <br>• Group by ประเทศ/Supplier/วันที่
+            <br>• นับจำนวน Orders
+            <br>• คำนวณยอดรวม
+            <br>• หาค่าเฉลี่ย
+          </p>
+        </div>
+
+        <div class="flow-item problem">
+          <h3>⚠️ ปัญหาที่เกิด</h3>
+          <p>
+            <strong>429 Rate Limit Error</strong>
+            <br>• ดึงข้อมูลมากเกินไป
+            <br>• ช้า (ต้องรอดาวน์โหลดข้อมูลทั้งหมด)
+            <br>• ใช้ bandwidth มาก
+            <br>• ประมวลผลฝั่ง Client ช้า
+          </p>
+        </div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="section after">
+        <div class="section-title">✅ หลังแก้ไข (แก้ปัญหาแล้ว)</div>
+        
+        <div class="flow-item solution">
+          <h3>1. Frontend Request</h3>
+          <p>Frontend ส่ง request ไปที่ Report Endpoint เฉพาะที่ต้องการ เช่น <code>/api/reports/by-country</code></p>
+        </div>
+
+        <div class="flow-item solution">
+          <h3>2. Backend Processing</h3>
+          <p>Backend คำนวณ Report ฝั่ง Server:
+            <br>• ใช้ SQL GROUP BY
+            <br>• คำนวณ SUM, AVG, COUNT
+            <br>• จำกัด 100 records
+            <br>• เรียงลำดับตามที่ต้องการ
+          </p>
+        </div>
+
+        <div class="flow-item solution">
+          <h3>3. Backend Response</h3>
+          <p>Backend ส่งผลลัพธ์ที่พร้อมใช้งานกลับมา (เฉพาะข้อมูลที่จำเป็น)</p>
+        </div>
+
+        <div class="flow-item solution">
+          <h3>✨ ผลลัพธ์</h3>
+          <p>
+            <strong>ไม่มี Error แล้ว!</strong>
+            <br>• เร็วขึ้นมาก
+            <br>• ใช้ bandwidth น้อย
+            <br>• ไม่มี Rate Limit
+            <br>• Frontend แค่แสดงผล
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENDPOINTS -->
+    <div class="endpoints">
+      <h2>📡 7 Report Endpoints ที่ต้องสร้าง</h2>
+      <div class="endpoint-grid">
+        <div class="endpoint-card">
+          <span class="method">GET</span>
+          <h3>1. Order Summary</h3>
+          <div class="path">/api/reports/summary</div>
+          <div class="description">สรุปภาพรวม Orders ทั้งหมด (จำนวน, ยอดรวม, ค่าเฉลี่ย)</div>
+        </div>
+
+        <div class="endpoint-card">
+          <span class="method">GET</span>
+          <h3>2. By Country</h3>
+          <div class="path">/api/reports/by-country</div>
+          <div class="description">รายงานแยกตามประเทศ (จาก product_snapshot) - จำกัด 100</div>
+        </div>
+
+        <div class="endpoint-card">
+          <span class="method">GET</span>
+          <h3>3. By Supplier</h3>
+          <div class="path">/api/reports/by-supplier</div>
+          <div class="description">รายงานแยกตาม Supplier - จำกัด 100</div>
+        </div>
+
+        <div class="endpoint-card">
+          <span class="method">GET</span>
+          <h3>4. By Travel Date</h3>
+          <div class="path">/api/reports/by-travel-date</div>
+          <div class="description">รายงานแยกตามเดือนเดินทาง (ภาษาไทย + พ.ศ.) - จำกัด 100</div>
+        </div>
+
+        <div class="endpoint-card">
+          <span class="method">GET</span>
+          <h3>5. By Booking Date</h3>
+          <div class="path">/api/reports/by-booking-date</div>
+          <div class="description">รายงานแยกตามเดือนจอง (ภาษาไทย + พ.ศ.) - จำกัด 100</div>
+        </div>
+
+        <div class="endpoint-card">
+          <span class="method">GET</span>
+          <h3>6. Repeat Customers</h3>
+          <div class="path">/api/reports/repeat-customers</div>
+          <div class="description">ลูกค้าที่จองซ้ำ (มากกว่า 1 ครั้ง) - จำกัด 100</div>
+        </div>
+
+        <div class="endpoint-card">
+          <span class="method">GET</span>
+          <h3>7. Countries List</h3>
+          <div class="path">/api/reports/countries</div>
+          <div class="description">รายการประเทศทั้งหมด (สำหรับ dropdown) - ไม่จำกัด</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BENEFITS -->
+    <div class="benefits">
+      <h2>🎯 ประโยชน์ที่ได้รับ</h2>
+      <div class="benefit-list">
+        <div class="benefit-item">
+          <div class="icon">⚡</div>
+          <h3>เร็วขึ้นมาก</h3>
+          <p>ไม่ต้องดึงข้อมูลทั้งหมด แค่ดึงผลลัพธ์ที่คำนวณแล้ว</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="icon">✅</div>
+          <h3>แก้ 429 Error</h3>
+          <p>ไม่มี Rate Limit เพราะไม่ต้องดึงข้อมูลมากเกินไป</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="icon">📉</div>
+          <h3>ใช้ Bandwidth น้อย</h3>
+          <p>ส่งเฉพาะข้อมูลที่จำเป็น ไม่ส่งข้อมูลดิบทั้งหมด</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="icon">🎨</div>
+          <h3>Frontend เบาขึ้น</h3>
+          <p>ไม่ต้องคำนวณเอง แค่แสดงผลข้อมูลที่ได้มา</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="icon">🔒</div>
+          <h3>ปลอดภัยกว่า</h3>
+          <p>ไม่ส่งข้อมูลดิบทั้งหมดไปฝั่ง Client</p>
+        </div>
+
+        <div class="benefit-item">
+          <div class="icon">📊</div>
+          <h3>Scalable</h3>
+          <p>รองรับข้อมูลเยอะขึ้นได้ เพราะคำนวณฝั่ง Server</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
