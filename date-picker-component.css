@@ -43,31 +43,45 @@
 
 /* Calendar Dropdown */
 .calendar-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
-  z-index: 1000;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 20px;
   font-family: 'Kanit', sans-serif;
   max-height: 90vh;
-  overflow: visible;
+  max-width: 90vw;
+  overflow: auto;
 }
 
-/* Auto-adjust position if near right edge */
-.date-picker-wrapper:last-child .calendar-dropdown {
-  left: auto;
+/* Backdrop */
+.calendar-dropdown::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
   right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+/* Remove auto-adjust - always centered */
+.date-picker-wrapper:last-child .calendar-dropdown {
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, -50%);
 }
 
 /* Dual Calendar (Date Range) */
 .calendar-dual {
   display: flex;
-  gap: 12px;
+  gap: 20px;
   width: auto;
   max-width: 100%;
 }
@@ -81,50 +95,33 @@
 /* Make calendar more compact */
 .calendar-month {
   flex: 1;
-  min-width: 260px;
-  max-width: 300px;
+  min-width: 280px;
+  max-width: 350px;
 }
 
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-  .calendar-dropdown {
-    right: 0;
-    left: auto;
-  }
-  
   .calendar-dual {
     flex-direction: column;
-    max-width: 280px;
+    max-width: 350px;
   }
   
   .calendar-month {
-    min-width: 260px;
-    max-width: 280px;
+    min-width: 280px;
+    max-width: 350px;
   }
 }
 
 @media (max-width: 768px) {
   .calendar-dropdown {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    right: auto;
-    transform: translate(-50%, -50%);
-    max-width: 90vw;
-    max-height: 80vh;
-    margin-top: 0;
+    padding: 16px;
+    max-width: 95vw;
   }
   
   .calendar-dual {
     flex-direction: column;
-    width: 90vw;
-    max-width: 320px;
-  }
-  
-  .calendar-single {
-    width: 90vw;
-    max-width: 320px;
+    max-width: 100%;
   }
   
   .calendar-month {
@@ -134,13 +131,12 @@
 }
 
 @media (max-width: 640px) {
-  .calendar-dual {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
   .calendar-dropdown {
     padding: 12px;
+  }
+  
+  .calendar-dual {
+    gap: 16px;
   }
 }
   }
@@ -157,14 +153,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   padding: 0 4px;
 }
 
 .calendar-nav-btn {
   background: none;
   border: none;
-  padding: 6px;
+  padding: 8px;
   cursor: pointer;
   border-radius: 6px;
   transition: background 0.2s;
@@ -185,12 +181,12 @@
 }
 
 .calendar-nav-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .calendar-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #1f2937;
 }
@@ -199,33 +195,33 @@
 .calendar-days-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  margin-bottom: 6px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 .calendar-day-name {
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: #6b7280;
-  padding: 6px 0;
+  padding: 8px 0;
 }
 
 /* Calendar Days Grid */
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 4px;
 }
 
 .calendar-day {
   text-align: center;
-  padding: 6px 4px;
-  font-size: 13px;
-  border-radius: 4px;
+  padding: 8px 4px;
+  font-size: 14px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  min-height: 30px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -275,18 +271,18 @@
 /* Calendar Actions */
 .calendar-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid #e5e7eb;
 }
 
 .calendar-btn {
   flex: 1;
-  padding: 7px 12px;
+  padding: 10px 16px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 8px;
+  font-size: 14px;
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
   cursor: pointer;
