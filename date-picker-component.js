@@ -73,6 +73,7 @@ const DatePickerComponent = {
       input.setAttribute('aria-expanded', state.isOpen);
       if (state.isOpen) {
         renderCalendar();
+        adjustDropdownPosition();
       }
     });
 
@@ -344,6 +345,45 @@ const DatePickerComponent = {
       );
     }
 
+    function adjustDropdownPosition() {
+      // Wait for DOM to update
+      setTimeout(() => {
+        const dropdownRect = dropdown.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Reset position
+        dropdown.style.left = '';
+        dropdown.style.right = '';
+        dropdown.style.top = '';
+        dropdown.style.bottom = '';
+        
+        // Check if dropdown overflows right edge
+        if (dropdownRect.right > viewportWidth) {
+          // Align to right edge of input
+          dropdown.style.left = 'auto';
+          dropdown.style.right = '0';
+        }
+        
+        // Check if dropdown overflows left edge
+        if (dropdownRect.left < 0) {
+          // Align to left edge of input
+          dropdown.style.left = '0';
+          dropdown.style.right = 'auto';
+        }
+        
+        // Check if dropdown overflows bottom edge
+        if (dropdownRect.bottom > viewportHeight) {
+          // Show above input instead
+          dropdown.style.top = 'auto';
+          dropdown.style.bottom = '100%';
+          dropdown.style.marginTop = '0';
+          dropdown.style.marginBottom = '4px';
+        }
+      }, 10);
+    }
+
     // Public API
     const pickerInstance = {
       getStartDate: () => state.startDate,
@@ -424,6 +464,7 @@ const DatePickerComponent = {
       input.setAttribute('aria-expanded', state.isOpen);
       if (state.isOpen) {
         renderCalendar();
+        adjustDropdownPosition();
       }
     });
 
@@ -587,6 +628,45 @@ const DatePickerComponent = {
         date1.getMonth() === date2.getMonth() &&
         date1.getDate() === date2.getDate()
       );
+    }
+
+    function adjustDropdownPosition() {
+      // Wait for DOM to update
+      setTimeout(() => {
+        const dropdownRect = dropdown.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Reset position
+        dropdown.style.left = '';
+        dropdown.style.right = '';
+        dropdown.style.top = '';
+        dropdown.style.bottom = '';
+        
+        // Check if dropdown overflows right edge
+        if (dropdownRect.right > viewportWidth) {
+          // Align to right edge of input
+          dropdown.style.left = 'auto';
+          dropdown.style.right = '0';
+        }
+        
+        // Check if dropdown overflows left edge
+        if (dropdownRect.left < 0) {
+          // Align to left edge of input
+          dropdown.style.left = '0';
+          dropdown.style.right = 'auto';
+        }
+        
+        // Check if dropdown overflows bottom edge
+        if (dropdownRect.bottom > viewportHeight) {
+          // Show above input instead
+          dropdown.style.top = 'auto';
+          dropdown.style.bottom = '100%';
+          dropdown.style.marginTop = '0';
+          dropdown.style.marginBottom = '4px';
+        }
+      }, 10);
     }
 
     // Public API
