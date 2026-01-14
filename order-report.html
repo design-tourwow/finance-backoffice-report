@@ -136,7 +136,7 @@
           <section class="filter-section" aria-label="ฟอร์มค้นหา">
             <h2>ค้นหาข้อมูล</h2>
             <form class="filter-form" id="reportFilterForm" novalidate>
-              <!-- Row 1: Dropdowns -->
+              <!-- Row 1: Country, Supplier, Travel Date -->
               <div class="form-row">
                 <div class="form-group">
                   <label for="filterCountry">ประเทศ</label>
@@ -148,10 +148,6 @@
                   <div class="searchable-dropdown-wrapper" id="supplierDropdownWrapper"></div>
                   <input type="hidden" id="filterSupplier" name="supplier_id" value="">
                 </div>
-              </div>
-
-              <!-- Row 2: Date Pickers -->
-              <div class="form-row">
                 <div class="form-group">
                   <label for="travelDateRangePicker">วันที่เดินทาง</label>
                   <div class="date-picker-wrapper" id="travelDatePicker">
@@ -171,7 +167,12 @@
                     />
                     <div id="travelCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog" aria-label="เลือกช่วงวันที่เดินทาง"></div>
                   </div>
+                  <span class="error-message" role="alert"></span>
                 </div>
+              </div>
+
+              <!-- Row 2: Booking Date (only 1 field, but keep consistent layout) -->
+              <div class="form-row">
                 <div class="form-group">
                   <label for="bookingDateRangePicker">วันที่จอง</label>
                   <div class="date-picker-wrapper" id="bookingDatePicker">
@@ -191,16 +192,20 @@
                     />
                     <div id="bookingCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog" aria-label="เลือกช่วงวันที่จอง"></div>
                   </div>
+                  <span class="error-message" role="alert"></span>
                 </div>
+                <div class="form-group"></div>
+                <div class="form-group"></div>
               </div>
 
               <!-- Row 3: Buttons -->
               <div class="form-row form-row-actions">
                 <div class="form-actions">
-                  <button type="submit" class="btn btn-primary">
+                  <button type="submit" class="btn btn-primary" aria-label="ค้นหาข้อมูล">
                     <span class="btn-text">ค้นหา</span>
+                    <span class="btn-loader" aria-hidden="true"></span>
                   </button>
-                  <button type="reset" class="btn btn-secondary">รีเซ็ต</button>
+                  <button type="reset" class="btn btn-secondary" aria-label="รีเซ็ตฟอร์ม">รีเซ็ต</button>
                 </div>
               </div>
             </form>

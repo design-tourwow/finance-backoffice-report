@@ -152,9 +152,14 @@
   // Initialize form handler
   function initFormHandler() {
     const form = document.getElementById('reportFilterForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
     
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
+      
+      // Add loading state
+      submitBtn.classList.add('loading');
+      submitBtn.disabled = true;
       
       // Get form data
       currentFilters = {};
@@ -188,8 +193,14 @@
       
       console.log('🔍 Applying filters:', currentFilters);
       
-      // Reload current tab with filters
-      await loadTabData(currentTab);
+      try {
+        // Reload current tab with filters
+        await loadTabData(currentTab);
+      } finally {
+        // Remove loading state
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+      }
     });
 
     form.addEventListener('reset', function() {
