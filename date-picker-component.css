@@ -72,14 +72,28 @@
   max-width: calc(100vw - 40px);
 }
 
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .calendar-dropdown {
+    right: 0;
+    left: auto;
+  }
+  
+  .calendar-dual {
+    width: 580px;
+  }
+}
+
 @media (max-width: 768px) {
   .calendar-dropdown {
     position: fixed;
     top: 50%;
     left: 50%;
+    right: auto;
     transform: translate(-50%, -50%);
     max-width: 90vw;
     max-height: 80vh;
+    margin-top: 0;
   }
   
   .calendar-dual {
@@ -98,6 +112,12 @@
   .calendar-dual {
     flex-direction: column;
     gap: 16px;
+  }
+  
+  .calendar-dropdown {
+    padding: 16px;
+  }
+}
   }
 }
 

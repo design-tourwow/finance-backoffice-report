@@ -1,0 +1,233 @@
+/* ========================================
+   Searchable Dropdown Component Styles
+   ======================================== */
+
+.searchable-dropdown-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.searchable-dropdown-trigger {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 36px 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Kanit', sans-serif;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  color: #1f2937;
+  text-align: left;
+  position: relative;
+}
+
+.searchable-dropdown-trigger:hover {
+  border-color: #4a7ba7;
+}
+
+.searchable-dropdown-trigger:focus {
+  outline: none;
+  border-color: #4a7ba7;
+  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
+}
+
+.searchable-dropdown-trigger.placeholder {
+  color: #9ca3af;
+}
+
+.searchable-dropdown-trigger .selected-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchable-dropdown-trigger .arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.2s;
+  color: #6b7280;
+}
+
+.searchable-dropdown-trigger.open .arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.searchable-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 320px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.searchable-dropdown-menu.open {
+  display: flex;
+}
+
+.searchable-dropdown-search {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.searchable-dropdown-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Kanit', sans-serif;
+  transition: all 0.2s;
+}
+
+.searchable-dropdown-search input:focus {
+  outline: none;
+  border-color: #4a7ba7;
+  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
+}
+
+.searchable-dropdown-options {
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.searchable-dropdown-option {
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  user-select: none;
+  font-size: 14px;
+  color: #1f2937;
+  font-family: 'Kanit', sans-serif;
+}
+
+.searchable-dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.searchable-dropdown-option.selected {
+  background: #eff6ff;
+  color: #4a7ba7;
+  font-weight: 500;
+}
+
+.searchable-dropdown-option.selected:hover {
+  background: #dbeafe;
+}
+
+.searchable-dropdown-empty {
+  padding: 20px 12px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+  font-family: 'Kanit', sans-serif;
+}
+
+/* Scrollbar styling */
+.searchable-dropdown-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.searchable-dropdown-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.searchable-dropdown-options::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.searchable-dropdown-options::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .searchable-dropdown-menu {
+    max-height: 280px;
+  }
+  
+  .searchable-dropdown-options {
+    max-height: 200px;
+  }
+}
+
+/* ========================================
+   Multi-Select Specific Styles
+   ======================================== */
+
+.searchable-dropdown-menu.multi .searchable-dropdown-search {
+  padding-bottom: 8px;
+}
+
+.searchable-dropdown-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.searchable-action-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 12px;
+  color: #4a7ba7;
+  font-family: 'Kanit', sans-serif;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.searchable-action-btn:hover {
+  color: #3a6287;
+  text-decoration: underline;
+}
+
+.searchable-dropdown-option .option-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #4a7ba7;
+  margin-right: 8px;
+}
+
+.searchable-dropdown-option label {
+  flex: 1;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1f2937;
+  font-family: 'Kanit', sans-serif;
+}
+
+.selected-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #4a7ba7;
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+

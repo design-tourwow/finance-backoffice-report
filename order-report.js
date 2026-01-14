@@ -94,28 +94,52 @@
   // Initialize filters
   async function initFilters() {
     try {
+      // Initialize country dropdown
+      const countryDropdown = SearchableDropdownComponent.initSingleSelect({
+        wrapperId: 'countryDropdownWrapper',
+        placeholder: 'ทั้งหมด',
+        options: [{ value: '', label: 'ทั้งหมด' }],
+        onChange: (value, label) => {
+          document.getElementById('filterCountry').value = value;
+          console.log('Country selected:', value, label);
+        }
+      });
+
+      // Initialize supplier dropdown
+      const supplierDropdown = SearchableDropdownComponent.initSingleSelect({
+        wrapperId: 'supplierDropdownWrapper',
+        placeholder: 'ทั้งหมด',
+        options: [{ value: '', label: 'ทั้งหมด' }],
+        onChange: (value, label) => {
+          document.getElementById('filterSupplier').value = value;
+          console.log('Supplier selected:', value, label);
+        }
+      });
+
       // Load countries
       const countriesResponse = await OrderReportAPI.getCountries();
       if (countriesResponse && countriesResponse.success && countriesResponse.data) {
-        const countrySelect = document.getElementById('filterCountry');
-        countriesResponse.data.forEach(country => {
-          const option = document.createElement('option');
-          option.value = country.id;
-          option.textContent = `${country.name_th} (${country.name_en})`;
-          countrySelect.appendChild(option);
-        });
+        const countryOptions = [
+          { value: '', label: 'ทั้งหมด' },
+          ...countriesResponse.data.map(country => ({
+            value: country.id,
+            label: `${country.name_th} (${country.name_en})`
+          }))
+        ];
+        countryDropdown.updateOptions(countryOptions);
       }
 
       // Load suppliers
       const suppliersResponse = await OrderReportAPI.getSuppliers();
       if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
-        const supplierSelect = document.getElementById('filterSupplier');
-        suppliersResponse.data.forEach(supplier => {
-          const option = document.createElement('option');
-          option.value = supplier.id;
-          option.textContent = `${supplier.name_th} (${supplier.name_en})`;
-          supplierSelect.appendChild(option);
-        });
+        const supplierOptions = [
+          { value: '', label: 'ทั้งหมด' },
+          ...suppliersResponse.data.map(supplier => ({
+            value: supplier.id,
+            label: `${supplier.name_th} (${supplier.name_en})`
+          }))
+        ];
+        supplierDropdown.updateOptions(supplierOptions);
       }
     } catch (error) {
       console.error('❌ Failed to load filters:', error);

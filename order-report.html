@@ -15,6 +15,7 @@
     <!-- Styles -->
     <link rel="stylesheet" href="tour-image-manager.css" />
     <link rel="stylesheet" href="date-picker-component.css" />
+    <link rel="stylesheet" href="searchable-dropdown-component.css" />
     <link rel="stylesheet" href="order-report.css" />
     
     <!-- Configuration -->
@@ -43,6 +44,7 @@
     <script src="tour-image-manager-api.js"></script>
     <script src="order-report-api.js"></script>
     <script src="date-picker-component.js"></script>
+    <script src="searchable-dropdown-component.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Load sidebar state -->
@@ -136,15 +138,13 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="filterCountry">ประเทศ</label>
-                  <select id="filterCountry" name="country_id" class="form-select">
-                    <option value="">ทั้งหมด</option>
-                  </select>
+                  <div class="searchable-dropdown-wrapper" id="countryDropdownWrapper"></div>
+                  <input type="hidden" id="filterCountry" name="country_id" value="">
                 </div>
                 <div class="form-group">
                   <label for="filterSupplier">Supplier</label>
-                  <select id="filterSupplier" name="supplier_id" class="form-select">
-                    <option value="">ทั้งหมด</option>
-                  </select>
+                  <div class="searchable-dropdown-wrapper" id="supplierDropdownWrapper"></div>
+                  <input type="hidden" id="filterSupplier" name="supplier_id" value="">
                 </div>
                 <div class="form-group">
                   <label for="travelDateRangePicker">วันที่เดินทาง</label>
