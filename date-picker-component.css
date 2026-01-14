@@ -43,45 +43,31 @@
 
 /* Calendar Dropdown */
 .calendar-dropdown {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10000;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  z-index: 1000;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 12px;
   font-family: 'Kanit', sans-serif;
   max-height: 90vh;
-  max-width: 90vw;
-  overflow: auto;
+  overflow: visible;
 }
 
-/* Backdrop */
-.calendar-dropdown::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: -1;
-}
-
-/* Remove auto-adjust - always centered */
+/* Auto-adjust position if near right edge */
 .date-picker-wrapper:last-child .calendar-dropdown {
-  left: 50%;
-  right: auto;
-  transform: translate(-50%, -50%);
+  left: auto;
+  right: 0;
 }
 
 /* Dual Calendar (Date Range) */
 .calendar-dual {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   width: auto;
   max-width: 100%;
 }
@@ -95,33 +81,50 @@
 /* Make calendar more compact */
 .calendar-month {
   flex: 1;
-  min-width: 280px;
-  max-width: 350px;
+  min-width: 260px;
+  max-width: 300px;
 }
 
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
+  .calendar-dropdown {
+    right: 0;
+    left: auto;
+  }
+  
   .calendar-dual {
     flex-direction: column;
-    max-width: 350px;
+    max-width: 280px;
   }
   
   .calendar-month {
-    min-width: 280px;
-    max-width: 350px;
+    min-width: 260px;
+    max-width: 280px;
   }
 }
 
 @media (max-width: 768px) {
   .calendar-dropdown {
-    padding: 16px;
-    max-width: 95vw;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    max-width: 90vw;
+    max-height: 80vh;
+    margin-top: 0;
   }
   
   .calendar-dual {
     flex-direction: column;
-    max-width: 100%;
+    width: 90vw;
+    max-width: 320px;
+  }
+  
+  .calendar-single {
+    width: 90vw;
+    max-width: 320px;
   }
   
   .calendar-month {
@@ -131,12 +134,13 @@
 }
 
 @media (max-width: 640px) {
-  .calendar-dropdown {
-    padding: 12px;
+  .calendar-dual {
+    flex-direction: column;
+    gap: 12px;
   }
   
-  .calendar-dual {
-    gap: 16px;
+  .calendar-dropdown {
+    padding: 12px;
   }
 }
   }
@@ -153,14 +157,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding: 0 4px;
 }
 
 .calendar-nav-btn {
   background: none;
   border: none;
-  padding: 8px;
+  padding: 6px;
   cursor: pointer;
   border-radius: 6px;
   transition: background 0.2s;
@@ -181,12 +185,12 @@
 }
 
 .calendar-nav-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .calendar-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
 }
@@ -195,33 +199,33 @@
 .calendar-days-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 2px;
+  margin-bottom: 6px;
 }
 
 .calendar-day-name {
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #6b7280;
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 /* Calendar Days Grid */
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 2px;
 }
 
 .calendar-day {
   text-align: center;
-  padding: 8px 4px;
-  font-size: 14px;
-  border-radius: 6px;
+  padding: 6px 4px;
+  font-size: 13px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  min-height: 36px;
+  min-height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,18 +275,18 @@
 /* Calendar Actions */
 .calendar-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid #e5e7eb;
 }
 
 .calendar-btn {
   flex: 1;
-  padding: 10px 16px;
+  padding: 7px 12px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 13px;
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
   cursor: pointer;
