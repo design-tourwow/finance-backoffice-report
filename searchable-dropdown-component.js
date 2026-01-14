@@ -19,6 +19,195 @@ const SearchableDropdownComponent = {
   },
   
   /**
+   * Initialize Simple Dropdown (without search)
+   * @param {Object} options - Configuration options
+   * @param {string} options.wrapperId - ID of wrapper element
+   * @param {string} options.placeholder - Placeholder text
+   * @param {Array} options.options - Array of {value, label} objects
+   * @param {Function} options.onChange - Callback when selection changes
+   * @returns {Object} Dropdown instance with methods
+   */
+  initDropdown(options) {
+    const { wrapperId, placeholder, options: dropdownOptions, onChange } = options;
+    
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) {
+      console.error('SearchableDropdown: Wrapper not found', wrapperId);
+      return null;
+    }
+
+    const state = {
+      selectedValue: null,
+      selectedLabel: null,
+      isOpen: false
+    };
+
+    // Build HTML (without search box)
+    wrapper.innerHTML = `
+      <div class="searchable-dropdown-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+        <span class="selected-text">${placeholder}</span>
+        <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="searchable-dropdown-menu" role="listbox">
+        <div class="searchable-dropdown-options">
+          ${renderSimpleOptions(dropdownOptions)}
+        </div>
+      </div>
+    `;
+
+    const trigger = wrapper.querySelector('.searchable-dropdown-trigger');
+    const menu = wrapper.querySelector('.searchable-dropdown-menu');
+    const optionsContainer = wrapper.querySelector('.searchable-dropdown-options');
+    const selectedText = wrapper.querySelector('.selected-text');
+
+    // Toggle dropdown
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      
+      const isCurrentlyOpen = state.isOpen;
+      
+      // Close all other dropdowns and date pickers first
+      if (!isCurrentlyOpen) {
+        SearchableDropdownComponent.closeAllDropdowns();
+        if (typeof DatePickerComponent !== 'undefined') {
+          DatePickerComponent.closeAllPickers();
+        }
+      }
+      
+      toggleDropdown();
+    });
+
+    // Keyboard support for trigger
+    trigger.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDropdown();
+      }
+      if (e.key === 'Escape') {
+        closeDropdown();
+      }
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!wrapper.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    // Prevent closing when clicking inside menu
+    menu.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    function renderSimpleOptions(options) {
+      if (options.length === 0) {
+        return '<div class="searchable-dropdown-empty">ไม่พบข้อมูล</div>';
+      }
+      
+      return options.map(opt => `
+        <div class="searchable-dropdown-option ${opt.value === state.selectedValue ? 'selected' : ''}" 
+             data-value="${opt.value}" 
+             role="option" 
+             aria-selected="${opt.value === state.selectedValue}">
+          ${opt.label}
+        </div>
+      `).join('');
+    }
+
+    function attachOptionListeners() {
+      const options = optionsContainer.querySelectorAll('.searchable-dropdown-option');
+      options.forEach(option => {
+        option.addEventListener('click', function() {
+          const value = this.getAttribute('data-value');
+          const label = this.textContent.trim();
+          selectOption(value, label);
+        });
+      });
+    }
+
+    function selectOption(value, label) {
+      state.selectedValue = value;
+      state.selectedLabel = label;
+      selectedText.textContent = label;
+      trigger.classList.remove('placeholder');
+      
+      // Update selected state in options
+      optionsContainer.querySelectorAll('.searchable-dropdown-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.getAttribute('data-value') === value);
+        opt.setAttribute('aria-selected', opt.getAttribute('data-value') === value);
+      });
+      
+      closeDropdown();
+      
+      if (onChange) {
+        onChange(value, label);
+      }
+    }
+
+    function toggleDropdown() {
+      if (state.isOpen) {
+        closeDropdown();
+      } else {
+        openDropdown();
+      }
+    }
+
+    function openDropdown() {
+      state.isOpen = true;
+      menu.classList.add('open');
+      trigger.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeDropdown() {
+      state.isOpen = false;
+      menu.classList.remove('open');
+      trigger.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    // Initial render
+    attachOptionListeners();
+
+    // Public API
+    const dropdownInstance = {
+      getValue: () => state.selectedValue,
+      getLabel: () => state.selectedLabel,
+      setValue: (value) => {
+        const option = dropdownOptions.find(opt => opt.value === value);
+        if (option) {
+          selectOption(option.value, option.label);
+        }
+      },
+      clear: () => {
+        state.selectedValue = null;
+        state.selectedLabel = null;
+        selectedText.textContent = placeholder;
+        trigger.classList.add('placeholder');
+        optionsContainer.querySelectorAll('.searchable-dropdown-option').forEach(opt => {
+          opt.classList.remove('selected');
+          opt.setAttribute('aria-selected', 'false');
+        });
+      },
+      updateOptions: (newOptions) => {
+        dropdownOptions.length = 0;
+        dropdownOptions.push(...newOptions);
+        optionsContainer.innerHTML = renderSimpleOptions(newOptions);
+        attachOptionListeners();
+      },
+      close: closeDropdown
+    };
+    
+    // Register this dropdown
+    SearchableDropdownComponent._openDropdowns.push(dropdownInstance);
+    
+    return dropdownInstance;
+  },
+
+  /**
    * Initialize Single-Select Dropdown
    * @param {Object} options - Configuration options
    * @param {string} options.wrapperId - ID of wrapper element

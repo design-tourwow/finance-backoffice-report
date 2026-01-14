@@ -96,8 +96,11 @@
 
   // Initialize filters
   async function initFilters() {
+    console.log('🔧 Initializing filters...');
+    
     try {
       // Initialize country dropdown
+      console.log('📍 Creating country dropdown...');
       const countryDropdown = SearchableDropdownComponent.initSingleSelect({
         wrapperId: 'countryDropdownWrapper',
         placeholder: 'ทั้งหมด',
@@ -107,8 +110,15 @@
           console.log('Country selected:', value, label);
         }
       });
+      
+      if (!countryDropdown) {
+        console.error('❌ Failed to create country dropdown');
+      } else {
+        console.log('✅ Country dropdown created');
+      }
 
       // Initialize supplier dropdown
+      console.log('🏢 Creating supplier dropdown...');
       const supplierDropdown = SearchableDropdownComponent.initSingleSelect({
         wrapperId: 'supplierDropdownWrapper',
         placeholder: 'ทั้งหมด',
@@ -118,8 +128,15 @@
           console.log('Supplier selected:', value, label);
         }
       });
+      
+      if (!supplierDropdown) {
+        console.error('❌ Failed to create supplier dropdown');
+      } else {
+        console.log('✅ Supplier dropdown created');
+      }
 
       // Load countries
+      console.log('🌍 Loading countries...');
       const countriesResponse = await OrderReportAPI.getCountries();
       if (countriesResponse && countriesResponse.success && countriesResponse.data) {
         const countryOptions = [
@@ -130,9 +147,11 @@
           }))
         ];
         countryDropdown.updateOptions(countryOptions);
+        console.log('✅ Countries loaded:', countryOptions.length);
       }
 
       // Load suppliers
+      console.log('🏢 Loading suppliers...');
       const suppliersResponse = await OrderReportAPI.getSuppliers();
       if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
         const supplierOptions = [
@@ -143,7 +162,10 @@
           }))
         ];
         supplierDropdown.updateOptions(supplierOptions);
+        console.log('✅ Suppliers loaded:', supplierOptions.length);
       }
+      
+      console.log('✅ Filters initialized successfully');
     } catch (error) {
       console.error('❌ Failed to load filters:', error);
     }
