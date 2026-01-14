@@ -209,10 +209,7 @@ const OrderReportAPI = {
       
       const result = await this.fetchAPI('/api/suppliers');
       
-      return {
-        status: 'success',
-        data: result.data || []
-      };
+      return result;
     } catch (error) {
       console.error('❌ Suppliers Error:', error);
       throw error;

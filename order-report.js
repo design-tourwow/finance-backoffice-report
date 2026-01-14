@@ -96,7 +96,7 @@
     try {
       // Load countries
       const countriesResponse = await OrderReportAPI.getCountries();
-      if (countriesResponse && countriesResponse.status === 'success' && countriesResponse.data) {
+      if (countriesResponse && countriesResponse.success && countriesResponse.data) {
         const countrySelect = document.getElementById('filterCountry');
         countriesResponse.data.forEach(country => {
           const option = document.createElement('option');
@@ -108,7 +108,7 @@
 
       // Load suppliers
       const suppliersResponse = await OrderReportAPI.getSuppliers();
-      if (suppliersResponse && suppliersResponse.status === 'success' && suppliersResponse.data) {
+      if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
         const supplierSelect = document.getElementById('filterSupplier');
         suppliersResponse.data.forEach(supplier => {
           const option = document.createElement('option');
