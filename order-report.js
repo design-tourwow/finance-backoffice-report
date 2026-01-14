@@ -6,6 +6,7 @@
   let currentTab = 'country';
   let currentFilters = {};
   let currentTableInstance = null;
+  let currentTableData = [];
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -29,6 +30,7 @@
     initFilters();
     initDatePickers();
     initFormHandler();
+    initTableSearch();
     
     // Load initial data
     await loadInitialData();
@@ -216,6 +218,76 @@
       onChange: (startDate, endDate) => {
         console.log('Booking dates changed:', startDate, endDate);
       }
+    });
+  }
+
+  // Initialize table search
+  function initTableSearch() {
+    const searchInput = document.getElementById('tableSearchInput');
+    const clearBtn = document.getElementById('clearTableSearch');
+    const resultsDiv = document.getElementById('tableSearchResults');
+    const resultCount = document.getElementById('searchResultCount');
+
+    if (!searchInput || !clearBtn) return;
+
+    // Search input handler
+    searchInput.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      
+      // Show/hide clear button
+      clearBtn.style.display = searchTerm ? 'flex' : 'none';
+      
+      if (!searchTerm) {
+        // Reset all rows
+        const rows = document.querySelectorAll('#reportTableBody tr');
+        rows.forEach(row => {
+          row.classList.remove('search-hidden', 'search-match');
+        });
+        resultsDiv.style.display = 'none';
+        return;
+      }
+
+      // Filter rows
+      const rows = document.querySelectorAll('#reportTableBody tr');
+      let matchCount = 0;
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const matches = text.includes(searchTerm);
+        
+        if (matches) {
+          row.classList.remove('search-hidden');
+          row.classList.add('search-match');
+          matchCount++;
+        } else {
+          row.classList.add('search-hidden');
+          row.classList.remove('search-match');
+        }
+      });
+
+      // Show results
+      resultCount.textContent = matchCount;
+      resultsDiv.style.display = 'block';
+    });
+
+    // Clear button handler
+    clearBtn.addEventListener('click', function() {
+      searchInput.value = '';
+      searchInput.dispatchEvent(new Event('input'));
+      searchInput.focus();
+    });
+
+    // Clear search when switching tabs
+    document.querySelectorAll('.report-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        resultsDiv.style.display = 'none';
+        const rows = document.querySelectorAll('#reportTableBody tr');
+        rows.forEach(row => {
+          row.classList.remove('search-hidden', 'search-match');
+        });
+      });
     });
   }
 
@@ -613,6 +685,17 @@
     thead.innerHTML = '';
     tbody.innerHTML = '';
     
+    // Store current data
+    currentTableData = data;
+    
+    // Clear search
+    const searchInput = document.getElementById('tableSearchInput');
+    if (searchInput) {
+      searchInput.value = '';
+      document.getElementById('clearTableSearch').style.display = 'none';
+      document.getElementById('tableSearchResults').style.display = 'none';
+    }
+    
     // Initialize sortable table
     currentTableInstance = TableSortingComponent.initSortableTable({
       tableId: 'reportTable',
@@ -620,6 +703,7 @@
       data: data,
       onSort: (sortedData, sortColumn, sortDirection) => {
         console.log('Table sorted:', { sortColumn, sortDirection });
+        currentTableData = sortedData;
       }
     });
   }
