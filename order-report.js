@@ -99,15 +99,15 @@
     console.log('🔧 Initializing filters...');
     
     try {
-      // Initialize country dropdown
+      // Initialize country dropdown (Multi-select like tour-image-manager)
       console.log('📍 Creating country dropdown...');
-      const countryDropdown = SearchableDropdownComponent.initSingleSelect({
+      const countryDropdown = SearchableDropdownComponent.initMultiSelect({
         wrapperId: 'countryDropdownWrapper',
-        placeholder: 'ทั้งหมด',
-        options: [{ value: '', label: 'ทั้งหมด' }],
-        onChange: (value, label) => {
-          document.getElementById('filterCountry').value = value;
-          console.log('Country selected:', value, label);
+        placeholder: 'เลือกประเทศ',
+        options: [],
+        onChange: (values, labels) => {
+          document.getElementById('filterCountry').value = values.join(',');
+          console.log('Countries selected:', values, labels);
         }
       });
       
@@ -117,15 +117,15 @@
         console.log('✅ Country dropdown created');
       }
 
-      // Initialize supplier dropdown
+      // Initialize supplier dropdown (Multi-select like tour-image-manager)
       console.log('🏢 Creating supplier dropdown...');
-      const supplierDropdown = SearchableDropdownComponent.initSingleSelect({
+      const supplierDropdown = SearchableDropdownComponent.initMultiSelect({
         wrapperId: 'supplierDropdownWrapper',
-        placeholder: 'ทั้งหมด',
-        options: [{ value: '', label: 'ทั้งหมด' }],
-        onChange: (value, label) => {
-          document.getElementById('filterSupplier').value = value;
-          console.log('Supplier selected:', value, label);
+        placeholder: 'เลือก Supplier',
+        options: [],
+        onChange: (values, labels) => {
+          document.getElementById('filterSupplier').value = values.join(',');
+          console.log('Suppliers selected:', values, labels);
         }
       });
       
@@ -139,13 +139,10 @@
       console.log('🌍 Loading countries...');
       const countriesResponse = await OrderReportAPI.getCountries();
       if (countriesResponse && countriesResponse.success && countriesResponse.data) {
-        const countryOptions = [
-          { value: '', label: 'ทั้งหมด' },
-          ...countriesResponse.data.map(country => ({
-            value: country.id,
-            label: `${country.name_th} (${country.name_en})`
-          }))
-        ];
+        const countryOptions = countriesResponse.data.map(country => ({
+          value: country.id,
+          label: `${country.name_th} (${country.name_en})`
+        }));
         countryDropdown.updateOptions(countryOptions);
         console.log('✅ Countries loaded:', countryOptions.length);
       }
@@ -154,13 +151,10 @@
       console.log('🏢 Loading suppliers...');
       const suppliersResponse = await OrderReportAPI.getSuppliers();
       if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
-        const supplierOptions = [
-          { value: '', label: 'ทั้งหมด' },
-          ...suppliersResponse.data.map(supplier => ({
-            value: supplier.id,
-            label: `${supplier.name_th} (${supplier.name_en})`
-          }))
-        ];
+        const supplierOptions = suppliersResponse.data.map(supplier => ({
+          value: supplier.id,
+          label: `${supplier.name_th} (${supplier.name_en})`
+        }));
         supplierDropdown.updateOptions(supplierOptions);
         console.log('✅ Suppliers loaded:', supplierOptions.length);
       }
@@ -186,12 +180,27 @@
       // Get form data
       currentFilters = {};
       
-      // Country and Supplier
-      const country = document.getElementById('filterCountry').value;
-      const supplier = document.getElementById('filterSupplier').value;
+      // Country and Supplier (now comma-separated values from multi-select)
+      const countryValue = document.getElementById('filterCountry').value;
+      const supplierValue = document.getElementById('filterSupplier').value;
       
-      if (country) currentFilters.country_id = country;
-      if (supplier) currentFilters.supplier_id = supplier;
+      // Convert comma-separated to array, then back to comma-separated for API
+      // (or send as array if API supports it)
+      if (countryValue) {
+        const countryIds = countryValue.split(',').filter(v => v);
+        if (countryIds.length > 0) {
+          // If API supports multiple IDs, send as comma-separated
+          // Otherwise, you might need to send first one only
+          currentFilters.country_id = countryIds.join(',');
+        }
+      }
+      
+      if (supplierValue) {
+        const supplierIds = supplierValue.split(',').filter(v => v);
+        if (supplierIds.length > 0) {
+          currentFilters.supplier_id = supplierIds.join(',');
+        }
+      }
       
       // Travel dates
       if (travelDatePickerInstance) {
@@ -229,6 +238,11 @@
       currentFilters = {};
       if (travelDatePickerInstance) travelDatePickerInstance.clear();
       if (bookingDatePickerInstance) bookingDatePickerInstance.clear();
+      
+      // Clear multi-select dropdowns
+      document.getElementById('filterCountry').value = '';
+      document.getElementById('filterSupplier').value = '';
+      
       setTimeout(() => loadTabData(currentTab), 100);
     });
   }
