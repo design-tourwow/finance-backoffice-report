@@ -38,12 +38,13 @@
 .sort-icon {
   display: inline-flex;
   flex-shrink: 0;
-  opacity: 0.5;
+  opacity: 0.4;
   transition: opacity 0.2s;
+  margin-left: 4px;
 }
 
 .sortable-header.sortable:hover .sort-icon {
-  opacity: 1;
+  opacity: 0.8;
 }
 
 /* Active sort state */
@@ -51,11 +52,19 @@
   opacity: 1;
 }
 
-.sortable-header.sorted.asc .sort-asc {
+.sortable-header.sorted.asc .sort-default {
+  opacity: 0 !important;
+}
+
+.sortable-header.sorted.asc .sort-asc-arrow {
   opacity: 1 !important;
 }
 
-.sortable-header.sorted.desc .sort-desc {
+.sortable-header.sorted.desc .sort-default {
+  opacity: 0 !important;
+}
+
+.sortable-header.sorted.desc .sort-desc-arrow {
   opacity: 1 !important;
 }
 

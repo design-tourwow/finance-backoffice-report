@@ -61,9 +61,10 @@ const TableSortingComponent = {
           const sortIcon = document.createElement('span');
           sortIcon.className = 'sort-icon';
           sortIcon.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path class="sort-asc" d="M6 3L9 6H3L6 3Z" fill="currentColor" opacity="0.3"/>
-              <path class="sort-desc" d="M6 9L3 6H9L6 9Z" fill="currentColor" opacity="0.3"/>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path class="sort-default" d="M7 15l5 5 5-5M7 9l5-5 5 5" opacity="0.3"/>
+              <path class="sort-asc-arrow" d="M7 9l5-5 5 5" opacity="0" stroke="#4a7ba7"/>
+              <path class="sort-desc-arrow" d="M7 15l5 5 5-5" opacity="0" stroke="#4a7ba7"/>
             </svg>
           `;
           headerContent.appendChild(sortIcon);
