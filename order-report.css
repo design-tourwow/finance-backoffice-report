@@ -211,9 +211,9 @@
 
 /* Highlight search matches */
 mark.search-highlight {
-  background: #fef3c7;
-  color: #92400e;
-  font-weight: 600;
+  background: rgba(74, 123, 167, 0.25);
+  color: inherit;
+  font-weight: inherit;
   padding: 0;
   border-radius: 2px;
 }

@@ -459,6 +459,8 @@
 
   // Render Country Report
   function renderCountryReport(response) {
+    console.log('🎨 Rendering Country Report:', response);
+    
     if (!response || !response.data || response.data.length === 0) {
       showEmpty();
       return;
@@ -467,6 +469,8 @@
     showContent();
     
     const data = response.data;
+    console.log('📊 Country Report Data:', data);
+    console.log('🔍 Current Filters:', currentFilters);
     
     // Render chart
     renderChart({
