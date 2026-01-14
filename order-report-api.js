@@ -61,6 +61,11 @@ const OrderReportAPI = {
       const result = await response.json();
       console.log('✅ Response:', result);
       
+      // Normalize response format (support both 'success' and 'status')
+      if (result.status === 'success' && !result.success) {
+        result.success = true;
+      }
+      
       return result;
     } catch (error) {
       console.error('❌ API Error:', error);
