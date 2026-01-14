@@ -238,10 +238,14 @@
       clearBtn.style.display = searchTerm ? 'flex' : 'none';
       
       if (!searchTerm) {
-        // Reset all rows
+        // Reset all rows - remove highlights
         const rows = document.querySelectorAll('#reportTableBody tr');
         rows.forEach(row => {
-          row.classList.remove('search-hidden', 'search-match');
+          row.classList.remove('search-hidden');
+          // Remove all highlight marks
+          row.querySelectorAll('mark').forEach(mark => {
+            mark.replaceWith(mark.textContent);
+          });
         });
         resultsDiv.style.display = 'none';
         return;
@@ -252,16 +256,33 @@
       let matchCount = 0;
 
       rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        const matches = text.includes(searchTerm);
+        const cells = row.querySelectorAll('td');
+        let rowMatches = false;
         
-        if (matches) {
+        cells.forEach(cell => {
+          const originalText = cell.textContent;
+          const lowerText = originalText.toLowerCase();
+          
+          if (lowerText.includes(searchTerm)) {
+            rowMatches = true;
+            
+            // Highlight matching text
+            const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+            const highlightedText = originalText.replace(regex, '<mark class="search-highlight">$1</mark>');
+            cell.innerHTML = highlightedText;
+          } else {
+            // Remove any existing highlights
+            cell.querySelectorAll('mark').forEach(mark => {
+              mark.replaceWith(mark.textContent);
+            });
+          }
+        });
+        
+        if (rowMatches) {
           row.classList.remove('search-hidden');
-          row.classList.add('search-match');
           matchCount++;
         } else {
           row.classList.add('search-hidden');
-          row.classList.remove('search-match');
         }
       });
 
@@ -270,10 +291,26 @@
       resultsDiv.style.display = 'block';
     });
 
+    // Helper function to escape regex special characters
+    function escapeRegex(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     // Clear button handler
     clearBtn.addEventListener('click', function() {
       searchInput.value = '';
-      searchInput.dispatchEvent(new Event('input'));
+      
+      // Remove all highlights
+      const rows = document.querySelectorAll('#reportTableBody tr');
+      rows.forEach(row => {
+        row.classList.remove('search-hidden');
+        row.querySelectorAll('mark').forEach(mark => {
+          mark.replaceWith(mark.textContent);
+        });
+      });
+      
+      clearBtn.style.display = 'none';
+      resultsDiv.style.display = 'none';
       searchInput.focus();
     });
 
@@ -285,7 +322,10 @@
         resultsDiv.style.display = 'none';
         const rows = document.querySelectorAll('#reportTableBody tr');
         rows.forEach(row => {
-          row.classList.remove('search-hidden', 'search-match');
+          row.classList.remove('search-hidden');
+          row.querySelectorAll('mark').forEach(mark => {
+            mark.replaceWith(mark.textContent);
+          });
         });
       });
     });
@@ -630,6 +670,26 @@
       currentChart.destroy();
     }
     
+    // Calculate min/max for better scaling
+    let minValue = 0;
+    let maxValue = 0;
+    
+    if (type !== 'pie' && data.datasets && data.datasets[0]) {
+      const values = data.datasets[0].data;
+      minValue = Math.min(...values);
+      maxValue = Math.max(...values);
+      
+      // If all values are small (< 10), adjust scale
+      if (maxValue < 10 && maxValue > 0) {
+        minValue = 0;
+        maxValue = Math.ceil(maxValue * 1.2); // Add 20% padding
+      } else if (minValue > 0) {
+        // If minimum is not 0, start from a reasonable baseline
+        const range = maxValue - minValue;
+        minValue = Math.max(0, minValue - range * 0.1);
+      }
+    }
+    
     // Create new chart
     currentChart = new Chart(ctx, {
       type: type,
@@ -657,11 +717,15 @@
         },
         scales: type !== 'pie' ? {
           y: {
-            beginAtZero: true,
+            beginAtZero: maxValue >= 10, // Only begin at zero if values are large
+            min: minValue,
+            max: maxValue,
             ticks: {
               font: {
                 family: 'Kanit'
-              }
+              },
+              stepSize: maxValue < 10 ? 1 : undefined, // Use integer steps for small values
+              precision: 0
             }
           },
           x: {
@@ -694,6 +758,17 @@
       searchInput.value = '';
       document.getElementById('clearTableSearch').style.display = 'none';
       document.getElementById('tableSearchResults').style.display = 'none';
+      
+      // Remove any existing highlights
+      setTimeout(() => {
+        const rows = document.querySelectorAll('#reportTableBody tr');
+        rows.forEach(row => {
+          row.classList.remove('search-hidden');
+          row.querySelectorAll('mark').forEach(mark => {
+            mark.replaceWith(mark.textContent);
+          });
+        });
+      }, 100);
     }
     
     // Initialize sortable table

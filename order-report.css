@@ -210,8 +210,12 @@
 }
 
 /* Highlight search matches */
-.report-table tbody tr.search-match {
-  background: #fef3c7 !important;
+mark.search-highlight {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+  padding: 0;
+  border-radius: 2px;
 }
 
 .report-table tbody tr.search-hidden {
