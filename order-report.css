@@ -31,10 +31,15 @@
   margin-bottom: 0 !important;
 }
 
+.form-row-actions {
+  grid-template-columns: 1fr !important;
+}
+
 .form-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+  margin-left: auto;
 }
 
 .error-message {
@@ -393,8 +398,11 @@ mark.search-highlight {
 /* Button Loading State */
 .btn-primary.loading {
   position: relative;
-  color: transparent;
   pointer-events: none;
+}
+
+.btn-primary.loading .btn-text {
+  visibility: hidden;
 }
 
 .btn-primary.loading .btn-loader {

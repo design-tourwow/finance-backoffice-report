@@ -11,6 +11,10 @@
   // Date picker instances
   let travelDatePickerInstance = null;
   let bookingDatePickerInstance = null;
+  
+  // Dropdown instances
+  let countryDropdownInstance = null;
+  let supplierDropdownInstance = null;
 
   document.addEventListener('DOMContentLoaded', function () {
     initOrderReport();
@@ -101,7 +105,7 @@
     try {
       // Initialize country dropdown (Multi-select like tour-image-manager)
       console.log('📍 Creating country dropdown...');
-      const countryDropdown = SearchableDropdownComponent.initMultiSelect({
+      countryDropdownInstance = SearchableDropdownComponent.initMultiSelect({
         wrapperId: 'countryDropdownWrapper',
         placeholder: 'เลือกประเทศ',
         options: [],
@@ -111,7 +115,7 @@
         }
       });
       
-      if (!countryDropdown) {
+      if (!countryDropdownInstance) {
         console.error('❌ Failed to create country dropdown');
       } else {
         console.log('✅ Country dropdown created');
@@ -119,7 +123,7 @@
 
       // Initialize supplier dropdown (Multi-select like tour-image-manager)
       console.log('🏢 Creating supplier dropdown...');
-      const supplierDropdown = SearchableDropdownComponent.initMultiSelect({
+      supplierDropdownInstance = SearchableDropdownComponent.initMultiSelect({
         wrapperId: 'supplierDropdownWrapper',
         placeholder: 'เลือก Supplier',
         options: [],
@@ -129,7 +133,7 @@
         }
       });
       
-      if (!supplierDropdown) {
+      if (!supplierDropdownInstance) {
         console.error('❌ Failed to create supplier dropdown');
       } else {
         console.log('✅ Supplier dropdown created');
@@ -143,7 +147,7 @@
           value: country.id,
           label: `${country.name_th} (${country.name_en})`
         }));
-        countryDropdown.updateOptions(countryOptions);
+        countryDropdownInstance.updateOptions(countryOptions);
         console.log('✅ Countries loaded:', countryOptions.length);
       }
 
@@ -155,7 +159,7 @@
           value: supplier.id,
           label: `${supplier.name_th} (${supplier.name_en})`
         }));
-        supplierDropdown.updateOptions(supplierOptions);
+        supplierDropdownInstance.updateOptions(supplierOptions);
         console.log('✅ Suppliers loaded:', supplierOptions.length);
       }
       
@@ -234,16 +238,25 @@
       }
     });
 
-    form.addEventListener('reset', function() {
+    form.addEventListener('reset', function(e) {
+      e.preventDefault();
+      
+      // Clear filters object
       currentFilters = {};
+      
+      // Clear date pickers
       if (travelDatePickerInstance) travelDatePickerInstance.clear();
       if (bookingDatePickerInstance) bookingDatePickerInstance.clear();
       
-      // Clear multi-select dropdowns
+      // Clear hidden inputs
       document.getElementById('filterCountry').value = '';
       document.getElementById('filterSupplier').value = '';
       
-      setTimeout(() => loadTabData(currentTab), 100);
+      // Clear multi-select dropdowns
+      if (countryDropdownInstance) countryDropdownInstance.clear();
+      if (supplierDropdownInstance) supplierDropdownInstance.clear();
+      
+      console.log('✅ Form reset - filters cleared (no reload)');
     });
   }
 
