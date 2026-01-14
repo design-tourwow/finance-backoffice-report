@@ -5,6 +5,20 @@
  */
 
 const DatePickerComponent = {
+  // Track all open pickers to close them when opening a new one
+  _openPickers: [],
+  
+  /**
+   * Close all open date pickers
+   */
+  closeAllPickers() {
+    this._openPickers.forEach(picker => {
+      if (picker && picker.close) {
+        picker.close();
+      }
+    });
+  },
+  
   /**
    * Initialize Date Range Picker
    * @param {Object} options - Configuration options
@@ -321,7 +335,7 @@ const DatePickerComponent = {
     }
 
     // Public API
-    return {
+    const pickerInstance = {
       getStartDate: () => state.startDate,
       getEndDate: () => state.endDate,
       setDates: (startDate, endDate) => {
@@ -334,6 +348,17 @@ const DatePickerComponent = {
         state.endDate = null;
         input.value = '';
       },
+      close: () => {
+        dropdown.style.display = 'none';
+        state.isOpen = false;
+        input.setAttribute('aria-expanded', 'false');
+      }
+    };
+    
+    // Register this picker
+    DatePickerComponent._openPickers.push(pickerInstance);
+    
+    return pickerInstance;
       close: closeCalendar
     };
   },

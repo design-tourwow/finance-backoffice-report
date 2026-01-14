@@ -54,6 +54,8 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   padding: 20px;
   font-family: 'Kanit', sans-serif;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 /* Dual Calendar (Date Range) */
@@ -72,13 +74,18 @@
 
 @media (max-width: 768px) {
   .calendar-dropdown {
+    position: fixed;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
+    max-width: 90vw;
+    max-height: 80vh;
   }
   
   .calendar-dual {
+    flex-direction: column;
     width: 90vw;
-    max-width: 600px;
+    max-width: 400px;
   }
   
   .calendar-single {
