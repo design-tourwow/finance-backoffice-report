@@ -63,6 +63,9 @@ const DatePickerComponent = {
       // Close all other pickers first (but not this one if it's already open)
       if (!isVisible) {
         DatePickerComponent.closeAllPickers();
+        if (typeof SearchableDropdownComponent !== 'undefined') {
+          SearchableDropdownComponent.closeAllDropdowns();
+        }
       }
       
       dropdown.style.display = isVisible ? 'none' : 'block';
@@ -411,6 +414,9 @@ const DatePickerComponent = {
       // Close all other pickers first (but not this one if it's already open)
       if (!isVisible) {
         DatePickerComponent.closeAllPickers();
+        if (typeof SearchableDropdownComponent !== 'undefined') {
+          SearchableDropdownComponent.closeAllDropdowns();
+        }
       }
       
       dropdown.style.display = isVisible ? 'none' : 'block';

@@ -4,6 +4,20 @@
  */
 
 const SearchableDropdownComponent = {
+  // Track all open dropdowns to close them when opening a new one
+  _openDropdowns: [],
+  
+  /**
+   * Close all open dropdowns
+   */
+  closeAllDropdowns() {
+    this._openDropdowns.forEach(dropdown => {
+      if (dropdown && dropdown.close) {
+        dropdown.close();
+      }
+    });
+  },
+  
   /**
    * Initialize Single-Select Dropdown
    * @param {Object} options - Configuration options
@@ -56,6 +70,17 @@ const SearchableDropdownComponent = {
     // Toggle dropdown
     trigger.addEventListener('click', function(e) {
       e.stopPropagation();
+      
+      const isCurrentlyOpen = state.isOpen;
+      
+      // Close all other dropdowns and date pickers first
+      if (!isCurrentlyOpen) {
+        SearchableDropdownComponent.closeAllDropdowns();
+        if (typeof DatePickerComponent !== 'undefined') {
+          DatePickerComponent.closeAllPickers();
+        }
+      }
+      
       toggleDropdown();
     });
 
@@ -168,7 +193,7 @@ const SearchableDropdownComponent = {
     attachOptionListeners();
 
     // Public API
-    return {
+    const dropdownInstance = {
       getValue: () => state.selectedValue,
       getLabel: () => state.selectedLabel,
       setValue: (value) => {
@@ -196,6 +221,11 @@ const SearchableDropdownComponent = {
       },
       close: closeDropdown
     };
+    
+    // Register this dropdown
+    SearchableDropdownComponent._openDropdowns.push(dropdownInstance);
+    
+    return dropdownInstance;
   },
 
   /**
@@ -256,6 +286,17 @@ const SearchableDropdownComponent = {
     // Toggle dropdown
     trigger.addEventListener('click', function(e) {
       e.stopPropagation();
+      
+      const isCurrentlyOpen = state.isOpen;
+      
+      // Close all other dropdowns and date pickers first
+      if (!isCurrentlyOpen) {
+        SearchableDropdownComponent.closeAllDropdowns();
+        if (typeof DatePickerComponent !== 'undefined') {
+          DatePickerComponent.closeAllPickers();
+        }
+      }
+      
       toggleDropdown();
     });
 
@@ -435,7 +476,7 @@ const SearchableDropdownComponent = {
     attachMultiOptionListeners();
 
     // Public API
-    return {
+    const dropdownInstance = {
       getValues: () => state.selectedValues,
       getLabels: () => state.selectedLabels,
       setValues: (values) => {
@@ -464,6 +505,11 @@ const SearchableDropdownComponent = {
       },
       close: closeDropdown
     };
+    
+    // Register this dropdown
+    SearchableDropdownComponent._openDropdowns.push(dropdownInstance);
+    
+    return dropdownInstance;
   }
 };
 

@@ -52,24 +52,24 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  padding: 20px;
+  padding: 16px;
   font-family: 'Kanit', sans-serif;
-  max-height: 500px;
-  overflow-y: auto;
+  max-height: 90vh;
+  overflow: visible;
 }
 
 /* Dual Calendar (Date Range) */
 .calendar-dual {
   display: flex;
-  gap: 20px;
-  width: 640px;
-  max-width: calc(100vw - 40px);
+  gap: 16px;
+  width: auto;
+  max-width: min(640px, calc(100vw - 40px));
 }
 
 /* Single Calendar */
 .calendar-single {
-  width: 320px;
-  max-width: calc(100vw - 40px);
+  width: auto;
+  max-width: min(320px, calc(100vw - 40px));
 }
 
 /* Responsive adjustments */
@@ -124,13 +124,15 @@
 /* Calendar Month */
 .calendar-month {
   flex: 1;
+  min-width: 280px;
 }
 
 .calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  padding: 0 4px;
 }
 
 .calendar-nav-btn {
@@ -187,17 +189,17 @@
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 2px;
 }
 
 .calendar-day {
   text-align: center;
-  padding: 10px 0;
-  font-size: 14px;
+  padding: 8px 4px;
+  font-size: 13px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  min-height: 38px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,18 +249,18 @@
 /* Calendar Actions */
 .calendar-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 16px;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid #e5e7eb;
 }
 
 .calendar-btn {
   flex: 1;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
   cursor: pointer;
