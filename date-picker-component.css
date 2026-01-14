@@ -50,24 +50,26 @@
   z-index: 1000;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  padding: 12px;
+  padding: 16px;
   font-family: 'Kanit', sans-serif;
   max-height: 90vh;
-  overflow: visible;
+  overflow: auto;
 }
 
-/* Auto-adjust position if near right edge */
-.date-picker-wrapper:last-child .calendar-dropdown {
-  left: auto;
-  right: 0;
+/* Smart positioning for right-side inputs */
+@media (min-width: 769px) {
+  .form-row .form-group:last-child .calendar-dropdown {
+    left: auto;
+    right: 0;
+  }
 }
 
 /* Dual Calendar (Date Range) */
 .calendar-dual {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   width: auto;
   max-width: 100%;
 }
@@ -78,8 +80,12 @@
   max-width: 100%;
 }
 
-/* Make calendar more compact */
+/* Calendar Month */
 .calendar-month {
+  flex: 1;
+  min-width: 280px;
+  max-width: 320px;
+}
   flex: 1;
   min-width: 260px;
   max-width: 300px;

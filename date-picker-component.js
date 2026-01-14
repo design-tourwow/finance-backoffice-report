@@ -73,7 +73,6 @@ const DatePickerComponent = {
       input.setAttribute('aria-expanded', state.isOpen);
       if (state.isOpen) {
         renderCalendar();
-        adjustDropdownPosition();
       }
     });
 
@@ -464,7 +463,6 @@ const DatePickerComponent = {
       input.setAttribute('aria-expanded', state.isOpen);
       if (state.isOpen) {
         renderCalendar();
-        adjustDropdownPosition();
       }
     });
 
