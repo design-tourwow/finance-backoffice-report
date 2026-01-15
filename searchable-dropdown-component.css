@@ -10,6 +10,7 @@
 .searchable-dropdown-trigger {
   width: 100%;
   min-height: 42px;
+  max-height: 42px;
   padding: 10px 36px 10px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -23,6 +24,7 @@
   color: #1f2937;
   text-align: left;
   position: relative;
+  overflow: hidden;
 }
 
 .searchable-dropdown-trigger:hover {
