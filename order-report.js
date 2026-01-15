@@ -705,7 +705,11 @@
     console.log('📊 Lead Time Summary:', summary);
     console.log('📊 Lead Time Data:', data.length, 'orders');
     
-    // Render Column Chart for distribution
+    // Store full data for filtering
+    window.leadTimeFullData = data;
+    window.leadTimeDistribution = distribution;
+    
+    // Render Column Chart for distribution with click handler
     renderChart({
       labels: distribution.map(item => item.range_label || item.range),
       datasets: [{
@@ -715,16 +719,111 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar');
+    }, 'bar', {
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const range = distribution[index];
+          filterTableByLeadTimeRange(range);
+        }
+      }
+    });
     
-    // Render sortable table with order details
+    // Render sortable table with order details (show all initially)
+    renderLeadTimeTable(data);
+  }
+
+  // Filter table by lead time range
+  function filterTableByLeadTimeRange(range) {
+    console.log('🔍 Filtering by range:', range);
+    
+    const fullData = window.leadTimeFullData || [];
+    
+    // Filter data based on range
+    let filteredData;
+    if (range.range === '90+') {
+      filteredData = fullData.filter(item => item.lead_time_days >= 91);
+    } else {
+      filteredData = fullData.filter(item => 
+        item.lead_time_days >= range.min_days && 
+        item.lead_time_days <= range.max_days
+      );
+    }
+    
+    console.log('📊 Filtered data:', filteredData.length, 'orders');
+    
+    // Re-render table with filtered data
+    renderLeadTimeTable(filteredData);
+    
+    // Show filter indicator
+    showLeadTimeFilterIndicator(range.range_label);
+  }
+
+  // Show filter indicator
+  function showLeadTimeFilterIndicator(rangeLabel) {
+    // Remove existing indicator
+    const existingIndicator = document.querySelector('.lead-time-filter-indicator');
+    if (existingIndicator) {
+      existingIndicator.remove();
+    }
+    
+    // Create new indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'lead-time-filter-indicator';
+    indicator.style.cssText = `
+      background: #e3f2fd;
+      border: 1px solid #2196f3;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #1976d2;
+    `;
+    
+    indicator.innerHTML = `
+      <span>
+        <strong>กรองตามช่วง:</strong> ${rangeLabel}
+      </span>
+      <button onclick="clearLeadTimeFilter()" style="
+        background: transparent;
+        border: none;
+        color: #1976d2;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: underline;
+        padding: 0;
+      ">
+        แสดงทั้งหมด
+      </button>
+    `;
+    
+    const tableContainer = document.getElementById('tableContainer');
+    tableContainer.insertBefore(indicator, tableContainer.firstChild);
+  }
+
+  // Clear lead time filter (global function)
+  window.clearLeadTimeFilter = function() {
+    const fullData = window.leadTimeFullData || [];
+    renderLeadTimeTable(fullData);
+    
+    const indicator = document.querySelector('.lead-time-filter-indicator');
+    if (indicator) {
+      indicator.remove();
+    }
+  };
+
+  // Render lead time table
+  function renderLeadTimeTable(data) {
     renderSortableTable([
       { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
       { key: 'order_code', label: 'Order Code', type: 'text', align: 'left' },
       { key: 'customer_name', label: 'ลูกค้า', type: 'text', align: 'left' },
       { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
-      { key: 'created_at', label: 'วันจอง', type: 'date', align: 'center' },
-      { key: 'travel_start_date', label: 'วันเดินทาง', type: 'date', align: 'center' },
+      { key: 'created_at', label: 'วันจอง', type: 'text', align: 'center' },
+      { key: 'travel_start_date', label: 'วันเดินทาง', type: 'text', align: 'center' },
       { key: 'lead_time_days', label: 'Lead Time (วัน)', type: 'number', align: 'right' },
       { key: 'net_amount', label: 'ยอดเงิน', type: 'currency', align: 'right' }
     ], data.map((item, index) => ({
@@ -732,14 +831,14 @@
       order_code: item.order_code || '-',
       customer_name: item.customer_name || 'ไม่ระบุ',
       country_name: item.country_name || 'ไม่ระบุ',
-      created_at: item.created_at ? formatDate(item.created_at) : '-',
+      created_at: item.created_at || '-',
       travel_start_date: item.travel_start_date || '-',
       lead_time_days: item.lead_time_days,
       net_amount: item.net_amount
     })));
   }
 
-  // Format date for display
+  // Format date for display (for other tabs)
   function formatDate(dateString) {
     if (!dateString) return '-';
     try {
