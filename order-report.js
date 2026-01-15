@@ -94,6 +94,12 @@
     
     currentTab = tabName;
     
+    // Show/hide filter dropdown based on tab
+    const tableFilters = document.getElementById('tableFilters');
+    if (tableFilters) {
+      tableFilters.style.display = tabName === 'lead-time' ? 'flex' : 'none';
+    }
+    
     // Load data for selected tab
     await loadTabData(tabName);
   }
@@ -708,6 +714,12 @@
     // Store full data for filtering
     window.leadTimeFullData = data;
     window.leadTimeDistribution = distribution;
+    
+    // Show filter dropdown for Lead Time tab
+    const tableFilters = document.getElementById('tableFilters');
+    if (tableFilters) {
+      tableFilters.style.display = 'flex';
+    }
     
     // Initialize dropdown filter
     initLeadTimeFilter();
