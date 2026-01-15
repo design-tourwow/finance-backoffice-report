@@ -1,0 +1,140 @@
+/* ========================================
+   Filter & Sort Dropdown Component
+   Single-select dropdown for filtering and sorting
+   ======================================== */
+
+.filter-sort-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.filter-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  min-width: 200px;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Kanit', sans-serif;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-sort-btn:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.filter-sort-btn.active {
+  border-color: #4a7ba7;
+  color: #4a7ba7;
+  background: #f0f7ff;
+}
+
+.filter-sort-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.filter-sort-btn-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-sort-arrow {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.filter-sort-btn.open .filter-sort-arrow {
+  transform: rotate(180deg);
+}
+
+.filter-sort-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  max-width: 320px;
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.filter-sort-menu.open {
+  display: flex;
+}
+
+.filter-sort-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: white;
+  font-size: 14px;
+  font-family: 'Kanit', sans-serif;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.filter-sort-option:last-child {
+  border-bottom: none;
+}
+
+.filter-sort-option:hover {
+  background: #f9fafb;
+}
+
+.filter-sort-option.active {
+  background: #f0f7ff;
+  color: #4a7ba7;
+  font-weight: 500;
+}
+
+.filter-sort-option svg {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.filter-sort-option.active svg {
+  color: #4a7ba7;
+}
+
+/* Scrollbar styling */
+.filter-sort-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-sort-menu::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.filter-sort-menu::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.filter-sort-menu::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

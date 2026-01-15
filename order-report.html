@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="date-picker-component.css" />
     <link rel="stylesheet" href="searchable-dropdown-component.css" />
     <link rel="stylesheet" href="table-sorting-component.css" />
+    <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
     <link rel="stylesheet" href="order-report.css" />
     
     <!-- Configuration -->
@@ -47,6 +48,7 @@
     <script src="date-picker-component.js"></script>
     <script src="searchable-dropdown-component.js"></script>
     <script src="table-sorting-component.js"></script>
+    <script src="filter-sort-dropdown-component.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Load sidebar state -->
@@ -357,25 +359,7 @@
                   </div>
                   
                   <!-- Filter Dropdown (for Lead Time tab only) -->
-                  <div class="table-filters" id="tableFilters" style="display: none;">
-                    <div class="table-filter-dropdown">
-                      <button type="button" class="table-filter-btn" id="leadTimeFilterBtn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
-                        </svg>
-                        <span id="leadTimeFilterLabel">ช่วง Lead Time</span>
-                      </button>
-                      <div class="table-filter-menu" id="leadTimeFilterMenu">
-                        <div class="table-filter-option active" data-range="all">ทั้งหมด</div>
-                        <div class="table-filter-option" data-range="0-7">0-7 วัน (จองใกล้วันเดินทาง)</div>
-                        <div class="table-filter-option" data-range="8-14">8-14 วัน</div>
-                        <div class="table-filter-option" data-range="15-30">15-30 วัน</div>
-                        <div class="table-filter-option" data-range="31-60">31-60 วัน</div>
-                        <div class="table-filter-option" data-range="61-90">61-90 วัน</div>
-                        <div class="table-filter-option" data-range="90+">มากกว่า 90 วัน (จองล่วงหน้ามาก)</div>
-                      </div>
-                    </div>
-                  </div>
+                  <div id="leadTimeFilterContainer"></div>
                 </div>
                 
                 <!-- Search Results (below search bar) -->
