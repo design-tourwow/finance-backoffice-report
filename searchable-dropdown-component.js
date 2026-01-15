@@ -435,285 +435,249 @@ const SearchableDropdownComponent = {
       return null;
     }
 
-    const state = {
-      selectedValues: [],
-      selectedLabels: [],
-      isOpen: false,
-      filteredOptions: [...dropdownOptions]
-    };
-
-    // Build HTML
+    // Build HTML (same structure as tour-image-manager)
+    wrapper.className = 'multi-select-wrapper';
     wrapper.innerHTML = `
-      <div class="searchable-dropdown-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+      <div class="multi-select-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
         <span class="selected-text">${placeholder}</span>
         <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div class="searchable-dropdown-menu multi" role="listbox">
-        <div class="searchable-dropdown-search">
+      <div class="multi-select-dropdown" role="listbox">
+        <div class="multi-select-search">
           <input type="text" placeholder="ค้นหา..." aria-label="ค้นหา">
-          <div class="searchable-dropdown-actions">
-            <button type="button" class="searchable-action-btn select-all">เลือกทั้งหมด</button>
-            <button type="button" class="searchable-action-btn deselect-all">ล้างทั้งหมด</button>
+          <div class="multi-select-actions">
+            <button type="button" class="multi-select-action-btn select-all">เลือกทั้งหมด</button>
+            <button type="button" class="multi-select-action-btn deselect-all">ล้างทั้งหมด</button>
           </div>
         </div>
-        <div class="searchable-dropdown-options">
-          ${renderMultiOptions(dropdownOptions, state.selectedValues)}
+        <div class="multi-select-options">
+          ${dropdownOptions.map(opt => `
+            <div class="multi-select-option">
+              <input type="checkbox" id="opt-${wrapperId}-${opt.value}" value="${opt.value}">
+              <label for="opt-${wrapperId}-${opt.value}">${opt.label}</label>
+            </div>
+          `).join('')}
         </div>
       </div>
     `;
 
-    const trigger = wrapper.querySelector('.searchable-dropdown-trigger');
-    const menu = wrapper.querySelector('.searchable-dropdown-menu');
-    const searchInput = wrapper.querySelector('.searchable-dropdown-search input');
-    const optionsContainer = wrapper.querySelector('.searchable-dropdown-options');
-    const selectedText = wrapper.querySelector('.selected-text');
+    const trigger = wrapper.querySelector('.multi-select-trigger');
+    const dropdown = wrapper.querySelector('.multi-select-dropdown');
+    const searchInput = wrapper.querySelector('.multi-select-search input');
     const selectAllBtn = wrapper.querySelector('.select-all');
     const deselectAllBtn = wrapper.querySelector('.deselect-all');
-
-    // Toggle dropdown
-    trigger.addEventListener('click', function(e) {
-      e.stopPropagation();
+    const optionsContainer = wrapper.querySelector('.multi-select-options');
+    const selectedText = trigger.querySelector('.selected-text');
+    
+    // Store placeholder
+    trigger.dataset.placeholder = placeholder;
+    
+    // Toggle dropdown (same as tour-image-manager)
+    const toggleDropdown = () => {
+      const isOpen = dropdown.classList.contains('open');
       
-      const isCurrentlyOpen = state.isOpen;
-      
-      // Close all other dropdowns and date pickers first
-      if (!isCurrentlyOpen) {
-        SearchableDropdownComponent.closeAllDropdowns();
-        if (typeof DatePickerComponent !== 'undefined') {
-          DatePickerComponent.closeAllPickers();
-        }
-      }
-      
-      toggleDropdown();
-    });
-
-    // Keyboard support for trigger
-    trigger.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleDropdown();
-      }
-      if (e.key === 'Escape') {
-        closeDropdown();
-      }
-    });
-
-    // Search functionality
-    searchInput.addEventListener('input', function(e) {
-      const searchTerm = e.target.value.toLowerCase();
-      state.filteredOptions = dropdownOptions.filter(opt => 
-        opt.label.toLowerCase().includes(searchTerm)
-      );
-      optionsContainer.innerHTML = renderMultiOptions(state.filteredOptions, state.selectedValues);
-      attachMultiOptionListeners();
-    });
-
-    // Select all
-    selectAllBtn.addEventListener('click', function() {
-      // Check all visible checkboxes in DOM
-      const visibleOptions = Array.from(optionsContainer.querySelectorAll('.searchable-dropdown-option'))
-        .filter(opt => opt.style.display !== 'none');
-      
-      visibleOptions.forEach(opt => {
-        const checkbox = opt.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-          checkbox.checked = true;
-          opt.classList.add('selected');
-          opt.setAttribute('aria-selected', 'true');
+      // Close all other dropdowns
+      document.querySelectorAll('.multi-select-dropdown.open').forEach(d => {
+        if (d !== dropdown) {
+          d.classList.remove('open');
+          d.previousElementSibling.classList.remove('open');
+          d.previousElementSibling.setAttribute('aria-expanded', 'false');
         }
       });
       
-      // Update display and state from DOM
-      updateMultiDisplay();
-      
-      if (onChange) {
-        onChange(state.selectedValues, state.selectedLabels);
-      }
-    });
-
-    // Deselect all
-    deselectAllBtn.addEventListener('click', function() {
-      // Uncheck all visible checkboxes in DOM
-      const visibleOptions = Array.from(optionsContainer.querySelectorAll('.searchable-dropdown-option'))
-        .filter(opt => opt.style.display !== 'none');
-      
-      visibleOptions.forEach(opt => {
-        const checkbox = opt.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-          checkbox.checked = false;
-          opt.classList.remove('selected');
-          opt.setAttribute('aria-selected', 'false');
-        }
-      });
-      
-      // Update display and state from DOM
-      updateMultiDisplay();
-      
-      if (onChange) {
-        onChange(state.selectedValues, state.selectedLabels);
-      }
-    });
-
-    // Close when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!wrapper.contains(e.target)) {
-        closeDropdown();
-      }
-    });
-
-    // Prevent closing when clicking inside menu
-    menu.addEventListener('click', function(e) {
-      e.stopPropagation();
-    });
-
-    function renderMultiOptions(options, selectedValues) {
-      if (options.length === 0) {
-        return '<div class="searchable-dropdown-empty">ไม่พบข้อมูล</div>';
+      // Close date pickers
+      if (typeof DatePickerComponent !== 'undefined') {
+        DatePickerComponent.closeAllPickers();
       }
       
-      return options.map(opt => {
-        const isSelected = selectedValues.includes(opt.value);
-        return `
-          <div class="searchable-dropdown-option ${isSelected ? 'selected' : ''}" 
-               data-value="${opt.value}" 
-               role="option" 
-               aria-selected="${isSelected}">
-            <input type="checkbox" 
-                   id="opt-${opt.value}" 
-                   value="${opt.value}" 
-                   ${isSelected ? 'checked' : ''}
-                   class="option-checkbox">
-            <label for="opt-${opt.value}">${opt.label}</label>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function attachMultiOptionListeners() {
-      const options = optionsContainer.querySelectorAll('.searchable-dropdown-option');
-      options.forEach(option => {
-        const checkbox = option.querySelector('.option-checkbox');
-        
-        option.addEventListener('click', function(e) {
-          if (e.target.tagName !== 'INPUT') {
-            checkbox.checked = !checkbox.checked;
-          }
-          toggleOption(checkbox.value, checkbox.checked);
-        });
-        
-        checkbox.addEventListener('change', function() {
-          toggleOption(this.value, this.checked);
-        });
-      });
-    }
-
-    function toggleOption(value, isChecked) {
-      const option = dropdownOptions.find(opt => opt.value === value);
-      if (!option) return;
-
-      // Update checkbox state in DOM
-      const optionElement = optionsContainer.querySelector(`[data-value="${value}"]`);
-      if (optionElement) {
-        optionElement.classList.toggle('selected', isChecked);
-        optionElement.setAttribute('aria-selected', isChecked);
+      if (isOpen) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      } else {
+        dropdown.classList.add('open');
+        trigger.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        searchInput.focus();
       }
-      
-      // Update display and state from DOM (like tour-image-manager)
-      updateMultiDisplay();
-      
-      if (onChange) {
-        onChange(state.selectedValues, state.selectedLabels);
-      }
-    }
-
-    function updateMultiDisplay() {
-      // Get all checked checkboxes from DOM (like tour-image-manager)
+    };
+    
+    // Update selected text (same as tour-image-manager)
+    const updateSelectedText = () => {
       const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
       const count = checkboxes.length;
       
       if (count === 0) {
-        selectedText.textContent = placeholder;
+        selectedText.textContent = trigger.dataset.placeholder || 'เลือก';
         trigger.classList.add('placeholder');
       } else {
         // Show all selected items as comma-separated text
-        const labels = Array.from(checkboxes).map(cb => {
-          const label = cb.nextElementSibling;
-          return label ? label.textContent.trim() : '';
-        }).filter(text => text !== '');
+        const labels = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
         const fullText = labels.join(', ');
         selectedText.textContent = fullText;
         trigger.classList.remove('placeholder');
       }
       
-      // Update state from DOM
-      state.selectedValues = Array.from(checkboxes).map(cb => cb.value);
-      state.selectedLabels = Array.from(checkboxes).map(cb => {
-        const label = cb.nextElementSibling;
-        return label ? label.textContent.trim() : '';
-      }).filter(text => text !== '');
-    }
-
-    function toggleDropdown() {
-      if (state.isOpen) {
-        closeDropdown();
-      } else {
-        openDropdown();
+      // Trigger onChange callback
+      if (onChange) {
+        const values = Array.from(checkboxes).map(cb => cb.value);
+        const labels = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
+        onChange(values, labels);
       }
-    }
-
-    function openDropdown() {
-      state.isOpen = true;
-      menu.classList.add('open');
-      trigger.classList.add('open');
-      trigger.setAttribute('aria-expanded', 'true');
-      searchInput.value = '';
-      state.filteredOptions = [...dropdownOptions];
-      optionsContainer.innerHTML = renderMultiOptions(state.filteredOptions, state.selectedValues);
-      attachMultiOptionListeners();
-      setTimeout(() => searchInput.focus(), 100);
-    }
-
-    function closeDropdown() {
-      state.isOpen = false;
-      menu.classList.remove('open');
-      trigger.classList.remove('open');
-      trigger.setAttribute('aria-expanded', 'false');
-    }
-
-    // Initial render
-    attachMultiOptionListeners();
+    };
+    
+    // Search functionality (same as tour-image-manager)
+    const filterOptions = () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const options = optionsContainer.querySelectorAll('.multi-select-option');
+      let hasResults = false;
+      
+      options.forEach(option => {
+        const label = option.querySelector('label').textContent.toLowerCase();
+        if (label.includes(searchTerm)) {
+          option.style.display = 'flex';
+          hasResults = true;
+        } else {
+          option.style.display = 'none';
+        }
+      });
+      
+      // Show/hide no results message
+      let noResults = optionsContainer.querySelector('.multi-select-no-results');
+      if (!hasResults) {
+        if (!noResults) {
+          noResults = document.createElement('div');
+          noResults.className = 'multi-select-no-results';
+          noResults.textContent = 'ไม่พบผลลัพธ์';
+          optionsContainer.appendChild(noResults);
+        }
+        noResults.style.display = 'block';
+      } else if (noResults) {
+        noResults.style.display = 'none';
+      }
+    };
+    
+    // Select all (same as tour-image-manager)
+    const selectAll = () => {
+      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
+        .filter(opt => opt.style.display !== 'none')
+        .map(opt => opt.querySelector('input[type="checkbox"]'));
+      
+      visibleCheckboxes.forEach(cb => {
+        cb.checked = true;
+        cb.closest('.multi-select-option').classList.add('selected');
+      });
+      updateSelectedText();
+    };
+    
+    // Deselect all (same as tour-image-manager)
+    const deselectAll = () => {
+      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
+        .filter(opt => opt.style.display !== 'none')
+        .map(opt => opt.querySelector('input[type="checkbox"]'));
+      
+      visibleCheckboxes.forEach(cb => {
+        cb.checked = false;
+        cb.closest('.multi-select-option').classList.remove('selected');
+      });
+      updateSelectedText();
+    };
+    
+    // Event listeners (same as tour-image-manager)
+    trigger.addEventListener('click', toggleDropdown);
+    trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleDropdown();
+      }
+    });
+    
+    searchInput.addEventListener('input', filterOptions);
+    searchInput.addEventListener('click', (e) => e.stopPropagation());
+    
+    selectAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectAll();
+    });
+    
+    deselectAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deselectAll();
+    });
+    
+    // Handle option clicks (same as tour-image-manager)
+    optionsContainer.addEventListener('click', (e) => {
+      const option = e.target.closest('.multi-select-option');
+      if (option) {
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        if (e.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+        }
+        
+        if (checkbox.checked) {
+          option.classList.add('selected');
+        } else {
+          option.classList.remove('selected');
+        }
+        
+        updateSelectedText();
+      }
+    });
+    
+    // Close on outside click (same as tour-image-manager)
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
 
     // Public API
     const dropdownInstance = {
-      getValues: () => state.selectedValues,
-      getLabels: () => state.selectedLabels,
+      getValues: () => {
+        const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+      },
+      getLabels: () => {
+        const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
+      },
       setValues: (values) => {
-        state.selectedValues = [...values];
-        state.selectedLabels = values.map(val => {
-          const opt = dropdownOptions.find(o => o.value === val);
-          return opt ? opt.label : val;
+        optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+          cb.checked = values.includes(cb.value);
+          const option = cb.closest('.multi-select-option');
+          if (cb.checked) {
+            option.classList.add('selected');
+          } else {
+            option.classList.remove('selected');
+          }
         });
-        updateMultiDisplay();
-        optionsContainer.innerHTML = renderMultiOptions(state.filteredOptions, state.selectedValues);
-        attachMultiOptionListeners();
+        updateSelectedText();
       },
       clear: () => {
-        state.selectedValues = [];
-        state.selectedLabels = [];
-        updateMultiDisplay();
-        optionsContainer.innerHTML = renderMultiOptions(state.filteredOptions, state.selectedValues);
-        attachMultiOptionListeners();
+        optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+          cb.checked = false;
+          cb.closest('.multi-select-option').classList.remove('selected');
+        });
+        updateSelectedText();
       },
       updateOptions: (newOptions) => {
-        dropdownOptions.length = 0;
-        dropdownOptions.push(...newOptions);
-        state.filteredOptions = [...newOptions];
-        optionsContainer.innerHTML = renderMultiOptions(newOptions, state.selectedValues);
-        attachMultiOptionListeners();
+        optionsContainer.innerHTML = newOptions.map(opt => `
+          <div class="multi-select-option">
+            <input type="checkbox" id="opt-${wrapperId}-${opt.value}" value="${opt.value}">
+            <label for="opt-${wrapperId}-${opt.value}">${opt.label}</label>
+          </div>
+        `).join('');
+        updateSelectedText();
       },
-      close: closeDropdown
+      close: () => {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
     };
     
     // Register this dropdown
