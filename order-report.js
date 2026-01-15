@@ -7,6 +7,7 @@
   let currentFilters = {};
   let currentTableInstance = null;
   let currentTableData = [];
+  let leadTimeFilterInstance = null;
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -715,14 +716,98 @@
     window.leadTimeFullData = data;
     window.leadTimeDistribution = distribution;
     
-    // Show filter dropdown for Lead Time tab
-    const tableFilters = document.getElementById('tableFilters');
-    if (tableFilters) {
-      tableFilters.style.display = 'flex';
-    }
-    
-    // Initialize dropdown filter
-    initLeadTimeFilter();
+    // Initialize filter dropdown using new component
+    leadTimeFilterInstance = FilterSortDropdownComponent.initDropdown({
+      containerId: 'leadTimeFilterContainer',
+      defaultLabel: 'ทั้งหมด',
+      defaultIcon: `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+        </svg>
+      `,
+      options: [
+        {
+          value: 'all',
+          label: 'ทั้งหมด',
+          active: true,
+          icon: `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+          `
+        },
+        {
+          value: '0-7',
+          label: '0-7 วัน (จองใกล้วันเดินทาง)',
+          icon: `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            </svg>
+          `
+        },
+        {
+          value: '8-14',
+          label: '8-14 วัน',
+          icon: `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          `
+        },
+        {
+          value: '15-30',
+          label: '15-30 วัน',
+          icon: `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          `
+        },
+        {
+          value: '31-60',
+          label: '31-60 วัน',
+          icon: `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          `
+        },
+        {
+          value: '61-90',
+          label: '61-90 วัน',
+          icon: `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          `
+        },
+        {
+          value: '90+',
+          label: 'มากกว่า 90 วัน (จองล่วงหน้ามาก)',
+          icon: `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          `
+        }
+      ],
+      onChange: (value, label) => {
+        console.log('🔍 Lead Time filter changed:', value, label);
+        filterLeadTimeByRange(value);
+      }
+    });
     
     // Render Column Chart (no click handler - use dropdown filter only)
     renderChart({
@@ -738,6 +823,47 @@
     
     // Render sortable table with order details (show all initially)
     renderLeadTimeTable(data);
+  }
+
+  // Filter Lead Time by range (using new component)
+  function filterLeadTimeByRange(rangeKey) {
+    const fullData = window.leadTimeFullData || [];
+    const distribution = window.leadTimeDistribution || [];
+    
+    console.log('🔍 Filtering by range:', rangeKey);
+    
+    if (rangeKey === 'all') {
+      // Show all data
+      console.log('📊 Showing all data:', fullData.length, 'orders');
+      renderLeadTimeTable(fullData);
+      return;
+    }
+    
+    // Find range details
+    const range = distribution.find(d => d.range === rangeKey);
+    if (!range) {
+      console.warn('⚠️ Range not found:', rangeKey);
+      renderLeadTimeTable(fullData);
+      return;
+    }
+    
+    console.log('📊 Range details:', range);
+    
+    // Filter data based on range
+    let filteredData;
+    if (range.range === '90+') {
+      filteredData = fullData.filter(item => item.lead_time_days >= 91);
+    } else {
+      filteredData = fullData.filter(item => 
+        item.lead_time_days >= range.min_days && 
+        item.lead_time_days <= range.max_days
+      );
+    }
+    
+    console.log('📊 Filtered data:', filteredData.length, 'orders for range:', rangeKey);
+    
+    // Re-render table with filtered data
+    renderLeadTimeTable(filteredData);
   }
 
   // Filter table by lead time range
