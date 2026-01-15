@@ -686,25 +686,17 @@
     
     const data = response.data;
     
-    // Render chart (Pie chart for repeat customers)
+    // Render chart (Horizontal Bar chart for repeat customers - easier to read)
     renderChart({
       labels: data.map(item => item.customer_name || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
-        backgroundColor: [
-          'rgba(74, 123, 167, 0.8)',
-          'rgba(123, 31, 162, 0.8)',
-          'rgba(56, 142, 60, 0.8)',
-          'rgba(245, 124, 0, 0.8)',
-          'rgba(211, 47, 47, 0.8)',
-          'rgba(0, 150, 136, 0.8)',
-          'rgba(255, 152, 0, 0.8)',
-          'rgba(63, 81, 181, 0.8)'
-        ],
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
+        borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'pie');
+    }, 'bar', { indexAxis: 'y' });
     
     // Render sortable table
     renderSortableTable([
@@ -725,7 +717,7 @@
   }
 
   // Render chart
-  function renderChart(data, type) {
+  function renderChart(data, type, extraOptions = {}) {
     const canvas = document.getElementById('reportChart');
     const ctx = canvas.getContext('2d');
     
@@ -754,11 +746,15 @@
       }
     }
     
+    // Determine if horizontal bar chart
+    const isHorizontal = extraOptions.indexAxis === 'y';
+    
     // Create new chart
     currentChart = new Chart(ctx, {
       type: type,
       data: data,
       options: {
+        ...extraOptions,
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -781,22 +777,25 @@
         },
         scales: type !== 'pie' ? {
           y: {
-            beginAtZero: maxValue >= 10, // Only begin at zero if values are large
-            min: minValue,
-            max: maxValue,
+            beginAtZero: isHorizontal ? true : (maxValue >= 10),
+            min: isHorizontal ? undefined : minValue,
+            max: isHorizontal ? undefined : maxValue,
             ticks: {
               font: {
                 family: 'Kanit'
               },
-              stepSize: maxValue < 10 ? 1 : undefined, // Use integer steps for small values
-              precision: 0
+              stepSize: (!isHorizontal && maxValue < 10) ? 1 : undefined,
+              precision: isHorizontal ? 0 : 0
             }
           },
           x: {
+            beginAtZero: isHorizontal ? true : undefined,
             ticks: {
               font: {
                 family: 'Kanit'
-              }
+              },
+              stepSize: isHorizontal ? 1 : undefined,
+              precision: 0
             }
           }
         } : {}
