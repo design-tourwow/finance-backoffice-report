@@ -831,29 +831,11 @@
       order_code: item.order_code || '-',
       customer_name: item.customer_name || 'ไม่ระบุ',
       country_name: item.country_name || 'ไม่ระบุ',
-      created_at: formatDateToThaiFormat(item.created_at),
+      created_at: item.created_at || '-',
       travel_start_date: item.travel_start_date || '-',
       lead_time_days: item.lead_time_days,
       net_amount: item.net_amount
     })));
-  }
-
-  // Format date to Thai format (DD/MM/YYYY พ.ศ.)
-  function formatDateToThaiFormat(dateString) {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '-';
-      
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const yearBE = date.getFullYear() + 543; // Convert to Buddhist Era
-      
-      return `${day}/${month}/${yearBE}`;
-    } catch (error) {
-      console.error('Date format error:', error, dateString);
-      return '-';
-    }
   }
 
   // Format date for display (for other tabs)
