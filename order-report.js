@@ -452,8 +452,6 @@
             return await OrderReportAPI.getReportByTravelDate(currentFilters);
           case 'booking-date':
             return await OrderReportAPI.getReportByBookingDate(currentFilters);
-          case 'repeat-customers':
-            return await OrderReportAPI.getRepeatCustomers(currentFilters);
         }
       };
       
@@ -478,9 +476,6 @@
           break;
         case 'booking-date':
           renderBookingDateReport(response);
-          break;
-        case 'repeat-customers':
-          renderRepeatCustomersReport(response);
           break;
       }
       
@@ -522,6 +517,7 @@
     console.log('🎨 Rendering Country Report:', response);
     
     if (!response || !response.data || response.data.length === 0) {
+      console.warn('⚠️ No data in Country Report response');
       showEmpty();
       return;
     }
@@ -530,6 +526,7 @@
     
     const data = response.data;
     console.log('📊 Country Report Data:', data);
+    console.log('📊 Data length:', data.length);
     console.log('🔍 Current Filters:', currentFilters);
     
     // Render chart
@@ -672,47 +669,6 @@
       total_orders: item.total_orders,
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount
-    })));
-  }
-
-  // Render Repeat Customers Report
-  function renderRepeatCustomersReport(response) {
-    if (!response || !response.data || response.data.length === 0) {
-      showEmpty();
-      return;
-    }
-
-    showContent();
-    
-    const data = response.data;
-    
-    // Render chart (Horizontal Bar chart - same style as Country tab)
-    renderChart({
-      labels: data.map(item => item.customer_name || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
-      }]
-    }, 'bar', { indexAxis: 'y' });
-    
-    // Render sortable table
-    renderSortableTable([
-      { key: 'customer_code', label: 'รหัสลูกค้า', type: 'text', align: 'left' },
-      { key: 'customer_name', label: 'ชื่อลูกค้า', type: 'text', align: 'left' },
-      { key: 'phone_number', label: 'เบอร์โทร', type: 'text', align: 'left' },
-      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
-      { key: 'countries', label: 'ประเทศ', type: 'text', align: 'left' },
-      { key: 'total_spent', label: 'ยอดรวม', type: 'currency', align: 'right' }
-    ], data.map(item => ({
-      customer_code: item.customer_code || '-',
-      customer_name: item.customer_name || 'ไม่ระบุ',
-      phone_number: item.phone_number || '-',
-      total_orders: item.total_orders,
-      countries: item.countries || '-',
-      total_spent: item.total_spent
     })));
   }
 
