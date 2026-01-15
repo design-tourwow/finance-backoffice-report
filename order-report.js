@@ -452,6 +452,8 @@
             return await OrderReportAPI.getReportByTravelDate(currentFilters);
           case 'booking-date':
             return await OrderReportAPI.getReportByBookingDate(currentFilters);
+          case 'lead-time':
+            return await OrderReportAPI.getLeadTimeAnalysis(currentFilters);
         }
       };
       
@@ -476,6 +478,9 @@
           break;
         case 'booking-date':
           renderBookingDateReport(response);
+          break;
+        case 'lead-time':
+          renderLeadTimeReport(response);
           break;
       }
       
@@ -678,6 +683,75 @@
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount
     })));
+  }
+
+  // Render Lead Time Report
+  function renderLeadTimeReport(response) {
+    console.log('🎨 Rendering Lead Time Report:', response);
+    
+    if (!response || !response.distribution || response.distribution.length === 0) {
+      console.warn('⚠️ No distribution data in Lead Time Report response');
+      showEmpty();
+      return;
+    }
+
+    showContent();
+    
+    const distribution = response.distribution;
+    const summary = response.summary || {};
+    const data = response.data || [];
+    
+    console.log('📊 Lead Time Distribution:', distribution);
+    console.log('📊 Lead Time Summary:', summary);
+    console.log('📊 Lead Time Data:', data.length, 'orders');
+    
+    // Render Column Chart for distribution
+    renderChart({
+      labels: distribution.map(item => item.range_label || item.range),
+      datasets: [{
+        label: 'จำนวน Orders',
+        data: distribution.map(item => item.count),
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
+        borderColor: 'rgba(74, 123, 167, 1)',
+        borderWidth: 1
+      }]
+    }, 'bar');
+    
+    // Render sortable table with order details
+    renderSortableTable([
+      { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
+      { key: 'order_code', label: 'Order Code', type: 'text', align: 'left' },
+      { key: 'customer_name', label: 'ลูกค้า', type: 'text', align: 'left' },
+      { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
+      { key: 'created_at', label: 'วันจอง', type: 'date', align: 'center' },
+      { key: 'travel_start_date', label: 'วันเดินทาง', type: 'date', align: 'center' },
+      { key: 'lead_time_days', label: 'Lead Time (วัน)', type: 'number', align: 'right' },
+      { key: 'net_amount', label: 'ยอดเงิน', type: 'currency', align: 'right' }
+    ], data.map((item, index) => ({
+      row_number: index + 1,
+      order_code: item.order_code || '-',
+      customer_name: item.customer_name || 'ไม่ระบุ',
+      country_name: item.country_name || 'ไม่ระบุ',
+      created_at: item.created_at ? formatDate(item.created_at) : '-',
+      travel_start_date: item.travel_start_date || '-',
+      lead_time_days: item.lead_time_days,
+      net_amount: item.net_amount
+    })));
+  }
+
+  // Format date for display
+  function formatDate(dateString) {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
   }
 
   // Calculate nice scale for chart axis (Best Practice)

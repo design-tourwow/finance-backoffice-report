@@ -219,6 +219,25 @@ const OrderReportAPI = {
       console.error('❌ Suppliers Error:', error);
       throw error;
     }
+  },
+
+  /**
+   * Get Lead Time Analysis Report
+   * @param {Object} filters - Filter parameters
+   * @returns {Promise<Object>}
+   */
+  async getLeadTimeAnalysis(filters = {}) {
+    try {
+      console.log('🔄 Fetching Lead Time Analysis with filters:', filters);
+      
+      const queryString = this.buildQueryString(filters);
+      const result = await this.fetchAPI(`/api/reports/lead-time-analysis${queryString}`);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Lead Time Analysis Error:', error);
+      throw error;
+    }
   }
 };
 
