@@ -686,17 +686,42 @@
     
     const data = response.data;
     
+    // Create gradient colors for each bar
+    const canvas = document.getElementById('reportChart');
+    const ctx = canvas.getContext('2d');
+    
     // Render chart (Horizontal Bar chart for repeat customers - easier to read)
     renderChart({
       labels: data.map(item => item.customer_name || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
+        backgroundColor: data.map((_, index) => {
+          const gradient = ctx.createLinearGradient(0, 0, 500, 0);
+          const colors = [
+            ['rgba(74, 123, 167, 0.9)', 'rgba(74, 123, 167, 0.6)'],
+            ['rgba(123, 31, 162, 0.9)', 'rgba(123, 31, 162, 0.6)'],
+            ['rgba(56, 142, 60, 0.9)', 'rgba(56, 142, 60, 0.6)'],
+            ['rgba(245, 124, 0, 0.9)', 'rgba(245, 124, 0, 0.6)'],
+            ['rgba(211, 47, 47, 0.9)', 'rgba(211, 47, 47, 0.6)'],
+            ['rgba(0, 150, 136, 0.9)', 'rgba(0, 150, 136, 0.6)'],
+            ['rgba(63, 81, 181, 0.9)', 'rgba(63, 81, 181, 0.6)'],
+            ['rgba(255, 152, 0, 0.9)', 'rgba(255, 152, 0, 0.6)']
+          ];
+          const colorPair = colors[index % colors.length];
+          gradient.addColorStop(0, colorPair[0]);
+          gradient.addColorStop(1, colorPair[1]);
+          return gradient;
+        }),
+        borderColor: 'rgba(255, 255, 255, 0.8)',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false
       }]
-    }, 'bar', { indexAxis: 'y' });
+    }, 'bar', { 
+      indexAxis: 'y',
+      barThickness: 32
+    });
     
     // Render sortable table
     renderSortableTable([
@@ -757,21 +782,49 @@
         ...extraOptions,
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 1000,
+          easing: 'easeInOutQuart'
+        },
         plugins: {
           legend: {
             display: type === 'pie',
-            position: 'right'
+            position: 'right',
+            labels: {
+              font: {
+                family: 'Kanit',
+                size: 13
+              },
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
           },
           tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            padding: 12,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            padding: 14,
+            cornerRadius: 8,
             titleFont: {
               size: 14,
-              family: 'Kanit'
+              family: 'Kanit',
+              weight: '600'
             },
             bodyFont: {
               size: 13,
               family: 'Kanit'
+            },
+            displayColors: true,
+            boxPadding: 6,
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                label += context.parsed.x || context.parsed.y;
+                label += ' Orders';
+                return label;
+              }
             }
           }
         },
@@ -780,22 +833,38 @@
             beginAtZero: isHorizontal ? true : (maxValue >= 10),
             min: isHorizontal ? undefined : minValue,
             max: isHorizontal ? undefined : maxValue,
+            grid: {
+              display: isHorizontal ? false : true,
+              color: 'rgba(0, 0, 0, 0.05)',
+              drawBorder: false
+            },
             ticks: {
               font: {
-                family: 'Kanit'
+                family: 'Kanit',
+                size: 12
               },
               stepSize: (!isHorizontal && maxValue < 10) ? 1 : undefined,
-              precision: isHorizontal ? 0 : 0
+              precision: isHorizontal ? 0 : 0,
+              padding: 10,
+              color: '#6b7280'
             }
           },
           x: {
             beginAtZero: isHorizontal ? true : undefined,
+            grid: {
+              display: isHorizontal ? true : true,
+              color: 'rgba(0, 0, 0, 0.05)',
+              drawBorder: false
+            },
             ticks: {
               font: {
-                family: 'Kanit'
+                family: 'Kanit',
+                size: 12
               },
               stepSize: isHorizontal ? 1 : undefined,
-              precision: 0
+              precision: 0,
+              padding: 10,
+              color: '#6b7280'
             }
           }
         } : {}
