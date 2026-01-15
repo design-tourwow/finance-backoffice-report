@@ -724,7 +724,7 @@
     // Initialize dropdown filter
     initLeadTimeFilter();
     
-    // Render Column Chart for distribution with click handler
+    // Render Column Chart (no click handler - use dropdown filter only)
     renderChart({
       labels: distribution.map(item => item.range_label || item.range),
       datasets: [{
@@ -734,15 +734,7 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar', {
-      onClick: (event, elements) => {
-        if (elements.length > 0) {
-          const index = elements[0].index;
-          const range = distribution[index];
-          filterTableByLeadTimeRange(range);
-        }
-      }
-    });
+    }, 'bar');
     
     // Render sortable table with order details (show all initially)
     renderLeadTimeTable(data);
@@ -802,6 +794,24 @@
       allOption.classList.add('active');
     }
     
+    // Remove old button listener by cloning
+    const newFilterBtn = filterBtn.cloneNode(true);
+    filterBtn.parentNode.replaceChild(newFilterBtn, filterBtn);
+    
+    // Toggle dropdown when clicking button
+    newFilterBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      filterMenu.classList.toggle('show');
+      console.log('🔘 Dropdown toggled:', filterMenu.classList.contains('show'));
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!newFilterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
+        filterMenu.classList.remove('show');
+      }
+    });
+    
     // Handle filter selection
     filterOptions.forEach(option => {
       // Remove old listeners by cloning
@@ -821,9 +831,10 @@
         
         // Update button label
         const labelElement = document.getElementById('leadTimeFilterLabel');
+        const btnElement = document.getElementById('leadTimeFilterBtn');
         if (rangeKey === 'all') {
           labelElement.textContent = 'ช่วง Lead Time';
-          filterBtn.classList.remove('active');
+          if (btnElement) btnElement.classList.remove('active');
           
           // Show all data
           const fullData = window.leadTimeFullData || [];
@@ -834,7 +845,7 @@
           if (indicator) indicator.remove();
         } else {
           labelElement.textContent = rangeLabel;
-          filterBtn.classList.add('active');
+          if (btnElement) btnElement.classList.add('active');
           
           // Find and filter by range
           const distribution = window.leadTimeDistribution || [];
