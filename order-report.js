@@ -709,6 +709,9 @@
     window.leadTimeFullData = data;
     window.leadTimeDistribution = distribution;
     
+    // Initialize dropdown filter
+    initLeadTimeFilter();
+    
     // Render Column Chart for distribution with click handler
     renderChart({
       labels: distribution.map(item => item.range_label || item.range),
@@ -757,6 +760,84 @@
     
     // Show filter indicator
     showLeadTimeFilterIndicator(range.range_label);
+  }
+
+  // Initialize Lead Time Filter Dropdown
+  function initLeadTimeFilter() {
+    const filterBtn = document.getElementById('leadTimeFilterBtn');
+    const filterMenu = document.getElementById('leadTimeFilterMenu');
+    
+    if (!filterBtn || !filterMenu) {
+      console.warn('⚠️ Lead Time filter elements not found');
+      return;
+    }
+    
+    console.log('🔧 Initializing Lead Time filter dropdown');
+    
+    // Reset dropdown state
+    const filterLabel = document.getElementById('leadTimeFilterLabel');
+    if (filterLabel) {
+      filterLabel.textContent = 'ช่วง Lead Time';
+    }
+    filterBtn.classList.remove('active');
+    filterMenu.classList.remove('show');
+    
+    // Set "ทั้งหมด" as active
+    const filterOptions = filterMenu.querySelectorAll('.table-filter-option');
+    filterOptions.forEach(opt => opt.classList.remove('active'));
+    const allOption = filterMenu.querySelector('[data-range="all"]');
+    if (allOption) {
+      allOption.classList.add('active');
+    }
+    
+    // Handle filter selection
+    filterOptions.forEach(option => {
+      // Remove old listeners by cloning
+      const newOption = option.cloneNode(true);
+      option.parentNode.replaceChild(newOption, option);
+      
+      newOption.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const rangeKey = this.getAttribute('data-range');
+        const rangeLabel = this.textContent.trim();
+        
+        console.log('🔍 Filter selected:', rangeKey, rangeLabel);
+        
+        // Update active state
+        filterMenu.querySelectorAll('.table-filter-option').forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Update button label
+        const labelElement = document.getElementById('leadTimeFilterLabel');
+        if (rangeKey === 'all') {
+          labelElement.textContent = 'ช่วง Lead Time';
+          filterBtn.classList.remove('active');
+          
+          // Show all data
+          const fullData = window.leadTimeFullData || [];
+          renderLeadTimeTable(fullData);
+          
+          // Remove filter indicator
+          const indicator = document.querySelector('.lead-time-filter-indicator');
+          if (indicator) indicator.remove();
+        } else {
+          labelElement.textContent = rangeLabel;
+          filterBtn.classList.add('active');
+          
+          // Find and filter by range
+          const distribution = window.leadTimeDistribution || [];
+          const range = distribution.find(d => d.range === rangeKey);
+          if (range) {
+            filterTableByLeadTimeRange(range);
+          }
+        }
+        
+        // Close dropdown
+        filterMenu.classList.remove('show');
+      });
+    });
+    
+    console.log('✅ Lead Time filter initialized');
   }
 
   // Show filter indicator
