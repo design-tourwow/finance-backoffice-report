@@ -157,6 +157,58 @@
   min-height: 400px;
 }
 
+/* Top Filter for Repeat Customers */
+.top-filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.top-filter-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.top-filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.top-filter-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Kanit', sans-serif;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.top-filter-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.top-filter-btn.active {
+  background: #4a7ba7;
+  border-color: #4a7ba7;
+  color: white;
+}
+
+.top-filter-btn.active:hover {
+  background: #3d6a91;
+  border-color: #3d6a91;
+}
+
 /* Chart Container */
 .chart-container {
   max-width: 100%;

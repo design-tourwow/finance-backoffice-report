@@ -7,6 +7,8 @@
   let currentFilters = {};
   let currentTableInstance = null;
   let currentTableData = [];
+  let currentTabFullData = []; // Store full data for current tab
+  let currentTopFilter = 10; // Default to Top 10
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -82,6 +84,48 @@
         switchTab(tabName);
       });
     });
+    
+    // Initialize top filter buttons for repeat customers
+    const topFilterButtons = document.querySelectorAll('.top-filter-btn');
+    topFilterButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Update active state
+        topFilterButtons.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Get selected top value
+        const topValue = this.getAttribute('data-top');
+        currentTopFilter = topValue === 'all' ? 'all' : parseInt(topValue);
+        
+        // Re-render chart with filtered data
+        rerenderCurrentChart();
+      });
+    });
+  }
+  
+  // Re-render current chart with top filter
+  function rerenderCurrentChart() {
+    if (!currentTabFullData || currentTabFullData.length === 0) {
+      return;
+    }
+    
+    switch(currentTab) {
+      case 'country':
+        renderCountryChart();
+        break;
+      case 'supplier':
+        renderSupplierChart();
+        break;
+      case 'travel-date':
+        renderTravelDateChart();
+        break;
+      case 'booking-date':
+        renderBookingDateChart();
+        break;
+      case 'repeat-customers':
+        renderRepeatCustomersChart();
+        break;
+    }
   }
 
   // Switch tab
@@ -93,6 +137,19 @@
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     
     currentTab = tabName;
+    
+    // Reset top filter to default
+    currentTopFilter = 10;
+    document.querySelectorAll('.top-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.getAttribute('data-top') === '10') {
+        btn.classList.add('active');
+      }
+    });
+    
+    // Show top filter for all tabs
+    const topFilterWrapper = document.getElementById('topFilterWrapper');
+    topFilterWrapper.style.display = 'flex';
     
     // Load data for selected tab
     await loadTabData(tabName);
@@ -528,36 +585,54 @@
 
     showContent();
     
-    const data = response.data;
-    console.log('📊 Country Report Data:', data);
-    console.log('🔍 Current Filters:', currentFilters);
+    // Store full data
+    currentTabFullData = response.data;
     
-    // Render chart
-    renderChart({
-      labels: data.map(item => item.country_name || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
-      }]
-    }, 'bar');
+    // Render chart with current filter
+    renderCountryChart();
     
-    // Render sortable table
+    // Render sortable table with full data
     renderSortableTable([
       { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' },
       { key: 'avg_net_amount', label: 'ค่าเฉลี่ย/Order', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], currentTabFullData.map(item => ({
       country_name: item.country_name || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount,
       avg_net_amount: item.avg_net_amount
     })));
+  }
+  
+  // Render Country Chart (separate function for filtering)
+  function renderCountryChart() {
+    if (!currentTabFullData || currentTabFullData.length === 0) {
+      return;
+    }
+    
+    // Filter data based on currentTopFilter
+    let filteredData = currentTabFullData;
+    if (currentTopFilter !== 'all') {
+      filteredData = currentTabFullData.slice(0, currentTopFilter);
+    }
+    
+    // Adjust chart height based on number of items
+    adjustChartHeight(filteredData.length);
+    
+    // Render chart
+    renderChart({
+      labels: filteredData.map(item => item.country_name || 'ไม่ระบุ'),
+      datasets: [{
+        label: 'จำนวน Orders',
+        data: filteredData.map(item => item.total_orders),
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
+        borderColor: 'rgba(74, 123, 167, 1)',
+        borderWidth: 1
+      }]
+    }, 'bar');
   }
 
   // Render Supplier Report
@@ -569,34 +644,54 @@
 
     showContent();
     
-    const data = response.data;
+    // Store full data
+    currentTabFullData = response.data;
     
-    // Render chart
-    renderChart({
-      labels: data.map(item => item.supplier_name || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(123, 31, 162, 0.8)',
-        borderColor: 'rgba(123, 31, 162, 1)',
-        borderWidth: 1
-      }]
-    }, 'bar');
+    // Render chart with current filter
+    renderSupplierChart();
     
-    // Render sortable table
+    // Render sortable table with full data
     renderSortableTable([
       { key: 'supplier_name', label: 'Supplier', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' },
       { key: 'avg_net_amount', label: 'ค่าเฉลี่ย/Order', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], currentTabFullData.map(item => ({
       supplier_name: item.supplier_name || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount,
       avg_net_amount: item.avg_net_amount
     })));
+  }
+  
+  // Render Supplier Chart (separate function for filtering)
+  function renderSupplierChart() {
+    if (!currentTabFullData || currentTabFullData.length === 0) {
+      return;
+    }
+    
+    // Filter data based on currentTopFilter
+    let filteredData = currentTabFullData;
+    if (currentTopFilter !== 'all') {
+      filteredData = currentTabFullData.slice(0, currentTopFilter);
+    }
+    
+    // Adjust chart height based on number of items
+    adjustChartHeight(filteredData.length);
+    
+    // Render chart (same blue color as Country)
+    renderChart({
+      labels: filteredData.map(item => item.supplier_name || 'ไม่ระบุ'),
+      datasets: [{
+        label: 'จำนวน Orders',
+        data: filteredData.map(item => item.total_orders),
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
+        borderColor: 'rgba(74, 123, 167, 1)',
+        borderWidth: 1
+      }]
+    }, 'bar');
   }
 
   // Render Travel Date Report
@@ -608,33 +703,54 @@
 
     showContent();
     
-    const data = response.data;
+    // Store full data
+    currentTabFullData = response.data;
     
-    // Render chart
-    renderChart({
-      labels: data.map(item => item.travel_month_label || item.travel_month || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(56, 142, 60, 0.8)',
-        borderColor: 'rgba(56, 142, 60, 1)',
-        borderWidth: 2,
-        fill: false
-      }]
-    }, 'line');
+    // Render chart with current filter
+    renderTravelDateChart();
     
-    // Render sortable table
+    // Render sortable table with full data
     renderSortableTable([
       { key: 'travel_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], currentTabFullData.map(item => ({
       travel_month_label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount
     })));
+  }
+  
+  // Render Travel Date Chart (separate function for filtering)
+  function renderTravelDateChart() {
+    if (!currentTabFullData || currentTabFullData.length === 0) {
+      return;
+    }
+    
+    // Filter data based on currentTopFilter
+    let filteredData = currentTabFullData;
+    if (currentTopFilter !== 'all') {
+      filteredData = currentTabFullData.slice(0, currentTopFilter);
+    }
+    
+    // Reset chart height for line chart
+    const chartContainer = document.getElementById('chartContainer');
+    chartContainer.style.height = '400px';
+    
+    // Render chart (same blue color as Country)
+    renderChart({
+      labels: filteredData.map(item => item.travel_month_label || item.travel_month || 'ไม่ระบุ'),
+      datasets: [{
+        label: 'จำนวน Orders',
+        data: filteredData.map(item => item.total_orders),
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
+        borderColor: 'rgba(74, 123, 167, 1)',
+        borderWidth: 2,
+        fill: false
+      }]
+    }, 'line');
   }
 
   // Render Booking Date Report
@@ -646,33 +762,54 @@
 
     showContent();
     
-    const data = response.data;
+    // Store full data
+    currentTabFullData = response.data;
     
-    // Render chart
-    renderChart({
-      labels: data.map(item => item.booking_month_label || item.booking_month || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(245, 124, 0, 0.8)',
-        borderColor: 'rgba(245, 124, 0, 1)',
-        borderWidth: 2,
-        fill: false
-      }]
-    }, 'line');
+    // Render chart with current filter
+    renderBookingDateChart();
     
-    // Render sortable table
+    // Render sortable table with full data
     renderSortableTable([
       { key: 'booking_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], currentTabFullData.map(item => ({
       booking_month_label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount
     })));
+  }
+  
+  // Render Booking Date Chart (separate function for filtering)
+  function renderBookingDateChart() {
+    if (!currentTabFullData || currentTabFullData.length === 0) {
+      return;
+    }
+    
+    // Filter data based on currentTopFilter
+    let filteredData = currentTabFullData;
+    if (currentTopFilter !== 'all') {
+      filteredData = currentTabFullData.slice(0, currentTopFilter);
+    }
+    
+    // Reset chart height for line chart
+    const chartContainer = document.getElementById('chartContainer');
+    chartContainer.style.height = '400px';
+    
+    // Render chart (same blue color as Country)
+    renderChart({
+      labels: filteredData.map(item => item.booking_month_label || item.booking_month || 'ไม่ระบุ'),
+      datasets: [{
+        label: 'จำนวน Orders',
+        data: filteredData.map(item => item.total_orders),
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
+        borderColor: 'rgba(74, 123, 167, 1)',
+        borderWidth: 2,
+        fill: false
+      }]
+    }, 'line');
   }
 
   // Render Repeat Customers Report
@@ -684,21 +821,13 @@
 
     showContent();
     
-    const data = response.data;
+    // Store full data
+    currentTabFullData = response.data;
     
-    // Render chart (Horizontal Bar chart - same style as Country tab)
-    renderChart({
-      labels: data.map(item => item.customer_name || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
-      }]
-    }, 'bar', { indexAxis: 'y' });
+    // Render chart with current filter
+    renderRepeatCustomersChart();
     
-    // Render sortable table
+    // Render sortable table with full data
     renderSortableTable([
       { key: 'customer_code', label: 'รหัสลูกค้า', type: 'text', align: 'left' },
       { key: 'customer_name', label: 'ชื่อลูกค้า', type: 'text', align: 'left' },
@@ -706,7 +835,7 @@
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'countries', label: 'ประเทศ', type: 'text', align: 'left' },
       { key: 'total_spent', label: 'ยอดรวม', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], currentTabFullData.map(item => ({
       customer_code: item.customer_code || '-',
       customer_name: item.customer_name || 'ไม่ระบุ',
       phone_number: item.phone_number || '-',
@@ -714,6 +843,43 @@
       countries: item.countries || '-',
       total_spent: item.total_spent
     })));
+  }
+  
+  // Render Repeat Customers Chart (separate function for filtering)
+  function renderRepeatCustomersChart() {
+    if (!currentTabFullData || currentTabFullData.length === 0) {
+      return;
+    }
+    
+    // Filter data based on currentTopFilter
+    let filteredData = currentTabFullData;
+    if (currentTopFilter !== 'all') {
+      filteredData = currentTabFullData.slice(0, currentTopFilter);
+    }
+    
+    // Adjust chart height based on number of items
+    adjustChartHeight(filteredData.length);
+    
+    // Render chart (Horizontal Bar chart - same style as Country tab)
+    renderChart({
+      labels: filteredData.map(item => item.customer_name || 'ไม่ระบุ'),
+      datasets: [{
+        label: 'จำนวน Orders',
+        data: filteredData.map(item => item.total_orders),
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
+        borderColor: 'rgba(74, 123, 167, 1)',
+        borderWidth: 1
+      }]
+    }, 'bar', { indexAxis: 'y' });
+  }
+  
+  // Adjust chart height based on number of items
+  function adjustChartHeight(itemCount) {
+    const chartContainer = document.getElementById('chartContainer');
+    const minHeight = 400;
+    const heightPerItem = 35;
+    const calculatedHeight = Math.max(minHeight, itemCount * heightPerItem);
+    chartContainer.style.height = calculatedHeight + 'px';
   }
 
   // Render chart
