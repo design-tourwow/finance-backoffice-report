@@ -1424,6 +1424,9 @@
     // Determine if horizontal bar chart
     const isHorizontal = extraOptions.indexAxis === 'y';
     
+    // Check if data labels are enabled
+    const hasDataLabels = extraOptions.plugins?.datalabels?.display === true;
+    
     // Calculate nice scale for the data
     let scaleConfig = {};
     if (type !== 'pie' && data.datasets && data.datasets[0]) {
@@ -1431,14 +1434,18 @@
       const min = Math.min(...values);
       const max = Math.max(...values);
       
-      const niceScale = calculateNiceScale(min, max);
+      // Add extra space for data labels (10% more)
+      const adjustedMax = hasDataLabels ? max * 1.1 : max;
+      const niceScale = calculateNiceScale(min, adjustedMax);
       
       console.log('📏 Scale:', { 
         dataMin: min, 
-        dataMax: max, 
+        dataMax: max,
+        adjustedMax: adjustedMax,
         scaleMin: niceScale.min, 
         scaleMax: niceScale.max, 
-        tickSpacing: niceScale.tickSpacing 
+        tickSpacing: niceScale.tickSpacing,
+        hasDataLabels: hasDataLabels
       });
       
       scaleConfig = {
@@ -1489,6 +1496,14 @@
           ...extraOptions,
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: {
+              top: hasDataLabels ? 30 : 10,
+              right: 20,
+              bottom: 10,
+              left: 20
+            }
+          },
           plugins: pluginOptions,
           scales: type !== 'pie' ? {
             y: isHorizontal ? {
