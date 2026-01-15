@@ -8,7 +8,7 @@
   let currentTableInstance = null;
   let currentTableData = [];
   let currentTabFullData = []; // Store full data for current tab
-  let currentTopFilter = 10; // Default to Top 10
+  let currentTopFilter = 'all'; // Default to All
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -138,11 +138,11 @@
     
     currentTab = tabName;
     
-    // Reset top filter to default
-    currentTopFilter = 10;
+    // Reset top filter to default (All)
+    currentTopFilter = 'all';
     document.querySelectorAll('.top-filter-btn').forEach(btn => {
       btn.classList.remove('active');
-      if (btn.getAttribute('data-top') === '10') {
+      if (btn.getAttribute('data-top') === 'all') {
         btn.classList.add('active');
       }
     });
@@ -619,8 +619,15 @@
       filteredData = currentTabFullData.slice(0, currentTopFilter);
     }
     
-    // Adjust chart height based on number of items
-    adjustChartHeight(filteredData.length);
+    // Fixed chart height - calculate based on full data for consistency
+    const totalItems = currentTabFullData.length;
+    const minHeight = 500;
+    const maxHeight = 1200;
+    const heightPerItem = 40; // Increased spacing
+    const calculatedHeight = Math.min(maxHeight, Math.max(minHeight, totalItems * heightPerItem));
+    
+    const chartContainer = document.getElementById('chartContainer');
+    chartContainer.style.height = calculatedHeight + 'px';
     
     // Render chart
     renderChart({
@@ -632,7 +639,10 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar');
+    }, 'bar', { 
+      barPercentage: 0.7,
+      categoryPercentage: 0.8
+    });
   }
 
   // Render Supplier Report
@@ -678,8 +688,15 @@
       filteredData = currentTabFullData.slice(0, currentTopFilter);
     }
     
-    // Adjust chart height based on number of items
-    adjustChartHeight(filteredData.length);
+    // Fixed chart height - calculate based on full data for consistency
+    const totalItems = currentTabFullData.length;
+    const minHeight = 500;
+    const maxHeight = 1200;
+    const heightPerItem = 40; // Increased spacing
+    const calculatedHeight = Math.min(maxHeight, Math.max(minHeight, totalItems * heightPerItem));
+    
+    const chartContainer = document.getElementById('chartContainer');
+    chartContainer.style.height = calculatedHeight + 'px';
     
     // Render chart (same blue color as Country)
     renderChart({
@@ -691,7 +708,10 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar');
+    }, 'bar', { 
+      barPercentage: 0.7,
+      categoryPercentage: 0.8
+    });
   }
 
   // Render Travel Date Report
@@ -857,8 +877,15 @@
       filteredData = currentTabFullData.slice(0, currentTopFilter);
     }
     
-    // Adjust chart height based on number of items
-    adjustChartHeight(filteredData.length);
+    // Fixed chart height - calculate based on full data for consistency
+    const totalItems = currentTabFullData.length;
+    const minHeight = 500;
+    const maxHeight = 1200;
+    const heightPerItem = 40; // Increased spacing
+    const calculatedHeight = Math.min(maxHeight, Math.max(minHeight, totalItems * heightPerItem));
+    
+    const chartContainer = document.getElementById('chartContainer');
+    chartContainer.style.height = calculatedHeight + 'px';
     
     // Render chart (Horizontal Bar chart - same style as Country tab)
     renderChart({
@@ -870,16 +897,16 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar', { indexAxis: 'y' });
+    }, 'bar', { 
+      indexAxis: 'y',
+      barPercentage: 0.7,
+      categoryPercentage: 0.8
+    });
   }
   
-  // Adjust chart height based on number of items
+  // Adjust chart height based on number of items (removed - no longer used)
   function adjustChartHeight(itemCount) {
-    const chartContainer = document.getElementById('chartContainer');
-    const minHeight = 400;
-    const heightPerItem = 35;
-    const calculatedHeight = Math.max(minHeight, itemCount * heightPerItem);
-    chartContainer.style.height = calculatedHeight + 'px';
+    // This function is no longer used but kept for compatibility
   }
 
   // Render chart
