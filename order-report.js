@@ -672,6 +672,51 @@
     })));
   }
 
+  // Calculate nice scale for chart axis (Best Practice)
+  function calculateNiceScale(min, max, maxTicks = 10) {
+    const range = max - min;
+    
+    // If range is 0, return simple scale
+    if (range === 0) {
+      return {
+        min: Math.max(0, min - 1),
+        max: max + 1,
+        tickSpacing: 1
+      };
+    }
+    
+    // Calculate rough tick spacing
+    const roughTickSpacing = range / (maxTicks - 1);
+    
+    // Get magnitude of tick spacing
+    const magnitude = Math.floor(Math.log10(roughTickSpacing));
+    const magnitudePower = Math.pow(10, magnitude);
+    
+    // Calculate nice tick spacing (1, 2, 5, 10, 20, 50, 100, etc.)
+    const normalizedSpacing = roughTickSpacing / magnitudePower;
+    let niceTickSpacing;
+    
+    if (normalizedSpacing < 1.5) {
+      niceTickSpacing = 1 * magnitudePower;
+    } else if (normalizedSpacing < 3) {
+      niceTickSpacing = 2 * magnitudePower;
+    } else if (normalizedSpacing < 7) {
+      niceTickSpacing = 5 * magnitudePower;
+    } else {
+      niceTickSpacing = 10 * magnitudePower;
+    }
+    
+    // Calculate nice min and max
+    const niceMin = Math.floor(min / niceTickSpacing) * niceTickSpacing;
+    const niceMax = Math.ceil(max / niceTickSpacing) * niceTickSpacing;
+    
+    return {
+      min: niceMin,
+      max: niceMax,
+      tickSpacing: niceTickSpacing
+    };
+  }
+
   // Render chart
   function renderChart(data, type, extraOptions = {}) {
     const canvas = document.getElementById('reportChart');
@@ -682,84 +727,118 @@
       currentChart.destroy();
     }
     
-    // Calculate min/max for better scaling
-    let minValue = 0;
-    let maxValue = 0;
-    
-    if (type !== 'pie' && data.datasets && data.datasets[0]) {
-      const values = data.datasets[0].data;
-      minValue = Math.min(...values);
-      maxValue = Math.max(...values);
-      
-      // If all values are small (< 10), adjust scale
-      if (maxValue < 10 && maxValue > 0) {
-        minValue = 0;
-        maxValue = Math.ceil(maxValue * 1.2); // Add 20% padding
-      } else if (minValue > 0) {
-        // If minimum is not 0, start from a reasonable baseline
-        const range = maxValue - minValue;
-        minValue = Math.max(0, minValue - range * 0.1);
-      }
+    // Validate data
+    if (!data || !data.labels || !data.datasets || data.labels.length === 0) {
+      console.error('❌ Invalid chart data:', data);
+      return;
     }
+    
+    console.log('📊 Rendering chart:', { type, labels: data.labels, data: data.datasets[0]?.data });
     
     // Determine if horizontal bar chart
     const isHorizontal = extraOptions.indexAxis === 'y';
     
+    // Calculate nice scale for the data
+    let scaleConfig = {};
+    if (type !== 'pie' && data.datasets && data.datasets[0]) {
+      const values = data.datasets[0].data;
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      
+      const niceScale = calculateNiceScale(min, max);
+      
+      console.log('📏 Scale:', { 
+        dataMin: min, 
+        dataMax: max, 
+        scaleMin: niceScale.min, 
+        scaleMax: niceScale.max, 
+        tickSpacing: niceScale.tickSpacing 
+      });
+      
+      scaleConfig = {
+        min: niceScale.min,
+        max: niceScale.max,
+        ticks: {
+          stepSize: niceScale.tickSpacing,
+          font: {
+            family: 'Kanit'
+          },
+          precision: 0
+        }
+      };
+    }
+    
     // Create new chart
-    currentChart = new Chart(ctx, {
-      type: type,
-      data: data,
-      options: {
-        ...extraOptions,
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: type === 'pie',
-            position: 'right'
-          },
-          tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            padding: 12,
-            titleFont: {
-              size: 14,
-              family: 'Kanit'
+    try {
+      currentChart = new Chart(ctx, {
+        type: type,
+        data: data,
+        options: {
+          ...extraOptions,
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: type === 'pie',
+              position: 'right'
             },
-            bodyFont: {
-              size: 13,
-              family: 'Kanit'
-            }
-          },
-          datalabels: {
-            display: false
-          }
-        },
-        scales: type !== 'pie' ? {
-          y: {
-            beginAtZero: isHorizontal ? true : (maxValue >= 10),
-            min: isHorizontal ? undefined : minValue,
-            max: isHorizontal ? undefined : maxValue,
-            ticks: {
-              font: {
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleFont: {
+                size: 14,
                 family: 'Kanit'
               },
-              stepSize: (!isHorizontal && maxValue < 10) ? 1 : undefined,
-              precision: isHorizontal ? 0 : 0
+              bodyFont: {
+                size: 13,
+                family: 'Kanit'
+              }
+            },
+            datalabels: {
+              display: false
             }
           },
-          x: {
-            beginAtZero: isHorizontal ? true : undefined,
-            ticks: {
-              font: {
-                family: 'Kanit'
+          scales: type !== 'pie' ? {
+            y: isHorizontal ? {
+              ticks: {
+                font: {
+                  family: 'Kanit'
+                }
               },
-              stepSize: isHorizontal ? 1 : undefined,
-              precision: 0
+              grid: {
+                display: false
+              }
+            } : {
+              ...scaleConfig,
+              grid: {
+                display: true,
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: isHorizontal ? {
+              ...scaleConfig,
+              grid: {
+                display: true,
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            } : {
+              ticks: {
+                font: {
+                  family: 'Kanit'
+                }
+              },
+              grid: {
+                display: false
+              }
             }
-          }
-        } : {}
-      }
-    });
+          } : {}
+        }
+      });
+      
+      console.log('✅ Chart rendered successfully');
+    } catch (error) {
+      console.error('❌ Chart rendering error:', error);
+    }
   }
 
   // Render sortable table
