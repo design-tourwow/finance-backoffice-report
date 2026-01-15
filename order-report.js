@@ -7,7 +7,8 @@
   let currentFilters = {};
   let currentTableInstance = null;
   let currentTableData = [];
-  let leadTimeFilterInstance = null;
+  let currentFilterInstance = null;
+  let currentTabData = [];
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -537,9 +538,13 @@
     showContent();
     
     const data = response.data;
+    currentTabData = data;
     console.log('📊 Country Report Data:', data);
     console.log('📊 Data length:', data.length);
     console.log('🔍 Current Filters:', currentFilters);
+    
+    // Initialize filter dropdown for Country tab
+    initTabFilter('country', data);
     
     // Render chart
     renderChart({
@@ -571,6 +576,183 @@
     })));
   }
 
+  // Initialize Tab Filter
+  function initTabFilter(tabType, data) {
+    const container = document.getElementById('tabFilterContainer');
+    if (!container) return;
+    
+    // Destroy existing filter
+    if (currentFilterInstance && currentFilterInstance.destroy) {
+      currentFilterInstance.destroy();
+    }
+    
+    let options = [];
+    let onChange = null;
+    
+    switch(tabType) {
+      case 'country':
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.country_name,
+            label: item.country_name || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterByCountry(value);
+        break;
+        
+      case 'supplier':
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.supplier_name,
+            label: item.supplier_name || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterBySupplier(value);
+        break;
+        
+      case 'travel-date':
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.travel_month_label || item.travel_month,
+            label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterByTravelDate(value);
+        break;
+        
+      case 'booking-date':
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.booking_month_label || item.booking_month,
+            label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterByBookingDate(value);
+        break;
+        
+      case 'lead-time':
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          {
+            value: '0-7',
+            label: '0-7 วัน (จองใกล้วันเดินทาง)',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`
+          },
+          {
+            value: '8-14',
+            label: '8-14 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+          },
+          {
+            value: '15-30',
+            label: '15-30 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+          },
+          {
+            value: '31-60',
+            label: '31-60 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '61-90',
+            label: '61-90 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '90+',
+            label: 'มากกว่า 90 วัน (จองล่วงหน้ามาก)',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`
+          }
+        ];
+        onChange = (value) => filterLeadTimeByRange(value);
+        break;
+    }
+    
+    if (options.length > 0) {
+      currentFilterInstance = FilterSortDropdownComponent.initDropdown({
+        containerId: 'tabFilterContainer',
+        defaultLabel: options[0].label,
+        defaultIcon: options[0].icon,
+        options: options,
+        onChange: onChange
+      });
+    }
+  }
+
+  // Filter functions for each tab
+  function filterByCountry(value) {
+    if (value === 'all') {
+      renderCountryReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => item.country_name === value);
+      renderCountryReport({ data: filtered });
+    }
+  }
+
+  function filterBySupplier(value) {
+    if (value === 'all') {
+      renderSupplierReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => item.supplier_name === value);
+      renderSupplierReport({ data: filtered });
+    }
+  }
+
+  function filterByTravelDate(value) {
+    if (value === 'all') {
+      renderTravelDateReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => 
+        (item.travel_month_label || item.travel_month) === value
+      );
+      renderTravelDateReport({ data: filtered });
+    }
+  }
+
+  function filterByBookingDate(value) {
+    if (value === 'all') {
+      renderBookingDateReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => 
+        (item.booking_month_label || item.booking_month) === value
+      );
+      renderBookingDateReport({ data: filtered });
+    }
+  }
+
   // Render Supplier Report
   function renderSupplierReport(response) {
     if (!response || !response.data || response.data.length === 0) {
@@ -581,6 +763,10 @@
     showContent();
     
     const data = response.data;
+    currentTabData = data;
+    
+    // Initialize filter dropdown for Supplier tab
+    initTabFilter('supplier', data);
     
     // Render chart (same blue color as Country)
     renderChart({
@@ -622,6 +808,10 @@
     showContent();
     
     const data = response.data;
+    currentTabData = data;
+    
+    // Initialize filter dropdown for Travel Date tab
+    initTabFilter('travel-date', data);
     
     // Render chart (same blue color as Country)
     renderChart({
@@ -662,6 +852,10 @@
     showContent();
     
     const data = response.data;
+    currentTabData = data;
+    
+    // Initialize filter dropdown for Booking Date tab
+    initTabFilter('booking-date', data);
     
     // Render chart (same blue color as Country)
     renderChart({
@@ -715,99 +909,10 @@
     // Store full data for filtering
     window.leadTimeFullData = data;
     window.leadTimeDistribution = distribution;
+    currentTabData = data;
     
-    // Initialize filter dropdown using new component
-    leadTimeFilterInstance = FilterSortDropdownComponent.initDropdown({
-      containerId: 'leadTimeFilterContainer',
-      defaultLabel: 'ทั้งหมด',
-      defaultIcon: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
-        </svg>
-      `,
-      options: [
-        {
-          value: 'all',
-          label: 'ทั้งหมด',
-          active: true,
-          icon: `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-            </svg>
-          `
-        },
-        {
-          value: '0-7',
-          label: '0-7 วัน (จองใกล้วันเดินทาง)',
-          icon: `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-            </svg>
-          `
-        },
-        {
-          value: '8-14',
-          label: '8-14 วัน',
-          icon: `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          `
-        },
-        {
-          value: '15-30',
-          label: '15-30 วัน',
-          icon: `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          `
-        },
-        {
-          value: '31-60',
-          label: '31-60 วัน',
-          icon: `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          `
-        },
-        {
-          value: '61-90',
-          label: '61-90 วัน',
-          icon: `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          `
-        },
-        {
-          value: '90+',
-          label: 'มากกว่า 90 วัน (จองล่วงหน้ามาก)',
-          icon: `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-          `
-        }
-      ],
-      onChange: (value, label) => {
-        console.log('🔍 Lead Time filter changed:', value, label);
-        filterLeadTimeByRange(value);
-      }
-    });
+    // Initialize filter dropdown using initTabFilter
+    initTabFilter('lead-time', data);
     
     // Render Column Chart (no click handler - use dropdown filter only)
     renderChart({
