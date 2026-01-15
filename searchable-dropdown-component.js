@@ -620,16 +620,12 @@ const SearchableDropdownComponent = {
 
     function updateMultiDisplay() {
       if (state.selectedValues.length === 0) {
-        selectedText.innerHTML = placeholder;
+        selectedText.textContent = placeholder;
         trigger.classList.add('placeholder');
-      } else if (state.selectedValues.length === 1) {
-        selectedText.innerHTML = state.selectedLabels[0];
-        trigger.classList.remove('placeholder');
       } else {
-        selectedText.innerHTML = `
-          ${state.selectedLabels[0]}
-          <span class="selected-count">+${state.selectedValues.length - 1}</span>
-        `;
+        // Show all selected items as comma-separated text (same as tour-image-manager)
+        const fullText = state.selectedLabels.join(', ');
+        selectedText.textContent = fullText;
         trigger.classList.remove('placeholder');
       }
     }
