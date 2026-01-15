@@ -162,10 +162,9 @@
   max-width: 100%;
   height: 400px;
   margin-bottom: 24px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
 }
 
 .chart-container canvas {

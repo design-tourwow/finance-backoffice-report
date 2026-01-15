@@ -2,6 +2,15 @@
 (function () {
   'use strict';
 
+  // Register Chart.js datalabels plugin
+  if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+    // Disable datalabels by default for all charts
+    Chart.defaults.set('plugins.datalabels', {
+      display: false
+    });
+  }
+
   let currentChart = null;
   let currentTab = 'country';
   let currentFilters = {};
@@ -686,41 +695,21 @@
     
     const data = response.data;
     
-    // Create gradient colors for each bar
-    const canvas = document.getElementById('reportChart');
-    const ctx = canvas.getContext('2d');
-    
-    // Render chart (Horizontal Bar chart for repeat customers - easier to read)
+    // Render chart (Horizontal Bar chart - simple and clean)
     renderChart({
       labels: data.map(item => item.customer_name || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
-        backgroundColor: data.map((_, index) => {
-          const gradient = ctx.createLinearGradient(0, 0, 500, 0);
-          const colors = [
-            ['rgba(74, 123, 167, 0.9)', 'rgba(74, 123, 167, 0.6)'],
-            ['rgba(123, 31, 162, 0.9)', 'rgba(123, 31, 162, 0.6)'],
-            ['rgba(56, 142, 60, 0.9)', 'rgba(56, 142, 60, 0.6)'],
-            ['rgba(245, 124, 0, 0.9)', 'rgba(245, 124, 0, 0.6)'],
-            ['rgba(211, 47, 47, 0.9)', 'rgba(211, 47, 47, 0.6)'],
-            ['rgba(0, 150, 136, 0.9)', 'rgba(0, 150, 136, 0.6)'],
-            ['rgba(63, 81, 181, 0.9)', 'rgba(63, 81, 181, 0.6)'],
-            ['rgba(255, 152, 0, 0.9)', 'rgba(255, 152, 0, 0.6)']
-          ];
-          const colorPair = colors[index % colors.length];
-          gradient.addColorStop(0, colorPair[0]);
-          gradient.addColorStop(1, colorPair[1]);
-          return gradient;
-        }),
-        borderColor: 'rgba(255, 255, 255, 0.8)',
-        borderWidth: 2,
-        borderRadius: 8,
+        backgroundColor: 'rgba(74, 123, 167, 0.85)',
+        borderColor: 'rgba(74, 123, 167, 1)',
+        borderWidth: 1,
+        borderRadius: 6,
         borderSkipped: false
       }]
     }, 'bar', { 
       indexAxis: 'y',
-      barThickness: 32
+      barThickness: 28
     });
     
     // Render sortable table
@@ -783,27 +772,22 @@
         responsive: true,
         maintainAspectRatio: false,
         animation: {
-          duration: 1000,
-          easing: 'easeInOutQuart'
+          duration: 800,
+          easing: 'easeOutQuart'
+        },
+        layout: {
+          padding: {
+            right: isHorizontal ? 50 : 10
+          }
         },
         plugins: {
           legend: {
-            display: type === 'pie',
-            position: 'right',
-            labels: {
-              font: {
-                family: 'Kanit',
-                size: 13
-              },
-              padding: 15,
-              usePointStyle: true,
-              pointStyle: 'circle'
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            padding: 14,
-            cornerRadius: 8,
+            padding: 12,
+            cornerRadius: 6,
             titleFont: {
               size: 14,
               family: 'Kanit',
@@ -813,20 +797,27 @@
               size: 13,
               family: 'Kanit'
             },
-            displayColors: true,
-            boxPadding: 6,
+            displayColors: false,
             callbacks: {
               label: function(context) {
-                let label = context.dataset.label || '';
-                if (label) {
-                  label += ': ';
-                }
-                label += context.parsed.x || context.parsed.y;
-                label += ' Orders';
-                return label;
+                return context.parsed.x || context.parsed.y + ' Orders';
               }
             }
-          }
+          },
+          datalabels: isHorizontal ? {
+            anchor: 'end',
+            align: 'end',
+            offset: 4,
+            color: '#374151',
+            font: {
+              family: 'Kanit',
+              size: 13,
+              weight: '600'
+            },
+            formatter: function(value) {
+              return value;
+            }
+          } : false
         },
         scales: type !== 'pie' ? {
           y: {
@@ -834,26 +825,25 @@
             min: isHorizontal ? undefined : minValue,
             max: isHorizontal ? undefined : maxValue,
             grid: {
-              display: isHorizontal ? false : true,
-              color: 'rgba(0, 0, 0, 0.05)',
+              display: false,
               drawBorder: false
             },
             ticks: {
               font: {
                 family: 'Kanit',
-                size: 12
+                size: 13
               },
               stepSize: (!isHorizontal && maxValue < 10) ? 1 : undefined,
-              precision: isHorizontal ? 0 : 0,
-              padding: 10,
-              color: '#6b7280'
+              precision: 0,
+              padding: 12,
+              color: '#374151'
             }
           },
           x: {
             beginAtZero: isHorizontal ? true : undefined,
             grid: {
               display: isHorizontal ? true : true,
-              color: 'rgba(0, 0, 0, 0.05)',
+              color: 'rgba(0, 0, 0, 0.04)',
               drawBorder: false
             },
             ticks: {
@@ -863,7 +853,7 @@
               },
               stepSize: isHorizontal ? 1 : undefined,
               precision: 0,
-              padding: 10,
+              padding: 8,
               color: '#6b7280'
             }
           }
