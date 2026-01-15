@@ -184,13 +184,20 @@
   align-items: center;
   gap: 12px;
   flex-wrap: nowrap;
+  justify-content: space-between;
 }
 
 .table-search-input-wrapper {
   position: relative;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 250px;
   max-width: 400px;
+}
+
+/* Tab Filter Container - align to right */
+#tabFilterContainer {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .table-search-input-wrapper .search-icon {
