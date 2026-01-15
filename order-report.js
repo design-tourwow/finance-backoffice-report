@@ -543,12 +543,14 @@
     
     // Render sortable table
     renderSortableTable([
+      { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
       { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' },
       { key: 'avg_net_amount', label: 'ค่าเฉลี่ย/Order', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], data.map((item, index) => ({
+      row_number: index + 1,
       country_name: item.country_name || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
@@ -582,12 +584,14 @@
     
     // Render sortable table
     renderSortableTable([
+      { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
       { key: 'supplier_name', label: 'Supplier', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' },
       { key: 'avg_net_amount', label: 'ค่าเฉลี่ย/Order', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], data.map((item, index) => ({
+      row_number: index + 1,
       supplier_name: item.supplier_name || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
@@ -622,11 +626,13 @@
     
     // Render sortable table
     renderSortableTable([
+      { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
       { key: 'travel_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], data.map((item, index) => ({
+      row_number: index + 1,
       travel_month_label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
@@ -660,11 +666,13 @@
     
     // Render sortable table
     renderSortableTable([
+      { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
       { key: 'booking_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
-    ], data.map(item => ({
+    ], data.map((item, index) => ({
+      row_number: index + 1,
       booking_month_label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
