@@ -767,37 +767,52 @@
       existingIndicator.remove();
     }
     
-    // Create new indicator
+    // Create new indicator (Chip/Badge style - subtle & professional)
     const indicator = document.createElement('div');
     indicator.className = 'lead-time-filter-indicator';
     indicator.style.cssText = `
-      background: #e3f2fd;
-      border: 1px solid #2196f3;
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-      display: flex;
+      background: #f5f5f5;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      font-size: 14px;
-      color: #1976d2;
+      gap: 8px;
+      font-size: 13px;
+      color: #666;
+      font-family: 'Kanit', sans-serif;
     `;
     
     indicator.innerHTML = `
-      <span>
-        <strong>กรองตามช่วง:</strong> ${rangeLabel}
-      </span>
-      <button onclick="clearLeadTimeFilter()" style="
-        background: transparent;
-        border: none;
-        color: #1976d2;
-        cursor: pointer;
-        font-size: 14px;
-        text-decoration: underline;
-        padding: 0;
+      <span style="color: #888; font-weight: 400;">กรองแสดง:</span>
+      <span style="
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 4px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #333;
+        font-weight: 500;
       ">
-        แสดงทั้งหมด
-      </button>
+        ${rangeLabel}
+        <button onclick="clearLeadTimeFilter()" style="
+          background: transparent;
+          border: none;
+          color: #999;
+          cursor: pointer;
+          padding: 0;
+          font-size: 18px;
+          line-height: 1;
+          display: flex;
+          align-items: center;
+          transition: color 0.2s;
+        " onmouseover="this.style.color='#666'" onmouseout="this.style.color='#999'" title="ล้างการกรอง">
+          ×
+        </button>
+      </span>
     `;
     
     const tableContainer = document.getElementById('tableContainer');
