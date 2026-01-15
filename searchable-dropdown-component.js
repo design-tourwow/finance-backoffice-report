@@ -619,15 +619,30 @@ const SearchableDropdownComponent = {
     }
 
     function updateMultiDisplay() {
-      if (state.selectedValues.length === 0) {
+      // Get all checked checkboxes from DOM (like tour-image-manager)
+      const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+      const count = checkboxes.length;
+      
+      if (count === 0) {
         selectedText.textContent = placeholder;
         trigger.classList.add('placeholder');
       } else {
-        // Show all selected items as comma-separated text (same as tour-image-manager)
-        const fullText = state.selectedLabels.join(', ');
+        // Show all selected items as comma-separated text
+        const labels = Array.from(checkboxes).map(cb => {
+          const label = cb.nextElementSibling;
+          return label ? label.textContent.trim() : '';
+        }).filter(text => text !== '');
+        const fullText = labels.join(', ');
         selectedText.textContent = fullText;
         trigger.classList.remove('placeholder');
       }
+      
+      // Update state from DOM
+      state.selectedValues = Array.from(checkboxes).map(cb => cb.value);
+      state.selectedLabels = Array.from(checkboxes).map(cb => {
+        const label = cb.nextElementSibling;
+        return label ? label.textContent.trim() : '';
+      }).filter(text => text !== '');
     }
 
     function toggleDropdown() {
