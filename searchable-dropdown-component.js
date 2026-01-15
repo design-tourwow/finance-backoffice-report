@@ -512,11 +512,22 @@ const SearchableDropdownComponent = {
 
     // Select all
     selectAllBtn.addEventListener('click', function() {
-      state.selectedValues = state.filteredOptions.map(opt => opt.value);
-      state.selectedLabels = state.filteredOptions.map(opt => opt.label);
+      // Check all visible checkboxes in DOM
+      const visibleOptions = Array.from(optionsContainer.querySelectorAll('.searchable-dropdown-option'))
+        .filter(opt => opt.style.display !== 'none');
+      
+      visibleOptions.forEach(opt => {
+        const checkbox = opt.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          checkbox.checked = true;
+          opt.classList.add('selected');
+          opt.setAttribute('aria-selected', 'true');
+        }
+      });
+      
+      // Update display and state from DOM
       updateMultiDisplay();
-      optionsContainer.innerHTML = renderMultiOptions(state.filteredOptions, state.selectedValues);
-      attachMultiOptionListeners();
+      
       if (onChange) {
         onChange(state.selectedValues, state.selectedLabels);
       }
@@ -524,11 +535,22 @@ const SearchableDropdownComponent = {
 
     // Deselect all
     deselectAllBtn.addEventListener('click', function() {
-      state.selectedValues = [];
-      state.selectedLabels = [];
+      // Uncheck all visible checkboxes in DOM
+      const visibleOptions = Array.from(optionsContainer.querySelectorAll('.searchable-dropdown-option'))
+        .filter(opt => opt.style.display !== 'none');
+      
+      visibleOptions.forEach(opt => {
+        const checkbox = opt.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          checkbox.checked = false;
+          opt.classList.remove('selected');
+          opt.setAttribute('aria-selected', 'false');
+        }
+      });
+      
+      // Update display and state from DOM
       updateMultiDisplay();
-      optionsContainer.innerHTML = renderMultiOptions(state.filteredOptions, state.selectedValues);
-      attachMultiOptionListeners();
+      
       if (onChange) {
         onChange(state.selectedValues, state.selectedLabels);
       }
@@ -591,27 +613,15 @@ const SearchableDropdownComponent = {
       const option = dropdownOptions.find(opt => opt.value === value);
       if (!option) return;
 
-      if (isChecked) {
-        if (!state.selectedValues.includes(value)) {
-          state.selectedValues.push(value);
-          state.selectedLabels.push(option.label);
-        }
-      } else {
-        const index = state.selectedValues.indexOf(value);
-        if (index > -1) {
-          state.selectedValues.splice(index, 1);
-          state.selectedLabels.splice(index, 1);
-        }
-      }
-
-      updateMultiDisplay();
-      
       // Update checkbox state in DOM
       const optionElement = optionsContainer.querySelector(`[data-value="${value}"]`);
       if (optionElement) {
         optionElement.classList.toggle('selected', isChecked);
         optionElement.setAttribute('aria-selected', isChecked);
       }
+      
+      // Update display and state from DOM (like tour-image-manager)
+      updateMultiDisplay();
       
       if (onChange) {
         onChange(state.selectedValues, state.selectedLabels);
