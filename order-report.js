@@ -2,15 +2,6 @@
 (function () {
   'use strict';
 
-  // Register Chart.js datalabels plugin
-  if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
-    Chart.register(ChartDataLabels);
-    // Disable datalabels by default for all charts
-    Chart.defaults.set('plugins.datalabels', {
-      display: false
-    });
-  }
-
   let currentChart = null;
   let currentTab = 'country';
   let currentFilters = {};
@@ -695,22 +686,17 @@
     
     const data = response.data;
     
-    // Render chart (Horizontal Bar chart - simple and clean)
+    // Render chart (Horizontal Bar chart - same style as Country tab)
     renderChart({
       labels: data.map(item => item.customer_name || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.85)',
+        backgroundColor: 'rgba(74, 123, 167, 0.8)',
         borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1,
-        borderRadius: 6,
-        borderSkipped: false
+        borderWidth: 1
       }]
-    }, 'bar', { 
-      indexAxis: 'y',
-      barThickness: 28
-    });
+    }, 'bar', { indexAxis: 'y' });
     
     // Render sortable table
     renderSortableTable([
@@ -771,90 +757,48 @@
         ...extraOptions,
         responsive: true,
         maintainAspectRatio: false,
-        animation: {
-          duration: 800,
-          easing: 'easeOutQuart'
-        },
-        layout: {
-          padding: {
-            right: isHorizontal ? 50 : 10
-          }
-        },
         plugins: {
           legend: {
-            display: false
+            display: type === 'pie',
+            position: 'right'
           },
           tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
             padding: 12,
-            cornerRadius: 6,
             titleFont: {
               size: 14,
-              family: 'Kanit',
-              weight: '600'
+              family: 'Kanit'
             },
             bodyFont: {
               size: 13,
               family: 'Kanit'
-            },
-            displayColors: false,
-            callbacks: {
-              label: function(context) {
-                return context.parsed.x || context.parsed.y + ' Orders';
-              }
             }
           },
-          datalabels: isHorizontal ? {
-            anchor: 'end',
-            align: 'end',
-            offset: 4,
-            color: '#374151',
-            font: {
-              family: 'Kanit',
-              size: 13,
-              weight: '600'
-            },
-            formatter: function(value) {
-              return value;
-            }
-          } : false
+          datalabels: {
+            display: false
+          }
         },
         scales: type !== 'pie' ? {
           y: {
             beginAtZero: isHorizontal ? true : (maxValue >= 10),
             min: isHorizontal ? undefined : minValue,
             max: isHorizontal ? undefined : maxValue,
-            grid: {
-              display: false,
-              drawBorder: false
-            },
             ticks: {
               font: {
-                family: 'Kanit',
-                size: 13
+                family: 'Kanit'
               },
               stepSize: (!isHorizontal && maxValue < 10) ? 1 : undefined,
-              precision: 0,
-              padding: 12,
-              color: '#374151'
+              precision: isHorizontal ? 0 : 0
             }
           },
           x: {
             beginAtZero: isHorizontal ? true : undefined,
-            grid: {
-              display: isHorizontal ? true : true,
-              color: 'rgba(0, 0, 0, 0.04)',
-              drawBorder: false
-            },
             ticks: {
               font: {
-                family: 'Kanit',
-                size: 12
+                family: 'Kanit'
               },
               stepSize: isHorizontal ? 1 : undefined,
-              precision: 0,
-              padding: 8,
-              color: '#6b7280'
+              precision: 0
             }
           }
         } : {}
