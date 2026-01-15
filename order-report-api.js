@@ -27,8 +27,30 @@ const OrderReportAPI = {
     if (filters.travel_date_to) params.append('travel_date_to', filters.travel_date_to);
     if (filters.booking_date_from) params.append('booking_date_from', filters.booking_date_from);
     if (filters.booking_date_to) params.append('booking_date_to', filters.booking_date_to);
-    if (filters.country_id) params.append('country_id', filters.country_id);
-    if (filters.supplier_id) params.append('supplier_id', filters.supplier_id);
+    
+    // Handle country_id - support both single and multiple values
+    if (filters.country_id) {
+      const countryIds = filters.country_id.toString().split(',').filter(id => id.trim());
+      if (countryIds.length === 1) {
+        // Single country - send as single parameter
+        params.append('country_id', countryIds[0]);
+      } else if (countryIds.length > 1) {
+        // Multiple countries - send as JSON array
+        params.append('country_id', JSON.stringify(countryIds));
+      }
+    }
+    
+    // Handle supplier_id - support both single and multiple values
+    if (filters.supplier_id) {
+      const supplierIds = filters.supplier_id.toString().split(',').filter(id => id.trim());
+      if (supplierIds.length === 1) {
+        // Single supplier - send as single parameter
+        params.append('supplier_id', supplierIds[0]);
+      } else if (supplierIds.length > 1) {
+        // Multiple suppliers - send as JSON array
+        params.append('supplier_id', JSON.stringify(supplierIds));
+      }
+    }
     
     const queryString = params.toString();
     return queryString ? `?${queryString}` : '';
