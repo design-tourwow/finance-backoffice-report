@@ -1,6 +1,7 @@
 /* ========================================
    Filter & Sort Dropdown Component
    Single-select dropdown for filtering and sorting
+   Exact copy from tour-image-manager.css
    ======================================== */
 
 .filter-sort-dropdown {
@@ -30,10 +31,9 @@
   background: #f9fafb;
 }
 
+/* Remove active state - no blue color */
 .filter-sort-btn.active {
-  border-color: #4a7ba7;
-  color: #4a7ba7;
-  background: #f0f7ff;
+  /* No special styling - same as default */
 }
 
 .filter-sort-btn-content {

@@ -117,13 +117,7 @@ const FilterSortDropdownComponent = (function() {
           <span class="filter-sort-btn-text">${label}</span>
         `;
         
-        // Update button active state (not active if first/default option)
-        const isDefault = value === options[0]?.value;
-        if (isDefault) {
-          btn.classList.remove('active');
-        } else {
-          btn.classList.add('active');
-        }
+        // No active state on button - same as tour-image-manager
         
         // Close dropdown
         menu.classList.remove('open');
