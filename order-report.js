@@ -1369,36 +1369,42 @@
       };
     }
     
+    // Merge plugin options (extraOptions.plugins should override defaults)
+    const pluginOptions = {
+      legend: {
+        display: type === 'pie',
+        position: 'right'
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        titleFont: {
+          size: 14,
+          family: 'Kanit'
+        },
+        bodyFont: {
+          size: 13,
+          family: 'Kanit'
+        }
+      },
+      datalabels: {
+        display: false,
+        ...(extraOptions.plugins?.datalabels || {})
+      },
+      ...(extraOptions.plugins || {})
+    };
+    
     // Create new chart
     try {
       currentChart = new Chart(ctx, {
         type: type,
         data: data,
+        plugins: extraOptions.plugins?.datalabels?.display ? [ChartDataLabels] : [],
         options: {
           ...extraOptions,
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: type === 'pie',
-              position: 'right'
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              padding: 12,
-              titleFont: {
-                size: 14,
-                family: 'Kanit'
-              },
-              bodyFont: {
-                size: 13,
-                family: 'Kanit'
-              }
-            },
-            datalabels: {
-              display: false
-            }
-          },
+          plugins: pluginOptions,
           scales: type !== 'pie' ? {
             y: isHorizontal ? {
               ticks: {
