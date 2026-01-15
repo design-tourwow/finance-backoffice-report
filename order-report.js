@@ -551,7 +551,7 @@
     // Initialize filter dropdown for Country tab
     initTabFilter('country', data);
     
-    // Render chart (without data labels)
+    // Render chart WITH data labels
     renderChart({
       labels: data.map(item => item.country_name || 'ไม่ระบุ'),
       datasets: [{
@@ -561,7 +561,24 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar');
+    }, 'bar', {
+      plugins: {
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: {
+            size: 12,
+            weight: 'bold',
+            family: 'Kanit'
+          },
+          formatter: (value) => {
+            return formatNumber(value);
+          }
+        }
+      }
+    });
     
     // Render sortable table
     renderSortableTable([
@@ -838,7 +855,7 @@
     // Initialize filter dropdown for Supplier tab
     initTabFilter('supplier', data);
     
-    // Render chart (same blue color as Country)
+    // Render chart WITH data labels
     renderChart({
       labels: data.map(item => item.supplier_name || 'ไม่ระบุ'),
       datasets: [{
@@ -848,7 +865,24 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar');
+    }, 'bar', {
+      plugins: {
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: {
+            size: 12,
+            weight: 'bold',
+            family: 'Kanit'
+          },
+          formatter: (value) => {
+            return formatNumber(value);
+          }
+        }
+      }
+    });
     
     // Render sortable table
     renderSortableTable([
@@ -883,7 +917,7 @@
     // Initialize filter dropdown for Travel Date tab
     initTabFilter('travel-date', data);
     
-    // Render chart (same blue color as Country)
+    // Render chart WITH data labels
     renderChart({
       labels: data.map(item => item.travel_month_label || item.travel_month || 'ไม่ระบุ'),
       datasets: [{
@@ -894,7 +928,24 @@
         borderWidth: 2,
         fill: false
       }]
-    }, 'line');
+    }, 'line', {
+      plugins: {
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: {
+            size: 12,
+            weight: 'bold',
+            family: 'Kanit'
+          },
+          formatter: (value) => {
+            return formatNumber(value);
+          }
+        }
+      }
+    });
     
     // Render sortable table
     renderSortableTable([
@@ -927,7 +978,7 @@
     // Initialize filter dropdown for Booking Date tab
     initTabFilter('booking-date', data);
     
-    // Render chart (same blue color as Country)
+    // Render chart WITH data labels
     renderChart({
       labels: data.map(item => item.booking_month_label || item.booking_month || 'ไม่ระบุ'),
       datasets: [{
@@ -938,7 +989,24 @@
         borderWidth: 2,
         fill: false
       }]
-    }, 'line');
+    }, 'line', {
+      plugins: {
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: {
+            size: 12,
+            weight: 'bold',
+            family: 'Kanit'
+          },
+          formatter: (value) => {
+            return formatNumber(value);
+          }
+        }
+      }
+    });
     
     // Render sortable table
     renderSortableTable([
@@ -984,7 +1052,7 @@
     // Initialize filter dropdown using initTabFilter
     initTabFilter('lead-time', data);
     
-    // Render Column Chart (no click handler - use dropdown filter only)
+    // Render Column Chart WITH data labels
     renderChart({
       labels: distribution.map(item => item.range_label || item.range),
       datasets: [{
@@ -994,7 +1062,24 @@
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1
       }]
-    }, 'bar');
+    }, 'bar', {
+      plugins: {
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: {
+            size: 12,
+            weight: 'bold',
+            family: 'Kanit'
+          },
+          formatter: (value) => {
+            return formatNumber(value);
+          }
+        }
+      }
+    });
     
     // Render sortable table with order details (show all initially)
     renderLeadTimeTable(data);
