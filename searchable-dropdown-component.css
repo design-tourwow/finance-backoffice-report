@@ -173,6 +173,61 @@
    Multi-Select Specific Styles
    ======================================== */
 
+.multi-select-trigger {
+  width: 100%;
+  min-height: 42px;
+  max-height: 42px;
+  padding: 10px 36px 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Kanit', sans-serif;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  color: #1f2937;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.multi-select-trigger:hover {
+  border-color: #4a7ba7;
+}
+
+.multi-select-trigger:focus {
+  outline: none;
+  border-color: #4a7ba7;
+  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
+}
+
+.multi-select-trigger.placeholder {
+  color: #9ca3af;
+}
+
+.multi-select-trigger .selected-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multi-select-trigger .arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.2s;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.multi-select-trigger.open .arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
 .searchable-dropdown-menu.multi .searchable-dropdown-search {
   padding-bottom: 8px;
 }
