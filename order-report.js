@@ -454,8 +454,6 @@
         switch(tabName) {
           case 'country':
             return await OrderReportAPI.getReportByCountry(currentFilters);
-          case 'country-with-labels':
-            return await OrderReportAPI.getReportByCountry(currentFilters);
           case 'supplier':
             return await OrderReportAPI.getReportBySupplier(currentFilters);
           case 'travel-date':
@@ -479,9 +477,6 @@
       switch(tabName) {
         case 'country':
           renderCountryReport(response);
-          break;
-        case 'country-with-labels':
-          renderCountryReportWithLabels(response);
           break;
         case 'supplier':
           renderSupplierReport(response);
@@ -552,71 +547,6 @@
     initTabFilter('country', data);
     
     // Render chart WITH data labels
-    renderChart({
-      labels: data.map(item => item.country_name || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
-      }]
-    }, 'bar', {
-      plugins: {
-        datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          color: '#374151',
-          font: {
-            size: 12,
-            weight: 'bold',
-            family: 'Kanit'
-          },
-          formatter: (value) => {
-            return formatNumber(value);
-          }
-        }
-      }
-    });
-    
-    // Render sortable table
-    renderSortableTable([
-      { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
-      { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
-      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
-      { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
-      { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' },
-      { key: 'avg_net_amount', label: 'ค่าเฉลี่ย/Order', type: 'currency', align: 'right' }
-    ], data.map((item, index) => ({
-      row_number: index + 1,
-      country_name: item.country_name || 'ไม่ระบุ',
-      total_orders: item.total_orders,
-      total_customers: item.total_customers,
-      total_net_amount: item.total_net_amount,
-      avg_net_amount: item.avg_net_amount
-    })));
-  }
-
-  // Render Country Report with Data Labels on Chart
-  function renderCountryReportWithLabels(response) {
-    console.log('🎨 Rendering Country Report with Labels:', response);
-    
-    if (!response || !response.data || response.data.length === 0) {
-      console.warn('⚠️ No data in Country Report response');
-      showEmpty();
-      return;
-    }
-
-    showContent();
-    
-    const data = response.data;
-    currentTabData = data;
-    
-    // Initialize filter dropdown for Country tab
-    initTabFilter('country', data);
-    
-    // Render chart WITH data labels on top of bars
     renderChart({
       labels: data.map(item => item.country_name || 'ไม่ระบุ'),
       datasets: [{
