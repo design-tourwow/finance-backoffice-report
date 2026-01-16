@@ -234,8 +234,16 @@
 #tabFilterContainer {
   margin-left: auto;
   flex-shrink: 0;
-  min-width: 220px;
-  max-width: 280px;
+  width: 240px;
+}
+
+#tabFilterContainer .filter-sort-dropdown {
+  width: 100%;
+}
+
+#tabFilterContainer .filter-sort-btn {
+  width: 100%;
+  min-width: 240px;
 }
 
 .table-search-input-wrapper .search-icon {

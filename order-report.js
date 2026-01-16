@@ -626,6 +626,21 @@
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
           },
           {
+            value: '7d',
+            label: '7 วันล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '14d',
+            label: '14 วันล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '30d',
+            label: '30 วันล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
             value: '1-3m',
             label: '1-3 เดือนล่าสุด',
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
@@ -676,6 +691,21 @@
             label: 'ทั้งหมด',
             active: true,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          {
+            value: '7d',
+            label: '7 วันล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '14d',
+            label: '14 วันล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '30d',
+            label: '30 วันล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           },
           {
             value: '1-3m',
@@ -792,6 +822,21 @@
     let startDate, endDate;
     
     switch(rangeValue) {
+      case '7d':
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 7);
+        endDate = new Date(today);
+        break;
+      case '14d':
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 14);
+        endDate = new Date(today);
+        break;
+      case '30d':
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 30);
+        endDate = new Date(today);
+        break;
       case '1-3m':
         startDate = new Date(today);
         startDate.setMonth(today.getMonth() - 3);
