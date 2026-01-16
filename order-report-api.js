@@ -141,8 +141,8 @@ const OrderReportAPI = {
     try {
       console.log('🔄 Fetching Report by Travel Date with filters:', filters);
       
-      // Use numeric_short format: MM/YYYY (e.g., "09/2569")
-      const queryString = this.buildQueryString(filters, 'numeric_short');
+      // Use numeric_month_year_full format: MM/YYYY (e.g., "01/2568")
+      const queryString = this.buildQueryString(filters, 'numeric_month_year_full');
       const result = await this.fetchAPI(`/api/reports/by-travel-date${queryString}`);
       
       return result;
@@ -161,8 +161,8 @@ const OrderReportAPI = {
     try {
       console.log('🔄 Fetching Report by Booking Date with filters:', filters);
       
-      // Use numeric_short format: MM/YYYY (e.g., "12/2567")
-      const queryString = this.buildQueryString(filters, 'numeric_short');
+      // Use numeric_month_year_full format: MM/YYYY (e.g., "12/2567")
+      const queryString = this.buildQueryString(filters, 'numeric_month_year_full');
       const result = await this.fetchAPI(`/api/reports/by-booking-date${queryString}`);
       
       return result;
