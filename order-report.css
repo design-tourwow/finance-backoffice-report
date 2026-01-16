@@ -2,9 +2,50 @@
    Order Report Styles
    ======================================== */
 
-/* Hide Filter Section */
+/* Filter Section - Compact Version */
 .filter-section {
-  display: none !important;
+  padding: 16px 20px !important;
+  margin-bottom: 20px !important;
+}
+
+.filter-section h2 {
+  font-size: 16px !important;
+  margin-bottom: 12px !important;
+}
+
+.filter-form {
+  gap: 12px !important;
+}
+
+.form-row {
+  gap: 12px !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+.form-group {
+  gap: 4px !important;
+}
+
+.form-group label {
+  font-size: 13px !important;
+  margin-bottom: 0 !important;
+}
+
+.form-row-actions {
+  grid-template-columns: 1fr !important;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.error-message {
+  min-height: 0 !important;
+  font-size: 11px !important;
+  margin-top: 2px !important;
 }
 
 /* Summary Cards */
