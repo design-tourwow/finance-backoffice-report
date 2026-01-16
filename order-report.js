@@ -578,6 +578,16 @@
             return formatNumber(value);
           }
         }
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: {
+              family: 'Kanit',
+              size: 14
+            }
+          }
+        }
       }
     });
     
@@ -628,22 +638,25 @@
           {
             value: 'all',
             label: 'ทั้งหมด',
-            active: true,
+            active: false,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
           },
           {
             value: '7d',
             label: '7 วันล่าสุด',
+            active: false,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           },
           {
             value: '14d',
             label: '14 วันล่าสุด',
+            active: false,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           },
           {
             value: '30d',
             label: '30 วันล่าสุด',
+            active: true,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           },
           {
@@ -695,22 +708,25 @@
           {
             value: 'all',
             label: 'ทั้งหมด',
-            active: true,
+            active: false,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
           },
           {
             value: '7d',
             label: '7 วันล่าสุด',
+            active: false,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           },
           {
             value: '14d',
             label: '14 วันล่าสุด',
+            active: false,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           },
           {
             value: '30d',
             label: '30 วันล่าสุด',
+            active: true,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           },
           {
@@ -801,10 +817,13 @@
     }
     
     if (options.length > 0) {
+      // Find the active option for default label and icon
+      const activeOption = options.find(opt => opt.active) || options[0];
+      
       currentFilterInstance = FilterSortDropdownComponent.initDropdown({
         containerId: 'tabFilterContainer',
-        defaultLabel: options[0].label,
-        defaultIcon: options[0].icon,
+        defaultLabel: activeOption.label,
+        defaultIcon: activeOption.icon,
         options: options,
         onChange: onChange
       });
@@ -965,6 +984,16 @@
           },
           formatter: (value) => {
             return formatNumber(value);
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: {
+              family: 'Kanit',
+              size: 14
+            }
           }
         }
       }
@@ -1224,6 +1253,16 @@
           },
           formatter: (value) => {
             return formatNumber(value);
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: {
+              family: 'Kanit',
+              size: 14
+            }
           }
         }
       }
