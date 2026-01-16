@@ -598,176 +598,246 @@
     const container = document.getElementById('tabFilterContainer');
     if (!container) return;
     
+    // Clear container
+    container.innerHTML = '';
+    
     // Destroy existing filter
     if (currentFilterInstance && currentFilterInstance.destroy) {
       currentFilterInstance.destroy();
+      currentFilterInstance = null;
     }
-    
-    let options = [];
-    let onChange = null;
     
     switch(tabType) {
       case 'country':
-        options = [
-          {
-            value: 'all',
-            label: 'ทั้งหมด',
-            active: true,
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-          },
-          ...data.map(item => ({
-            value: item.country_name,
-            label: item.country_name || 'ไม่ระบุ',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`
-          }))
-        ];
-        onChange = (value) => filterByCountry(value);
+        initCountryTabFilter(container, data);
         break;
         
       case 'supplier':
-        options = [
-          {
-            value: 'all',
-            label: 'ทั้งหมด',
-            active: true,
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-          },
-          ...data.map(item => ({
-            value: item.supplier_name,
-            label: item.supplier_name || 'ไม่ระบุ',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
-          }))
-        ];
-        onChange = (value) => filterBySupplier(value);
+        initSupplierTabFilter(container, data);
         break;
         
       case 'travel-date':
-        options = [
-          {
-            value: 'all',
-            label: 'ทั้งหมด',
-            active: true,
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-          },
-          ...data.map(item => ({
-            value: item.travel_month_label || item.travel_month,
-            label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-          }))
-        ];
-        onChange = (value) => filterByTravelDate(value);
+        initTravelDateTabFilter(container, data);
         break;
         
       case 'booking-date':
-        options = [
-          {
-            value: 'all',
-            label: 'ทั้งหมด',
-            active: true,
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-          },
-          ...data.map(item => ({
-            value: item.booking_month_label || item.booking_month,
-            label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-          }))
-        ];
-        onChange = (value) => filterByBookingDate(value);
+        initBookingDateTabFilter(container, data);
         break;
         
       case 'lead-time':
-        options = [
-          {
-            value: 'all',
-            label: 'ทั้งหมด',
-            active: true,
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-          },
-          {
-            value: '0-7',
-            label: '0-7 วัน (จองใกล้วันเดินทาง)',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`
-          },
-          {
-            value: '8-14',
-            label: '8-14 วัน',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
-          },
-          {
-            value: '15-30',
-            label: '15-30 วัน',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
-          },
-          {
-            value: '31-60',
-            label: '31-60 วัน',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-          },
-          {
-            value: '61-90',
-            label: '61-90 วัน',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-          },
-          {
-            value: '90+',
-            label: 'มากกว่า 90 วัน (จองล่วงหน้ามาก)',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`
-          }
-        ];
-        onChange = (value) => filterLeadTimeByRange(value);
+        initLeadTimeTabFilter(container, data);
         break;
     }
+  }
+
+  // Initialize Country Tab Filter (Multi-select)
+  function initCountryTabFilter(container, data) {
+    // Create wrapper for multi-select
+    const wrapper = document.createElement('div');
+    wrapper.id = 'tabCountryFilter';
+    wrapper.className = 'searchable-dropdown-wrapper';
+    container.appendChild(wrapper);
     
-    if (options.length > 0) {
-      currentFilterInstance = FilterSortDropdownComponent.initDropdown({
-        containerId: 'tabFilterContainer',
-        defaultLabel: options[0].label,
-        defaultIcon: options[0].icon,
-        options: options,
-        onChange: onChange
-      });
-    }
+    // Get country options from data
+    const countryOptions = data.map(item => ({
+      value: item.country_name,
+      label: item.country_name || 'ไม่ระบุ'
+    }));
+    
+    // Initialize multi-select
+    currentFilterInstance = SearchableDropdownComponent.initMultiSelect({
+      wrapperId: 'tabCountryFilter',
+      placeholder: 'เลือกประเทศ',
+      options: countryOptions,
+      onChange: (values, labels) => {
+        if (values.length === 0) {
+          // Show all
+          renderCountryReport({ data: currentTabData });
+        } else {
+          // Filter by selected countries
+          const filtered = currentTabData.filter(item => values.includes(item.country_name));
+          renderCountryReport({ data: filtered });
+        }
+      }
+    });
   }
 
-  // Filter functions for each tab
-  function filterByCountry(value) {
-    if (value === 'all') {
-      renderCountryReport({ data: currentTabData });
-    } else {
-      const filtered = currentTabData.filter(item => item.country_name === value);
-      renderCountryReport({ data: filtered });
-    }
+  // Initialize Supplier Tab Filter (Multi-select)
+  function initSupplierTabFilter(container, data) {
+    // Create wrapper for multi-select
+    const wrapper = document.createElement('div');
+    wrapper.id = 'tabSupplierFilter';
+    wrapper.className = 'searchable-dropdown-wrapper';
+    container.appendChild(wrapper);
+    
+    // Get supplier options from data
+    const supplierOptions = data.map(item => ({
+      value: item.supplier_name,
+      label: item.supplier_name || 'ไม่ระบุ'
+    }));
+    
+    // Initialize multi-select
+    currentFilterInstance = SearchableDropdownComponent.initMultiSelect({
+      wrapperId: 'tabSupplierFilter',
+      placeholder: 'เลือก Supplier',
+      options: supplierOptions,
+      onChange: (values, labels) => {
+        if (values.length === 0) {
+          // Show all
+          renderSupplierReport({ data: currentTabData });
+        } else {
+          // Filter by selected suppliers
+          const filtered = currentTabData.filter(item => values.includes(item.supplier_name));
+          renderSupplierReport({ data: filtered });
+        }
+      }
+    });
   }
 
-  function filterBySupplier(value) {
-    if (value === 'all') {
-      renderSupplierReport({ data: currentTabData });
-    } else {
-      const filtered = currentTabData.filter(item => item.supplier_name === value);
-      renderSupplierReport({ data: filtered });
-    }
+  // Initialize Travel Date Tab Filter (Date Picker)
+  function initTravelDateTabFilter(container, data) {
+    // Create wrapper for date picker
+    const wrapper = document.createElement('div');
+    wrapper.className = 'date-picker-wrapper';
+    wrapper.id = 'tabTravelDateFilter';
+    wrapper.innerHTML = `
+      <div class="date-icon" aria-hidden="true">
+        <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/>
+        </svg>
+      </div>
+      <input
+        id="tabTravelDateInput"
+        type="text"
+        class="date-input"
+        placeholder="เลือกช่วงเวลา"
+        readonly
+        aria-label="เลือกช่วงวันที่เดินทาง"
+      />
+      <div id="tabTravelDateDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
+    `;
+    container.appendChild(wrapper);
+    
+    // Initialize date picker
+    currentFilterInstance = DatePickerComponent.initDateRangePicker({
+      inputId: 'tabTravelDateInput',
+      dropdownId: 'tabTravelDateDropdown',
+      wrapperId: 'tabTravelDateFilter',
+      onChange: (startDate, endDate) => {
+        if (!startDate || !endDate) {
+          // Show all
+          renderTravelDateReport({ data: currentTabData });
+        } else {
+          // Filter by date range
+          const startStr = DatePickerComponent.formatDateToAPI(startDate);
+          const endStr = DatePickerComponent.formatDateToAPI(endDate);
+          
+          const filtered = currentTabData.filter(item => {
+            const itemDate = item.travel_month; // Format: YYYY-MM
+            return itemDate >= startStr.substring(0, 7) && itemDate <= endStr.substring(0, 7);
+          });
+          renderTravelDateReport({ data: filtered });
+        }
+      }
+    });
   }
 
-  function filterByTravelDate(value) {
-    if (value === 'all') {
-      renderTravelDateReport({ data: currentTabData });
-    } else {
-      const filtered = currentTabData.filter(item => 
-        (item.travel_month_label || item.travel_month) === value
-      );
-      renderTravelDateReport({ data: filtered });
-    }
+  // Initialize Booking Date Tab Filter (Date Picker)
+  function initBookingDateTabFilter(container, data) {
+    // Create wrapper for date picker
+    const wrapper = document.createElement('div');
+    wrapper.className = 'date-picker-wrapper';
+    wrapper.id = 'tabBookingDateFilter';
+    wrapper.innerHTML = `
+      <div class="date-icon" aria-hidden="true">
+        <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/>
+        </svg>
+      </div>
+      <input
+        id="tabBookingDateInput"
+        type="text"
+        class="date-input"
+        placeholder="เลือกช่วงเวลา"
+        readonly
+        aria-label="เลือกช่วงวันที่จอง"
+      />
+      <div id="tabBookingDateDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
+    `;
+    container.appendChild(wrapper);
+    
+    // Initialize date picker
+    currentFilterInstance = DatePickerComponent.initDateRangePicker({
+      inputId: 'tabBookingDateInput',
+      dropdownId: 'tabBookingDateDropdown',
+      wrapperId: 'tabBookingDateFilter',
+      onChange: (startDate, endDate) => {
+        if (!startDate || !endDate) {
+          // Show all
+          renderBookingDateReport({ data: currentTabData });
+        } else {
+          // Filter by date range
+          const startStr = DatePickerComponent.formatDateToAPI(startDate);
+          const endStr = DatePickerComponent.formatDateToAPI(endDate);
+          
+          const filtered = currentTabData.filter(item => {
+            const itemDate = item.booking_month; // Format: YYYY-MM
+            return itemDate >= startStr.substring(0, 7) && itemDate <= endStr.substring(0, 7);
+          });
+          renderBookingDateReport({ data: filtered });
+        }
+      }
+    });
   }
 
-  function filterByBookingDate(value) {
-    if (value === 'all') {
-      renderBookingDateReport({ data: currentTabData });
-    } else {
-      const filtered = currentTabData.filter(item => 
-        (item.booking_month_label || item.booking_month) === value
-      );
-      renderBookingDateReport({ data: filtered });
-    }
+  // Initialize Lead Time Tab Filter (Dropdown)
+  function initLeadTimeTabFilter(container, data) {
+    const options = [
+      {
+        value: 'all',
+        label: 'ทั้งหมด',
+        active: true,
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+      },
+      {
+        value: '0-7',
+        label: '0-7 วัน (จองใกล้วันเดินทาง)',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`
+      },
+      {
+        value: '8-14',
+        label: '8-14 วัน',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+      },
+      {
+        value: '15-30',
+        label: '15-30 วัน',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+      },
+      {
+        value: '31-60',
+        label: '31-60 วัน',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+      },
+      {
+        value: '61-90',
+        label: '61-90 วัน',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+      },
+      {
+        value: '90+',
+        label: 'มากกว่า 90 วัน (จองล่วงหน้ามาก)',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`
+      }
+    ];
+    
+    currentFilterInstance = FilterSortDropdownComponent.initDropdown({
+      containerId: 'tabFilterContainer',
+      defaultLabel: options[0].label,
+      defaultIcon: options[0].icon,
+      options: options,
+      onChange: (value) => filterLeadTimeByRange(value)
+    });
   }
 
   // Render Supplier Report
