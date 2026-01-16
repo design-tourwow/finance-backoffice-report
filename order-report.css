@@ -6,6 +6,7 @@
 .filter-section {
   padding: 16px 20px !important;
   margin-bottom: 20px !important;
+  display: none !important; /* Hide filter section */
 }
 
 .filter-section h2 {
