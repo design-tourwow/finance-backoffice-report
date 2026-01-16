@@ -608,38 +608,14 @@
     
     switch(tabType) {
       case 'country':
-        options = [
-          {
-            value: 'all',
-            label: 'ทั้งหมด',
-            active: true,
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-          },
-          ...data.map(item => ({
-            value: item.country_name,
-            label: item.country_name || 'ไม่ระบุ',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`
-          }))
-        ];
-        onChange = (value) => filterByCountry(value);
-        break;
+        // No filter for country tab
+        container.innerHTML = '';
+        return;
         
       case 'supplier':
-        options = [
-          {
-            value: 'all',
-            label: 'ทั้งหมด',
-            active: true,
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-          },
-          ...data.map(item => ({
-            value: item.supplier_name,
-            label: item.supplier_name || 'ไม่ระบุ',
-            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
-          }))
-        ];
-        onChange = (value) => filterBySupplier(value);
-        break;
+        // No filter for supplier tab
+        container.innerHTML = '';
+        return;
         
       case 'travel-date':
         options = [
