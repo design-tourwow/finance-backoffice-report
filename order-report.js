@@ -1051,7 +1051,7 @@
             minRotation: 90,
             font: {
               family: 'Kanit',
-              size: 11
+              size: 14
             }
           }
         },
@@ -1143,7 +1143,7 @@
             minRotation: 90,
             font: {
               family: 'Kanit',
-              size: 11
+              size: 14
             }
           }
         },
