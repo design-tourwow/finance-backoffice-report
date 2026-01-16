@@ -234,6 +234,8 @@
 #tabFilterContainer {
   margin-left: auto;
   flex-shrink: 0;
+  min-width: 220px;
+  max-width: 280px;
 }
 
 .table-search-input-wrapper .search-icon {

@@ -625,13 +625,48 @@
             active: true,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
           },
-          ...data.map(item => ({
-            value: item.travel_start_date_label || item.travel_start_date,
-            label: item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ',
+          {
+            value: '1-3m',
+            label: '1-3 เดือนล่าสุด',
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-          }))
+          },
+          {
+            value: '3-6m',
+            label: '3-6 เดือนล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '6-12m',
+            label: '6-12 เดือนล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '1-2y',
+            label: '1-2 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '2-3y',
+            label: '2-3 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '3-4y',
+            label: '3-4 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '4-5y',
+            label: '4-5 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '5y+',
+            label: '5 ปีขึ้นไป',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          }
         ];
-        onChange = (value) => filterByTravelDate(value);
+        onChange = (value) => filterByDateRange(value, 'travel');
         break;
         
       case 'booking-date':
@@ -642,13 +677,48 @@
             active: true,
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
           },
-          ...data.map(item => ({
-            value: item.created_date_label || item.created_date,
-            label: item.created_date_label || item.created_date || 'ไม่ระบุ',
+          {
+            value: '1-3m',
+            label: '1-3 เดือนล่าสุด',
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-          }))
+          },
+          {
+            value: '3-6m',
+            label: '3-6 เดือนล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '6-12m',
+            label: '6-12 เดือนล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '1-2y',
+            label: '1-2 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '2-3y',
+            label: '2-3 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '3-4y',
+            label: '3-4 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '4-5y',
+            label: '4-5 ปีล่าสุด',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '5y+',
+            label: '5 ปีขึ้นไป',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          }
         ];
-        onChange = (value) => filterByBookingDate(value);
+        onChange = (value) => filterByDateRange(value, 'booking');
         break;
         
       case 'lead-time':
@@ -705,43 +775,102 @@
     }
   }
 
-  // Filter functions for each tab
-  function filterByCountry(value) {
-    if (value === 'all') {
-      renderCountryReport({ data: currentTabData });
-    } else {
-      const filtered = currentTabData.filter(item => item.country_name === value);
-      renderCountryReport({ data: filtered });
+  // Filter by date range (for travel-date and booking-date tabs)
+  function filterByDateRange(rangeValue, dateType) {
+    if (rangeValue === 'all') {
+      // Show all data
+      if (dateType === 'travel') {
+        renderTravelDateReport({ data: currentTabData });
+      } else {
+        renderBookingDateReport({ data: currentTabData });
+      }
+      return;
     }
-  }
-
-  function filterBySupplier(value) {
-    if (value === 'all') {
-      renderSupplierReport({ data: currentTabData });
-    } else {
-      const filtered = currentTabData.filter(item => item.supplier_name === value);
-      renderSupplierReport({ data: filtered });
+    
+    // Calculate date range
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch(rangeValue) {
+      case '1-3m':
+        startDate = new Date(today);
+        startDate.setMonth(today.getMonth() - 3);
+        endDate = new Date(today);
+        endDate.setMonth(today.getMonth() - 1);
+        break;
+      case '3-6m':
+        startDate = new Date(today);
+        startDate.setMonth(today.getMonth() - 6);
+        endDate = new Date(today);
+        endDate.setMonth(today.getMonth() - 3);
+        break;
+      case '6-12m':
+        startDate = new Date(today);
+        startDate.setMonth(today.getMonth() - 12);
+        endDate = new Date(today);
+        endDate.setMonth(today.getMonth() - 6);
+        break;
+      case '1-2y':
+        startDate = new Date(today);
+        startDate.setFullYear(today.getFullYear() - 2);
+        endDate = new Date(today);
+        endDate.setFullYear(today.getFullYear() - 1);
+        break;
+      case '2-3y':
+        startDate = new Date(today);
+        startDate.setFullYear(today.getFullYear() - 3);
+        endDate = new Date(today);
+        endDate.setFullYear(today.getFullYear() - 2);
+        break;
+      case '3-4y':
+        startDate = new Date(today);
+        startDate.setFullYear(today.getFullYear() - 4);
+        endDate = new Date(today);
+        endDate.setFullYear(today.getFullYear() - 3);
+        break;
+      case '4-5y':
+        startDate = new Date(today);
+        startDate.setFullYear(today.getFullYear() - 5);
+        endDate = new Date(today);
+        endDate.setFullYear(today.getFullYear() - 4);
+        break;
+      case '5y+':
+        startDate = new Date('2000-01-01');
+        endDate = new Date(today);
+        endDate.setFullYear(today.getFullYear() - 5);
+        break;
     }
-  }
-
-  function filterByTravelDate(value) {
-    if (value === 'all') {
-      renderTravelDateReport({ data: currentTabData });
-    } else {
-      const filtered = currentTabData.filter(item => 
-        (item.travel_start_date_label || item.travel_start_date) === value
-      );
+    
+    // Filter data based on date range
+    const filtered = currentTabData.filter(item => {
+      let itemDateStr;
+      if (dateType === 'travel') {
+        itemDateStr = item.travel_start_date;
+      } else {
+        itemDateStr = item.created_date;
+      }
+      
+      if (!itemDateStr) return false;
+      
+      // Parse date (format: YYYY-MM-DD)
+      const itemDate = new Date(itemDateStr);
+      
+      return itemDate >= startDate && itemDate <= endDate;
+    });
+    
+    console.log('📊 Filtered by date range:', { 
+      rangeValue, 
+      dateType, 
+      startDate: startDate.toISOString().split('T')[0], 
+      endDate: endDate.toISOString().split('T')[0],
+      originalCount: currentTabData.length,
+      filteredCount: filtered.length 
+    });
+    
+    // Re-render with filtered data
+    if (dateType === 'travel') {
       renderTravelDateReport({ data: filtered });
-    }
-  }
-
-  function filterByBookingDate(value) {
-    if (value === 'all') {
-      renderBookingDateReport({ data: currentTabData });
     } else {
-      const filtered = currentTabData.filter(item => 
-        (item.created_date_label || item.created_date) === value
-      );
       renderBookingDateReport({ data: filtered });
     }
   }
