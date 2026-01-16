@@ -56,7 +56,7 @@ const FilterSortDropdownComponent = (function() {
                   <circle cx="12" cy="12" r="10"/>
                 </svg>
               `}
-              ${opt.label}
+              <span class="filter-sort-option-label">${opt.label}</span>
             </button>
           `).join('')}
         </div>
@@ -103,12 +103,9 @@ const FilterSortDropdownComponent = (function() {
         e.stopPropagation();
         const value = this.getAttribute('data-value');
         
-        // Get label text only (exclude SVG)
-        const labelText = Array.from(this.childNodes)
-          .filter(node => node.nodeType === Node.TEXT_NODE)
-          .map(node => node.textContent.trim())
-          .join(' ')
-          .trim();
+        // Get label from span
+        const labelSpan = this.querySelector('.filter-sort-option-label');
+        const labelText = labelSpan ? labelSpan.textContent.trim() : '';
         
         const icon = this.querySelector('svg')?.outerHTML || '';
         

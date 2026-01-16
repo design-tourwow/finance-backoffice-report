@@ -121,6 +121,10 @@
   color: #4a7ba7;
 }
 
+.filter-sort-option-label {
+  flex: 1;
+}
+
 /* Scrollbar styling */
 .filter-sort-menu::-webkit-scrollbar {
   width: 6px;
