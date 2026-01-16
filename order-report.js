@@ -953,6 +953,24 @@
             return formatNumber(value);
           }
         }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: true,
+            drawOnChartArea: true,
+            color: 'rgba(0, 0, 0, 0.1)',
+            lineWidth: 1
+          }
+        },
+        y: {
+          grid: {
+            display: true,
+            drawOnChartArea: true,
+            color: 'rgba(0, 0, 0, 0.1)',
+            lineWidth: 1
+          }
+        }
       }
     });
     
