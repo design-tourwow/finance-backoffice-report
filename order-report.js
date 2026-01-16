@@ -638,39 +638,31 @@
     wrapper.id = 'tabCountryDropdownWrapper';
     container.appendChild(wrapper);
     
+    // Get unique countries from current tab data
+    const uniqueCountries = [...new Set(currentTabData.map(item => item.country_name))].filter(Boolean);
+    const countryOptions = uniqueCountries.map(name => ({
+      value: name,
+      label: name
+    }));
+    
     // Initialize multi-select (same code as filter-section)
     const instance = SearchableDropdownComponent.initMultiSelect({
       wrapperId: 'tabCountryDropdownWrapper',
       placeholder: 'เลือกประเทศ',
-      options: [],
+      options: countryOptions,
       onChange: (values, labels) => {
         console.log('Tab Country filter changed:', values, labels);
         // Filter immediately (no need to click search button)
         if (values.length === 0) {
           renderCountryReport({ data: currentTabData });
         } else {
-          // Filter by country IDs
           const filtered = currentTabData.filter(item => 
-            values.includes(String(item.country_id))
+            values.includes(item.country_name)
           );
           renderCountryReport({ data: filtered });
         }
       }
     });
-    
-    // Load countries from API (same code as filter-section)
-    try {
-      const countriesResponse = await OrderReportAPI.getCountries();
-      if (countriesResponse && countriesResponse.success && countriesResponse.data) {
-        const countryOptions = countriesResponse.data.map(country => ({
-          value: country.id,
-          label: `${country.name_th} (${country.name_en})`
-        }));
-        instance.updateOptions(countryOptions);
-      }
-    } catch (error) {
-      console.error('Failed to load countries for tab filter:', error);
-    }
     
     currentFilterInstance = instance;
   }
@@ -683,39 +675,31 @@
     wrapper.id = 'tabSupplierDropdownWrapper';
     container.appendChild(wrapper);
     
+    // Get unique suppliers from current tab data
+    const uniqueSuppliers = [...new Set(currentTabData.map(item => item.supplier_name))].filter(Boolean);
+    const supplierOptions = uniqueSuppliers.map(name => ({
+      value: name,
+      label: name
+    }));
+    
     // Initialize multi-select (same code as filter-section)
     const instance = SearchableDropdownComponent.initMultiSelect({
       wrapperId: 'tabSupplierDropdownWrapper',
       placeholder: 'เลือก Supplier',
-      options: [],
+      options: supplierOptions,
       onChange: (values, labels) => {
         console.log('Tab Supplier filter changed:', values, labels);
         // Filter immediately (no need to click search button)
         if (values.length === 0) {
           renderSupplierReport({ data: currentTabData });
         } else {
-          // Filter by supplier IDs
           const filtered = currentTabData.filter(item => 
-            values.includes(String(item.supplier_id))
+            values.includes(item.supplier_name)
           );
           renderSupplierReport({ data: filtered });
         }
       }
     });
-    
-    // Load suppliers from API (same code as filter-section)
-    try {
-      const suppliersResponse = await OrderReportAPI.getSuppliers();
-      if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
-        const supplierOptions = suppliersResponse.data.map(supplier => ({
-          value: supplier.id,
-          label: `${supplier.name_th} (${supplier.name_en})`
-        }));
-        instance.updateOptions(supplierOptions);
-      }
-    } catch (error) {
-      console.error('Failed to load suppliers for tab filter:', error);
-    }
     
     currentFilterInstance = instance;
   }
