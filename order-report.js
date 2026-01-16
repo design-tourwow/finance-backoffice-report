@@ -1324,12 +1324,15 @@
 
   // Calculate nice scale for chart axis (Best Practice)
   function calculateNiceScale(min, max, maxTicks = 10) {
+    // Always start Y-axis from 0 for bar charts
+    min = 0;
+    
     const range = max - min;
     
     // If range is 0, return simple scale
     if (range === 0) {
       return {
-        min: Math.max(0, min - 1),
+        min: 0,
         max: max + 1,
         tickSpacing: 1
       };
@@ -1356,12 +1359,11 @@
       niceTickSpacing = 10 * magnitudePower;
     }
     
-    // Calculate nice min and max
-    const niceMin = Math.floor(min / niceTickSpacing) * niceTickSpacing;
+    // Calculate nice max (min is always 0)
     const niceMax = Math.ceil(max / niceTickSpacing) * niceTickSpacing;
     
     return {
-      min: niceMin,
+      min: 0,
       max: niceMax,
       tickSpacing: niceTickSpacing
     };
