@@ -639,78 +639,341 @@
     }, 100);
   }
 
-  // Initialize Country Tab Filter (Multi-select)
+  // Initialize Country Tab Filter (Multi-select - Direct HTML copy from filter-section)
   function initCountryTabFilter(container, data) {
+    const uniqueCountries = [...new Set(data.map(item => item.country_name))].filter(Boolean);
+    
+    // Create wrapper with exact same HTML structure as filter-section
     const wrapper = document.createElement('div');
     wrapper.className = 'multi-select-wrapper';
     wrapper.id = 'tabCountryDropdownWrapper';
+    
+    const optionsHTML = uniqueCountries.map((name, index) => `
+      <div class="multi-select-option">
+        <input type="checkbox" id="opt-tabCountryDropdownWrapper-${index}" value="${name}">
+        <label for="opt-tabCountryDropdownWrapper-${index}">${name}</label>
+      </div>
+    `).join('');
+    
+    wrapper.innerHTML = `
+      <div class="multi-select-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+        <span class="selected-text">เลือกประเทศ</span>
+        <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="multi-select-dropdown" role="listbox">
+        <div class="multi-select-search">
+          <input type="text" placeholder="ค้นหา..." aria-label="ค้นหา">
+          <div class="multi-select-actions">
+            <button type="button" class="multi-select-action-btn select-all">เลือกทั้งหมด</button>
+            <button type="button" class="multi-select-action-btn deselect-all">ล้างทั้งหมด</button>
+          </div>
+        </div>
+        <div class="multi-select-options">
+          ${optionsHTML}
+        </div>
+      </div>
+    `;
+    
     container.appendChild(wrapper);
     
-    const uniqueCountries = [...new Set(data.map(item => item.country_name))].filter(Boolean);
-    const countryOptions = uniqueCountries.map(name => ({
-      value: name,
-      label: name
-    }));
+    // Setup event handlers (copy from searchable-dropdown-component.js)
+    const trigger = wrapper.querySelector('.multi-select-trigger');
+    const dropdown = wrapper.querySelector('.multi-select-dropdown');
+    const searchInput = wrapper.querySelector('.multi-select-search input');
+    const selectAllBtn = wrapper.querySelector('.select-all');
+    const deselectAllBtn = wrapper.querySelector('.deselect-all');
+    const optionsContainer = wrapper.querySelector('.multi-select-options');
+    const selectedText = trigger.querySelector('.selected-text');
     
-    // Use onChange callback exactly like the original filter-section
-    // This ensures checkbox state is updated before filtering
-    const instance = SearchableDropdownComponent.initMultiSelect({
-      wrapperId: 'tabCountryDropdownWrapper',
-      placeholder: 'เลือกประเทศ',
-      options: countryOptions,
-      onChange: (values, labels) => {
-        // Prevent infinite loop during initialization
-        if (isInitializingTabFilter) return;
-        
-        // Filter immediately when selection changes
-        if (values.length === 0) {
+    // Toggle dropdown
+    trigger.addEventListener('click', () => {
+      const isOpen = dropdown.classList.contains('open');
+      
+      // Close all other dropdowns
+      document.querySelectorAll('.multi-select-dropdown.open').forEach(d => {
+        if (d !== dropdown) {
+          d.classList.remove('open');
+          d.previousElementSibling.classList.remove('open');
+        }
+      });
+      
+      if (isOpen) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+      } else {
+        dropdown.classList.add('open');
+        trigger.classList.add('open');
+        searchInput.focus();
+      }
+    });
+    
+    // Update selected text and filter
+    const updateSelectedText = () => {
+      const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+      const count = checkboxes.length;
+      
+      if (count === 0) {
+        selectedText.textContent = 'เลือกประเทศ';
+        trigger.classList.add('placeholder');
+        // Show all data when nothing selected
+        if (!isInitializingTabFilter) {
           renderCountryReport({ data: currentTabData });
-        } else {
+        }
+      } else {
+        const labels = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
+        selectedText.textContent = labels.join(', ');
+        trigger.classList.remove('placeholder');
+        // Filter data
+        if (!isInitializingTabFilter) {
+          const values = Array.from(checkboxes).map(cb => cb.value);
           const filtered = currentTabData.filter(item => values.includes(item.country_name));
           renderCountryReport({ data: filtered });
         }
       }
+    };
+    
+    // Search functionality
+    searchInput.addEventListener('input', () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const options = optionsContainer.querySelectorAll('.multi-select-option');
+      
+      options.forEach(option => {
+        const label = option.querySelector('label').textContent.toLowerCase();
+        option.style.display = label.includes(searchTerm) ? 'flex' : 'none';
+      });
     });
     
-    currentFilterInstance = instance;
+    // Select all
+    selectAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
+        .filter(opt => opt.style.display !== 'none')
+        .map(opt => opt.querySelector('input[type="checkbox"]'));
+      
+      visibleCheckboxes.forEach(cb => {
+        cb.checked = true;
+        cb.closest('.multi-select-option').classList.add('selected');
+      });
+      updateSelectedText();
+    });
+    
+    // Deselect all
+    deselectAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
+        .filter(opt => opt.style.display !== 'none')
+        .map(opt => opt.querySelector('input[type="checkbox"]'));
+      
+      visibleCheckboxes.forEach(cb => {
+        cb.checked = false;
+        cb.closest('.multi-select-option').classList.remove('selected');
+      });
+      updateSelectedText();
+    });
+    
+    // Handle option clicks
+    optionsContainer.addEventListener('click', (e) => {
+      const option = e.target.closest('.multi-select-option');
+      if (option) {
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        if (e.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+        }
+        
+        if (checkbox.checked) {
+          option.classList.add('selected');
+        } else {
+          option.classList.remove('selected');
+        }
+        
+        updateSelectedText();
+      }
+    });
+    
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+      }
+    });
+    
+    currentFilterInstance = {
+      clear: () => {
+        optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+          cb.checked = false;
+          cb.closest('.multi-select-option').classList.remove('selected');
+        });
+        updateSelectedText();
+      },
+      destroy: () => {
+        wrapper.remove();
+      }
+    };
   }
 
-  // Initialize Supplier Tab Filter (Multi-select)
+  // Initialize Supplier Tab Filter (Multi-select - Direct HTML copy from filter-section)
   function initSupplierTabFilter(container, data) {
+    const uniqueSuppliers = [...new Set(data.map(item => item.supplier_name))].filter(Boolean);
+    
     const wrapper = document.createElement('div');
     wrapper.className = 'multi-select-wrapper';
     wrapper.id = 'tabSupplierDropdownWrapper';
+    
+    const optionsHTML = uniqueSuppliers.map((name, index) => `
+      <div class="multi-select-option">
+        <input type="checkbox" id="opt-tabSupplierDropdownWrapper-${index}" value="${name}">
+        <label for="opt-tabSupplierDropdownWrapper-${index}">${name}</label>
+      </div>
+    `).join('');
+    
+    wrapper.innerHTML = `
+      <div class="multi-select-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+        <span class="selected-text">เลือก Supplier</span>
+        <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="multi-select-dropdown" role="listbox">
+        <div class="multi-select-search">
+          <input type="text" placeholder="ค้นหา..." aria-label="ค้นหา">
+          <div class="multi-select-actions">
+            <button type="button" class="multi-select-action-btn select-all">เลือกทั้งหมด</button>
+            <button type="button" class="multi-select-action-btn deselect-all">ล้างทั้งหมด</button>
+          </div>
+        </div>
+        <div class="multi-select-options">
+          ${optionsHTML}
+        </div>
+      </div>
+    `;
+    
     container.appendChild(wrapper);
     
-    const uniqueSuppliers = [...new Set(data.map(item => item.supplier_name))].filter(Boolean);
-    const supplierOptions = uniqueSuppliers.map(name => ({
-      value: name,
-      label: name
-    }));
+    const trigger = wrapper.querySelector('.multi-select-trigger');
+    const dropdown = wrapper.querySelector('.multi-select-dropdown');
+    const searchInput = wrapper.querySelector('.multi-select-search input');
+    const selectAllBtn = wrapper.querySelector('.select-all');
+    const deselectAllBtn = wrapper.querySelector('.deselect-all');
+    const optionsContainer = wrapper.querySelector('.multi-select-options');
+    const selectedText = trigger.querySelector('.selected-text');
     
-    // Use onChange callback exactly like the original filter-section
-    const instance = SearchableDropdownComponent.initMultiSelect({
-      wrapperId: 'tabSupplierDropdownWrapper',
-      placeholder: 'เลือก Supplier',
-      options: supplierOptions,
-      onChange: (values, labels) => {
-        // Prevent infinite loop during initialization
-        if (isInitializingTabFilter) return;
-        
-        // Filter immediately when selection changes
-        if (values.length === 0) {
+    trigger.addEventListener('click', () => {
+      const isOpen = dropdown.classList.contains('open');
+      document.querySelectorAll('.multi-select-dropdown.open').forEach(d => {
+        if (d !== dropdown) {
+          d.classList.remove('open');
+          d.previousElementSibling.classList.remove('open');
+        }
+      });
+      
+      if (isOpen) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+      } else {
+        dropdown.classList.add('open');
+        trigger.classList.add('open');
+        searchInput.focus();
+      }
+    });
+    
+    const updateSelectedText = () => {
+      const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
+      const count = checkboxes.length;
+      
+      if (count === 0) {
+        selectedText.textContent = 'เลือก Supplier';
+        trigger.classList.add('placeholder');
+        if (!isInitializingTabFilter) {
           renderSupplierReport({ data: currentTabData });
-        } else {
+        }
+      } else {
+        const labels = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
+        selectedText.textContent = labels.join(', ');
+        trigger.classList.remove('placeholder');
+        if (!isInitializingTabFilter) {
+          const values = Array.from(checkboxes).map(cb => cb.value);
           const filtered = currentTabData.filter(item => values.includes(item.supplier_name));
           renderSupplierReport({ data: filtered });
         }
       }
+    };
+    
+    searchInput.addEventListener('input', () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const options = optionsContainer.querySelectorAll('.multi-select-option');
+      options.forEach(option => {
+        const label = option.querySelector('label').textContent.toLowerCase();
+        option.style.display = label.includes(searchTerm) ? 'flex' : 'none';
+      });
     });
     
-    currentFilterInstance = instance;
+    selectAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
+        .filter(opt => opt.style.display !== 'none')
+        .map(opt => opt.querySelector('input[type="checkbox"]'));
+      visibleCheckboxes.forEach(cb => {
+        cb.checked = true;
+        cb.closest('.multi-select-option').classList.add('selected');
+      });
+      updateSelectedText();
+    });
+    
+    deselectAllBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
+        .filter(opt => opt.style.display !== 'none')
+        .map(opt => opt.querySelector('input[type="checkbox"]'));
+      visibleCheckboxes.forEach(cb => {
+        cb.checked = false;
+        cb.closest('.multi-select-option').classList.remove('selected');
+      });
+      updateSelectedText();
+    });
+    
+    optionsContainer.addEventListener('click', (e) => {
+      const option = e.target.closest('.multi-select-option');
+      if (option) {
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        if (e.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+        }
+        
+        if (checkbox.checked) {
+          option.classList.add('selected');
+        } else {
+          option.classList.remove('selected');
+        }
+        
+        updateSelectedText();
+      }
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        dropdown.classList.remove('open');
+        trigger.classList.remove('open');
+      }
+    });
+    
+    currentFilterInstance = {
+      clear: () => {
+        optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+          cb.checked = false;
+          cb.closest('.multi-select-option').classList.remove('selected');
+        });
+        updateSelectedText();
+      },
+      destroy: () => {
+        wrapper.remove();
+      }
+    };
   }
 
-  // Initialize Travel Date Tab Filter (Date Picker)
+  // Initialize Travel Date Tab Filter (Date Picker - Direct implementation)
   function initTravelDateTabFilter(container, data) {
     const wrapper = document.createElement('div');
     wrapper.className = 'date-picker-wrapper';
@@ -733,70 +996,48 @@
     `;
     container.appendChild(wrapper);
     
-    // Create instance WITHOUT onChange
+    // Create instance with onChange for Apply/Clear buttons
     const instance = DatePickerComponent.initDateRangePicker({
       inputId: 'tabTravelDateRangePicker',
       dropdownId: 'tabTravelCalendarDropdown',
       wrapperId: 'tabTravelDatePicker',
-      onChange: null
-    });
-    
-    // Use event delegation for calendar buttons (they're created dynamically)
-    let isProcessingChange = false;
-    container.addEventListener('click', function(e) {
-      if (isProcessingChange) return;
-      
-      // Handle Apply button
-      if (e.target.classList.contains('apply') && e.target.classList.contains('calendar-btn')) {
-        isProcessingChange = true;
-        setTimeout(() => {
-          const startDate = instance.getStartDate();
-          const endDate = instance.getEndDate();
+      onChange: (startDate, endDate) => {
+        // Only filter when user clicks Apply (onChange is called from Apply button)
+        if (!isInitializingTabFilter && startDate && endDate) {
+          const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
+          const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
           
-          if (!startDate || !endDate) {
-            renderTravelDateReport({ data: currentTabData });
-          } else {
-            const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
-            const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
-            
-            const filtered = currentTabData.filter(item => {
-              const itemDate = item.travel_month;
-              return itemDate >= startStr && itemDate <= endStr;
-            });
-            renderTravelDateReport({ data: filtered });
-          }
-          isProcessingChange = false;
-        }, 0);
-      }
-      
-      // Handle Clear button
-      if (e.target.classList.contains('clear') && e.target.classList.contains('calendar-btn')) {
-        isProcessingChange = true;
-        setTimeout(() => {
-          renderTravelDateReport({ data: currentTabData });
-          isProcessingChange = false;
-        }, 0);
+          const filtered = currentTabData.filter(item => {
+            const itemDate = item.travel_month;
+            return itemDate >= startStr && itemDate <= endStr;
+          });
+          renderTravelDateReport({ data: filtered });
+        }
       }
     });
     
-    // Intercept the input click to adjust position BEFORE showing dropdown
-    const input = document.getElementById('tabTravelDateRangePicker');
+    // Handle Clear button separately
     const dropdown = document.getElementById('tabTravelCalendarDropdown');
-    if (input && dropdown) {
-      // Store original click handler
-      const originalClickHandler = input.onclick;
-      
-      // Override click handler
-      input.addEventListener('click', function(e) {
-        // Adjust position before showing
-        adjustTabDatePickerPosition('tabTravelDatePicker', 'tabTravelCalendarDropdown');
-      }, true); // Use capture phase to run before DatePickerComponent's handler
+    if (dropdown) {
+      // Use MutationObserver to detect when calendar is rendered
+      const observer = new MutationObserver(() => {
+        const clearBtn = dropdown.querySelector('.calendar-btn.clear');
+        if (clearBtn && !clearBtn.dataset.listenerAttached) {
+          clearBtn.dataset.listenerAttached = 'true';
+          clearBtn.addEventListener('click', () => {
+            if (!isInitializingTabFilter) {
+              renderTravelDateReport({ data: currentTabData });
+            }
+          });
+        }
+      });
+      observer.observe(dropdown, { childList: true, subtree: true });
     }
     
     currentFilterInstance = instance;
   }
 
-  // Initialize Booking Date Tab Filter (Date Picker)
+  // Initialize Booking Date Tab Filter (Date Picker - Direct implementation)
   function initBookingDateTabFilter(container, data) {
     const wrapper = document.createElement('div');
     wrapper.className = 'date-picker-wrapper';
@@ -819,58 +1060,40 @@
     `;
     container.appendChild(wrapper);
     
-    // Create instance WITHOUT onChange
+    // Create instance with onChange for Apply/Clear buttons
     const instance = DatePickerComponent.initDateRangePicker({
       inputId: 'tabBookingDateRangePicker',
       dropdownId: 'tabBookingCalendarDropdown',
       wrapperId: 'tabBookingDatePicker',
-      onChange: null
-    });
-    
-    // Use event delegation
-    let isProcessingChange = false;
-    container.addEventListener('click', function(e) {
-      if (isProcessingChange) return;
-      
-      if (e.target.classList.contains('apply') && e.target.classList.contains('calendar-btn')) {
-        isProcessingChange = true;
-        setTimeout(() => {
-          const startDate = instance.getStartDate();
-          const endDate = instance.getEndDate();
+      onChange: (startDate, endDate) => {
+        if (!isInitializingTabFilter && startDate && endDate) {
+          const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
+          const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
           
-          if (!startDate || !endDate) {
-            renderBookingDateReport({ data: currentTabData });
-          } else {
-            const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
-            const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
-            
-            const filtered = currentTabData.filter(item => {
-              const itemDate = item.booking_month;
-              return itemDate >= startStr && itemDate <= endStr;
-            });
-            renderBookingDateReport({ data: filtered });
-          }
-          isProcessingChange = false;
-        }, 0);
-      }
-      
-      if (e.target.classList.contains('clear') && e.target.classList.contains('calendar-btn')) {
-        isProcessingChange = true;
-        setTimeout(() => {
-          renderBookingDateReport({ data: currentTabData });
-          isProcessingChange = false;
-        }, 0);
+          const filtered = currentTabData.filter(item => {
+            const itemDate = item.booking_month;
+            return itemDate >= startStr && itemDate <= endStr;
+          });
+          renderBookingDateReport({ data: filtered });
+        }
       }
     });
     
-    // Intercept the input click to adjust position BEFORE showing dropdown
-    const input = document.getElementById('tabBookingDateRangePicker');
+    // Handle Clear button separately
     const dropdown = document.getElementById('tabBookingCalendarDropdown');
-    if (input && dropdown) {
-      input.addEventListener('click', function(e) {
-        // Adjust position before showing
-        adjustTabDatePickerPosition('tabBookingDatePicker', 'tabBookingCalendarDropdown');
-      }, true); // Use capture phase to run before DatePickerComponent's handler
+    if (dropdown) {
+      const observer = new MutationObserver(() => {
+        const clearBtn = dropdown.querySelector('.calendar-btn.clear');
+        if (clearBtn && !clearBtn.dataset.listenerAttached) {
+          clearBtn.dataset.listenerAttached = 'true';
+          clearBtn.addEventListener('click', () => {
+            if (!isInitializingTabFilter) {
+              renderBookingDateReport({ data: currentTabData });
+            }
+          });
+        }
+      });
+      observer.observe(dropdown, { childList: true, subtree: true });
     }
     
     currentFilterInstance = instance;
@@ -924,60 +1147,6 @@
       options: options,
       onChange: (value) => filterLeadTimeByRange(value)
     });
-  }
-
-  // Adjust tab date picker position to prevent overflow
-  function adjustTabDatePickerPosition(wrapperId, dropdownId) {
-    const wrapper = document.getElementById(wrapperId);
-    const dropdown = document.getElementById(dropdownId);
-    
-    if (!wrapper || !dropdown) return;
-    
-    // Force reflow to get accurate measurements
-    dropdown.style.display = 'block';
-    dropdown.style.visibility = 'hidden';
-    
-    const dropdownRect = dropdown.getBoundingClientRect();
-    const wrapperRect = wrapper.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Reset position
-    dropdown.style.left = '';
-    dropdown.style.right = '';
-    dropdown.style.top = '';
-    dropdown.style.bottom = '';
-    dropdown.style.transform = '';
-    
-    // Check if dropdown overflows bottom edge
-    const spaceBelow = viewportHeight - wrapperRect.bottom;
-    const spaceAbove = wrapperRect.top;
-    const dropdownHeight = dropdownRect.height;
-    
-    if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-      // Show above wrapper instead
-      dropdown.style.top = 'auto';
-      dropdown.style.bottom = '100%';
-      dropdown.style.marginTop = '0';
-      dropdown.style.marginBottom = '4px';
-    }
-    
-    // Check if dropdown overflows right edge
-    if (dropdownRect.right > viewportWidth) {
-      // Align to right edge of wrapper
-      dropdown.style.left = 'auto';
-      dropdown.style.right = '0';
-    }
-    
-    // Check if dropdown overflows left edge
-    if (dropdownRect.left < 0) {
-      // Align to left edge of wrapper
-      dropdown.style.left = '0';
-      dropdown.style.right = 'auto';
-    }
-    
-    // Make visible
-    dropdown.style.visibility = 'visible';
   }
 
   // Filter functions for each tab
