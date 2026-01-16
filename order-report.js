@@ -458,8 +458,6 @@
             return await OrderReportAPI.getReportBySupplier(currentFilters);
           case 'travel-date':
             return await OrderReportAPI.getReportByTravelDate(currentFilters);
-          case 'travel-date-v2':
-            return await OrderReportAPI.getReportByTravelDate(currentFilters);
           case 'booking-date':
             return await OrderReportAPI.getReportByBookingDate(currentFilters);
           case 'lead-time':
@@ -485,9 +483,6 @@
           break;
         case 'travel-date':
           renderTravelDateReport(response);
-          break;
-        case 'travel-date-v2':
-          renderTravelDateReportV2(response);
           break;
         case 'booking-date':
           renderBookingDateReport(response);
@@ -898,159 +893,6 @@
     })));
   }
 
-  // Render Travel Date Report V2 (Enhanced with short labels, vertical text, grid lines, year colors)
-  function renderTravelDateReportV2(response) {
-    if (!response || !response.data || response.data.length === 0) {
-      showEmpty();
-      return;
-    }
-
-    showContent();
-    
-    const data = response.data;
-    currentTabData = data;
-    
-    // Initialize filter dropdown for Travel Date V2 tab
-    initTabFilter('travel-date', data);
-    
-    // Convert labels to short format: "ธ.ค. 68"
-    const shortLabels = data.map(item => {
-      const monthLabel = item.travel_month_label || item.travel_month || 'ไม่ระบุ';
-      return convertToShortMonthLabel(monthLabel);
-    });
-    
-    // Extract years for background colors
-    const years = data.map(item => {
-      const monthStr = item.travel_month || '';
-      const match = monthStr.match(/^(\d{4})-/);
-      return match ? parseInt(match[1]) : null;
-    });
-    
-    // Generate background colors by year (minimal pastel colors)
-    const uniqueYears = [...new Set(years.filter(y => y !== null))].sort();
-    const yearColorMap = {};
-    const pastelColors = [
-      'rgba(239, 246, 255, 0.3)', // Light blue
-      'rgba(243, 244, 246, 0.3)', // Light gray
-      'rgba(254, 243, 199, 0.3)', // Light yellow
-      'rgba(243, 232, 255, 0.3)', // Light purple
-      'rgba(220, 252, 231, 0.3)', // Light green
-      'rgba(254, 226, 226, 0.3)'  // Light red
-    ];
-    
-    uniqueYears.forEach((year, index) => {
-      yearColorMap[year] = pastelColors[index % pastelColors.length];
-    });
-    
-    const backgroundColors = years.map(year => yearColorMap[year] || 'rgba(255, 255, 255, 0)');
-    
-    // Render chart WITH enhanced styling
-    renderChart({
-      labels: shortLabels,
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: backgroundColors,
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 2,
-        fill: false,
-        pointBackgroundColor: 'rgba(74, 123, 167, 1)',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6
-      }]
-    }, 'line', {
-      plugins: {
-        datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          color: '#374151',
-          font: {
-            size: 12,
-            weight: 'bold',
-            family: 'Kanit'
-          },
-          formatter: (value) => {
-            return formatNumber(value);
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            font: {
-              family: 'Kanit',
-              size: 11
-            },
-            maxRotation: 90,
-            minRotation: 90
-          },
-          grid: {
-            display: true,
-            color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
-          }
-        },
-        y: {
-          grid: {
-            display: true,
-            color: 'rgba(0, 0, 0, 0.05)'
-          }
-        }
-      }
-    });
-    
-    // Render sortable table
-    renderSortableTable([
-      { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
-      { key: 'travel_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
-      { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
-      { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
-      { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
-    ], data.map((item, index) => ({
-      row_number: index + 1,
-      travel_month_label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
-      total_orders: item.total_orders,
-      total_customers: item.total_customers,
-      total_net_amount: item.total_net_amount
-    })));
-  }
-
-  // Convert month label to short format: "มกราคม 2568" -> "ม.ค. 68"
-  function convertToShortMonthLabel(fullLabel) {
-    const monthMap = {
-      'มกราคม': 'ม.ค.',
-      'กุมภาพันธ์': 'ก.พ.',
-      'มีนาคม': 'มี.ค.',
-      'เมษายน': 'เม.ย.',
-      'พฤษภาคม': 'พ.ค.',
-      'มิถุนายน': 'มิ.ย.',
-      'กรกฎาคม': 'ก.ค.',
-      'สิงหาคม': 'ส.ค.',
-      'กันยายน': 'ก.ย.',
-      'ตุลาคม': 'ต.ค.',
-      'พฤศจิกายน': 'พ.ย.',
-      'ธันวาคม': 'ธ.ค.'
-    };
-    
-    // Try to match "มกราคม 2568" format
-    for (const [full, short] of Object.entries(monthMap)) {
-      if (fullLabel.includes(full)) {
-        // Extract year (last 2 digits of Buddhist year)
-        const yearMatch = fullLabel.match(/(\d{4})/);
-        if (yearMatch) {
-          const year = yearMatch[1].slice(-2); // Get last 2 digits
-          return `${short} ${year}`;
-        }
-        return short;
-      }
-    }
-    
-    return fullLabel;
-  }
-
   // Render Booking Date Report
   function renderBookingDateReport(response) {
     if (!response || !response.data || response.data.length === 0) {
@@ -1415,8 +1257,8 @@
       { key: 'order_code', label: 'Order Code', type: 'text', align: 'left' },
       { key: 'customer_name', label: 'ลูกค้า', type: 'text', align: 'left' },
       { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
-      { key: 'created_at', label: 'วันจอง', type: 'text', align: 'center' },
-      { key: 'travel_start_date', label: 'วันเดินทาง', type: 'text', align: 'center' },
+      { key: 'booking_date', label: 'วันจอง', type: 'text', align: 'center' },
+      { key: 'travel_date', label: 'วันเดินทาง', type: 'text', align: 'center' },
       { key: 'lead_time_days', label: 'Lead Time (วัน)', type: 'number', align: 'right' },
       { key: 'net_amount', label: 'ยอดเงิน', type: 'currency', align: 'right' }
     ], data.map((item, index) => ({
@@ -1424,8 +1266,8 @@
       order_code: item.order_code || '-',
       customer_name: item.customer_name || 'ไม่ระบุ',
       country_name: item.country_name || 'ไม่ระบุ',
-      created_at: item.created_at || '-',
-      travel_start_date: item.travel_start_date || '-',
+      booking_date: item.booking_date || '-',
+      travel_date: item.travel_date || '-',
       lead_time_days: item.lead_time_days,
       net_amount: item.net_amount
     })));
