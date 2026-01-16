@@ -1468,7 +1468,8 @@
               grid: {
                 display: true,
                 color: 'rgba(0, 0, 0, 0.05)'
-              }
+              },
+              ...(extraOptions.scales?.y || {})
             },
             x: isHorizontal ? {
               ...scaleConfig,
@@ -1484,7 +1485,8 @@
               },
               grid: {
                 display: false
-              }
+              },
+              ...(extraOptions.scales?.x || {})
             }
           } : {}
         }
