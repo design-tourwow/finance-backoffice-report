@@ -96,6 +96,12 @@
     
     currentTab = tabName;
     
+    // Destroy current filter instance when switching tabs
+    if (currentFilterInstance && currentFilterInstance.destroy) {
+      currentFilterInstance.destroy();
+      currentFilterInstance = null;
+    }
+    
     // Show/hide filter dropdown based on tab
     const tableFilters = document.getElementById('tableFilters');
     if (tableFilters) {
@@ -994,8 +1000,10 @@
     const data = response.data;
     currentTabData = data;
     
-    // Initialize filter dropdown for Travel Date tab
-    initTabFilter('travel-date', data);
+    // Initialize filter dropdown ONLY if not already initialized
+    if (!currentFilterInstance) {
+      initTabFilter('travel-date', data);
+    }
     
     // Calculate dynamic width: 40px per bar for better spacing with grid
     const barWidth = 40;
@@ -1084,8 +1092,10 @@
     const data = response.data;
     currentTabData = data;
     
-    // Initialize filter dropdown for Booking Date tab
-    initTabFilter('booking-date', data);
+    // Initialize filter dropdown ONLY if not already initialized
+    if (!currentFilterInstance) {
+      initTabFilter('booking-date', data);
+    }
     
     // Calculate dynamic width: 40px per bar for better spacing with grid
     const barWidth = 40;

@@ -118,13 +118,20 @@ const FilterSortDropdownComponent = (function() {
         dropdownOptions.forEach(opt => opt.classList.remove('active'));
         this.classList.add('active');
         
-        // Update button text and icon
-        btnContent.innerHTML = `
-          ${icon}
-          <span class="filter-sort-btn-text">${labelText}</span>
-        `;
+        // Get fresh reference to button content (in case it was re-created)
+        const currentBtn = document.getElementById(btnId);
+        const currentBtnContent = currentBtn ? currentBtn.querySelector('.filter-sort-btn-content') : null;
         
-        // No active state on button - same as tour-image-manager
+        if (currentBtnContent) {
+          // Update button text and icon
+          currentBtnContent.innerHTML = `
+            ${icon}
+            <span class="filter-sort-btn-text">${labelText}</span>
+          `;
+          console.log('✅ Button content updated successfully');
+        } else {
+          console.error('❌ Could not find button content element');
+        }
         
         // Close dropdown
         menu.classList.remove('open');
