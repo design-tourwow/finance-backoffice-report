@@ -1257,8 +1257,8 @@
       { key: 'order_code', label: 'Order Code', type: 'text', align: 'left' },
       { key: 'customer_name', label: 'ลูกค้า', type: 'text', align: 'left' },
       { key: 'country_name', label: 'ประเทศ', type: 'text', align: 'left' },
-      { key: 'booking_date', label: 'วันจอง', type: 'text', align: 'center' },
-      { key: 'travel_date', label: 'วันเดินทาง', type: 'text', align: 'center' },
+      { key: 'created_at', label: 'วันจอง', type: 'text', align: 'center' },
+      { key: 'travel_start_date', label: 'วันเดินทาง', type: 'text', align: 'center' },
       { key: 'lead_time_days', label: 'Lead Time (วัน)', type: 'number', align: 'right' },
       { key: 'net_amount', label: 'ยอดเงิน', type: 'currency', align: 'right' }
     ], data.map((item, index) => ({
@@ -1266,8 +1266,8 @@
       order_code: item.order_code || '-',
       customer_name: item.customer_name || 'ไม่ระบุ',
       country_name: item.country_name || 'ไม่ระบุ',
-      booking_date: item.booking_date || '-',
-      travel_date: item.travel_date || '-',
+      created_at: item.created_at || '-',
+      travel_start_date: item.travel_start_date || '-',
       lead_time_days: item.lead_time_days,
       net_amount: item.net_amount
     })));
