@@ -3,6 +3,8 @@
 const FilterSortDropdownComponent = (function() {
   'use strict';
 
+  console.log('🔧 FilterSortDropdownComponent loaded - Version 2.0 with label span fix');
+
   /**
    * Initialize Filter/Sort Dropdown
    * @param {Object} config - Configuration object
@@ -109,7 +111,8 @@ const FilterSortDropdownComponent = (function() {
         
         const icon = this.querySelector('svg')?.outerHTML || '';
         
-        console.log('🔍 Option selected:', value, labelText);
+        console.log('🔍 Option selected:', { value, labelText, icon: icon.substring(0, 20) + '...' });
+        console.log('📝 Updating button with label:', labelText);
         
         // Update active state
         dropdownOptions.forEach(opt => opt.classList.remove('active'));
