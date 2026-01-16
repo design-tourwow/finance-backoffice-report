@@ -823,8 +823,8 @@
     // Initialize filter dropdown for Travel Date tab
     initTabFilter('travel-date', data);
     
-    // Calculate dynamic width: 30px per bar for better spacing
-    const barWidth = 30;
+    // Calculate dynamic width: 40px per bar for better spacing with grid
+    const barWidth = 40;
     const chartMinWidth = data.length * barWidth;
     
     // Render bar chart with horizontal scroll
@@ -836,8 +836,8 @@
         backgroundColor: 'rgba(74, 123, 167, 0.8)',
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1,
-        barPercentage: 0.8,
-        categoryPercentage: 0.9
+        barPercentage: 0.7,
+        categoryPercentage: 1.0
       }]
     }, 'bar', {
       plugins: {
@@ -859,7 +859,10 @@
       scales: {
         x: {
           grid: {
-            display: false
+            display: true,
+            drawOnChartArea: true,
+            color: 'rgba(0, 0, 0, 0.1)',
+            lineWidth: 1
           },
           ticks: {
             maxRotation: 90,
@@ -910,8 +913,8 @@
     // Initialize filter dropdown for Booking Date tab
     initTabFilter('booking-date', data);
     
-    // Calculate dynamic width: 30px per bar for better spacing
-    const barWidth = 30;
+    // Calculate dynamic width: 40px per bar for better spacing with grid
+    const barWidth = 40;
     const chartMinWidth = data.length * barWidth;
     
     // Render bar chart with horizontal scroll
@@ -923,8 +926,8 @@
         backgroundColor: 'rgba(74, 123, 167, 0.8)',
         borderColor: 'rgba(74, 123, 167, 1)',
         borderWidth: 1,
-        barPercentage: 0.8,
-        categoryPercentage: 0.9
+        barPercentage: 0.7,
+        categoryPercentage: 1.0
       }]
     }, 'bar', {
       plugins: {
@@ -946,7 +949,10 @@
       scales: {
         x: {
           grid: {
-            display: false
+            display: true,
+            drawOnChartArea: true,
+            color: 'rgba(0, 0, 0, 0.1)',
+            lineWidth: 1
           },
           ticks: {
             maxRotation: 90,
@@ -1365,6 +1371,7 @@
   function renderChart(data, type, extraOptions = {}, minWidth = null, height = null) {
     const canvas = document.getElementById('reportChart');
     const chartContainer = document.getElementById('chartContainer');
+    const chartWrapper = canvas.parentElement;
     const ctx = canvas.getContext('2d');
     
     // Destroy existing chart
@@ -1395,16 +1402,19 @@
     
     // Enable horizontal scroll if minWidth is provided and exceeds container width
     if (minWidth && minWidth > chartContainer.clientWidth) {
-      chartContainer.style.overflowX = 'auto';
-      chartContainer.style.overflowY = 'hidden';
-      canvas.style.minWidth = `${minWidth}px`;
-      canvas.parentElement.style.minWidth = `${minWidth}px`;
-      console.log('📏 Enabled horizontal scroll:', { minWidth, containerWidth: chartContainer.clientWidth });
+      // Set wrapper width to enable scroll
+      chartWrapper.style.width = `${minWidth}px`;
+      chartWrapper.style.height = '100%';
+      
+      console.log('📏 Enabled horizontal scroll:', { 
+        minWidth, 
+        containerWidth: chartContainer.clientWidth,
+        wrapperWidth: minWidth
+      });
     } else {
-      chartContainer.style.overflowX = 'visible';
-      chartContainer.style.overflowY = 'visible';
-      canvas.style.minWidth = '';
-      canvas.parentElement.style.minWidth = '';
+      // Reset to default
+      chartWrapper.style.width = '100%';
+      chartWrapper.style.height = '100%';
     }
     
     // Determine if horizontal bar chart
