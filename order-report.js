@@ -643,12 +643,22 @@
       label: name
     }));
     
-    // Use event delegation to handle checkbox changes
-    // This prevents infinite loop because we attach listener ONCE to container
+    // Create instance WITHOUT onChange to prevent it from being called during init
+    const instance = SearchableDropdownComponent.initMultiSelect({
+      wrapperId: 'tabCountryDropdownWrapper',
+      placeholder: 'เลือกประเทศ',
+      options: countryOptions,
+      onChange: null // Don't pass onChange - we handle it manually below
+    });
+    
+    // Use event delegation with proper timing to wait for checkbox state update
     let isProcessingChange = false;
-    container.addEventListener('change', function(e) {
-      if (e.target.type === 'checkbox' && !isProcessingChange) {
+    container.addEventListener('click', function(e) {
+      // Check if clicked on checkbox or its label
+      const option = e.target.closest('.multi-select-option');
+      if (option && !isProcessingChange) {
         isProcessingChange = true;
+        // Wait for checkbox state to update AND for updateSelectedText to complete
         setTimeout(() => {
           const selectedValues = instance.getValues();
           if (selectedValues.length === 0) {
@@ -658,16 +668,8 @@
             renderCountryReport({ data: filtered });
           }
           isProcessingChange = false;
-        }, 0);
+        }, 50); // Increased timeout to ensure checkbox state is updated
       }
-    });
-    
-    // Create instance WITHOUT onChange to prevent it from being called during init
-    const instance = SearchableDropdownComponent.initMultiSelect({
-      wrapperId: 'tabCountryDropdownWrapper',
-      placeholder: 'เลือกประเทศ',
-      options: countryOptions,
-      onChange: null // Don't pass onChange - we handle it via event delegation above
     });
     
     currentFilterInstance = instance;
@@ -686,10 +688,19 @@
       label: name
     }));
     
-    // Use event delegation
+    // Create instance WITHOUT onChange
+    const instance = SearchableDropdownComponent.initMultiSelect({
+      wrapperId: 'tabSupplierDropdownWrapper',
+      placeholder: 'เลือก Supplier',
+      options: supplierOptions,
+      onChange: null
+    });
+    
+    // Use event delegation with proper timing
     let isProcessingChange = false;
-    container.addEventListener('change', function(e) {
-      if (e.target.type === 'checkbox' && !isProcessingChange) {
+    container.addEventListener('click', function(e) {
+      const option = e.target.closest('.multi-select-option');
+      if (option && !isProcessingChange) {
         isProcessingChange = true;
         setTimeout(() => {
           const selectedValues = instance.getValues();
@@ -700,15 +711,8 @@
             renderSupplierReport({ data: filtered });
           }
           isProcessingChange = false;
-        }, 0);
+        }, 50);
       }
-    });
-    
-    const instance = SearchableDropdownComponent.initMultiSelect({
-      wrapperId: 'tabSupplierDropdownWrapper',
-      placeholder: 'เลือก Supplier',
-      options: supplierOptions,
-      onChange: null
     });
     
     currentFilterInstance = instance;
@@ -736,6 +740,14 @@
       <div id="tabTravelCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
     `;
     container.appendChild(wrapper);
+    
+    // Create instance WITHOUT onChange
+    const instance = DatePickerComponent.initDateRangePicker({
+      inputId: 'tabTravelDateRangePicker',
+      dropdownId: 'tabTravelCalendarDropdown',
+      wrapperId: 'tabTravelDatePicker',
+      onChange: null
+    });
     
     // Use event delegation for calendar buttons (they're created dynamically)
     let isProcessingChange = false;
@@ -775,12 +787,19 @@
       }
     });
     
-    const instance = DatePickerComponent.initDateRangePicker({
-      inputId: 'tabTravelDateRangePicker',
-      dropdownId: 'tabTravelCalendarDropdown',
-      wrapperId: 'tabTravelDatePicker',
-      onChange: null
-    });
+    // Add event listener to adjust position when calendar opens
+    const input = document.getElementById('tabTravelDateRangePicker');
+    const dropdown = document.getElementById('tabTravelCalendarDropdown');
+    if (input && dropdown) {
+      input.addEventListener('click', function() {
+        // Wait for dropdown to be displayed, then adjust position
+        setTimeout(() => {
+          if (dropdown.style.display === 'block') {
+            adjustTabDatePickerPosition('tabTravelDatePicker', 'tabTravelCalendarDropdown');
+          }
+        }, 10);
+      });
+    }
     
     currentFilterInstance = instance;
   }
@@ -807,6 +826,14 @@
       <div id="tabBookingCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
     `;
     container.appendChild(wrapper);
+    
+    // Create instance WITHOUT onChange
+    const instance = DatePickerComponent.initDateRangePicker({
+      inputId: 'tabBookingDateRangePicker',
+      dropdownId: 'tabBookingCalendarDropdown',
+      wrapperId: 'tabBookingDatePicker',
+      onChange: null
+    });
     
     // Use event delegation
     let isProcessingChange = false;
@@ -844,12 +871,18 @@
       }
     });
     
-    const instance = DatePickerComponent.initDateRangePicker({
-      inputId: 'tabBookingDateRangePicker',
-      dropdownId: 'tabBookingCalendarDropdown',
-      wrapperId: 'tabBookingDatePicker',
-      onChange: null
-    });
+    // Add event listener to adjust position when calendar opens
+    const input = document.getElementById('tabBookingDateRangePicker');
+    const dropdown = document.getElementById('tabBookingCalendarDropdown');
+    if (input && dropdown) {
+      input.addEventListener('click', function() {
+        setTimeout(() => {
+          if (dropdown.style.display === 'block') {
+            adjustTabDatePickerPosition('tabBookingDatePicker', 'tabBookingCalendarDropdown');
+          }
+        }, 10);
+      });
+    }
     
     currentFilterInstance = instance;
   }
@@ -902,6 +935,49 @@
       options: options,
       onChange: (value) => filterLeadTimeByRange(value)
     });
+  }
+
+  // Adjust tab date picker position to prevent overflow
+  function adjustTabDatePickerPosition(wrapperId, dropdownId) {
+    const wrapper = document.getElementById(wrapperId);
+    const dropdown = document.getElementById(dropdownId);
+    
+    if (!wrapper || !dropdown) return;
+    
+    const dropdownRect = dropdown.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Reset position
+    dropdown.style.left = '';
+    dropdown.style.right = '';
+    dropdown.style.top = '';
+    dropdown.style.bottom = '';
+    dropdown.style.transform = '';
+    
+    // Check if dropdown overflows right edge
+    if (dropdownRect.right > viewportWidth) {
+      // Align to right edge of wrapper
+      dropdown.style.left = 'auto';
+      dropdown.style.right = '0';
+    }
+    
+    // Check if dropdown overflows left edge
+    if (dropdownRect.left < 0) {
+      // Align to left edge of wrapper
+      dropdown.style.left = '0';
+      dropdown.style.right = 'auto';
+    }
+    
+    // Check if dropdown overflows bottom edge
+    if (dropdownRect.bottom > viewportHeight) {
+      // Show above wrapper instead
+      dropdown.style.top = 'auto';
+      dropdown.style.bottom = '100%';
+      dropdown.style.marginTop = '0';
+      dropdown.style.marginBottom = '4px';
+    }
   }
 
   // Filter functions for each tab
