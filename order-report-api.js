@@ -18,9 +18,10 @@ const OrderReportAPI = {
   /**
    * Build query string from filters
    * @param {Object} filters - Filter parameters
+   * @param {string} dateFormat - Date format (optional)
    * @returns {string}
    */
-  buildQueryString(filters = {}) {
+  buildQueryString(filters = {}, dateFormat = null) {
     const params = new URLSearchParams();
     
     if (filters.travel_date_from) params.append('travel_date_from', filters.travel_date_from);
@@ -29,6 +30,7 @@ const OrderReportAPI = {
     if (filters.booking_date_to) params.append('booking_date_to', filters.booking_date_to);
     if (filters.country_id) params.append('country_id', filters.country_id);
     if (filters.supplier_id) params.append('supplier_id', filters.supplier_id);
+    if (dateFormat) params.append('date_format', dateFormat);
     
     const queryString = params.toString();
     return queryString ? `?${queryString}` : '';
@@ -139,7 +141,8 @@ const OrderReportAPI = {
     try {
       console.log('🔄 Fetching Report by Travel Date with filters:', filters);
       
-      const queryString = this.buildQueryString(filters);
+      // Use numeric_short format: MM/YYYY (e.g., "09/2569")
+      const queryString = this.buildQueryString(filters, 'numeric_short');
       const result = await this.fetchAPI(`/api/reports/by-travel-date${queryString}`);
       
       return result;
@@ -158,7 +161,8 @@ const OrderReportAPI = {
     try {
       console.log('🔄 Fetching Report by Booking Date with filters:', filters);
       
-      const queryString = this.buildQueryString(filters);
+      // Use numeric_short format: MM/YYYY (e.g., "12/2567")
+      const queryString = this.buildQueryString(filters, 'numeric_short');
       const result = await this.fetchAPI(`/api/reports/by-booking-date${queryString}`);
       
       return result;
