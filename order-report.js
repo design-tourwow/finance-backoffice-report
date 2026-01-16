@@ -593,8 +593,8 @@
     })));
   }
 
-  // Initialize Tab Filter (Copy from filter-section 100%)
-  async function initTabFilter(tabType, data) {
+  // Initialize Tab Filter (with multi-select/date picker components)
+  function initTabFilter(tabType, data) {
     const container = document.getElementById('tabFilterContainer');
     if (!container) return;
     
@@ -609,104 +609,113 @@
     
     switch(tabType) {
       case 'country':
-        await initCountryTabFilter(container);
+        initCountryTabFilter(container, data);
         break;
         
       case 'supplier':
-        await initSupplierTabFilter(container);
+        initSupplierTabFilter(container, data);
         break;
         
       case 'travel-date':
-        initTravelDateTabFilter(container);
+        initTravelDateTabFilter(container, data);
         break;
         
       case 'booking-date':
-        initBookingDateTabFilter(container);
+        initBookingDateTabFilter(container, data);
         break;
         
       case 'lead-time':
-        initLeadTimeTabFilter(container);
+        initLeadTimeTabFilter(container, data);
         break;
     }
   }
 
-  // Initialize Country Tab Filter (Copy from filter-section 100%)
-  async function initCountryTabFilter(container) {
-    // Create wrapper (same HTML structure as filter-section)
+  // Initialize Country Tab Filter (Multi-select)
+  function initCountryTabFilter(container, data) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'searchable-dropdown-wrapper';
+    wrapper.className = 'multi-select-wrapper';
     wrapper.id = 'tabCountryDropdownWrapper';
     container.appendChild(wrapper);
     
-    // Get unique countries from current tab data
-    const uniqueCountries = [...new Set(currentTabData.map(item => item.country_name))].filter(Boolean);
+    const uniqueCountries = [...new Set(data.map(item => item.country_name))].filter(Boolean);
     const countryOptions = uniqueCountries.map(name => ({
       value: name,
       label: name
     }));
     
-    // Initialize multi-select (same code as filter-section)
+    // Use event delegation to handle checkbox changes
+    // This prevents infinite loop because we attach listener ONCE to container
+    let isProcessingChange = false;
+    container.addEventListener('change', function(e) {
+      if (e.target.type === 'checkbox' && !isProcessingChange) {
+        isProcessingChange = true;
+        setTimeout(() => {
+          const selectedValues = instance.getValues();
+          if (selectedValues.length === 0) {
+            renderCountryReport({ data: currentTabData });
+          } else {
+            const filtered = currentTabData.filter(item => selectedValues.includes(item.country_name));
+            renderCountryReport({ data: filtered });
+          }
+          isProcessingChange = false;
+        }, 0);
+      }
+    });
+    
+    // Create instance WITHOUT onChange to prevent it from being called during init
     const instance = SearchableDropdownComponent.initMultiSelect({
       wrapperId: 'tabCountryDropdownWrapper',
       placeholder: 'เลือกประเทศ',
       options: countryOptions,
-      onChange: (values, labels) => {
-        console.log('Tab Country filter changed:', values, labels);
-        // Filter immediately (no need to click search button)
-        if (values.length === 0) {
-          renderCountryReport({ data: currentTabData });
-        } else {
-          const filtered = currentTabData.filter(item => 
-            values.includes(item.country_name)
-          );
-          renderCountryReport({ data: filtered });
-        }
-      }
+      onChange: null // Don't pass onChange - we handle it via event delegation above
     });
     
     currentFilterInstance = instance;
   }
 
-  // Initialize Supplier Tab Filter (Copy from filter-section 100%)
-  async function initSupplierTabFilter(container) {
-    // Create wrapper (same HTML structure as filter-section)
+  // Initialize Supplier Tab Filter (Multi-select)
+  function initSupplierTabFilter(container, data) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'searchable-dropdown-wrapper';
+    wrapper.className = 'multi-select-wrapper';
     wrapper.id = 'tabSupplierDropdownWrapper';
     container.appendChild(wrapper);
     
-    // Get unique suppliers from current tab data
-    const uniqueSuppliers = [...new Set(currentTabData.map(item => item.supplier_name))].filter(Boolean);
+    const uniqueSuppliers = [...new Set(data.map(item => item.supplier_name))].filter(Boolean);
     const supplierOptions = uniqueSuppliers.map(name => ({
       value: name,
       label: name
     }));
     
-    // Initialize multi-select (same code as filter-section)
+    // Use event delegation
+    let isProcessingChange = false;
+    container.addEventListener('change', function(e) {
+      if (e.target.type === 'checkbox' && !isProcessingChange) {
+        isProcessingChange = true;
+        setTimeout(() => {
+          const selectedValues = instance.getValues();
+          if (selectedValues.length === 0) {
+            renderSupplierReport({ data: currentTabData });
+          } else {
+            const filtered = currentTabData.filter(item => selectedValues.includes(item.supplier_name));
+            renderSupplierReport({ data: filtered });
+          }
+          isProcessingChange = false;
+        }, 0);
+      }
+    });
+    
     const instance = SearchableDropdownComponent.initMultiSelect({
       wrapperId: 'tabSupplierDropdownWrapper',
       placeholder: 'เลือก Supplier',
       options: supplierOptions,
-      onChange: (values, labels) => {
-        console.log('Tab Supplier filter changed:', values, labels);
-        // Filter immediately (no need to click search button)
-        if (values.length === 0) {
-          renderSupplierReport({ data: currentTabData });
-        } else {
-          const filtered = currentTabData.filter(item => 
-            values.includes(item.supplier_name)
-          );
-          renderSupplierReport({ data: filtered });
-        }
-      }
+      onChange: null
     });
     
     currentFilterInstance = instance;
   }
 
-  // Initialize Travel Date Tab Filter (Copy from filter-section 100%)
-  function initTravelDateTabFilter(container) {
-    // Create wrapper (same HTML structure as filter-section)
+  // Initialize Travel Date Tab Filter (Date Picker)
+  function initTravelDateTabFilter(container, data) {
     const wrapper = document.createElement('div');
     wrapper.className = 'date-picker-wrapper';
     wrapper.id = 'tabTravelDatePicker';
@@ -724,39 +733,60 @@
         readonly
         aria-label="เลือกช่วงวันที่เดินทาง"
       />
-      <div id="tabTravelCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog" aria-label="เลือกช่วงวันที่เดินทาง"></div>
+      <div id="tabTravelCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
     `;
     container.appendChild(wrapper);
     
-    // Initialize date picker (same code as filter-section)
+    // Use event delegation for calendar buttons (they're created dynamically)
+    let isProcessingChange = false;
+    container.addEventListener('click', function(e) {
+      if (isProcessingChange) return;
+      
+      // Handle Apply button
+      if (e.target.classList.contains('apply') && e.target.classList.contains('calendar-btn')) {
+        isProcessingChange = true;
+        setTimeout(() => {
+          const startDate = instance.getStartDate();
+          const endDate = instance.getEndDate();
+          
+          if (!startDate || !endDate) {
+            renderTravelDateReport({ data: currentTabData });
+          } else {
+            const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
+            const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
+            
+            const filtered = currentTabData.filter(item => {
+              const itemDate = item.travel_month;
+              return itemDate >= startStr && itemDate <= endStr;
+            });
+            renderTravelDateReport({ data: filtered });
+          }
+          isProcessingChange = false;
+        }, 0);
+      }
+      
+      // Handle Clear button
+      if (e.target.classList.contains('clear') && e.target.classList.contains('calendar-btn')) {
+        isProcessingChange = true;
+        setTimeout(() => {
+          renderTravelDateReport({ data: currentTabData });
+          isProcessingChange = false;
+        }, 0);
+      }
+    });
+    
     const instance = DatePickerComponent.initDateRangePicker({
       inputId: 'tabTravelDateRangePicker',
       dropdownId: 'tabTravelCalendarDropdown',
       wrapperId: 'tabTravelDatePicker',
-      onChange: (startDate, endDate) => {
-        console.log('Tab Travel Date filter changed:', startDate, endDate);
-        // Filter immediately (no need to click search button)
-        if (!startDate || !endDate) {
-          renderTravelDateReport({ data: currentTabData });
-        } else {
-          const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7); // YYYY-MM
-          const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
-          
-          const filtered = currentTabData.filter(item => {
-            const itemDate = item.travel_month; // Format: YYYY-MM
-            return itemDate >= startStr && itemDate <= endStr;
-          });
-          renderTravelDateReport({ data: filtered });
-        }
-      }
+      onChange: null
     });
     
     currentFilterInstance = instance;
   }
 
-  // Initialize Booking Date Tab Filter (Copy from filter-section 100%)
-  function initBookingDateTabFilter(container) {
-    // Create wrapper (same HTML structure as filter-section)
+  // Initialize Booking Date Tab Filter (Date Picker)
+  function initBookingDateTabFilter(container, data) {
     const wrapper = document.createElement('div');
     wrapper.className = 'date-picker-wrapper';
     wrapper.id = 'tabBookingDatePicker';
@@ -774,38 +804,58 @@
         readonly
         aria-label="เลือกช่วงวันที่จอง"
       />
-      <div id="tabBookingCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog" aria-label="เลือกช่วงวันที่จอง"></div>
+      <div id="tabBookingCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
     `;
     container.appendChild(wrapper);
     
-    // Initialize date picker (same code as filter-section)
+    // Use event delegation
+    let isProcessingChange = false;
+    container.addEventListener('click', function(e) {
+      if (isProcessingChange) return;
+      
+      if (e.target.classList.contains('apply') && e.target.classList.contains('calendar-btn')) {
+        isProcessingChange = true;
+        setTimeout(() => {
+          const startDate = instance.getStartDate();
+          const endDate = instance.getEndDate();
+          
+          if (!startDate || !endDate) {
+            renderBookingDateReport({ data: currentTabData });
+          } else {
+            const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
+            const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
+            
+            const filtered = currentTabData.filter(item => {
+              const itemDate = item.booking_month;
+              return itemDate >= startStr && itemDate <= endStr;
+            });
+            renderBookingDateReport({ data: filtered });
+          }
+          isProcessingChange = false;
+        }, 0);
+      }
+      
+      if (e.target.classList.contains('clear') && e.target.classList.contains('calendar-btn')) {
+        isProcessingChange = true;
+        setTimeout(() => {
+          renderBookingDateReport({ data: currentTabData });
+          isProcessingChange = false;
+        }, 0);
+      }
+    });
+    
     const instance = DatePickerComponent.initDateRangePicker({
       inputId: 'tabBookingDateRangePicker',
       dropdownId: 'tabBookingCalendarDropdown',
       wrapperId: 'tabBookingDatePicker',
-      onChange: (startDate, endDate) => {
-        console.log('Tab Booking Date filter changed:', startDate, endDate);
-        // Filter immediately (no need to click search button)
-        if (!startDate || !endDate) {
-          renderBookingDateReport({ data: currentTabData });
-        } else {
-          const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7); // YYYY-MM
-          const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
-          
-          const filtered = currentTabData.filter(item => {
-            const itemDate = item.booking_month; // Format: YYYY-MM
-            return itemDate >= startStr && itemDate <= endStr;
-          });
-          renderBookingDateReport({ data: filtered });
-        }
-      }
+      onChange: null
     });
     
     currentFilterInstance = instance;
   }
 
-  // Initialize Lead Time Tab Filter (Keep original dropdown)
-  function initLeadTimeTabFilter(container) {
+  // Initialize Lead Time Tab Filter (keep original dropdown)
+  function initLeadTimeTabFilter(container, data) {
     const options = [
       {
         value: 'all',
@@ -852,6 +902,47 @@
       options: options,
       onChange: (value) => filterLeadTimeByRange(value)
     });
+  }
+
+  // Filter functions for each tab
+  function filterByCountry(value) {
+    if (value === 'all') {
+      renderCountryReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => item.country_name === value);
+      renderCountryReport({ data: filtered });
+    }
+  }
+
+  function filterBySupplier(value) {
+    if (value === 'all') {
+      renderSupplierReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => item.supplier_name === value);
+      renderSupplierReport({ data: filtered });
+    }
+  }
+
+  function filterByTravelDate(value) {
+    if (value === 'all') {
+      renderTravelDateReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => 
+        (item.travel_month_label || item.travel_month) === value
+      );
+      renderTravelDateReport({ data: filtered });
+    }
+  }
+
+  function filterByBookingDate(value) {
+    if (value === 'all') {
+      renderBookingDateReport({ data: currentTabData });
+    } else {
+      const filtered = currentTabData.filter(item => 
+        (item.booking_month_label || item.booking_month) === value
+      );
+      renderBookingDateReport({ data: filtered });
+    }
   }
 
   // Render Supplier Report
