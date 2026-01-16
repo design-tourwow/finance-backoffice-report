@@ -626,8 +626,8 @@
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
           },
           ...data.map(item => ({
-            value: item.travel_month_label || item.travel_month,
-            label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
+            value: item.travel_start_date_label || item.travel_start_date,
+            label: item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ',
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           }))
         ];
@@ -643,8 +643,8 @@
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
           },
           ...data.map(item => ({
-            value: item.booking_month_label || item.booking_month,
-            label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
+            value: item.created_date_label || item.created_date,
+            label: item.created_date_label || item.created_date || 'ไม่ระบุ',
             icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
           }))
         ];
@@ -729,7 +729,7 @@
       renderTravelDateReport({ data: currentTabData });
     } else {
       const filtered = currentTabData.filter(item => 
-        (item.travel_month_label || item.travel_month) === value
+        (item.travel_start_date_label || item.travel_start_date) === value
       );
       renderTravelDateReport({ data: filtered });
     }
@@ -740,7 +740,7 @@
       renderBookingDateReport({ data: currentTabData });
     } else {
       const filtered = currentTabData.filter(item => 
-        (item.booking_month_label || item.booking_month) === value
+        (item.created_date_label || item.created_date) === value
       );
       renderBookingDateReport({ data: filtered });
     }
@@ -825,7 +825,7 @@
     
     // Render chart WITH data labels
     renderChart({
-      labels: data.map(item => item.travel_month_label || item.travel_month || 'ไม่ระบุ'),
+      labels: data.map(item => item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
@@ -874,13 +874,13 @@
     // Render sortable table
     renderSortableTable([
       { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
-      { key: 'travel_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
+      { key: 'travel_start_date_label', label: 'วันที่เดินทาง', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
     ], data.map((item, index) => ({
       row_number: index + 1,
-      travel_month_label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
+      travel_start_date_label: item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount
@@ -904,7 +904,7 @@
     
     // Render chart WITH data labels
     renderChart({
-      labels: data.map(item => item.booking_month_label || item.booking_month || 'ไม่ระบุ'),
+      labels: data.map(item => item.created_date_label || item.created_date || 'ไม่ระบุ'),
       datasets: [{
         label: 'จำนวน Orders',
         data: data.map(item => item.total_orders),
@@ -953,13 +953,13 @@
     // Render sortable table
     renderSortableTable([
       { key: 'row_number', label: 'ลำดับ', type: 'number', align: 'center', sortable: false },
-      { key: 'booking_month_label', label: 'เดือน/ปี', type: 'text', align: 'left' },
+      { key: 'created_date_label', label: 'วันที่จอง', type: 'text', align: 'left' },
       { key: 'total_orders', label: 'จำนวน Orders', type: 'number', align: 'right' },
       { key: 'total_customers', label: 'จำนวนลูกค้า', type: 'number', align: 'right' },
       { key: 'total_net_amount', label: 'ยอดรวม (Net Amount)', type: 'currency', align: 'right' }
     ], data.map((item, index) => ({
       row_number: index + 1,
-      booking_month_label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
+      created_date_label: item.created_date_label || item.created_date || 'ไม่ระบุ',
       total_orders: item.total_orders,
       total_customers: item.total_customers,
       total_net_amount: item.total_net_amount

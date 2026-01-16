@@ -133,41 +133,41 @@ const OrderReportAPI = {
   },
 
   /**
-   * Get Report by Travel Date
+   * Get Report by Travel Date (Daily)
    * @param {Object} filters - Filter parameters
    * @returns {Promise<Object>}
    */
   async getReportByTravelDate(filters = {}) {
     try {
-      console.log('🔄 Fetching Report by Travel Date with filters:', filters);
+      console.log('🔄 Fetching Report by Travel Start Date (Daily) with filters:', filters);
       
-      // Use numeric_month_year_full format: MM/YYYY (e.g., "01/2568")
-      const queryString = this.buildQueryString(filters, 'numeric_month_year_full');
-      const result = await this.fetchAPI(`/api/reports/by-travel-date${queryString}`);
+      // Use numeric_full format: DD/MM/YYYY พ.ศ. (e.g., "01/03/2569")
+      const queryString = this.buildQueryString(filters, 'numeric_full');
+      const result = await this.fetchAPI(`/api/reports/by-travel-start-date${queryString}`);
       
       return result;
     } catch (error) {
-      console.error('❌ Report by Travel Date Error:', error);
+      console.error('❌ Report by Travel Start Date Error:', error);
       throw error;
     }
   },
 
   /**
-   * Get Report by Booking Date
+   * Get Report by Booking Date (Daily)
    * @param {Object} filters - Filter parameters
    * @returns {Promise<Object>}
    */
   async getReportByBookingDate(filters = {}) {
     try {
-      console.log('🔄 Fetching Report by Booking Date with filters:', filters);
+      console.log('🔄 Fetching Report by Created Date (Daily) with filters:', filters);
       
-      // Use numeric_month_year_full format: MM/YYYY (e.g., "12/2567")
-      const queryString = this.buildQueryString(filters, 'numeric_month_year_full');
-      const result = await this.fetchAPI(`/api/reports/by-booking-date${queryString}`);
+      // Use numeric_full format: DD/MM/YYYY พ.ศ. (e.g., "13/01/2569")
+      const queryString = this.buildQueryString(filters, 'numeric_full');
+      const result = await this.fetchAPI(`/api/reports/by-created-date${queryString}`);
       
       return result;
     } catch (error) {
-      console.error('❌ Report by Booking Date Error:', error);
+      console.error('❌ Report by Created Date Error:', error);
       throw error;
     }
   },
