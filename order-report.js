@@ -9,7 +9,6 @@
   let currentTableData = [];
   let currentFilterInstance = null;
   let currentTabData = [];
-  let isInitializingTabFilter = false; // Flag to prevent infinite loop during tab filter init
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -594,559 +593,140 @@
     })));
   }
 
-  // Initialize Tab Filter (with multi-select/date picker components)
+  // Initialize Tab Filter
   function initTabFilter(tabType, data) {
     const container = document.getElementById('tabFilterContainer');
     if (!container) return;
     
-    // Set flag to prevent onChange from triggering during initialization
-    isInitializingTabFilter = true;
-    
-    // Clear container
-    container.innerHTML = '';
-    
     // Destroy existing filter
     if (currentFilterInstance && currentFilterInstance.destroy) {
       currentFilterInstance.destroy();
-      currentFilterInstance = null;
     }
+    
+    let options = [];
+    let onChange = null;
     
     switch(tabType) {
       case 'country':
-        initCountryTabFilter(container, data);
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.country_name,
+            label: item.country_name || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterByCountry(value);
         break;
         
       case 'supplier':
-        initSupplierTabFilter(container, data);
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.supplier_name,
+            label: item.supplier_name || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterBySupplier(value);
         break;
         
       case 'travel-date':
-        initTravelDateTabFilter(container, data);
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.travel_month_label || item.travel_month,
+            label: item.travel_month_label || item.travel_month || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterByTravelDate(value);
         break;
         
       case 'booking-date':
-        initBookingDateTabFilter(container, data);
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          ...data.map(item => ({
+            value: item.booking_month_label || item.booking_month,
+            label: item.booking_month_label || item.booking_month || 'ไม่ระบุ',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          }))
+        ];
+        onChange = (value) => filterByBookingDate(value);
         break;
         
       case 'lead-time':
-        initLeadTimeTabFilter(container, data);
+        options = [
+          {
+            value: 'all',
+            label: 'ทั้งหมด',
+            active: true,
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+          },
+          {
+            value: '0-7',
+            label: '0-7 วัน (จองใกล้วันเดินทาง)',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`
+          },
+          {
+            value: '8-14',
+            label: '8-14 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+          },
+          {
+            value: '15-30',
+            label: '15-30 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+          },
+          {
+            value: '31-60',
+            label: '31-60 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '61-90',
+            label: '61-90 วัน',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+          },
+          {
+            value: '90+',
+            label: 'มากกว่า 90 วัน (จองล่วงหน้ามาก)',
+            icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`
+          }
+        ];
+        onChange = (value) => filterLeadTimeByRange(value);
         break;
     }
     
-    // Reset flag after initialization completes
-    setTimeout(() => {
-      isInitializingTabFilter = false;
-    }, 100);
-  }
-
-  // Initialize Country Tab Filter (Multi-select - Direct HTML copy from filter-section)
-  function initCountryTabFilter(container, data) {
-    const uniqueCountries = [...new Set(data.map(item => item.country_name))].filter(Boolean);
-    
-    // Create wrapper with exact same HTML structure as filter-section
-    const wrapper = document.createElement('div');
-    wrapper.className = 'multi-select-wrapper';
-    wrapper.id = 'tabCountryDropdownWrapper';
-    
-    const optionsHTML = uniqueCountries.map((name, index) => `
-      <div class="multi-select-option">
-        <input type="checkbox" id="opt-tabCountryDropdownWrapper-${index}" value="${name}">
-        <label for="opt-tabCountryDropdownWrapper-${index}">${name}</label>
-      </div>
-    `).join('');
-    
-    wrapper.innerHTML = `
-      <div class="multi-select-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
-        <span class="selected-text">เลือกประเทศ</span>
-        <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="multi-select-dropdown" role="listbox">
-        <div class="multi-select-search">
-          <input type="text" placeholder="ค้นหา..." aria-label="ค้นหา">
-          <div class="multi-select-actions">
-            <button type="button" class="multi-select-action-btn select-all">เลือกทั้งหมด</button>
-            <button type="button" class="multi-select-action-btn deselect-all">ล้างทั้งหมด</button>
-          </div>
-        </div>
-        <div class="multi-select-options">
-          ${optionsHTML}
-        </div>
-      </div>
-    `;
-    
-    container.appendChild(wrapper);
-    
-    // Setup event handlers (copy from searchable-dropdown-component.js)
-    const trigger = wrapper.querySelector('.multi-select-trigger');
-    const dropdown = wrapper.querySelector('.multi-select-dropdown');
-    const searchInput = wrapper.querySelector('.multi-select-search input');
-    const selectAllBtn = wrapper.querySelector('.select-all');
-    const deselectAllBtn = wrapper.querySelector('.deselect-all');
-    const optionsContainer = wrapper.querySelector('.multi-select-options');
-    const selectedText = trigger.querySelector('.selected-text');
-    
-    // Toggle dropdown
-    trigger.addEventListener('click', () => {
-      const isOpen = dropdown.classList.contains('open');
-      
-      // Close all other dropdowns
-      document.querySelectorAll('.multi-select-dropdown.open').forEach(d => {
-        if (d !== dropdown) {
-          d.classList.remove('open');
-          d.previousElementSibling.classList.remove('open');
-        }
+    if (options.length > 0) {
+      currentFilterInstance = FilterSortDropdownComponent.initDropdown({
+        containerId: 'tabFilterContainer',
+        defaultLabel: options[0].label,
+        defaultIcon: options[0].icon,
+        options: options,
+        onChange: onChange
       });
-      
-      if (isOpen) {
-        dropdown.classList.remove('open');
-        trigger.classList.remove('open');
-      } else {
-        dropdown.classList.add('open');
-        trigger.classList.add('open');
-        searchInput.focus();
-      }
-    });
-    
-    // Update selected text and filter
-    const updateSelectedText = () => {
-      const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
-      const count = checkboxes.length;
-      
-      if (count === 0) {
-        selectedText.textContent = 'เลือกประเทศ';
-        trigger.classList.add('placeholder');
-        // Show all data when nothing selected
-        if (!isInitializingTabFilter) {
-          renderCountryReport({ data: currentTabData });
-        }
-      } else {
-        const labels = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
-        selectedText.textContent = labels.join(', ');
-        trigger.classList.remove('placeholder');
-        // Filter data
-        if (!isInitializingTabFilter) {
-          const values = Array.from(checkboxes).map(cb => cb.value);
-          const filtered = currentTabData.filter(item => values.includes(item.country_name));
-          renderCountryReport({ data: filtered });
-        }
-      }
-    };
-    
-    // Search functionality
-    searchInput.addEventListener('input', () => {
-      const searchTerm = searchInput.value.toLowerCase();
-      const options = optionsContainer.querySelectorAll('.multi-select-option');
-      
-      options.forEach(option => {
-        const label = option.querySelector('label').textContent.toLowerCase();
-        option.style.display = label.includes(searchTerm) ? 'flex' : 'none';
-      });
-    });
-    
-    // Select all
-    selectAllBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
-        .filter(opt => opt.style.display !== 'none')
-        .map(opt => opt.querySelector('input[type="checkbox"]'));
-      
-      visibleCheckboxes.forEach(cb => {
-        cb.checked = true;
-        cb.closest('.multi-select-option').classList.add('selected');
-      });
-      updateSelectedText();
-    });
-    
-    // Deselect all
-    deselectAllBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
-        .filter(opt => opt.style.display !== 'none')
-        .map(opt => opt.querySelector('input[type="checkbox"]'));
-      
-      visibleCheckboxes.forEach(cb => {
-        cb.checked = false;
-        cb.closest('.multi-select-option').classList.remove('selected');
-      });
-      updateSelectedText();
-    });
-    
-    // Handle option clicks
-    optionsContainer.addEventListener('click', (e) => {
-      const option = e.target.closest('.multi-select-option');
-      if (option) {
-        const checkbox = option.querySelector('input[type="checkbox"]');
-        if (e.target !== checkbox) {
-          checkbox.checked = !checkbox.checked;
-        }
-        
-        if (checkbox.checked) {
-          option.classList.add('selected');
-        } else {
-          option.classList.remove('selected');
-        }
-        
-        updateSelectedText();
-      }
-    });
-    
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-      if (!wrapper.contains(e.target)) {
-        dropdown.classList.remove('open');
-        trigger.classList.remove('open');
-      }
-    });
-    
-    currentFilterInstance = {
-      clear: () => {
-        optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-          cb.checked = false;
-          cb.closest('.multi-select-option').classList.remove('selected');
-        });
-        updateSelectedText();
-      },
-      destroy: () => {
-        wrapper.remove();
-      }
-    };
-  }
-
-  // Initialize Supplier Tab Filter (Multi-select - Direct HTML copy from filter-section)
-  function initSupplierTabFilter(container, data) {
-    const uniqueSuppliers = [...new Set(data.map(item => item.supplier_name))].filter(Boolean);
-    
-    const wrapper = document.createElement('div');
-    wrapper.className = 'multi-select-wrapper';
-    wrapper.id = 'tabSupplierDropdownWrapper';
-    
-    const optionsHTML = uniqueSuppliers.map((name, index) => `
-      <div class="multi-select-option">
-        <input type="checkbox" id="opt-tabSupplierDropdownWrapper-${index}" value="${name}">
-        <label for="opt-tabSupplierDropdownWrapper-${index}">${name}</label>
-      </div>
-    `).join('');
-    
-    wrapper.innerHTML = `
-      <div class="multi-select-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
-        <span class="selected-text">เลือก Supplier</span>
-        <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div class="multi-select-dropdown" role="listbox">
-        <div class="multi-select-search">
-          <input type="text" placeholder="ค้นหา..." aria-label="ค้นหา">
-          <div class="multi-select-actions">
-            <button type="button" class="multi-select-action-btn select-all">เลือกทั้งหมด</button>
-            <button type="button" class="multi-select-action-btn deselect-all">ล้างทั้งหมด</button>
-          </div>
-        </div>
-        <div class="multi-select-options">
-          ${optionsHTML}
-        </div>
-      </div>
-    `;
-    
-    container.appendChild(wrapper);
-    
-    const trigger = wrapper.querySelector('.multi-select-trigger');
-    const dropdown = wrapper.querySelector('.multi-select-dropdown');
-    const searchInput = wrapper.querySelector('.multi-select-search input');
-    const selectAllBtn = wrapper.querySelector('.select-all');
-    const deselectAllBtn = wrapper.querySelector('.deselect-all');
-    const optionsContainer = wrapper.querySelector('.multi-select-options');
-    const selectedText = trigger.querySelector('.selected-text');
-    
-    trigger.addEventListener('click', () => {
-      const isOpen = dropdown.classList.contains('open');
-      document.querySelectorAll('.multi-select-dropdown.open').forEach(d => {
-        if (d !== dropdown) {
-          d.classList.remove('open');
-          d.previousElementSibling.classList.remove('open');
-        }
-      });
-      
-      if (isOpen) {
-        dropdown.classList.remove('open');
-        trigger.classList.remove('open');
-      } else {
-        dropdown.classList.add('open');
-        trigger.classList.add('open');
-        searchInput.focus();
-      }
-    });
-    
-    const updateSelectedText = () => {
-      const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
-      const count = checkboxes.length;
-      
-      if (count === 0) {
-        selectedText.textContent = 'เลือก Supplier';
-        trigger.classList.add('placeholder');
-        if (!isInitializingTabFilter) {
-          renderSupplierReport({ data: currentTabData });
-        }
-      } else {
-        const labels = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
-        selectedText.textContent = labels.join(', ');
-        trigger.classList.remove('placeholder');
-        if (!isInitializingTabFilter) {
-          const values = Array.from(checkboxes).map(cb => cb.value);
-          const filtered = currentTabData.filter(item => values.includes(item.supplier_name));
-          renderSupplierReport({ data: filtered });
-        }
-      }
-    };
-    
-    searchInput.addEventListener('input', () => {
-      const searchTerm = searchInput.value.toLowerCase();
-      const options = optionsContainer.querySelectorAll('.multi-select-option');
-      options.forEach(option => {
-        const label = option.querySelector('label').textContent.toLowerCase();
-        option.style.display = label.includes(searchTerm) ? 'flex' : 'none';
-      });
-    });
-    
-    selectAllBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
-        .filter(opt => opt.style.display !== 'none')
-        .map(opt => opt.querySelector('input[type="checkbox"]'));
-      visibleCheckboxes.forEach(cb => {
-        cb.checked = true;
-        cb.closest('.multi-select-option').classList.add('selected');
-      });
-      updateSelectedText();
-    });
-    
-    deselectAllBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
-        .filter(opt => opt.style.display !== 'none')
-        .map(opt => opt.querySelector('input[type="checkbox"]'));
-      visibleCheckboxes.forEach(cb => {
-        cb.checked = false;
-        cb.closest('.multi-select-option').classList.remove('selected');
-      });
-      updateSelectedText();
-    });
-    
-    optionsContainer.addEventListener('click', (e) => {
-      const option = e.target.closest('.multi-select-option');
-      if (option) {
-        const checkbox = option.querySelector('input[type="checkbox"]');
-        if (e.target !== checkbox) {
-          checkbox.checked = !checkbox.checked;
-        }
-        
-        if (checkbox.checked) {
-          option.classList.add('selected');
-        } else {
-          option.classList.remove('selected');
-        }
-        
-        updateSelectedText();
-      }
-    });
-    
-    document.addEventListener('click', (e) => {
-      if (!wrapper.contains(e.target)) {
-        dropdown.classList.remove('open');
-        trigger.classList.remove('open');
-      }
-    });
-    
-    currentFilterInstance = {
-      clear: () => {
-        optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-          cb.checked = false;
-          cb.closest('.multi-select-option').classList.remove('selected');
-        });
-        updateSelectedText();
-      },
-      destroy: () => {
-        wrapper.remove();
-      }
-    };
-  }
-
-  // Initialize Travel Date Tab Filter (Date Picker - Direct implementation)
-  function initTravelDateTabFilter(container, data) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'date-picker-wrapper';
-    wrapper.id = 'tabTravelDatePicker';
-    wrapper.innerHTML = `
-      <div class="date-icon" aria-hidden="true">
-        <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/>
-        </svg>
-      </div>
-      <input
-        id="tabTravelDateRangePicker"
-        type="text"
-        class="date-input"
-        placeholder="เลือกช่วงเวลา"
-        readonly
-        aria-label="เลือกช่วงวันที่เดินทาง"
-      />
-      <div id="tabTravelCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
-    `;
-    container.appendChild(wrapper);
-    
-    // Create instance with onChange for Apply/Clear buttons
-    const instance = DatePickerComponent.initDateRangePicker({
-      inputId: 'tabTravelDateRangePicker',
-      dropdownId: 'tabTravelCalendarDropdown',
-      wrapperId: 'tabTravelDatePicker',
-      onChange: (startDate, endDate) => {
-        // Only filter when user clicks Apply (onChange is called from Apply button)
-        if (!isInitializingTabFilter && startDate && endDate) {
-          const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
-          const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
-          
-          const filtered = currentTabData.filter(item => {
-            const itemDate = item.travel_month;
-            return itemDate >= startStr && itemDate <= endStr;
-          });
-          renderTravelDateReport({ data: filtered });
-        }
-      }
-    });
-    
-    // Handle Clear button separately
-    const dropdown = document.getElementById('tabTravelCalendarDropdown');
-    if (dropdown) {
-      // Use MutationObserver to detect when calendar is rendered
-      const observer = new MutationObserver(() => {
-        const clearBtn = dropdown.querySelector('.calendar-btn.clear');
-        if (clearBtn && !clearBtn.dataset.listenerAttached) {
-          clearBtn.dataset.listenerAttached = 'true';
-          clearBtn.addEventListener('click', () => {
-            if (!isInitializingTabFilter) {
-              renderTravelDateReport({ data: currentTabData });
-            }
-          });
-        }
-      });
-      observer.observe(dropdown, { childList: true, subtree: true });
     }
-    
-    currentFilterInstance = instance;
-  }
-
-  // Initialize Booking Date Tab Filter (Date Picker - Direct implementation)
-  function initBookingDateTabFilter(container, data) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'date-picker-wrapper';
-    wrapper.id = 'tabBookingDatePicker';
-    wrapper.innerHTML = `
-      <div class="date-icon" aria-hidden="true">
-        <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/>
-        </svg>
-      </div>
-      <input
-        id="tabBookingDateRangePicker"
-        type="text"
-        class="date-input"
-        placeholder="เลือกช่วงเวลา"
-        readonly
-        aria-label="เลือกช่วงวันที่จอง"
-      />
-      <div id="tabBookingCalendarDropdown" class="calendar-dropdown" style="display: none;" role="dialog"></div>
-    `;
-    container.appendChild(wrapper);
-    
-    // Create instance with onChange for Apply/Clear buttons
-    const instance = DatePickerComponent.initDateRangePicker({
-      inputId: 'tabBookingDateRangePicker',
-      dropdownId: 'tabBookingCalendarDropdown',
-      wrapperId: 'tabBookingDatePicker',
-      onChange: (startDate, endDate) => {
-        if (!isInitializingTabFilter && startDate && endDate) {
-          const startStr = DatePickerComponent.formatDateToAPI(startDate).substring(0, 7);
-          const endStr = DatePickerComponent.formatDateToAPI(endDate).substring(0, 7);
-          
-          const filtered = currentTabData.filter(item => {
-            const itemDate = item.booking_month;
-            return itemDate >= startStr && itemDate <= endStr;
-          });
-          renderBookingDateReport({ data: filtered });
-        }
-      }
-    });
-    
-    // Handle Clear button separately
-    const dropdown = document.getElementById('tabBookingCalendarDropdown');
-    if (dropdown) {
-      const observer = new MutationObserver(() => {
-        const clearBtn = dropdown.querySelector('.calendar-btn.clear');
-        if (clearBtn && !clearBtn.dataset.listenerAttached) {
-          clearBtn.dataset.listenerAttached = 'true';
-          clearBtn.addEventListener('click', () => {
-            if (!isInitializingTabFilter) {
-              renderBookingDateReport({ data: currentTabData });
-            }
-          });
-        }
-      });
-      observer.observe(dropdown, { childList: true, subtree: true });
-    }
-    
-    currentFilterInstance = instance;
-  }
-
-  // Initialize Lead Time Tab Filter (keep original dropdown)
-  function initLeadTimeTabFilter(container, data) {
-    const options = [
-      {
-        value: 'all',
-        label: 'ทั้งหมด',
-        active: true,
-        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
-      },
-      {
-        value: '0-7',
-        label: '0-7 วัน (จองใกล้วันเดินทาง)',
-        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`
-      },
-      {
-        value: '8-14',
-        label: '8-14 วัน',
-        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
-      },
-      {
-        value: '15-30',
-        label: '15-30 วัน',
-        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
-      },
-      {
-        value: '31-60',
-        label: '31-60 วัน',
-        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-      },
-      {
-        value: '61-90',
-        label: '61-90 วัน',
-        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
-      },
-      {
-        value: '90+',
-        label: 'มากกว่า 90 วัน (จองล่วงหน้ามาก)',
-        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`
-      }
-    ];
-    
-    currentFilterInstance = FilterSortDropdownComponent.initDropdown({
-      containerId: 'tabFilterContainer',
-      defaultLabel: options[0].label,
-      defaultIcon: options[0].icon,
-      options: options,
-      onChange: (value) => filterLeadTimeByRange(value)
-    });
   }
 
   // Filter functions for each tab
