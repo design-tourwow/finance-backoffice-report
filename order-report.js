@@ -823,7 +823,11 @@
     // Initialize filter dropdown for Travel Date tab
     initTabFilter('travel-date', data);
     
-    // Render bar chart (vertical bars) like Country tab
+    // Calculate dynamic width: 30px per bar for better spacing
+    const barWidth = 30;
+    const chartMinWidth = data.length * barWidth;
+    
+    // Render bar chart with horizontal scroll
     renderChart({
       labels: data.map(item => item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ'),
       datasets: [{
@@ -831,7 +835,9 @@
         data: data.map(item => item.total_orders),
         backgroundColor: 'rgba(74, 123, 167, 0.8)',
         borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
+        borderWidth: 1,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
       }]
     }, 'bar', {
       plugins: {
@@ -871,7 +877,7 @@
           }
         }
       }
-    });
+    }, chartMinWidth, 550);
     
     // Render sortable table
     renderSortableTable([
@@ -904,7 +910,11 @@
     // Initialize filter dropdown for Booking Date tab
     initTabFilter('booking-date', data);
     
-    // Render bar chart (vertical bars) like Country tab
+    // Calculate dynamic width: 30px per bar for better spacing
+    const barWidth = 30;
+    const chartMinWidth = data.length * barWidth;
+    
+    // Render bar chart with horizontal scroll
     renderChart({
       labels: data.map(item => item.created_date_label || item.created_date || 'ไม่ระบุ'),
       datasets: [{
@@ -912,7 +922,9 @@
         data: data.map(item => item.total_orders),
         backgroundColor: 'rgba(74, 123, 167, 0.8)',
         borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
+        borderWidth: 1,
+        barPercentage: 0.8,
+        categoryPercentage: 0.9
       }]
     }, 'bar', {
       plugins: {
@@ -952,7 +964,7 @@
           }
         }
       }
-    });
+    }, chartMinWidth, 550);
     
     // Render sortable table
     renderSortableTable([
@@ -1350,7 +1362,7 @@
   }
 
   // Render chart
-  function renderChart(data, type, extraOptions = {}) {
+  function renderChart(data, type, extraOptions = {}, minWidth = null, height = null) {
     const canvas = document.getElementById('reportChart');
     const chartContainer = document.getElementById('chartContainer');
     const ctx = canvas.getContext('2d');
@@ -1366,13 +1378,34 @@
       return;
     }
     
-    console.log('📊 Rendering chart:', { type, labels: data.labels.length, data: data.datasets[0]?.data });
+    console.log('📊 Rendering chart:', { 
+      type, 
+      labels: data.labels.length, 
+      minWidth, 
+      height,
+      containerWidth: chartContainer.clientWidth 
+    });
     
-    // Reset container styles (no scroll)
-    chartContainer.style.overflowX = 'visible';
-    chartContainer.style.overflowY = 'visible';
-    canvas.style.minWidth = '';
-    canvas.parentElement.style.minWidth = '';
+    // Set custom height if provided
+    if (height) {
+      chartContainer.style.height = `${height}px`;
+    } else {
+      chartContainer.style.height = '400px'; // default
+    }
+    
+    // Enable horizontal scroll if minWidth is provided and exceeds container width
+    if (minWidth && minWidth > chartContainer.clientWidth) {
+      chartContainer.style.overflowX = 'auto';
+      chartContainer.style.overflowY = 'hidden';
+      canvas.style.minWidth = `${minWidth}px`;
+      canvas.parentElement.style.minWidth = `${minWidth}px`;
+      console.log('📏 Enabled horizontal scroll:', { minWidth, containerWidth: chartContainer.clientWidth });
+    } else {
+      chartContainer.style.overflowX = 'visible';
+      chartContainer.style.overflowY = 'visible';
+      canvas.style.minWidth = '';
+      canvas.parentElement.style.minWidth = '';
+    }
     
     // Determine if horizontal bar chart
     const isHorizontal = extraOptions.indexAxis === 'y';
