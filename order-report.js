@@ -823,11 +823,7 @@
     // Initialize filter dropdown for Travel Date tab
     initTabFilter('travel-date', data);
     
-    // Calculate dynamic width based on data points (minimum 80px per point for better spacing)
-    const minWidthPerPoint = 80;
-    const chartMinWidth = data.length * minWidthPerPoint;
-    
-    // Render chart WITH data labels and horizontal scroll
+    // Render bar chart (vertical bars) like Country tab
     renderChart({
       labels: data.map(item => item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ'),
       datasets: [{
@@ -835,11 +831,9 @@
         data: data.map(item => item.total_orders),
         backgroundColor: 'rgba(74, 123, 167, 0.8)',
         borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 2,
-        fill: false,
-        tension: 0.1 // Slight curve for smoother line
+        borderWidth: 1
       }]
-    }, 'line', {
+    }, 'bar', {
       plugins: {
         datalabels: {
           display: true,
@@ -859,26 +853,25 @@
       scales: {
         x: {
           grid: {
-            display: true,
-            drawOnChartArea: true,
-            color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            display: false
           },
           ticks: {
-            maxRotation: 45,
-            minRotation: 45
+            maxRotation: 90,
+            minRotation: 90,
+            font: {
+              family: 'Kanit',
+              size: 11
+            }
           }
         },
         y: {
           grid: {
             display: true,
-            drawOnChartArea: true,
-            color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            color: 'rgba(0, 0, 0, 0.05)'
           }
         }
       }
-    }, chartMinWidth);
+    });
     
     // Render sortable table
     renderSortableTable([
@@ -911,11 +904,7 @@
     // Initialize filter dropdown for Booking Date tab
     initTabFilter('booking-date', data);
     
-    // Calculate dynamic width based on data points (minimum 80px per point for better spacing)
-    const minWidthPerPoint = 80;
-    const chartMinWidth = data.length * minWidthPerPoint;
-    
-    // Render chart WITH data labels and horizontal scroll
+    // Render bar chart (vertical bars) like Country tab
     renderChart({
       labels: data.map(item => item.created_date_label || item.created_date || 'ไม่ระบุ'),
       datasets: [{
@@ -923,11 +912,9 @@
         data: data.map(item => item.total_orders),
         backgroundColor: 'rgba(74, 123, 167, 0.8)',
         borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 2,
-        fill: false,
-        tension: 0.1 // Slight curve for smoother line
+        borderWidth: 1
       }]
-    }, 'line', {
+    }, 'bar', {
       plugins: {
         datalabels: {
           display: true,
@@ -947,26 +934,25 @@
       scales: {
         x: {
           grid: {
-            display: true,
-            drawOnChartArea: true,
-            color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            display: false
           },
           ticks: {
-            maxRotation: 45,
-            minRotation: 45
+            maxRotation: 90,
+            minRotation: 90,
+            font: {
+              family: 'Kanit',
+              size: 11
+            }
           }
         },
         y: {
           grid: {
             display: true,
-            drawOnChartArea: true,
-            color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            color: 'rgba(0, 0, 0, 0.05)'
           }
         }
       }
-    }, chartMinWidth);
+    });
     
     // Render sortable table
     renderSortableTable([
@@ -1364,7 +1350,7 @@
   }
 
   // Render chart
-  function renderChart(data, type, extraOptions = {}, minWidth = null) {
+  function renderChart(data, type, extraOptions = {}) {
     const canvas = document.getElementById('reportChart');
     const chartContainer = document.getElementById('chartContainer');
     const ctx = canvas.getContext('2d');
@@ -1380,21 +1366,13 @@
       return;
     }
     
-    console.log('📊 Rendering chart:', { type, labels: data.labels, data: data.datasets[0]?.data, minWidth });
+    console.log('📊 Rendering chart:', { type, labels: data.labels.length, data: data.datasets[0]?.data });
     
-    // Enable horizontal scroll if minWidth is provided and exceeds container width
-    if (minWidth && minWidth > chartContainer.clientWidth) {
-      chartContainer.style.overflowX = 'auto';
-      chartContainer.style.overflowY = 'hidden';
-      canvas.style.minWidth = `${minWidth}px`;
-      canvas.parentElement.style.minWidth = `${minWidth}px`;
-      console.log('📏 Enabled horizontal scroll:', { minWidth, containerWidth: chartContainer.clientWidth });
-    } else {
-      chartContainer.style.overflowX = 'visible';
-      chartContainer.style.overflowY = 'visible';
-      canvas.style.minWidth = '';
-      canvas.parentElement.style.minWidth = '';
-    }
+    // Reset container styles (no scroll)
+    chartContainer.style.overflowX = 'visible';
+    chartContainer.style.overflowY = 'visible';
+    canvas.style.minWidth = '';
+    canvas.parentElement.style.minWidth = '';
     
     // Determine if horizontal bar chart
     const isHorizontal = extraOptions.indexAxis === 'y';
