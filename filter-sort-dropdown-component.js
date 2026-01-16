@@ -102,10 +102,17 @@ const FilterSortDropdownComponent = (function() {
       option.addEventListener('click', function(e) {
         e.stopPropagation();
         const value = this.getAttribute('data-value');
-        const label = this.textContent.trim();
+        
+        // Get label text only (exclude SVG)
+        const labelText = Array.from(this.childNodes)
+          .filter(node => node.nodeType === Node.TEXT_NODE)
+          .map(node => node.textContent.trim())
+          .join(' ')
+          .trim();
+        
         const icon = this.querySelector('svg')?.outerHTML || '';
         
-        console.log('🔍 Option selected:', value, label);
+        console.log('🔍 Option selected:', value, labelText);
         
         // Update active state
         dropdownOptions.forEach(opt => opt.classList.remove('active'));
@@ -114,7 +121,7 @@ const FilterSortDropdownComponent = (function() {
         // Update button text and icon
         btnContent.innerHTML = `
           ${icon}
-          <span class="filter-sort-btn-text">${label}</span>
+          <span class="filter-sort-btn-text">${labelText}</span>
         `;
         
         // No active state on button - same as tour-image-manager
@@ -125,7 +132,7 @@ const FilterSortDropdownComponent = (function() {
         
         // Trigger callback
         if (onChange && typeof onChange === 'function') {
-          onChange(value, label);
+          onChange(value, labelText);
         }
       });
     });
