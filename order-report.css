@@ -625,3 +625,26 @@ mark.search-highlight {
     height: 14px;
   }
 }
+
+/* Tab Filter Container - Match filter-section width */
+#tabFilterContainer {
+  width: 100%;
+  max-width: 400px;
+}
+
+#tabFilterContainer .searchable-dropdown-wrapper,
+#tabFilterContainer .date-picker-wrapper {
+  width: 100%;
+  min-width: 300px;
+}
+
+/* Ensure dropdown and date picker have proper width */
+#tabFilterContainer .multi-select-trigger {
+  width: 100%;
+  min-width: 300px;
+}
+
+#tabFilterContainer .date-input {
+  width: 100%;
+  min-width: 300px;
+}
