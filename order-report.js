@@ -849,11 +849,11 @@
   // Filter by date range (for travel-date and booking-date tabs)
   function filterByDateRange(rangeValue, dateType) {
     if (rangeValue === 'all') {
-      // Show all data
+      // Show all data - pass skipDefaultFilter to prevent infinite loop
       if (dateType === 'travel') {
-        renderTravelDateReport({ data: currentTabData });
+        renderTravelDateReport({ data: currentTabData }, true);
       } else {
-        renderBookingDateReport({ data: currentTabData });
+        renderBookingDateReport({ data: currentTabData }, true);
       }
       return;
     }
@@ -953,11 +953,11 @@
       filteredCount: filtered.length 
     });
     
-    // Re-render with filtered data
+    // Re-render with filtered data - pass skipDefaultFilter to prevent infinite loop
     if (dateType === 'travel') {
-      renderTravelDateReport({ data: filtered });
+      renderTravelDateReport({ data: filtered }, true);
     } else {
-      renderBookingDateReport({ data: filtered });
+      renderBookingDateReport({ data: filtered }, true);
     }
   }
 
@@ -1050,7 +1050,7 @@
   }
 
   // Render Travel Date Report
-  function renderTravelDateReport(response) {
+  function renderTravelDateReport(response, skipDefaultFilter = false) {
     if (!response || !response.data || response.data.length === 0) {
       showEmpty();
       return;
@@ -1064,6 +1064,11 @@
     // Initialize filter dropdown ONLY if not already initialized
     if (!currentFilterInstance) {
       initTabFilter('travel-date', data);
+      // Apply default filter (30d) only on first load
+      if (!skipDefaultFilter) {
+        filterByDateRange('30d', 'travel');
+        return; // Exit early as filterByDateRange will re-render
+      }
     }
     
     // Calculate dynamic width: 40px per bar for better spacing with grid
@@ -1158,7 +1163,7 @@
   }
 
   // Render Booking Date Report
-  function renderBookingDateReport(response) {
+  function renderBookingDateReport(response, skipDefaultFilter = false) {
     if (!response || !response.data || response.data.length === 0) {
       showEmpty();
       return;
@@ -1172,6 +1177,11 @@
     // Initialize filter dropdown ONLY if not already initialized
     if (!currentFilterInstance) {
       initTabFilter('booking-date', data);
+      // Apply default filter (30d) only on first load
+      if (!skipDefaultFilter) {
+        filterByDateRange('30d', 'booking');
+        return; // Exit early as filterByDateRange will re-render
+      }
     }
     
     // Calculate dynamic width: 40px per bar for better spacing with grid
