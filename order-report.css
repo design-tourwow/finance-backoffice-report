@@ -233,7 +233,6 @@
 
 /* Tab Filter Container - align to right */
 #tabFilterContainer {
-  margin-left: auto;
   flex-shrink: 0;
   width: 240px;
 }
@@ -245,6 +244,23 @@
 #tabFilterContainer .filter-sort-btn {
   width: 100%;
   min-width: 240px;
+}
+
+/* Export CSV Button */
+.export-csv-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.export-csv-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .table-search-input-wrapper .search-icon {

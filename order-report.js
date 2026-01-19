@@ -37,6 +37,7 @@
     initDatePickers();
     initFormHandler();
     initTableSearch();
+    initExportButton();
     
     // Load initial data
     await loadInitialData();
@@ -402,6 +403,16 @@
           });
         });
       });
+    });
+  }
+
+  // Initialize Export CSV button
+  function initExportButton() {
+    const exportBtn = document.getElementById('exportCsvBtn');
+    if (!exportBtn) return;
+
+    exportBtn.addEventListener('click', function() {
+      exportCurrentTabToCSV();
     });
   }
 
@@ -1929,6 +1940,106 @@
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(num);
+  }
+
+  // Export current tab to CSV
+  function exportCurrentTabToCSV() {
+    if (!currentTableData || currentTableData.length === 0) {
+      alert('ไม่มีข้อมูลให้ Export');
+      return;
+    }
+
+    let headers = [];
+    let rows = [];
+    let filename = '';
+
+    // Determine which tab is active and prepare data accordingly
+    switch(currentTab) {
+      case 'country':
+        filename = `order-report-by-country-${new Date().toISOString().split('T')[0]}.csv`;
+        headers = ['ลำดับ', 'ประเทศ', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)', 'ค่าเฉลี่ย/Order'];
+        rows = currentTableData.map((item, index) => [
+          index + 1,
+          item.country_name || 'ไม่ระบุ',
+          item.total_orders || 0,
+          item.total_customers || 0,
+          item.total_net_amount || 0,
+          item.avg_net_amount || 0
+        ]);
+        break;
+
+      case 'supplier':
+        filename = `order-report-by-supplier-${new Date().toISOString().split('T')[0]}.csv`;
+        headers = ['ลำดับ', 'Supplier', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)', 'ค่าเฉลี่ย/Order'];
+        rows = currentTableData.map((item, index) => [
+          index + 1,
+          item.supplier_name || 'ไม่ระบุ',
+          item.total_orders || 0,
+          item.total_customers || 0,
+          item.total_net_amount || 0,
+          item.avg_net_amount || 0
+        ]);
+        break;
+
+      case 'travel-date':
+        filename = `order-report-by-travel-date-${new Date().toISOString().split('T')[0]}.csv`;
+        headers = ['ลำดับ', 'วันที่เดินทาง', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'];
+        rows = currentTableData.map((item, index) => [
+          index + 1,
+          item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ',
+          item.total_orders || 0,
+          item.total_customers || 0,
+          item.total_net_amount || 0
+        ]);
+        break;
+
+      case 'booking-date':
+        filename = `order-report-by-booking-date-${new Date().toISOString().split('T')[0]}.csv`;
+        headers = ['ลำดับ', 'วันที่จอง', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'];
+        rows = currentTableData.map((item, index) => [
+          index + 1,
+          item.created_date_label || item.created_date || 'ไม่ระบุ',
+          item.total_orders || 0,
+          item.total_customers || 0,
+          item.total_net_amount || 0
+        ]);
+        break;
+
+      case 'lead-time':
+        filename = `order-report-lead-time-${new Date().toISOString().split('T')[0]}.csv`;
+        headers = ['ลำดับ', 'Order Code', 'ลูกค้า', 'ประเทศ', 'วันจอง', 'วันเดินทาง', 'Lead Time (วัน)', 'ยอดเงิน'];
+        rows = currentTableData.map((item, index) => [
+          index + 1,
+          item.order_code || '-',
+          item.customer_name || 'ไม่ระบุ',
+          item.country_name || 'ไม่ระบุ',
+          item.created_at || '-',
+          item.travel_start_date || '-',
+          item.lead_time_days || 0,
+          item.net_amount || 0
+        ]);
+        break;
+
+      default:
+        alert('ไม่สามารถ Export ข้อมูลได้');
+        return;
+    }
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Add BOM for Excel UTF-8 support
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    
+    console.log('✅ CSV exported successfully:', filename);
   }
 
 })();
