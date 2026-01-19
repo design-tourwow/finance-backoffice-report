@@ -566,31 +566,16 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render chart WITH data labels and background bars (overlapping)
+    // Render chart WITH data labels and background bars (stacked with remainder)
     renderChart({
       labels: data.map(item => item.country_name || 'ไม่ระบุ'),
       datasets: [
-        {
-          label: 'Background',
-          data: data.map(() => maxValue),
-          backgroundColor: 'rgba(230, 230, 230, 0.3)',
-          borderColor: 'rgba(230, 230, 230, 0.5)',
-          borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
-          datalabels: {
-            display: false
-          },
-          order: 2
-        },
         {
           label: 'จำนวน Orders',
           data: data.map(item => item.total_orders),
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -604,8 +589,17 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          },
-          order: 1
+          }
+        },
+        {
+          label: 'Background',
+          data: data.map(item => maxValue - item.total_orders),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'rgba(230, 230, 230, 0.5)',
+          borderWidth: 1,
+          datalabels: {
+            display: false
+          }
         }
       ]
     }, 'bar', {
@@ -616,13 +610,16 @@
       },
       scales: {
         x: {
+          stacked: true,
           ticks: {
             font: {
               family: 'Kanit',
               size: 14
             }
-          },
-          offset: false
+          }
+        },
+        y: {
+          stacked: true
         }
       }
     });
@@ -999,31 +996,16 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render chart WITH data labels and background bars (overlapping)
+    // Render chart WITH data labels and background bars (stacked with remainder)
     renderChart({
       labels: data.map(item => item.supplier_name || 'ไม่ระบุ'),
       datasets: [
-        {
-          label: 'Background',
-          data: data.map(() => maxValue),
-          backgroundColor: 'rgba(230, 230, 230, 0.3)',
-          borderColor: 'rgba(230, 230, 230, 0.5)',
-          borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
-          datalabels: {
-            display: false
-          },
-          order: 2
-        },
         {
           label: 'จำนวน Orders',
           data: data.map(item => item.total_orders),
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1037,8 +1019,17 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          },
-          order: 1
+          }
+        },
+        {
+          label: 'Background',
+          data: data.map(item => maxValue - item.total_orders),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'rgba(230, 230, 230, 0.5)',
+          borderWidth: 1,
+          datalabels: {
+            display: false
+          }
         }
       ]
     }, 'bar', {
@@ -1049,13 +1040,16 @@
       },
       scales: {
         x: {
+          stacked: true,
           ticks: {
             font: {
               family: 'Kanit',
               size: 14
             }
-          },
-          offset: false
+          }
+        },
+        y: {
+          stacked: true
         }
       }
     });
@@ -1107,31 +1101,16 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render bar chart with horizontal scroll and background bars (overlapping)
+    // Render bar chart with horizontal scroll and background bars (stacked with remainder)
     renderChart({
       labels: data.map(item => item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ'),
       datasets: [
-        {
-          label: 'Background',
-          data: data.map(() => maxValue),
-          backgroundColor: 'rgba(230, 230, 230, 0.3)',
-          borderColor: 'rgba(230, 230, 230, 0.5)',
-          borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
-          datalabels: {
-            display: false
-          },
-          order: 2
-        },
         {
           label: 'จำนวน Orders',
           data: data.map(item => item.total_orders),
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1145,8 +1124,17 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          },
-          order: 1
+          }
+        },
+        {
+          label: 'Background',
+          data: data.map(item => maxValue - item.total_orders),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'rgba(230, 230, 230, 0.5)',
+          borderWidth: 1,
+          datalabels: {
+            display: false
+          }
         }
       ]
     }, 'bar', {
@@ -1157,12 +1145,12 @@
       },
       scales: {
         x: {
+          stacked: true,
           grid: {
             display: true,
             drawOnChartArea: true,
             color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1,
-            offset: false
+            lineWidth: 1
           },
           ticks: {
             maxRotation: 90,
@@ -1171,10 +1159,10 @@
               family: 'Kanit',
               size: 14
             }
-          },
-          offset: false
+          }
         },
         y: {
+          stacked: true,
           grid: {
             display: true,
             color: 'rgba(0, 0, 0, 0.05)'
@@ -1228,31 +1216,16 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render bar chart with horizontal scroll and background bars (overlapping)
+    // Render bar chart with horizontal scroll and background bars (stacked with remainder)
     renderChart({
       labels: data.map(item => item.created_date_label || item.created_date || 'ไม่ระบุ'),
       datasets: [
-        {
-          label: 'Background',
-          data: data.map(() => maxValue),
-          backgroundColor: 'rgba(230, 230, 230, 0.3)',
-          borderColor: 'rgba(230, 230, 230, 0.5)',
-          borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
-          datalabels: {
-            display: false
-          },
-          order: 2
-        },
         {
           label: 'จำนวน Orders',
           data: data.map(item => item.total_orders),
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1266,8 +1239,17 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          },
-          order: 1
+          }
+        },
+        {
+          label: 'Background',
+          data: data.map(item => maxValue - item.total_orders),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'rgba(230, 230, 230, 0.5)',
+          borderWidth: 1,
+          datalabels: {
+            display: false
+          }
         }
       ]
     }, 'bar', {
@@ -1278,12 +1260,12 @@
       },
       scales: {
         x: {
+          stacked: true,
           grid: {
             display: true,
             drawOnChartArea: true,
             color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1,
-            offset: false
+            lineWidth: 1
           },
           ticks: {
             maxRotation: 90,
@@ -1292,10 +1274,10 @@
               family: 'Kanit',
               size: 14
             }
-          },
-          offset: false
+          }
         },
         y: {
+          stacked: true,
           grid: {
             display: true,
             color: 'rgba(0, 0, 0, 0.05)'
@@ -1351,31 +1333,16 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...distribution.map(item => item.count));
     
-    // Render Column Chart WITH data labels and background bars (overlapping)
+    // Render Column Chart WITH data labels and background bars (stacked with remainder)
     renderChart({
       labels: distribution.map(item => item.range_label || item.range),
       datasets: [
-        {
-          label: 'Background',
-          data: distribution.map(() => maxValue),
-          backgroundColor: 'rgba(230, 230, 230, 0.3)',
-          borderColor: 'rgba(230, 230, 230, 0.5)',
-          borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
-          datalabels: {
-            display: false
-          },
-          order: 2
-        },
         {
           label: 'จำนวน Orders',
           data: distribution.map(item => item.count),
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barThickness: 'flex',
-          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1389,8 +1356,17 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          },
-          order: 1
+          }
+        },
+        {
+          label: 'Background',
+          data: distribution.map(item => maxValue - item.count),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'rgba(230, 230, 230, 0.5)',
+          borderWidth: 1,
+          datalabels: {
+            display: false
+          }
         }
       ]
     }, 'bar', {
@@ -1401,13 +1377,16 @@
       },
       scales: {
         x: {
+          stacked: true,
           ticks: {
             font: {
               family: 'Kanit',
               size: 14
             }
-          },
-          offset: false
+          }
+        },
+        y: {
+          stacked: true
         }
       }
     });
