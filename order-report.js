@@ -552,16 +552,32 @@
     // Initialize filter dropdown for Country tab
     initTabFilter('country', data);
     
-    // Render chart WITH data labels
+    // Calculate max value for background bars
+    const maxValue = Math.max(...data.map(item => item.total_orders));
+    
+    // Render chart WITH data labels and background bars
     renderChart({
       labels: data.map(item => item.country_name || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
-      }]
+      datasets: [
+        {
+          label: 'Background',
+          data: data.map(() => maxValue),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'transparent',
+          borderWidth: 0,
+          barPercentage: 1.0,
+          categoryPercentage: 1.0,
+          order: 2
+        },
+        {
+          label: 'จำนวน Orders',
+          data: data.map(item => item.total_orders),
+          backgroundColor: 'rgba(74, 123, 167, 0.8)',
+          borderColor: 'rgba(74, 123, 167, 1)',
+          borderWidth: 1,
+          order: 1
+        }
+      ]
     }, 'bar', {
       plugins: {
         datalabels: {
@@ -960,16 +976,32 @@
     // Initialize filter dropdown for Supplier tab
     initTabFilter('supplier', data);
     
-    // Render chart WITH data labels
+    // Calculate max value for background bars
+    const maxValue = Math.max(...data.map(item => item.total_orders));
+    
+    // Render chart WITH data labels and background bars
     renderChart({
       labels: data.map(item => item.supplier_name || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
-      }]
+      datasets: [
+        {
+          label: 'Background',
+          data: data.map(() => maxValue),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'transparent',
+          borderWidth: 0,
+          barPercentage: 1.0,
+          categoryPercentage: 1.0,
+          order: 2
+        },
+        {
+          label: 'จำนวน Orders',
+          data: data.map(item => item.total_orders),
+          backgroundColor: 'rgba(74, 123, 167, 0.8)',
+          borderColor: 'rgba(74, 123, 167, 1)',
+          borderWidth: 1,
+          order: 1
+        }
+      ]
     }, 'bar', {
       plugins: {
         datalabels: {
@@ -1038,18 +1070,34 @@
     const barWidth = 40;
     const chartMinWidth = data.length * barWidth;
     
-    // Render bar chart with horizontal scroll
+    // Calculate max value for background bars
+    const maxValue = Math.max(...data.map(item => item.total_orders));
+    
+    // Render bar chart with horizontal scroll and background bars
     renderChart({
       labels: data.map(item => item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1,
-        barPercentage: 0.7,
-        categoryPercentage: 1.0
-      }]
+      datasets: [
+        {
+          label: 'Background',
+          data: data.map(() => maxValue),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'transparent',
+          borderWidth: 0,
+          barPercentage: 1.0,
+          categoryPercentage: 1.0,
+          order: 2
+        },
+        {
+          label: 'จำนวน Orders',
+          data: data.map(item => item.total_orders),
+          backgroundColor: 'rgba(74, 123, 167, 0.8)',
+          borderColor: 'rgba(74, 123, 167, 1)',
+          borderWidth: 1,
+          barPercentage: 0.7,
+          categoryPercentage: 1.0,
+          order: 1
+        }
+      ]
     }, 'bar', {
       plugins: {
         datalabels: {
@@ -1130,18 +1178,34 @@
     const barWidth = 40;
     const chartMinWidth = data.length * barWidth;
     
-    // Render bar chart with horizontal scroll
+    // Calculate max value for background bars
+    const maxValue = Math.max(...data.map(item => item.total_orders));
+    
+    // Render bar chart with horizontal scroll and background bars
     renderChart({
       labels: data.map(item => item.created_date_label || item.created_date || 'ไม่ระบุ'),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: data.map(item => item.total_orders),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1,
-        barPercentage: 0.7,
-        categoryPercentage: 1.0
-      }]
+      datasets: [
+        {
+          label: 'Background',
+          data: data.map(() => maxValue),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'transparent',
+          borderWidth: 0,
+          barPercentage: 1.0,
+          categoryPercentage: 1.0,
+          order: 2
+        },
+        {
+          label: 'จำนวน Orders',
+          data: data.map(item => item.total_orders),
+          backgroundColor: 'rgba(74, 123, 167, 0.8)',
+          borderColor: 'rgba(74, 123, 167, 1)',
+          borderWidth: 1,
+          barPercentage: 0.7,
+          categoryPercentage: 1.0,
+          order: 1
+        }
+      ]
     }, 'bar', {
       plugins: {
         datalabels: {
@@ -1229,16 +1293,32 @@
     // Initialize filter dropdown using initTabFilter
     initTabFilter('lead-time', data);
     
-    // Render Column Chart WITH data labels
+    // Calculate max value for background bars
+    const maxValue = Math.max(...distribution.map(item => item.count));
+    
+    // Render Column Chart WITH data labels and background bars
     renderChart({
       labels: distribution.map(item => item.range_label || item.range),
-      datasets: [{
-        label: 'จำนวน Orders',
-        data: distribution.map(item => item.count),
-        backgroundColor: 'rgba(74, 123, 167, 0.8)',
-        borderColor: 'rgba(74, 123, 167, 1)',
-        borderWidth: 1
-      }]
+      datasets: [
+        {
+          label: 'Background',
+          data: distribution.map(() => maxValue),
+          backgroundColor: 'rgba(230, 230, 230, 0.3)',
+          borderColor: 'transparent',
+          borderWidth: 0,
+          barPercentage: 1.0,
+          categoryPercentage: 1.0,
+          order: 2
+        },
+        {
+          label: 'จำนวน Orders',
+          data: distribution.map(item => item.count),
+          backgroundColor: 'rgba(74, 123, 167, 0.8)',
+          borderColor: 'rgba(74, 123, 167, 1)',
+          borderWidth: 1,
+          order: 1
+        }
+      ]
     }, 'bar', {
       plugins: {
         datalabels: {
@@ -1686,7 +1766,13 @@
     const pluginOptions = {
       legend: {
         display: type === 'pie',
-        position: 'right'
+        position: 'right',
+        labels: {
+          filter: function(legendItem, chartData) {
+            // Hide 'Background' dataset from legend
+            return legendItem.text !== 'Background';
+          }
+        }
       },
       tooltip: {
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1698,6 +1784,10 @@
         bodyFont: {
           size: 13,
           family: 'Kanit'
+        },
+        filter: function(tooltipItem) {
+          // Hide 'Background' dataset from tooltip
+          return tooltipItem.dataset.label !== 'Background';
         }
       },
       datalabels: {
