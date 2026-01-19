@@ -1966,7 +1966,10 @@
 
   // Export current tab to CSV
   function exportCurrentTabToCSV() {
-    if (!currentTableData || currentTableData.length === 0) {
+    // Get visible rows from table (excluding hidden rows from search)
+    const visibleRows = Array.from(document.querySelectorAll('#reportTableBody tr:not(.search-hidden)'));
+    
+    if (visibleRows.length === 0) {
       alert('ไม่มีข้อมูลให้ Export');
       return;
     }
@@ -1975,76 +1978,46 @@
     let rows = [];
     let filename = '';
 
-    // Determine which tab is active and prepare data accordingly
+    // Get headers from table
+    const headerCells = document.querySelectorAll('#reportTableHead th');
+    headers = Array.from(headerCells).map(th => {
+      // Remove sort icons from header text
+      const text = th.textContent.trim();
+      return text.replace(/[▲▼]/g, '').trim();
+    });
+
+    // Get data from visible rows
+    rows = visibleRows.map(row => {
+      const cells = row.querySelectorAll('td');
+      return Array.from(cells).map(cell => {
+        // Get text content and remove any HTML tags or highlights
+        let text = cell.textContent.trim();
+        // Remove currency symbols and format
+        text = text.replace(/[฿,]/g, '');
+        return text;
+      });
+    });
+
+    // Generate filename based on current tab
+    const dateStr = new Date().toISOString().split('T')[0];
     switch(currentTab) {
       case 'country':
-        filename = `order-report-by-country-${new Date().toISOString().split('T')[0]}.csv`;
-        headers = ['ลำดับ', 'ประเทศ', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)', 'ค่าเฉลี่ย/Order'];
-        rows = currentTableData.map((item, index) => [
-          index + 1,
-          item.country_name || 'ไม่ระบุ',
-          item.total_orders || 0,
-          item.total_customers || 0,
-          item.total_net_amount || 0,
-          item.avg_net_amount || 0
-        ]);
+        filename = `order-report-by-country-${dateStr}.csv`;
         break;
-
       case 'supplier':
-        filename = `order-report-by-supplier-${new Date().toISOString().split('T')[0]}.csv`;
-        headers = ['ลำดับ', 'Supplier', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)', 'ค่าเฉลี่ย/Order'];
-        rows = currentTableData.map((item, index) => [
-          index + 1,
-          item.supplier_name || 'ไม่ระบุ',
-          item.total_orders || 0,
-          item.total_customers || 0,
-          item.total_net_amount || 0,
-          item.avg_net_amount || 0
-        ]);
+        filename = `order-report-by-supplier-${dateStr}.csv`;
         break;
-
       case 'travel-date':
-        filename = `order-report-by-travel-date-${new Date().toISOString().split('T')[0]}.csv`;
-        headers = ['ลำดับ', 'วันที่เดินทาง', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'];
-        rows = currentTableData.map((item, index) => [
-          index + 1,
-          item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ',
-          item.total_orders || 0,
-          item.total_customers || 0,
-          item.total_net_amount || 0
-        ]);
+        filename = `order-report-by-travel-date-${dateStr}.csv`;
         break;
-
       case 'booking-date':
-        filename = `order-report-by-booking-date-${new Date().toISOString().split('T')[0]}.csv`;
-        headers = ['ลำดับ', 'วันที่จอง', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม (Net Amount)'];
-        rows = currentTableData.map((item, index) => [
-          index + 1,
-          item.created_date_label || item.created_date || 'ไม่ระบุ',
-          item.total_orders || 0,
-          item.total_customers || 0,
-          item.total_net_amount || 0
-        ]);
+        filename = `order-report-by-booking-date-${dateStr}.csv`;
         break;
-
       case 'lead-time':
-        filename = `order-report-lead-time-${new Date().toISOString().split('T')[0]}.csv`;
-        headers = ['ลำดับ', 'Order Code', 'ลูกค้า', 'ประเทศ', 'วันจอง', 'วันเดินทาง', 'Lead Time (วัน)', 'ยอดเงิน'];
-        rows = currentTableData.map((item, index) => [
-          index + 1,
-          item.order_code || '-',
-          item.customer_name || 'ไม่ระบุ',
-          item.country_name || 'ไม่ระบุ',
-          item.created_at || '-',
-          item.travel_start_date || '-',
-          item.lead_time_days || 0,
-          item.net_amount || 0
-        ]);
+        filename = `order-report-lead-time-${dateStr}.csv`;
         break;
-
       default:
-        alert('ไม่สามารถ Export ข้อมูลได้');
-        return;
+        filename = `order-report-${dateStr}.csv`;
     }
 
     // Create CSV content
@@ -2061,7 +2034,7 @@
     link.download = filename;
     link.click();
     
-    console.log('✅ CSV exported successfully:', filename);
+    console.log('✅ CSV exported successfully:', filename, `(${rows.length} rows)`);
   }
 
 })();
