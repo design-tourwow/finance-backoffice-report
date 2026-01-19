@@ -576,11 +576,12 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'rgba(230, 230, 230, 0.5)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: false
-          }
+          },
+          order: 2
         },
         {
           label: 'จำนวน Orders',
@@ -588,8 +589,8 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -603,7 +604,8 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          }
+          },
+          order: 1
         }
       ]
     }, 'bar', {
@@ -619,7 +621,8 @@
               family: 'Kanit',
               size: 14
             }
-          }
+          },
+          offset: false
         }
       }
     });
@@ -1006,11 +1009,12 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'rgba(230, 230, 230, 0.5)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: false
-          }
+          },
+          order: 2
         },
         {
           label: 'จำนวน Orders',
@@ -1018,8 +1022,8 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1033,7 +1037,8 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          }
+          },
+          order: 1
         }
       ]
     }, 'bar', {
@@ -1049,7 +1054,8 @@
               family: 'Kanit',
               size: 14
             }
-          }
+          },
+          offset: false
         }
       }
     });
@@ -1111,11 +1117,12 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'rgba(230, 230, 230, 0.5)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: false
-          }
+          },
+          order: 2
         },
         {
           label: 'จำนวน Orders',
@@ -1123,8 +1130,8 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1138,7 +1145,8 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          }
+          },
+          order: 1
         }
       ]
     }, 'bar', {
@@ -1153,7 +1161,8 @@
             display: true,
             drawOnChartArea: true,
             color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            lineWidth: 1,
+            offset: false
           },
           ticks: {
             maxRotation: 90,
@@ -1162,7 +1171,8 @@
               family: 'Kanit',
               size: 14
             }
-          }
+          },
+          offset: false
         },
         y: {
           grid: {
@@ -1228,11 +1238,12 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'rgba(230, 230, 230, 0.5)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: false
-          }
+          },
+          order: 2
         },
         {
           label: 'จำนวน Orders',
@@ -1240,8 +1251,8 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1255,7 +1266,8 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          }
+          },
+          order: 1
         }
       ]
     }, 'bar', {
@@ -1270,7 +1282,8 @@
             display: true,
             drawOnChartArea: true,
             color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            lineWidth: 1,
+            offset: false
           },
           ticks: {
             maxRotation: 90,
@@ -1279,7 +1292,8 @@
               family: 'Kanit',
               size: 14
             }
-          }
+          },
+          offset: false
         },
         y: {
           grid: {
@@ -1347,11 +1361,12 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'rgba(230, 230, 230, 0.5)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: false
-          }
+          },
+          order: 2
         },
         {
           label: 'จำนวน Orders',
@@ -1359,8 +1374,8 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barPercentage: 0.9,
-          categoryPercentage: 0.8,
+          barThickness: 'flex',
+          maxBarThickness: 60,
           datalabels: {
             display: true,
             anchor: 'end',
@@ -1374,7 +1389,8 @@
             formatter: (value) => {
               return formatNumber(value);
             }
-          }
+          },
+          order: 1
         }
       ]
     }, 'bar', {
@@ -1390,7 +1406,8 @@
               family: 'Kanit',
               size: 14
             }
-          }
+          },
+          offset: false
         }
       }
     });
