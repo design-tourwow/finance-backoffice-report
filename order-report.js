@@ -566,7 +566,7 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render chart WITH data labels and background bars
+    // Render chart WITH data labels and background bars (stacked)
     renderChart({
       labels: data.map(item => item.country_name || 'ไม่ระบุ'),
       datasets: [
@@ -576,9 +576,9 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'transparent',
           borderWidth: 0,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          order: 2
+          datalabels: {
+            display: false
+          }
         },
         {
           label: 'จำนวน Orders',
@@ -586,34 +586,40 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          order: 1
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: {
+              size: 12,
+              weight: 'bold',
+              family: 'Kanit'
+            },
+            formatter: (value) => {
+              return formatNumber(value);
+            }
+          }
         }
       ]
     }, 'bar', {
       plugins: {
         datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          color: '#374151',
-          font: {
-            size: 12,
-            weight: 'bold',
-            family: 'Kanit'
-          },
-          formatter: (value) => {
-            return formatNumber(value);
-          }
+          display: true
         }
       },
       scales: {
         x: {
+          stacked: true,
           ticks: {
             font: {
               family: 'Kanit',
               size: 14
             }
           }
+        },
+        y: {
+          stacked: true
         }
       }
     });
@@ -990,7 +996,7 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render chart WITH data labels and background bars
+    // Render chart WITH data labels and background bars (stacked)
     renderChart({
       labels: data.map(item => item.supplier_name || 'ไม่ระบุ'),
       datasets: [
@@ -1000,9 +1006,9 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'transparent',
           borderWidth: 0,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          order: 2
+          datalabels: {
+            display: false
+          }
         },
         {
           label: 'จำนวน Orders',
@@ -1010,34 +1016,40 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          order: 1
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: {
+              size: 12,
+              weight: 'bold',
+              family: 'Kanit'
+            },
+            formatter: (value) => {
+              return formatNumber(value);
+            }
+          }
         }
       ]
     }, 'bar', {
       plugins: {
         datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          color: '#374151',
-          font: {
-            size: 12,
-            weight: 'bold',
-            family: 'Kanit'
-          },
-          formatter: (value) => {
-            return formatNumber(value);
-          }
+          display: true
         }
       },
       scales: {
         x: {
+          stacked: true,
           ticks: {
             font: {
               family: 'Kanit',
               size: 14
             }
           }
+        },
+        y: {
+          stacked: true
         }
       }
     });
@@ -1089,7 +1101,7 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render bar chart with horizontal scroll and background bars
+    // Render bar chart with horizontal scroll and background bars (stacked)
     renderChart({
       labels: data.map(item => item.travel_start_date_label || item.travel_start_date || 'ไม่ระบุ'),
       datasets: [
@@ -1099,9 +1111,9 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'transparent',
           borderWidth: 0,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          order: 2
+          datalabels: {
+            display: false
+          }
         },
         {
           label: 'จำนวน Orders',
@@ -1109,30 +1121,31 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barPercentage: 0.7,
-          categoryPercentage: 1.0,
-          order: 1
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: {
+              size: 12,
+              weight: 'bold',
+              family: 'Kanit'
+            },
+            formatter: (value) => {
+              return formatNumber(value);
+            }
+          }
         }
       ]
     }, 'bar', {
       plugins: {
         datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          color: '#374151',
-          font: {
-            size: 12,
-            weight: 'bold',
-            family: 'Kanit'
-          },
-          formatter: (value) => {
-            return formatNumber(value);
-          }
+          display: true
         }
       },
       scales: {
         x: {
+          stacked: true,
           grid: {
             display: true,
             drawOnChartArea: true,
@@ -1149,6 +1162,7 @@
           }
         },
         y: {
+          stacked: true,
           grid: {
             display: true,
             color: 'rgba(0, 0, 0, 0.05)'
@@ -1202,7 +1216,7 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...data.map(item => item.total_orders));
     
-    // Render bar chart with horizontal scroll and background bars
+    // Render bar chart with horizontal scroll and background bars (stacked)
     renderChart({
       labels: data.map(item => item.created_date_label || item.created_date || 'ไม่ระบุ'),
       datasets: [
@@ -1212,9 +1226,9 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'transparent',
           borderWidth: 0,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          order: 2
+          datalabels: {
+            display: false
+          }
         },
         {
           label: 'จำนวน Orders',
@@ -1222,30 +1236,31 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          barPercentage: 0.7,
-          categoryPercentage: 1.0,
-          order: 1
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: {
+              size: 12,
+              weight: 'bold',
+              family: 'Kanit'
+            },
+            formatter: (value) => {
+              return formatNumber(value);
+            }
+          }
         }
       ]
     }, 'bar', {
       plugins: {
         datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          color: '#374151',
-          font: {
-            size: 12,
-            weight: 'bold',
-            family: 'Kanit'
-          },
-          formatter: (value) => {
-            return formatNumber(value);
-          }
+          display: true
         }
       },
       scales: {
         x: {
+          stacked: true,
           grid: {
             display: true,
             drawOnChartArea: true,
@@ -1262,6 +1277,7 @@
           }
         },
         y: {
+          stacked: true,
           grid: {
             display: true,
             color: 'rgba(0, 0, 0, 0.05)'
@@ -1317,7 +1333,7 @@
     // Calculate max value for background bars
     const maxValue = Math.max(...distribution.map(item => item.count));
     
-    // Render Column Chart WITH data labels and background bars
+    // Render Column Chart WITH data labels and background bars (stacked)
     renderChart({
       labels: distribution.map(item => item.range_label || item.range),
       datasets: [
@@ -1327,9 +1343,9 @@
           backgroundColor: 'rgba(230, 230, 230, 0.3)',
           borderColor: 'transparent',
           borderWidth: 0,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          order: 2
+          datalabels: {
+            display: false
+          }
         },
         {
           label: 'จำนวน Orders',
@@ -1337,34 +1353,40 @@
           backgroundColor: 'rgba(74, 123, 167, 0.8)',
           borderColor: 'rgba(74, 123, 167, 1)',
           borderWidth: 1,
-          order: 1
+          datalabels: {
+            display: true,
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: {
+              size: 12,
+              weight: 'bold',
+              family: 'Kanit'
+            },
+            formatter: (value) => {
+              return formatNumber(value);
+            }
+          }
         }
       ]
     }, 'bar', {
       plugins: {
         datalabels: {
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          color: '#374151',
-          font: {
-            size: 12,
-            weight: 'bold',
-            family: 'Kanit'
-          },
-          formatter: (value) => {
-            return formatNumber(value);
-          }
+          display: true
         }
       },
       scales: {
         x: {
+          stacked: true,
           ticks: {
             font: {
               family: 'Kanit',
               size: 14
             }
           }
+        },
+        y: {
+          stacked: true
         }
       }
     });
