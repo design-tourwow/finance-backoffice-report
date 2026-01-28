@@ -7,12 +7,9 @@ const OrderReportAPI = {
     return url;
   },
   
-  // Get token from sessionStorage or localStorage (fallback)
+  // Get JWT token from sessionStorage or localStorage (fallback)
   getToken() {
-    // For testing, use test token
-    const testToken = 'sk_test_4f8b2c9e1a3d5f7b9c0e2a4d6f8b1c3e';
-    const storedToken = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
-    return storedToken || testToken;
+    return sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
   },
 
   /**
@@ -48,7 +45,7 @@ const OrderReportAPI = {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         method: 'GET',
         headers: {
-          'x-api-key': this.getToken()
+          'Authorization': 'Bearer ' + this.getToken()
         }
       });
 
