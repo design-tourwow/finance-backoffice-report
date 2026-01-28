@@ -24,10 +24,9 @@
 
   async function initOrderReport() {
     console.log('🎯 Initializing Order Report...');
-    
-    // Check authentication
-    if (!checkAuth()) {
-      showAuthModal();
+
+    // Check authentication and token expiry
+    if (!validateToken()) {
       return;
     }
 
@@ -45,12 +44,34 @@
     console.log('✅ Order Report initialized');
   }
 
-  // Check authentication
+  // Check authentication (token exists)
   function checkAuth() {
     if (typeof TourImageAPI !== 'undefined' && TourImageAPI.hasToken) {
       return TourImageAPI.hasToken();
     }
     return !!(sessionStorage.getItem('authToken') || localStorage.getItem('authToken'));
+  }
+
+  // Check token expiry - returns true if valid, false if expired
+  function checkTokenExpiry() {
+    if (typeof TokenUtils !== 'undefined') {
+      return !TokenUtils.isTokenExpired();
+    }
+    return true; // If TokenUtils not available, assume valid
+  }
+
+  // Check both auth and token expiry before any action
+  function validateToken() {
+    if (!checkAuth()) {
+      showAuthModal();
+      return false;
+    }
+    if (!checkTokenExpiry()) {
+      console.error('❌ Token expired - redirecting to login');
+      redirectToLogin('Token หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+      return false;
+    }
+    return true;
   }
 
   // Show auth modal
@@ -64,14 +85,21 @@
   }
 
   // Redirect to login
-  function redirectToLogin() {
+  function redirectToLogin(message = null) {
+    if (typeof TokenUtils !== 'undefined') {
+      TokenUtils.redirectToLogin(message || 'ไม่พบ Token หรือ Token หมดอายุ\nกรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+      return;
+    }
+
+    if (message) alert(message);
+
     const hostname = window.location.hostname;
     let loginUrl = 'https://financebackoffice.tourwow.com/login';
-    
+
     if (hostname.includes('staging')) {
       loginUrl = 'https://financebackoffice-staging2.tourwow.com/login';
     }
-    
+
     window.location.href = loginUrl;
   }
 
@@ -89,6 +117,9 @@
 
   // Switch tab
   async function switchTab(tabName) {
+    // Check token before switching tab
+    if (!validateToken()) return;
+
     // Update active tab
     document.querySelectorAll('.report-tab').forEach(tab => {
       tab.classList.remove('active');
@@ -191,7 +222,10 @@
     
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
-      
+
+      // Check token before submitting
+      if (!validateToken()) return;
+
       // Add loading state
       submitBtn.classList.add('loading');
       submitBtn.disabled = true;
@@ -427,6 +461,9 @@
 
   // Load summary
   async function loadSummary() {
+    // Check token before loading
+    if (!validateToken()) return;
+
     try {
       const response = await OrderReportAPI.getOrderSummary(currentFilters);
       
@@ -461,6 +498,9 @@
 
   // Load tab data
   async function loadTabData(tabName) {
+    // Check token before loading
+    if (!validateToken()) return;
+
     showLoading();
     
     try {

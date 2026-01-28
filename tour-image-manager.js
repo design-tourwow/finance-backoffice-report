@@ -404,6 +404,13 @@ function initFormHandler() {
   filterForm.addEventListener('submit', async function (e) {
     e.preventDefault();
 
+    // Check token before action
+    if (typeof TokenUtils !== 'undefined' && TokenUtils.isTokenExpired()) {
+      console.error('❌ Token expired - redirecting to login');
+      TokenUtils.redirectToLogin('Token หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+      return;
+    }
+
     // Validate all fields
     let isValid = true;
     inputs.forEach((input) => {
@@ -784,7 +791,14 @@ function initShowAllButtons() {
 
     async function loadMoreResults() {
       console.log(`🔍 loadMoreResults called: isLoading=${isLoading}, hasMoreData=${hasMoreData}`);
-      
+
+      // Check token before loading more
+      if (typeof TokenUtils !== 'undefined' && TokenUtils.isTokenExpired()) {
+        console.error('❌ Token expired - redirecting to login');
+        TokenUtils.redirectToLogin('Token หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+        return;
+      }
+
       if (isLoading || !hasMoreData) {
         console.log(`⛔ Blocked: isLoading=${isLoading}, hasMoreData=${hasMoreData}`);
         return;
@@ -1153,16 +1167,23 @@ function initShowAllButtons() {
   // Check token and load data
   async function checkTokenAndLoadData() {
     console.log('🔐 Checking authentication...');
-    
+
     // Check if token exists in localStorage
     if (!TourImageAPI.hasToken()) {
       console.error('❌ No token found - redirecting to login');
       redirectToLogin();
       return;
     }
-    
-    console.log('✅ Token found - loading data...');
-    
+
+    // Check if token is expired using TokenUtils
+    if (typeof TokenUtils !== 'undefined' && TokenUtils.isTokenExpired()) {
+      console.error('❌ Token expired - redirecting to login');
+      redirectToLogin();
+      return;
+    }
+
+    console.log('✅ Token found and valid - loading data...');
+
     // Token exists, validate by trying to load data
     try {
       await loadInitialData();
@@ -1172,25 +1193,43 @@ function initShowAllButtons() {
       redirectToLogin();
     }
   }
-  
+
+  // Check token before any action (call this before load data, search, etc.)
+  function checkTokenBeforeAction() {
+    if (typeof TokenUtils !== 'undefined') {
+      if (TokenUtils.isTokenExpired()) {
+        console.error('❌ Token expired before action - redirecting to login');
+        redirectToLogin();
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Redirect to login page
   function redirectToLogin() {
-    // Detect environment from hostname
+    // Use TokenUtils if available
+    if (typeof TokenUtils !== 'undefined') {
+      TokenUtils.redirectToLogin('ไม่พบ Token หรือ Token หมดอายุ\nกรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+      return;
+    }
+
+    // Fallback to manual redirect
     const hostname = window.location.hostname;
     let loginUrl = 'https://financebackoffice.tourwow.com/login';
-    
+
     if (hostname.includes('staging')) {
       loginUrl = 'https://financebackoffice-staging2.tourwow.com/login';
     }
-    
+
     console.log('🔙 Redirecting to login:', loginUrl);
-    
+
     // Show alert before redirect
     alert('ไม่พบ Token หรือ Token หมดอายุ\nกรุณาเข้าสู่ระบบใหม่อีกครั้ง');
-    
+
     // Clear token
     TourImageAPI.removeToken();
-    
+
     // Redirect
     window.location.href = loginUrl;
   }
@@ -1279,12 +1318,15 @@ function initShowAllButtons() {
 
   // Load images
   async function loadImages(page = 1) {
+    // Check token before loading
+    if (!checkTokenBeforeAction()) return;
+
     const resultsTable = document.getElementById('resultsTable');
     const loadingState = document.querySelector('.loading-state');
     const emptyState = document.querySelector('.empty-state');
     const countElement = document.querySelector('.results-header .count');
     const tableHeader = resultsTable ? resultsTable.querySelector('.table-header') : null;
-    
+
     try {
       // Show loading, hide results but keep header visible
       if (loadingState) loadingState.style.display = 'flex';
@@ -1840,10 +1882,17 @@ function initShowAllButtons() {
 
   // Handle Export
   async function handleExport(format) {
+    // Check token before export
+    if (typeof TokenUtils !== 'undefined' && TokenUtils.isTokenExpired()) {
+      console.error('❌ Token expired - redirecting to login');
+      TokenUtils.redirectToLogin('Token หมดอายุ กรุณาเข้าสู่ระบบใหม่');
+      return;
+    }
+
     try {
       // Get current images data
       const images = window.currentImages || [];
-      
+
       if (images.length === 0) {
         alert('ไม่มีข้อมูลให้ Export');
         return;
