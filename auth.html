@@ -124,56 +124,105 @@
       <div class="error-message" id="errorMessage">
         เกิดข้อผิดพลาด: ไม่พบ Token หรือ Token ไม่ถูกต้อง
       </div>
-      
+
       <button class="btn-retry" id="btnRetry" onclick="redirectToLogin()">
         กลับไปหน้า Login
       </button>
+
+      <!-- Debug Info Box -->
+      <div id="debugBox" style="display:none; margin-top:1rem; padding:1rem; background:#f0f0f0; border-radius:8px; text-align:left; font-size:0.75rem; font-family:monospace; max-height:200px; overflow:auto;">
+        <strong>Debug Info:</strong>
+        <pre id="debugLog" style="margin:0.5rem 0 0 0; white-space:pre-wrap; word-break:break-all;"></pre>
+      </div>
     </div>
 
     <script>
       (function() {
         'use strict';
 
+        // Debug logging helper
+        const debugLogs = [];
+        function debugLog(message) {
+          console.log(message);
+          debugLogs.push(message);
+          updateDebugBox();
+        }
+
+        function updateDebugBox() {
+          const debugBox = document.getElementById('debugBox');
+          const debugLogEl = document.getElementById('debugLog');
+          if (debugBox && debugLogEl) {
+            debugBox.style.display = 'block';
+            debugLogEl.textContent = debugLogs.join('\n');
+          }
+        }
+
+        debugLog('=== AUTH DEBUG START ===');
+        debugLog('Time: ' + new Date().toLocaleString('th-TH'));
+        debugLog('URL: ' + window.location.href);
+        debugLog('Search: ' + window.location.search);
+
         // Get token from URL parameter
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
 
-        console.log('🔐 Auth page loaded');
-        console.log('📍 Current URL:', window.location.href);
-        console.log('🎫 Token received:', token ? 'Yes (length: ' + token.length + ')' : 'No');
+        debugLog('Token param exists: ' + (token ? 'YES' : 'NO'));
+        debugLog('Token length: ' + (token ? token.length : 0));
+        debugLog('Token preview: ' + (token ? token.substring(0, 30) + '...' : 'N/A'));
+
+        // Check if localStorage/sessionStorage is available
+        debugLog('--- Storage Check ---');
+        try {
+          localStorage.setItem('test', 'test');
+          localStorage.removeItem('test');
+          debugLog('localStorage: AVAILABLE');
+        } catch (e) {
+          debugLog('localStorage: BLOCKED - ' + e.message);
+        }
+
+        try {
+          sessionStorage.setItem('test', 'test');
+          sessionStorage.removeItem('test');
+          debugLog('sessionStorage: AVAILABLE');
+        } catch (e) {
+          debugLog('sessionStorage: BLOCKED - ' + e.message);
+        }
 
         if (token && token.trim() !== '') {
           try {
+            debugLog('--- Storing Token ---');
+
             // Clear all existing tokens first to prevent conflicts
             sessionStorage.clear();
             localStorage.clear();
-            console.log('🧹 Cleared sessionStorage and localStorage');
-            
+            debugLog('Cleared storage');
+
             // Store NEW token in BOTH sessionStorage AND localStorage (same key)
             sessionStorage.setItem('authToken', token);
+            debugLog('Set sessionStorage');
             localStorage.setItem('authToken', token);
-            
-            console.log('📥 Token received from URL:', token);
-            console.log('📏 Token length:', token.length);
-            console.log('🔑 Token preview:', token.substring(0, 50) + '...' + token.substring(token.length - 10));
-            
+            debugLog('Set localStorage');
+
             // Verify token was stored correctly
             const storedSessionToken = sessionStorage.getItem('authToken');
             const storedLocalToken = localStorage.getItem('authToken');
-            
+
+            debugLog('Session token stored: ' + (storedSessionToken ? storedSessionToken.length + ' chars' : 'NO'));
+            debugLog('Local token stored: ' + (storedLocalToken ? storedLocalToken.length + ' chars' : 'NO'));
+            debugLog('Session match: ' + (storedSessionToken === token));
+            debugLog('Local match: ' + (storedLocalToken === token));
+
             if (storedSessionToken === token && storedLocalToken === token) {
-              console.log('✅ Token stored successfully in sessionStorage');
-              console.log('✅ Token stored successfully in localStorage');
-              console.log('✅ Both tokens match the URL token');
-              
+              debugLog('✅ Token stored successfully!');
+
               // Decode and log token expiry for debugging
               try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const expDate = new Date(payload.exp * 1000);
-                console.log('⏰ Token expires at:', expDate.toLocaleString('th-TH'));
-                console.log('📊 Token payload:', payload);
+                debugLog('Token exp: ' + expDate.toLocaleString('th-TH'));
+                debugLog('Payload: ' + JSON.stringify(payload));
               } catch (e) {
-                console.log('⚠️ Could not decode token expiry:', e.message);
+                debugLog('⚠️ Could not decode: ' + e.message);
               }
             } else {
               throw new Error('Token verification failed - stored token does not match');
@@ -181,27 +230,25 @@
 
             // Detect environment from hostname
             const hostname = window.location.hostname;
-            let environment = 'production';
-            
-            if (hostname.includes('staging')) {
-              environment = 'staging';
-            }
-            
-            console.log('🎯 Environment detected:', environment);
-            console.log('🔄 Redirecting to tour-image-manager...');
+            let environment = hostname.includes('staging') ? 'staging' : 'production';
+            debugLog('Environment: ' + environment);
 
             // Redirect to main page (clean URL) - use full path
+            const redirectUrl = window.location.origin + '/tour-image-manager';
+            debugLog('Redirecting to: ' + redirectUrl);
+            debugLog('=== REDIRECT IN 2 SECONDS ===');
+
             setTimeout(() => {
-              const redirectUrl = window.location.origin + '/tour-image-manager';
-              console.log('🔗 Redirect URL:', redirectUrl);
               window.location.replace(redirectUrl);
-            }, 800); // Increased delay to ensure storage completes
+            }, 2000); // Increased to 2 seconds for debugging
 
           } catch (error) {
+            debugLog('❌ ERROR: ' + error.message);
             console.error('❌ Error storing token:', error);
             showError('เกิดข้อผิดพลาดในการบันทึก Token: ' + error.message);
           }
         } else {
+          debugLog('❌ No token in URL!');
           console.error('❌ No token found in URL');
           showError('ไม่พบ Token ในระบบ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
         }
