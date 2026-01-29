@@ -15,6 +15,12 @@
       label: 'Order Report',
       url: '/order-report',
       requireAuth: true
+    },
+    {
+      id: 'order-report-2',
+      label: 'Order Report 2',
+      url: '/order-report-2',
+      requireAuth: true
     }
   ];
 

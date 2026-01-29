@@ -11,6 +11,10 @@
     {
       "source": "/order-report",
       "destination": "/order-report.html"
+    },
+    {
+      "source": "/order-report-2",
+      "destination": "/order-report-2.html"
     }
   ],
   "headers": [
