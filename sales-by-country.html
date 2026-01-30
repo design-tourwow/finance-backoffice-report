@@ -131,21 +131,26 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
             z-index: 9999;
           }
           .page-protection-overlay.hidden {
             display: none;
           }
+          .page-protection-overlay.hidden .protection-modal {
+            display: none;
+          }
           .protection-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: #333;
             border-radius: 12px;
             padding: 28px 32px;
             max-width: 420px;
             width: 90%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
           }
           .protection-title {
             font-family: 'Kanit', sans-serif;
