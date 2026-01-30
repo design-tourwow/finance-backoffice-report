@@ -600,43 +600,63 @@
 
   // Show loading
   function showLoading() {
-    document.querySelector('.loading-state').style.display = 'flex';
-    document.querySelector('.empty-state').style.display = 'none';
-    document.getElementById('chartContainer').style.display = 'none';
-    document.getElementById('tableContainer').style.display = 'none';
+    const section = document.querySelector('.report-content-section');
+    if (section) {
+      section.innerHTML = `
+        <div class="dashboard-table-loading">
+          <div class="spinner"></div>
+          <span>กำลังโหลดข้อมูล...</span>
+        </div>
+      `;
+    }
   }
 
   // Show empty
   function showEmpty() {
-    document.querySelector('.loading-state').style.display = 'none';
-    document.querySelector('.empty-state').style.display = 'flex';
-    document.getElementById('chartContainer').style.display = 'none';
-    document.getElementById('tableContainer').style.display = 'none';
+    const section = document.querySelector('.report-content-section');
+    if (section) {
+      section.innerHTML = `
+        <div class="dashboard-table-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/>
+            <line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">ไม่พบข้อมูล</h3>
+          <p style="margin: 0; font-size: 14px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
+        </div>
+      `;
+    }
   }
 
-  // Show content
+  // Show content - not needed with new structure
   function showContent() {
-    document.querySelector('.loading-state').style.display = 'none';
-    document.querySelector('.empty-state').style.display = 'none';
-    document.getElementById('chartContainer').style.display = 'block';
-    document.getElementById('tableContainer').style.display = 'block';
+    // Content is rendered directly to section
   }
 
   // Render Country Report - Interactive Dashboard
   function renderCountryReport(response) {
     console.log('🎨 Rendering Country Dashboard:', response);
 
+    const tabContent = document.querySelector('.report-content-section');
+
     if (!response || !response.data || response.data.length === 0) {
       console.warn('⚠️ No data in Country Report response');
-      showEmpty();
+      tabContent.innerHTML = `
+        <div class="dashboard-table-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/>
+            <line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">ไม่พบข้อมูล</h3>
+          <p style="margin: 0; font-size: 14px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
+        </div>
+      `;
       return;
     }
-
-    // Hide default containers and show custom dashboard
-    document.querySelector('.loading-state').style.display = 'none';
-    document.querySelector('.empty-state').style.display = 'none';
-    document.getElementById('chartContainer').style.display = 'none';
-    document.getElementById('tableContainer').style.display = 'none';
 
     const data = response.data;
     currentTabData = data;
@@ -650,12 +670,9 @@
       (item.total_orders > (max?.total_orders || 0)) ? item : max, null);
     const activeCountries = data.filter(item => item.total_orders > 0).length;
 
-    // Calculate growth rate (simulated - compare to average)
-    const avgOrders = totalOrders / data.length;
+    // Calculate top country percent
     const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
-
-    // Create dashboard HTML
-    const tabContent = document.querySelector('.report-content-section');
+    const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
     // Remove existing dashboard if any
     const existingDashboard = document.querySelector('.country-dashboard');
@@ -667,11 +684,10 @@
       <div class="country-dashboard">
         <!-- Time Granularity Control with Dropdowns -->
         <div class="time-granularity-control">
-          <span class="time-granularity-label">แสดงข้อมูล:</span>
+          <span class="time-granularity-label">ช่วงเวลา:</span>
           <div class="time-granularity-buttons">
-            <!-- Yearly Dropdown -->
             <div class="time-dropdown-wrapper">
-              <button class="time-btn active" data-granularity="yearly" id="yearlyBtn">
+              <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
                 <span class="time-btn-text">รายปี</span>
                 <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
@@ -679,7 +695,6 @@
               </button>
               <div class="time-dropdown-menu" id="yearlyDropdown"></div>
             </div>
-            <!-- Quarterly Dropdown -->
             <div class="time-dropdown-wrapper">
               <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
                 <span class="time-btn-text">รายไตรมาส</span>
@@ -689,7 +704,6 @@
               </button>
               <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
             </div>
-            <!-- Monthly Dropdown -->
             <div class="time-dropdown-wrapper">
               <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
                 <span class="time-btn-text">รายเดือน</span>
@@ -703,7 +717,7 @@
           <div class="selected-period-badge" id="selectedPeriodBadge" style="display: none;"></div>
         </div>
 
-        <!-- KPI Cards -->
+        <!-- Compact KPI Cards -->
         <div class="dashboard-kpi-cards">
           <div class="dashboard-kpi-card kpi-travelers">
             <div class="kpi-icon">
@@ -713,51 +727,37 @@
                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
               </svg>
             </div>
-            <div class="kpi-label">จำนวนนักท่องเที่ยวทั้งหมด</div>
-            <div class="kpi-value" id="kpiTotalTravelers">${formatNumber(totalTravelers)}</div>
-            <div class="kpi-trend positive">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                <polyline points="17 6 23 6 23 12"/>
-              </svg>
-              <span>จาก ${formatNumber(totalOrders)} ออเดอร์</span>
+            <div class="kpi-content">
+              <div class="kpi-label">นักท่องเที่ยว</div>
+              <div class="kpi-value" id="kpiTotalTravelers">${formatNumber(totalTravelers)}</div>
+              <div class="kpi-subtext">${formatNumber(totalOrders)} ออเดอร์</div>
             </div>
           </div>
 
           <div class="dashboard-kpi-card kpi-top-country">
             <div class="kpi-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                <circle cx="12" cy="9" r="2.5"/>
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
             </div>
-            <div class="kpi-label">ประเทศยอดนิยมอันดับ 1</div>
-            <div class="kpi-value" id="kpiTopCountry">${topCountry?.country_name || '-'}</div>
-            <div class="kpi-trend positive">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                <polyline points="17 6 23 6 23 12"/>
-              </svg>
-              <span>${topOrdersPercent.toFixed(1)}% ของทั้งหมด</span>
+            <div class="kpi-content">
+              <div class="kpi-label">ยอดนิยม #1</div>
+              <div class="kpi-value" id="kpiTopCountry">${topCountry?.country_name || '-'}</div>
+              <div class="kpi-subtext">${topOrdersPercent.toFixed(1)}% ของทั้งหมด</div>
             </div>
           </div>
 
           <div class="dashboard-kpi-card kpi-growth">
             <div class="kpi-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="20" x2="12" y2="10"/>
-                <line x1="18" y1="20" x2="18" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="16"/>
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
               </svg>
             </div>
-            <div class="kpi-label">ยอดรวมทั้งหมด</div>
-            <div class="kpi-value" id="kpiTotalRevenue">${formatCurrencyShort(totalRevenue)}</div>
-            <div class="kpi-trend positive">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                <polyline points="17 6 23 6 23 12"/>
-              </svg>
-              <span>เฉลี่ย ${formatCurrencyShort(totalRevenue / totalOrders)}/ออเดอร์</span>
+            <div class="kpi-content">
+              <div class="kpi-label">ยอดรวม</div>
+              <div class="kpi-value" id="kpiTotalRevenue">${formatCurrencyShort(totalRevenue)}</div>
+              <div class="kpi-subtext">เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์</div>
             </div>
           </div>
 
@@ -768,31 +768,29 @@
                 <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
               </svg>
             </div>
-            <div class="kpi-label">จำนวนประเทศที่มีออเดอร์</div>
-            <div class="kpi-value" id="kpiActiveCountries">${formatNumber(activeCountries)}</div>
-            <div class="kpi-trend neutral">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 12h8"/>
-              </svg>
-              <span>ประเทศ</span>
+            <div class="kpi-content">
+              <div class="kpi-label">ประเทศ</div>
+              <div class="kpi-value" id="kpiActiveCountries">${formatNumber(activeCountries)}</div>
+              <div class="kpi-subtext">ที่มีออเดอร์</div>
             </div>
           </div>
         </div>
 
         <!-- Charts Row -->
         <div class="dashboard-charts-row">
-          <!-- Main Area Chart -->
+          <!-- Main Bar Chart -->
           <div class="glass-chart-container">
             <div class="glass-chart-header">
               <div>
                 <div class="glass-chart-title">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
                   </svg>
-                  แนวโน้มจำนวนนักท่องเที่ยว
+                  จำนวนนักท่องเที่ยวตามประเทศ
                 </div>
-                <div class="glass-chart-subtitle">แสดงข้อมูลตาม${getGranularityLabel(currentTimeGranularity)}</div>
+                <div class="glass-chart-subtitle">Top 10 ประเทศยอดนิยม</div>
               </div>
             </div>
             <div class="glass-chart-wrapper">
@@ -809,7 +807,7 @@
                     <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
                     <path d="M22 12A10 10 0 0 0 12 2v10z"/>
                   </svg>
-                  ส่วนแบ่งตลาด
+                  สัดส่วนยอดขาย
                 </div>
                 <div class="glass-chart-subtitle">Top ${Math.min(5, data.length)} ประเทศ</div>
               </div>
@@ -852,13 +850,27 @@
             <table class="dashboard-table" id="dashboardTable">
               <thead>
                 <tr>
-                  <th style="text-align: center; width: 60px;">ลำดับ</th>
-                  <th style="text-align: left;">ประเทศ</th>
-                  <th style="text-align: right;">จำนวน Orders</th>
-                  <th style="text-align: right;">จำนวนลูกค้า</th>
-                  <th style="text-align: right;">ยอดรวม</th>
-                  <th style="text-align: right;">ค่าเฉลี่ย/Order</th>
-                  <th style="text-align: center; width: 120px;">แนวโน้ม</th>
+                  <th style="text-align: center; width: 50px; cursor: default;">#</th>
+                  <th style="text-align: left;" data-sort="country_name" data-type="string">
+                    ประเทศ
+                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+                  </th>
+                  <th style="text-align: right;" data-sort="total_orders" data-type="number">
+                    Orders
+                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+                  </th>
+                  <th style="text-align: right;" data-sort="total_customers" data-type="number">
+                    ลูกค้า
+                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+                  </th>
+                  <th style="text-align: right;" data-sort="total_net_amount" data-type="number">
+                    ยอดรวม
+                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+                  </th>
+                  <th style="text-align: right;" data-sort="avg_net_amount" data-type="number">
+                    เฉลี่ย/Order
+                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+                  </th>
                 </tr>
               </thead>
               <tbody id="dashboardTableBody">
@@ -875,7 +887,7 @@
     // Initialize time granularity buttons
     initTimeGranularityButtons(data);
 
-    // Initialize area chart
+    // Initialize bar chart
     renderCountryAreaChart(data, currentTimeGranularity);
 
     // Initialize search
@@ -884,8 +896,8 @@
     // Initialize export
     initDashboardExport(data);
 
-    // Render sparklines
-    renderSparklines(data);
+    // Initialize table sorting
+    initTableSorting(data);
   }
 
   // Get granularity label in Thai
@@ -936,18 +948,13 @@
   // Render dashboard table rows
   function renderDashboardTableRows(data) {
     return data.map((item, index) => `
-      <tr data-country="${item.country_name || ''}">
-        <td style="text-align: center; color: #9ca3af;">${index + 1}</td>
+      <tr data-country="${item.country_name || ''}" data-index="${index}">
+        <td style="text-align: center; color: #9ca3af; font-size: 12px;">${index + 1}</td>
         <td style="font-weight: 500;">${item.country_name || 'ไม่ระบุ'}</td>
-        <td style="text-align: right;">${formatNumber(item.total_orders)}</td>
-        <td style="text-align: right;">${formatNumber(item.total_customers)}</td>
-        <td style="text-align: right;">${formatCurrency(item.total_net_amount)}</td>
-        <td style="text-align: right;">${formatCurrency(item.avg_net_amount)}</td>
-        <td style="text-align: center;">
-          <div class="sparkline-cell">
-            <canvas class="sparkline-canvas" data-index="${index}" width="80" height="24"></canvas>
-          </div>
-        </td>
+        <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatNumber(item.total_orders)}</td>
+        <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatNumber(item.total_customers)}</td>
+        <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatCurrency(item.total_net_amount)}</td>
+        <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatCurrency(item.avg_net_amount)}</td>
       </tr>
     `).join('');
   }
@@ -1187,10 +1194,6 @@
   function renderCountryDashboardContent(data) {
     currentTabData = data;
 
-    // Show content
-    document.querySelector('.loading-state').style.display = 'none';
-    document.querySelector('.empty-state').style.display = 'none';
-
     if (data.length === 0) {
       showEmpty();
       return;
@@ -1204,12 +1207,27 @@
       (item.total_orders > (max?.total_orders || 0)) ? item : max, null);
     const activeCountries = data.filter(item => item.total_orders > 0).length;
     const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
+    const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
     // Update KPI values
-    document.getElementById('kpiTotalTravelers').textContent = formatNumber(totalTravelers);
-    document.getElementById('kpiTopCountry').textContent = topCountry?.country_name || '-';
-    document.getElementById('kpiTotalRevenue').textContent = formatCurrencyShort(totalRevenue);
-    document.getElementById('kpiActiveCountries').textContent = formatNumber(activeCountries);
+    const kpiTravelers = document.getElementById('kpiTotalTravelers');
+    const kpiTopCountry = document.getElementById('kpiTopCountry');
+    const kpiRevenue = document.getElementById('kpiTotalRevenue');
+    const kpiCountries = document.getElementById('kpiActiveCountries');
+
+    if (kpiTravelers) kpiTravelers.textContent = formatNumber(totalTravelers);
+    if (kpiTopCountry) kpiTopCountry.textContent = topCountry?.country_name || '-';
+    if (kpiRevenue) kpiRevenue.textContent = formatCurrencyShort(totalRevenue);
+    if (kpiCountries) kpiCountries.textContent = formatNumber(activeCountries);
+
+    // Update subtexts
+    const subtexts = document.querySelectorAll('.kpi-subtext');
+    if (subtexts.length >= 4) {
+      subtexts[0].textContent = `${formatNumber(totalOrders)} ออเดอร์`;
+      subtexts[1].textContent = `${topOrdersPercent.toFixed(1)}% ของทั้งหมด`;
+      subtexts[2].textContent = `เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์`;
+      subtexts[3].textContent = 'ที่มีออเดอร์';
+    }
 
     // Update market share list
     const marketShareList = document.getElementById('marketShareList');
@@ -1226,11 +1244,11 @@
     // Re-render chart
     renderCountryAreaChart(data, currentTimeGranularity);
 
-    // Re-render sparklines
-    renderSparklines(data);
+    // Re-initialize table sorting
+    initTableSorting(data);
   }
 
-  // Render country area chart
+  // Render country bar chart with data labels
   function renderCountryAreaChart(data, granularity) {
     const canvas = document.getElementById('countryAreaChart');
     if (!canvas) return;
@@ -1242,41 +1260,32 @@
       countryDashboardChart.destroy();
     }
 
-    // Generate time-based labels based on granularity
-    let labels = [];
-    let chartData = [];
-
     // Sort data by orders for visualization
     const sortedData = [...data].sort((a, b) => b.total_orders - a.total_orders);
-    const topCountries = sortedData.slice(0, 8);
+    const topCountries = sortedData.slice(0, 10);
 
-    // For now, use country names as X-axis labels
-    // In a real implementation, you would fetch time-series data from the API
-    labels = topCountries.map(item => item.country_name || 'ไม่ระบุ');
-    chartData = topCountries.map(item => item.total_customers);
+    // Use country names as X-axis labels
+    const labels = topCountries.map(item => item.country_name || 'ไม่ระบุ');
+    const chartData = topCountries.map(item => item.total_customers);
 
-    // Create gradient - match website theme color (#4a7ba7)
-    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
-    gradient.addColorStop(0, 'rgba(74, 123, 167, 0.25)');
-    gradient.addColorStop(1, 'rgba(74, 123, 167, 0.02)');
+    // Generate gradient colors for bars
+    const barColors = topCountries.map((_, index) => {
+      const opacity = 1 - (index * 0.06);
+      return `rgba(74, 123, 167, ${opacity})`;
+    });
 
     countryDashboardChart = new Chart(ctx, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: labels,
         datasets: [{
           label: 'จำนวนนักท่องเที่ยว',
           data: chartData,
-          fill: true,
-          backgroundColor: gradient,
+          backgroundColor: barColors,
           borderColor: '#4a7ba7',
-          borderWidth: 2,
-          tension: 0.4,
-          pointBackgroundColor: '#4a7ba7',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6
+          borderWidth: 1,
+          borderRadius: 4,
+          maxBarThickness: 50
         }]
       },
       options: {
@@ -1285,6 +1294,20 @@
         plugins: {
           legend: {
             display: false
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            offset: 4,
+            color: '#374151',
+            font: {
+              family: 'Kanit',
+              size: 11,
+              weight: '600'
+            },
+            formatter: function(value) {
+              return formatNumber(value);
+            }
           },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1312,14 +1335,13 @@
         scales: {
           x: {
             grid: {
-              color: 'rgba(0, 0, 0, 0.05)',
-              drawBorder: false
+              display: false
             },
             ticks: {
               color: '#6b7280',
               font: {
                 family: 'Kanit',
-                size: 12
+                size: 11
               },
               maxRotation: 45,
               minRotation: 45
@@ -1334,65 +1356,73 @@
               color: '#6b7280',
               font: {
                 family: 'Kanit',
-                size: 12
+                size: 11
               },
               callback: function(value) {
                 return formatNumber(value);
               }
             },
-            beginAtZero: true
+            beginAtZero: true,
+            // Add padding at top for data labels
+            suggestedMax: Math.max(...chartData) * 1.15
           }
         }
-      }
+      },
+      plugins: [ChartDataLabels]
     });
   }
 
-  // Render sparklines for each row
-  function renderSparklines(data) {
-    const sparklineCanvases = document.querySelectorAll('.sparkline-canvas');
+  // Initialize table sorting
+  function initTableSorting(data) {
+    const table = document.getElementById('dashboardTable');
+    if (!table) return;
 
-    sparklineCanvases.forEach((canvas) => {
-      const ctx = canvas.getContext('2d');
-      const index = parseInt(canvas.dataset.index);
-      const item = data[index];
+    const headers = table.querySelectorAll('thead th[data-sort]');
+    let currentSort = { column: null, direction: 'asc' };
 
-      if (!item) return;
+    headers.forEach(header => {
+      header.addEventListener('click', function() {
+        const sortKey = this.dataset.sort;
+        const sortType = this.dataset.type || 'string';
 
-      // Generate fake trend data based on orders (in real app, use actual historical data)
-      const baseValue = item.total_orders;
-      const sparkData = [];
-      for (let i = 0; i < 7; i++) {
-        const variance = (Math.random() - 0.5) * 0.4;
-        sparkData.push(Math.max(1, baseValue * (0.8 + i * 0.05 + variance)));
-      }
-
-      // Draw sparkline
-      const width = canvas.width;
-      const height = canvas.height;
-      const max = Math.max(...sparkData);
-      const min = Math.min(...sparkData);
-      const range = max - min || 1;
-
-      ctx.clearRect(0, 0, width, height);
-      ctx.beginPath();
-      // Use website theme colors: green for positive, red for negative
-      ctx.strokeStyle = sparkData[sparkData.length - 1] >= sparkData[0]
-        ? '#388e3c'
-        : '#dc2626';
-      ctx.lineWidth = 1.5;
-
-      sparkData.forEach((value, i) => {
-        const x = (i / (sparkData.length - 1)) * width;
-        const y = height - ((value - min) / range) * (height - 4) - 2;
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
+        // Toggle direction if same column
+        if (currentSort.column === sortKey) {
+          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
         } else {
-          ctx.lineTo(x, y);
+          currentSort.column = sortKey;
+          currentSort.direction = 'desc'; // Default to descending for numbers
+        }
+
+        // Update header styles
+        headers.forEach(h => {
+          h.classList.remove('sort-asc', 'sort-desc');
+        });
+        this.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+        // Sort data
+        const sortedData = [...currentTabData].sort((a, b) => {
+          let aVal = a[sortKey];
+          let bVal = b[sortKey];
+
+          if (sortType === 'number') {
+            aVal = parseFloat(aVal) || 0;
+            bVal = parseFloat(bVal) || 0;
+          } else {
+            aVal = (aVal || '').toString().toLowerCase();
+            bVal = (bVal || '').toString().toLowerCase();
+          }
+
+          if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+          if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+
+        // Re-render table body
+        const tableBody = document.getElementById('dashboardTableBody');
+        if (tableBody) {
+          tableBody.innerHTML = renderDashboardTableRows(sortedData);
         }
       });
-
-      ctx.stroke();
     });
   }
 

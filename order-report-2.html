@@ -217,81 +217,8 @@
           </section>
 
           <!-- Report Content Section (No Tabs) -->
-          <section class="report-content-section">
-            <div class="report-tab-content">
-              <!-- Loading State -->
-              <div class="loading-state" style="display: none;">
-                <div class="spinner"></div>
-                <p>กำลังโหลดข้อมูล...</p>
-              </div>
-
-              <!-- Empty State -->
-              <div class="empty-state" style="display: none;">
-                <div class="empty-state-content">
-                  <div class="empty-icon-wrapper">
-                    <img src="assets/images/no-result.svg" alt="ไม่พบข้อมูล" class="empty-icon" width="240" height="240" />
-                  </div>
-                  <div class="empty-text">
-                    <h3>ไม่พบข้อมูล</h3>
-                    <p>ลองปรับเงื่อนไขการค้นหาใหม่</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Chart Container -->
-              <div class="chart-container" id="chartContainer" style="display: none;">
-                <div class="chart-wrapper">
-                  <canvas id="reportChart"></canvas>
-                </div>
-              </div>
-
-              <!-- Table Container -->
-              <div class="table-container" id="tableContainer" style="display: none;">
-                <!-- Table Search & Filters -->
-                <div class="table-search-wrapper">
-                  <div class="table-search-input-wrapper">
-                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                    <input 
-                      type="text" 
-                      id="tableSearchInput" 
-                      class="table-search-input" 
-                      placeholder="ค้นหาในตาราง..."
-                      aria-label="ค้นหาข้อมูลในตาราง"
-                    />
-                    <button type="button" id="clearTableSearch" class="clear-search-btn" style="display: none;" aria-label="ล้างการค้นหา">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </div>
-                  
-                  <!-- Filter Dropdown (dynamic for each tab) -->
-                  <div id="tabFilterContainer"></div>
-                  
-                  <!-- Export Button -->
-                  <button type="button" class="btn btn-secondary export-csv-btn" id="exportCsvBtn" title="Export เป็น CSV">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                    </svg>
-                    Export CSV
-                  </button>
-                </div>
-                
-                <!-- Search Results (below search bar) -->
-                <div class="table-search-results" id="tableSearchResults" style="display: none;">
-                  <span class="results-text">พบ <strong id="searchResultCount">0</strong> รายการ</span>
-                </div>
-                
-                <table class="report-table" id="reportTable">
-                  <thead id="reportTableHead"></thead>
-                  <tbody id="reportTableBody"></tbody>
-                </table>
-              </div>
-            </div>
+          <section class="report-content-section" id="reportContentSection">
+            <!-- Dashboard will be rendered here by JavaScript -->
           </section>
         </div>
       </main>
