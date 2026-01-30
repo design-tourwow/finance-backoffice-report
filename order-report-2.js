@@ -710,11 +710,8 @@
     const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
     const avgPerTraveler = totalTravelers > 0 ? (totalRevenue / totalTravelers) : 0;
 
-    // Remove existing dashboard if any
-    const existingDashboard = document.querySelector('.country-dashboard');
-    if (existingDashboard) {
-      existingDashboard.remove();
-    }
+    // Clear section content completely (remove loading state and any existing dashboard)
+    tabContent.innerHTML = '';
 
     const dashboardHTML = `
       <div class="country-dashboard">
@@ -934,7 +931,14 @@
       </div>
     `;
 
-    tabContent.insertAdjacentHTML('beforeend', dashboardHTML);
+    tabContent.innerHTML = dashboardHTML;
+
+    // Debug: Verify dashboard elements are rendered
+    console.log('✅ Dashboard rendered, checking elements:');
+    console.log('  - market-share-container:', !!document.querySelector('.market-share-container'));
+    console.log('  - chart-type-toggle:', !!document.querySelector('.chart-type-toggle'));
+    console.log('  - chart-type-btn count:', document.querySelectorAll('.chart-type-btn').length);
+    console.log('  - marketShareList:', !!document.getElementById('marketShareList'));
 
     // Initialize time granularity buttons
     initTimeGranularityButtons(data);
@@ -961,10 +965,12 @@
   // Initialize chart type toggle
   function initChartTypeToggle(data) {
     const toggleBtns = document.querySelectorAll('.chart-type-btn');
+    console.log('🔘 Initializing chart type toggle, found buttons:', toggleBtns.length);
 
     toggleBtns.forEach(btn => {
       btn.addEventListener('click', function() {
         const chartType = this.dataset.type;
+        console.log('📊 Chart type clicked:', chartType, 'current:', currentChartType);
         if (chartType === currentChartType) return;
 
         // Update active state
@@ -974,6 +980,7 @@
         currentChartType = chartType;
 
         // Re-render chart with new type
+        console.log('📊 Re-rendering chart as:', chartType);
         renderCountryAreaChart(currentTabData, chartType);
       });
     });
