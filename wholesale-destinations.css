@@ -183,6 +183,19 @@
   }
 }
 
+.dropdown-year-header {
+  padding: 10px 14px 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+}
+
 .time-dropdown-item {
   padding: 10px 14px;
   display: flex;
@@ -223,32 +236,36 @@
 
 /* Selected Period Badge */
 .selected-period-badge {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
   background: #e3f2fd;
-  border-radius: 20px;
-  font-size: 14px;
-  color: #4a7ba7;
+  border: 1px solid #bbdefb;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-left: 12px;
+  font-size: 15px;
   font-weight: 500;
+  color: #1976d2;
 }
 
+.badge-clear,
 .selected-period-badge .clear-btn {
   background: none;
   border: none;
   padding: 2px;
   cursor: pointer;
-  color: #4a7ba7;
+  color: #1976d2;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
+  border-radius: 4px;
+  transition: all 0.15s ease;
 }
 
+.badge-clear:hover,
 .selected-period-badge .clear-btn:hover {
-  background: rgba(74, 123, 167, 0.2);
+  background: rgba(25, 118, 210, 0.1);
 }
 
 /* KPI Cards */
@@ -338,8 +355,9 @@
 .kpi-label {
   font-size: 14px;
   color: #6b7280;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   font-weight: 500;
+  font-family: 'Kanit', sans-serif;
 }
 
 .kpi-value {
@@ -465,8 +483,8 @@
 }
 
 .wholesale-rank {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -503,9 +521,10 @@
 }
 
 .wholesale-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   color: #1f2937;
+  margin-bottom: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -515,23 +534,38 @@
   height: 6px;
   background: #f3f4f6;
   border-radius: 3px;
-  margin-top: 6px;
   overflow: hidden;
 }
 
 .wholesale-bar {
   height: 100%;
-  background: linear-gradient(90deg, #4a7ba7 0%, #6b9dc4 100%);
   border-radius: 3px;
   transition: width 0.5s ease;
+}
+
+.top-wholesale-item.top-1 .wholesale-bar {
+  background: #4a7ba7;
+}
+
+.top-wholesale-item.top-2 .wholesale-bar {
+  background: #6b7280;
+}
+
+.top-wholesale-item.top-3 .wholesale-bar {
+  background: #9ca3af;
+}
+
+.top-wholesale-item.other .wholesale-bar {
+  background: #d1d5db;
 }
 
 .wholesale-count {
   font-size: 16px;
   font-weight: 600;
-  color: #4a7ba7;
-  margin-left: 12px;
-  white-space: nowrap;
+  color: #374151;
+  margin-left: 16px;
+  min-width: 50px;
+  text-align: right;
 }
 
 /* Data Table */
@@ -737,7 +771,7 @@
   padding: 4px 10px;
   background: #f3f4f6;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 14px;
   color: #374151;
 }
 

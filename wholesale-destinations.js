@@ -405,7 +405,7 @@
       const rankClass = index < 3 ? `top-${index + 1}` : 'other';
 
       return `
-        <div class="top-wholesale-item">
+        <div class="top-wholesale-item ${rankClass}">
           <div class="wholesale-rank ${rankClass}">${index + 1}</div>
           <div class="wholesale-info">
             <div class="wholesale-name" title="${item.name}">${truncateName(item.name, 25)}</div>
@@ -413,7 +413,7 @@
               <div class="wholesale-bar" style="width: ${percent}%;"></div>
             </div>
           </div>
-          <div class="wholesale-count">${formatNumber(item.total)}</div>
+          <div class="wholesale-count">${percent.toFixed(1)}%</div>
         </div>
       `;
     }).join('');
