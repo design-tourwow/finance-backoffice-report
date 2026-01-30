@@ -822,11 +822,7 @@ mark.search-highlight {
 
 .time-granularity-buttons {
   display: flex;
-  gap: 4px;
-  background: #f3f4f6;
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  gap: 8px;
 }
 
 .time-btn {

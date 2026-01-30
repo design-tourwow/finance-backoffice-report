@@ -717,7 +717,7 @@
       <div class="country-dashboard">
         <!-- Time Granularity Control with Dropdowns -->
         <div class="time-granularity-control">
-          <span class="time-granularity-label">ช่วงเวลา:</span>
+          <span class="time-granularity-label">เลือกช่วงเวลา</span>
           <div class="time-granularity-buttons">
             <div class="time-dropdown-wrapper">
               <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
