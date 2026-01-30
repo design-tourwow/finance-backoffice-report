@@ -45,17 +45,6 @@
 
   // Load country report
   async function loadCountryReport() {
-    // Show initial loading state
-    const section = document.querySelector('.report-content-section');
-    if (section) {
-      section.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; color: #6b7280;">
-          <div style="width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #4a7ba7; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-          <p style="margin-top: 16px; font-family: Kanit, sans-serif;">กำลังโหลดข้อมูล...</p>
-        </div>
-      `;
-    }
-
     try {
       // Fetch available periods first
       const periodsResponse = await OrderReport2API.getAvailablePeriods();
@@ -1317,12 +1306,6 @@
     const labels = topCountries.map(item => item.country_name || 'ไม่ระบุ');
     const chartData = topCountries.map(item => item.total_customers);
 
-    // Generate gradient colors for bars
-    const barColors = topCountries.map((_, index) => {
-      const opacity = 1 - (index * 0.06);
-      return `rgba(74, 123, 167, ${opacity})`;
-    });
-
     countryDashboardChart = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -1330,8 +1313,8 @@
         datasets: [{
           label: 'จำนวนนักท่องเที่ยว',
           data: chartData,
-          backgroundColor: barColors,
-          borderColor: '#4a7ba7',
+          backgroundColor: '#4a7ba7',
+          borderColor: '#3d6a8f',
           borderWidth: 1,
           borderRadius: 4,
           maxBarThickness: 50
