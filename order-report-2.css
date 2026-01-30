@@ -1074,8 +1074,42 @@ mark.search-highlight {
 .glass-chart-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 16px;
+}
+
+/* Chart Type Toggle */
+.chart-type-toggle {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.chart-type-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.chart-type-btn:hover {
+  color: #4a7ba7;
+  background: rgba(74, 123, 167, 0.1);
+}
+
+.chart-type-btn.active {
+  background: white;
+  color: #4a7ba7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .glass-chart-title {

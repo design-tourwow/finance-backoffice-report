@@ -668,9 +668,10 @@
       (item.total_orders > (max?.total_orders || 0)) ? item : max, null);
     const activeCountries = data.filter(item => item.total_orders > 0).length;
 
-    // Calculate top country percent
+    // Calculate metrics
     const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
     const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+    const avgPerTraveler = totalTravelers > 0 ? (totalRevenue / totalTravelers) : 0;
 
     // Remove existing dashboard if any
     const existingDashboard = document.querySelector('.country-dashboard');
@@ -726,9 +727,9 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">นักท่องเที่ยว</div>
+              <div class="kpi-label">จำนวนผู้เดินทาง</div>
               <div class="kpi-value" id="kpiTotalTravelers">${formatNumber(totalTravelers)}</div>
-              <div class="kpi-subtext">${formatNumber(totalOrders)} ออเดอร์</div>
+              <div class="kpi-subtext">จาก ${formatNumber(totalOrders)} ออเดอร์</div>
             </div>
           </div>
 
@@ -762,21 +763,20 @@
           <div class="dashboard-kpi-card kpi-active">
             <div class="kpi-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">ประเทศ</div>
-              <div class="kpi-value" id="kpiActiveCountries">${formatNumber(activeCountries)}</div>
-              <div class="kpi-subtext">ที่มีออเดอร์</div>
+              <div class="kpi-label">ยอดเฉลี่ย/คน</div>
+              <div class="kpi-value" id="kpiAvgPerPerson">${formatCurrencyShort(avgPerTraveler)}</div>
+              <div class="kpi-subtext">ต่อผู้เดินทาง 1 คน</div>
             </div>
           </div>
         </div>
 
         <!-- Charts Row -->
         <div class="dashboard-charts-row">
-          <!-- Main Bar Chart -->
+          <!-- Main Chart with Toggle -->
           <div class="glass-chart-container">
             <div class="glass-chart-header">
               <div>
@@ -786,9 +786,24 @@
                     <line x1="12" y1="20" x2="12" y2="4"/>
                     <line x1="6" y1="20" x2="6" y2="14"/>
                   </svg>
-                  จำนวนนักท่องเที่ยวตามประเทศ
+                  จำนวนผู้เดินทางตามประเทศ
                 </div>
                 <div class="glass-chart-subtitle">Top 10 ประเทศยอดนิยม</div>
+              </div>
+              <div class="chart-type-toggle">
+                <button class="chart-type-btn active" data-type="bar" title="Bar Chart">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                </button>
+                <button class="chart-type-btn" data-type="pie" title="Pie Chart">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                    <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                  </svg>
+                </button>
               </div>
             </div>
             <div class="glass-chart-wrapper">
@@ -886,7 +901,10 @@
     initTimeGranularityButtons(data);
 
     // Initialize bar chart
-    renderCountryAreaChart(data, currentTimeGranularity);
+    renderCountryAreaChart(data, 'bar');
+
+    // Initialize chart type toggle
+    initChartTypeToggle(data);
 
     // Initialize search
     initDashboardSearch(data);
@@ -896,6 +914,30 @@
 
     // Initialize table sorting
     initTableSorting(data);
+  }
+
+  // Current chart type
+  let currentChartType = 'bar';
+
+  // Initialize chart type toggle
+  function initChartTypeToggle(data) {
+    const toggleBtns = document.querySelectorAll('.chart-type-btn');
+
+    toggleBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const chartType = this.dataset.type;
+        if (chartType === currentChartType) return;
+
+        // Update active state
+        toggleBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        currentChartType = chartType;
+
+        // Re-render chart with new type
+        renderCountryAreaChart(currentTabData, chartType);
+      });
+    });
   }
 
   // Get granularity label in Thai
@@ -1247,24 +1289,27 @@
     const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
     const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
+    // Calculate avgPerTraveler for KPI card 4
+    const avgPerTraveler = totalTravelers > 0 ? (totalRevenue / totalTravelers) : 0;
+
     // Update KPI values
     const kpiTravelers = document.getElementById('kpiTotalTravelers');
     const kpiTopCountry = document.getElementById('kpiTopCountry');
     const kpiRevenue = document.getElementById('kpiTotalRevenue');
-    const kpiCountries = document.getElementById('kpiActiveCountries');
+    const kpiAvgPerPerson = document.getElementById('kpiAvgPerPerson');
 
     if (kpiTravelers) kpiTravelers.textContent = formatNumber(totalTravelers);
     if (kpiTopCountry) kpiTopCountry.textContent = topCountry?.country_name || '-';
     if (kpiRevenue) kpiRevenue.textContent = formatCurrencyShort(totalRevenue);
-    if (kpiCountries) kpiCountries.textContent = formatNumber(activeCountries);
+    if (kpiAvgPerPerson) kpiAvgPerPerson.textContent = formatCurrencyShort(avgPerTraveler);
 
     // Update subtexts
     const subtexts = document.querySelectorAll('.kpi-subtext');
     if (subtexts.length >= 4) {
-      subtexts[0].textContent = `${formatNumber(totalOrders)} ออเดอร์`;
+      subtexts[0].textContent = `จาก ${formatNumber(totalOrders)} ออเดอร์`;
       subtexts[1].textContent = `${topOrdersPercent.toFixed(1)}% ของทั้งหมด`;
       subtexts[2].textContent = `เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์`;
-      subtexts[3].textContent = 'ที่มีออเดอร์';
+      subtexts[3].textContent = 'ต่อผู้เดินทาง 1 คน';
     }
 
     // Update market share list
@@ -1279,15 +1324,15 @@
       tableBody.innerHTML = renderDashboardTableRows(data);
     }
 
-    // Re-render chart
-    renderCountryAreaChart(data, currentTimeGranularity);
+    // Re-render chart with current type
+    renderCountryAreaChart(data, currentChartType);
 
     // Re-initialize table sorting
     initTableSorting(data);
   }
 
-  // Render country bar chart with data labels
-  function renderCountryAreaChart(data, granularity) {
+  // Render country chart (bar or pie)
+  function renderCountryAreaChart(data, chartType) {
     const canvas = document.getElementById('countryAreaChart');
     if (!canvas) return;
 
@@ -1302,106 +1347,150 @@
     const sortedData = [...data].sort((a, b) => b.total_orders - a.total_orders);
     const topCountries = sortedData.slice(0, 10);
 
-    // Use country names as X-axis labels
+    // Use country names as labels
     const labels = topCountries.map(item => item.country_name || 'ไม่ระบุ');
     const chartData = topCountries.map(item => item.total_customers);
 
-    countryDashboardChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'จำนวนนักท่องเที่ยว',
-          data: chartData,
-          backgroundColor: '#4a7ba7',
-          borderColor: '#3d6a8f',
-          borderWidth: 1,
-          borderRadius: 4,
-          maxBarThickness: 50
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          },
-          datalabels: {
-            anchor: 'end',
-            align: 'top',
-            offset: 4,
-            color: '#374151',
-            font: {
-              family: 'Kanit',
-              size: 11,
-              weight: '600'
+    // Pie chart colors
+    const pieColors = [
+      '#4a7ba7', '#6b8cbe', '#8da3d0', '#aebae2', '#d0d1f4',
+      '#5c6bc0', '#7986cb', '#9fa8da', '#c5cae9', '#e8eaf6'
+    ];
+
+    if (chartType === 'pie') {
+      // Pie Chart
+      countryDashboardChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: chartData,
+            backgroundColor: pieColors,
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                font: {
+                  family: 'Kanit',
+                  size: 11
+                },
+                padding: 12,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
             },
-            formatter: function(value) {
-              return formatNumber(value);
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            titleColor: '#fff',
-            bodyColor: 'rgba(255,255,255,0.9)',
-            borderColor: 'rgba(74, 123, 167, 0.5)',
-            borderWidth: 1,
-            padding: 12,
-            titleFont: {
-              family: 'Kanit',
-              size: 14,
-              weight: '600'
+            datalabels: {
+              color: '#fff',
+              font: {
+                family: 'Kanit',
+                size: 11,
+                weight: '600'
+              },
+              formatter: function(value, context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percent = ((value / total) * 100).toFixed(1);
+                return percent > 5 ? percent + '%' : '';
+              }
             },
-            bodyFont: {
-              family: 'Kanit',
-              size: 13
-            },
-            callbacks: {
-              label: function(context) {
-                return `จำนวน: ${formatNumber(context.raw)} คน`;
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#fff',
+              bodyColor: 'rgba(255,255,255,0.9)',
+              padding: 12,
+              titleFont: { family: 'Kanit', size: 14, weight: '600' },
+              bodyFont: { family: 'Kanit', size: 13 },
+              callbacks: {
+                label: function(context) {
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percent = ((context.raw / total) * 100).toFixed(1);
+                  return `จำนวนผู้เดินทาง: ${formatNumber(context.raw)} คน (${percent}%)`;
+                }
               }
             }
           }
         },
-        scales: {
-          x: {
-            grid: {
-              display: false
-            },
-            ticks: {
-              color: '#6b7280',
-              font: {
-                family: 'Kanit',
-                size: 11
-              },
-              maxRotation: 45,
-              minRotation: 45
-            }
-          },
-          y: {
-            grid: {
-              color: 'rgba(0, 0, 0, 0.05)',
-              drawBorder: false
-            },
-            ticks: {
-              color: '#6b7280',
-              font: {
-                family: 'Kanit',
-                size: 11
-              },
-              callback: function(value) {
+        plugins: [ChartDataLabels]
+      });
+    } else {
+      // Bar Chart (default)
+      countryDashboardChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'จำนวนผู้เดินทาง',
+            data: chartData,
+            backgroundColor: '#4a7ba7',
+            borderColor: '#3d6a8f',
+            borderWidth: 1,
+            borderRadius: 4,
+            maxBarThickness: 50
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end',
+              align: 'top',
+              offset: 4,
+              color: '#374151',
+              font: { family: 'Kanit', size: 11, weight: '600' },
+              formatter: function(value) {
                 return formatNumber(value);
               }
             },
-            beginAtZero: true,
-            // Add padding at top for data labels
-            suggestedMax: Math.max(...chartData) * 1.15
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#fff',
+              bodyColor: 'rgba(255,255,255,0.9)',
+              borderColor: 'rgba(74, 123, 167, 0.5)',
+              borderWidth: 1,
+              padding: 12,
+              titleFont: { family: 'Kanit', size: 14, weight: '600' },
+              bodyFont: { family: 'Kanit', size: 13 },
+              callbacks: {
+                label: function(context) {
+                  return `จำนวนผู้เดินทาง: ${formatNumber(context.raw)} คน`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                color: '#6b7280',
+                font: { family: 'Kanit', size: 11 },
+                maxRotation: 45,
+                minRotation: 45
+              }
+            },
+            y: {
+              grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
+              ticks: {
+                color: '#6b7280',
+                font: { family: 'Kanit', size: 11 },
+                callback: function(value) { return formatNumber(value); }
+              },
+              beginAtZero: true,
+              suggestedMax: Math.max(...chartData) * 1.15
+            }
           }
-        }
-      },
-      plugins: [ChartDataLabels]
-    });
+        },
+        plugins: [ChartDataLabels]
+      });
+    }
   }
 
   // Initialize table sorting
