@@ -1124,6 +1124,11 @@ mark.search-highlight {
   margin-bottom: 24px;
 }
 
+/* Grid items need min-width: 0 to allow shrinking in grid */
+.dashboard-charts-row > * {
+  min-width: 0;
+}
+
 /* Chart Container - Light Theme */
 .glass-chart-container {
   background: white;
@@ -1131,6 +1136,7 @@ mark.search-highlight {
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden; /* Contain the scroll wrapper */
 }
 
 .glass-chart-header {
@@ -1201,11 +1207,7 @@ mark.search-highlight {
   min-width: 100%;
 }
 
-/* Chart scroll container - header stays fixed */
-.glass-chart-container {
-  overflow: visible;
-}
-
+/* Chart scroll wrapper - handles horizontal scroll for bar chart */
 .glass-chart-scroll-wrapper {
   overflow-x: auto;
   overflow-y: hidden;
