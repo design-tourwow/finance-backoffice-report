@@ -58,14 +58,14 @@
 
     try {
       // Fetch available periods first
-      const periodsResponse = await OrderReport2API.getAvailablePeriods();
+      const periodsResponse = await SalesByCountryAPI.getAvailablePeriods();
       if (periodsResponse && periodsResponse.success && periodsResponse.data) {
         availablePeriods = periodsResponse.data;
         console.log('📅 Available Periods:', availablePeriods);
       }
 
       // Load all data (no filter)
-      const response = await OrderReport2API.getReportByCountry({});
+      const response = await SalesByCountryAPI.getReportByCountry({});
 
       if (response && response.success && response.data) {
         renderCountryReport(response);
@@ -236,7 +236,7 @@
 
       // Load countries
       console.log('🌍 Loading countries...');
-      const countriesResponse = await OrderReport2API.getCountries();
+      const countriesResponse = await SalesByCountryAPI.getCountries();
       if (countriesResponse && countriesResponse.success && countriesResponse.data) {
         const countryOptions = countriesResponse.data.map(country => ({
           value: country.id,
@@ -248,7 +248,7 @@
 
       // Load suppliers
       console.log('🏢 Loading suppliers...');
-      const suppliersResponse = await OrderReport2API.getSuppliers();
+      const suppliersResponse = await SalesByCountryAPI.getSuppliers();
       if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
         const supplierOptions = suppliersResponse.data.map(supplier => ({
           value: supplier.id,
@@ -514,7 +514,7 @@
     if (!validateToken()) return;
 
     try {
-      const response = await OrderReport2API.getOrderSummary(currentFilters);
+      const response = await SalesByCountryAPI.getOrderSummary(currentFilters);
       
       console.log('📊 Summary Response:', response);
       
@@ -559,15 +559,15 @@
       const apiCall = async () => {
         switch(tabName) {
           case 'country':
-            return await OrderReport2API.getReportByCountry(currentFilters);
+            return await SalesByCountryAPI.getReportByCountry(currentFilters);
           case 'supplier':
-            return await OrderReport2API.getReportBySupplier(currentFilters);
+            return await SalesByCountryAPI.getReportBySupplier(currentFilters);
           case 'travel-date':
-            return await OrderReport2API.getReportByTravelDate(currentFilters);
+            return await SalesByCountryAPI.getReportByTravelDate(currentFilters);
           case 'booking-date':
-            return await OrderReport2API.getReportByBookingDate(currentFilters);
+            return await SalesByCountryAPI.getReportByBookingDate(currentFilters);
           case 'lead-time':
-            return await OrderReport2API.getLeadTimeAnalysis(currentFilters);
+            return await SalesByCountryAPI.getLeadTimeAnalysis(currentFilters);
         }
       };
       
@@ -1050,7 +1050,7 @@
     // Fetch available periods if not already loaded
     if (!availablePeriods) {
       try {
-        const response = await OrderReport2API.getAvailablePeriods();
+        const response = await SalesByCountryAPI.getAvailablePeriods();
         if (response && response.success && response.data) {
           availablePeriods = response.data;
           console.log('📅 Available Periods:', availablePeriods);
@@ -1250,7 +1250,7 @@
       // Show loading overlay on dashboard
       showDashboardLoading();
 
-      const response = await OrderReport2API.getReportByCountry(periodFilters);
+      const response = await SalesByCountryAPI.getReportByCountry(periodFilters);
 
       // Hide loading overlay
       hideDashboardLoading();
@@ -1296,7 +1296,7 @@
     try {
       showDashboardLoading();
 
-      const response = await OrderReport2API.getReportByCountry({});
+      const response = await SalesByCountryAPI.getReportByCountry({});
 
       hideDashboardLoading();
 

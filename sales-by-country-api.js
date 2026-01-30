@@ -1,5 +1,5 @@
 // Order Report API Service - Using Backend Report Endpoints
-const OrderReport2API = {
+const SalesByCountryAPI = {
   // Use global API_BASE_URL set by inline script in HTML
   get baseURL() {
     const url = window.API_BASE_URL || 'https://finance-backoffice-report-api.vercel.app';

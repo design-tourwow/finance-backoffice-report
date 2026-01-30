@@ -13,12 +13,8 @@
       "destination": "/order-report.html"
     },
     {
-      "source": "/order-report-2",
-      "destination": "/order-report-2.html"
-    },
-    {
       "source": "/sales-by-country",
-      "destination": "/order-report-2.html"
+      "destination": "/sales-by-country.html"
     }
   ],
   "headers": [

@@ -33,12 +33,6 @@
   // Check if menu item is active
   function isActive(menuUrl) {
     const currentPath = getCurrentPath();
-    // Handle /sales-by-country which maps to /order-report-2.html
-    if (menuUrl === '/sales-by-country') {
-      return currentPath === '/sales-by-country' ||
-             currentPath === '/order-report-2' ||
-             currentPath === '/order-report-2.html';
-    }
     return currentPath === menuUrl || currentPath === menuUrl + '.html';
   }
 
