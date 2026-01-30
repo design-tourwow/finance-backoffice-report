@@ -114,7 +114,7 @@
             <line x1="9" y1="9" x2="9.01" y2="9"/>
             <line x1="15" y1="9" x2="15.01" y2="9"/>
           </svg>
-          <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #374151;">ไม่พบข้อมูล</h3>
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">ไม่พบข้อมูล</h3>
           <p style="margin: 0; font-size: 16px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
         </div>
       `;
@@ -431,7 +431,7 @@
 
       return `
         <tr data-wholesale="${item.name}" data-index="${index}">
-          <td style="text-align: center; color: #9ca3af; font-size: 14px;">${index + 1}</td>
+          <td style="text-align: center; color: #9ca3af; font-size: 16px;">${index + 1}</td>
           <td style="font-weight: 500;">${item.name}</td>
           <td>
             <div class="country-tags">
@@ -485,7 +485,7 @@
             anchor: 'end',
             align: 'end',
             color: '#374151',
-            font: { family: 'Kanit', size: 12, weight: '600' },
+            font: { family: 'Kanit', size: 14, weight: '600' },
             formatter: function(value) {
               return formatNumber(value);
             }
@@ -495,8 +495,8 @@
             titleColor: '#fff',
             bodyColor: 'rgba(255,255,255,0.9)',
             padding: 12,
-            titleFont: { family: 'Kanit', size: 14, weight: '600' },
-            bodyFont: { family: 'Kanit', size: 13 },
+            titleFont: { family: 'Kanit', size: 16, weight: '600' },
+            bodyFont: { family: 'Kanit', size: 15 },
             callbacks: {
               label: function(context) {
                 return `ยอดจอง: ${formatNumber(context.raw)}`;
@@ -509,7 +509,7 @@
             beginAtZero: true,
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: {
-              font: { family: 'Kanit', size: 12 },
+              font: { family: 'Kanit', size: 14 },
               callback: function(value) {
                 return formatNumber(value);
               }
@@ -518,7 +518,7 @@
           y: {
             grid: { display: false },
             ticks: {
-              font: { family: 'Kanit', size: 12 }
+              font: { family: 'Kanit', size: 14 }
             }
           }
         }
@@ -587,7 +587,7 @@
             position: 'top',
             align: 'start',
             labels: {
-              font: { family: 'Kanit', size: 12 },
+              font: { family: 'Kanit', size: 14 },
               padding: 16,
               usePointStyle: true,
               pointStyle: 'circle'
@@ -599,8 +599,8 @@
             titleColor: '#fff',
             bodyColor: 'rgba(255,255,255,0.9)',
             padding: 12,
-            titleFont: { family: 'Kanit', size: 14, weight: '600' },
-            bodyFont: { family: 'Kanit', size: 13 },
+            titleFont: { family: 'Kanit', size: 16, weight: '600' },
+            bodyFont: { family: 'Kanit', size: 15 },
             callbacks: {
               label: function(context) {
                 return `${context.dataset.label}: ${formatNumber(context.raw)}`;
@@ -613,7 +613,7 @@
             stacked: true,
             grid: { display: false },
             ticks: {
-              font: { family: 'Kanit', size: 11 },
+              font: { family: 'Kanit', size: 13 },
               maxRotation: 45,
               minRotation: 45
             }
@@ -623,7 +623,7 @@
             beginAtZero: true,
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: {
-              font: { family: 'Kanit', size: 12 },
+              font: { family: 'Kanit', size: 14 },
               callback: function(value) {
                 return formatNumber(value);
               }
