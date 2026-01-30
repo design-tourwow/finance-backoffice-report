@@ -919,7 +919,7 @@
 .dashboard-table th.sticky-right,
 .dashboard-table td.sticky-right {
   position: sticky !important;
-  z-index: 10 !important;
+  z-index: 20 !important;
 }
 
 .dashboard-table th.sticky-right {
@@ -936,8 +936,9 @@
 
 .dashboard-table th.sticky-right-second,
 .dashboard-table td.sticky-right-second {
-  right: 100px !important;
-  z-index: 12 !important;
+  right: 90px !important;
+  z-index: 21 !important;
+  min-width: 100px;
 }
 
 /* Shadow overlay for right sticky */
@@ -955,7 +956,8 @@
 .dashboard-table th.sticky-right-first,
 .dashboard-table td.sticky-right-first {
   right: 0 !important;
-  z-index: 12 !important;
+  z-index: 21 !important;
+  min-width: 90px;
 }
 
 /* Country Tags in Table (legacy - keeping for compatibility) */
