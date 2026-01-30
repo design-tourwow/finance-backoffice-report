@@ -850,13 +850,6 @@
   white-space: nowrap;
   border-left: 1px solid #f3f4f6;
   background: #fff;
-  position: relative;
-  z-index: 1;
-}
-
-.dashboard-table th.country-sub-header {
-  position: relative;
-  z-index: 1;
 }
 
 .dashboard-table tbody tr:hover td.country-cell {
