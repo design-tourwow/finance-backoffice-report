@@ -811,20 +811,18 @@
   font-weight: 600;
   border-left: 1px solid #e5e7eb;
   border-right: 1px solid #e5e7eb;
-  position: sticky !important;
-  left: 230px;
-  right: 190px;
-  z-index: 15 !important;
 }
 
 .dashboard-table th.country-sub-header {
   text-align: center;
   font-size: 13px;
-  padding: 8px 12px;
-  min-width: 80px;
+  padding: 8px 24px 8px 12px;
+  white-space: nowrap;
+  width: auto;
   background: #fafbfc;
   border-left: 1px solid #f3f4f6;
   cursor: pointer;
+  position: relative;
 }
 
 .dashboard-table th.country-sub-header:first-of-type {
@@ -848,7 +846,8 @@
 .dashboard-table td.country-cell {
   text-align: center;
   font-size: 15px;
-  padding: 12px 8px;
+  padding: 12px;
+  white-space: nowrap;
   border-left: 1px solid #f3f4f6;
   background: #fff;
   position: relative;
