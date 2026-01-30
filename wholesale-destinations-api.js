@@ -78,11 +78,7 @@ const WholesaleDestinationsAPI = {
       console.log('🔄 Fetching Wholesale Destinations with filters:', filters);
 
       const queryString = this.buildQueryString(filters);
-      // TODO: Replace with actual API endpoint when available
-      // const result = await this.fetchAPI(`/api/reports/wholesale-destinations${queryString}`);
-
-      // For now, return mock data
-      const result = this.getMockData();
+      const result = await this.fetchAPI(`/api/reports/wholesale-destinations${queryString}`);
 
       return result;
     } catch (error) {
