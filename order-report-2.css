@@ -10,7 +10,7 @@
 }
 
 .filter-section h2 {
-  font-size: 16px !important;
+  font-size: 18px !important;
   margin-bottom: 12px !important;
 }
 
@@ -28,7 +28,7 @@
 }
 
 .form-group label {
-  font-size: 13px !important;
+  font-size: 15px !important;
   margin-bottom: 0 !important;
 }
 
@@ -45,7 +45,7 @@
 
 .error-message {
   min-height: 0 !important;
-  font-size: 11px !important;
+  font-size: 15px !important;
   margin-top: 2px !important;
 }
 
@@ -89,14 +89,14 @@
 }
 
 .summary-card-label {
-  font-size: 13px;
+  font-size: 15px;
   color: #6b7280;
   margin-bottom: 4px;
   font-weight: 500;
 }
 
 .summary-card-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: #1f2937;
   line-height: 1.2;
@@ -134,7 +134,7 @@
   border: none;
   border-bottom: 3px solid transparent;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   font-family: 'Kanit', sans-serif;
   cursor: pointer;
@@ -263,7 +263,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: 16px;
   white-space: nowrap;
 }
 
@@ -286,7 +286,7 @@
   padding: 10px 40px 10px 40px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Kanit', sans-serif;
   color: #1f2937;
   background: white;
@@ -326,7 +326,7 @@
 }
 
 .table-search-results {
-  font-size: 13px;
+  font-size: 15px;
   color: #6b7280;
   margin-top: -8px;
   margin-bottom: 12px;
@@ -359,7 +359,7 @@
   padding: 10px 16px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Kanit', sans-serif;
   color: #374151;
   background: white;
@@ -409,7 +409,7 @@
 
 .table-filter-option {
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Kanit', sans-serif;
   color: #374151;
   cursor: pointer;
@@ -454,7 +454,7 @@ mark.search-highlight {
 .report-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .report-table tbody tr:hover {
@@ -498,7 +498,7 @@ mark.search-highlight {
 }
 
 .loading-state p {
-  font-size: 15px;
+  font-size: 17px;
   margin: 0;
 }
 
@@ -529,7 +529,7 @@ mark.search-highlight {
 
 .dashboard-loading-overlay p {
   margin-top: 12px;
-  font-size: 14px;
+  font-size: 16px;
   color: #6b7280;
   font-family: 'Kanit', sans-serif;
 }
@@ -556,7 +556,7 @@ mark.search-highlight {
 
 .page-loading p {
   margin-top: 16px;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 /* Country Dashboard relative for overlay */
@@ -590,14 +590,14 @@ mark.search-highlight {
 }
 
 .empty-text h3 {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   color: #374151;
   margin: 0 0 8px 0;
 }
 
 .empty-text p {
-  font-size: 14px;
+  font-size: 16px;
   color: #6b7280;
   margin: 0;
   line-height: 1.5;
@@ -609,7 +609,7 @@ mark.search-highlight {
   padding: 11px 16px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Kanit', sans-serif;
   color: #1f2937;
   background: white;
@@ -632,7 +632,7 @@ mark.search-highlight {
   padding: 11px 16px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Kanit', sans-serif;
   color: #1f2937;
   background: white;
@@ -691,7 +691,7 @@ mark.search-highlight {
 .error-message {
   display: block;
   color: #dc2626;
-  font-size: 12px;
+  font-size: 14px;
   margin-top: 4px;
   min-height: 16px;
 }
@@ -720,7 +720,7 @@ mark.search-highlight {
   }
 
   .report-table {
-    font-size: 13px;
+    font-size: 15px;
   }
 
   .report-table th,
@@ -745,12 +745,12 @@ mark.search-highlight {
   }
 
   .summary-card-value {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .report-tab {
     padding: 12px 16px;
-    font-size: 13px;
+    font-size: 15px;
     min-width: 100px;
   }
 
@@ -816,7 +816,7 @@ mark.search-highlight {
 
 .time-granularity-label {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -831,7 +831,7 @@ mark.search-highlight {
   border-radius: 6px;
   background: #fff;
   color: #1f2937;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   font-family: 'Kanit', sans-serif;
   cursor: pointer;
@@ -897,7 +897,7 @@ mark.search-highlight {
 
 .dropdown-year-header {
   padding: 10px 14px 6px;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 600;
   color: #6b7280;
   text-transform: uppercase;
@@ -932,7 +932,7 @@ mark.search-highlight {
 }
 
 .dropdown-item-label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #1f2937;
 }
@@ -942,7 +942,7 @@ mark.search-highlight {
 }
 
 .dropdown-item-count {
-  font-size: 12px;
+  font-size: 14px;
   color: #9ca3af;
 }
 
@@ -956,7 +956,7 @@ mark.search-highlight {
   border-radius: 6px;
   padding: 6px 10px;
   margin-left: 12px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   color: #1976d2;
 }
@@ -1075,7 +1075,7 @@ mark.search-highlight {
 }
 
 .kpi-label {
-  font-size: 12px;
+  font-size: 14px;
   color: #6b7280;
   margin-bottom: 2px;
   font-weight: 500;
@@ -1083,7 +1083,7 @@ mark.search-highlight {
 }
 
 .kpi-value {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #1f2937;
   line-height: 1.2;
@@ -1094,7 +1094,7 @@ mark.search-highlight {
 }
 
 .kpi-subtext {
-  font-size: 11px;
+  font-size: 15px;
   color: #9ca3af;
   margin-top: 2px;
   font-family: 'Kanit', sans-serif;
@@ -1178,7 +1178,7 @@ mark.search-highlight {
 }
 
 .glass-chart-title {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: #1f2937;
   display: flex;
@@ -1193,7 +1193,7 @@ mark.search-highlight {
 }
 
 .glass-chart-subtitle {
-  font-size: 12px;
+  font-size: 14px;
   color: #6b7280;
   margin-top: 2px;
 }
@@ -1275,7 +1275,7 @@ mark.search-highlight {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   margin-right: 12px;
   flex-shrink: 0;
@@ -1307,7 +1307,7 @@ mark.search-highlight {
 }
 
 .market-share-name {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #1f2937;
   margin-bottom: 6px;
@@ -1346,7 +1346,7 @@ mark.search-highlight {
 }
 
 .market-share-percent {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #374151;
   margin-left: 16px;
@@ -1372,7 +1372,7 @@ mark.search-highlight {
 }
 
 .dashboard-table-title {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: #1f2937;
   display: flex;
@@ -1395,13 +1395,13 @@ mark.search-highlight {
 .dashboard-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .dashboard-table thead th {
   padding: 12px 16px;
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #6b7280;
   text-transform: uppercase;
@@ -1443,7 +1443,7 @@ mark.search-highlight {
 }
 
 .sparkline-value {
-  font-size: 13px;
+  font-size: 15px;
   color: #6b7280;
   min-width: 50px;
 }
@@ -1459,7 +1459,7 @@ mark.search-highlight {
   padding: 10px 40px 10px 40px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Kanit', sans-serif;
   color: #1f2937;
   background: white;
@@ -1492,7 +1492,7 @@ mark.search-highlight {
   border-radius: 8px;
   background: white;
   color: #374151;
-  font-size: 14px;
+  font-size: 16px;
   font-family: 'Kanit', sans-serif;
   cursor: pointer;
   display: flex;
@@ -1534,7 +1534,7 @@ mark.search-highlight {
   }
 
   .kpi-value {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .glass-chart-wrapper {

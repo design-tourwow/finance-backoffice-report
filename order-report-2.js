@@ -633,7 +633,7 @@
             <line x1="15" y1="9" x2="15.01" y2="9"/>
           </svg>
           <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">ไม่พบข้อมูล</h3>
-          <p style="margin: 0; font-size: 14px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
+          <p style="margin: 0; font-size: 16px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
         </div>
       `;
     }
@@ -687,7 +687,7 @@
             <line x1="15" y1="9" x2="15.01" y2="9"/>
           </svg>
           <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">ไม่พบข้อมูล</h3>
-          <p style="margin: 0; font-size: 14px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
+          <p style="margin: 0; font-size: 16px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
         </div>
       `;
       return;
@@ -1035,7 +1035,7 @@
   function renderDashboardTableRows(data) {
     return data.map((item, index) => `
       <tr data-country="${item.country_name || ''}" data-index="${index}">
-        <td style="text-align: center; color: #9ca3af; font-size: 12px;">${index + 1}</td>
+        <td style="text-align: center; color: #9ca3af; font-size: 16px;">${index + 1}</td>
         <td style="font-weight: 500;">${item.country_name || 'ไม่ระบุ'}</td>
         <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatNumber(item.total_orders)}</td>
         <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatNumber(item.total_customers)}</td>
@@ -1444,7 +1444,7 @@
               position: 'right',
               align: 'start', // Align legend items to top
               labels: {
-                font: { family: 'Kanit', size: 11 },
+                font: { family: 'Kanit', size: 13 },
                 padding: 8,
                 usePointStyle: true,
                 pointStyle: 'circle'
@@ -1454,7 +1454,7 @@
               color: '#fff',
               font: {
                 family: 'Kanit',
-                size: 10,
+                size: 14,
                 weight: '600'
               },
               anchor: 'center',
@@ -1474,8 +1474,8 @@
               titleColor: '#fff',
               bodyColor: 'rgba(255,255,255,0.9)',
               padding: 12,
-              titleFont: { family: 'Kanit', size: 14, weight: '600' },
-              bodyFont: { family: 'Kanit', size: 13 },
+              titleFont: { family: 'Kanit', size: 16, weight: '600' },
+              bodyFont: { family: 'Kanit', size: 15 },
               callbacks: {
                 label: function(context) {
                   const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -1536,7 +1536,7 @@
               align: 'top',
               offset: 4,
               color: '#374151',
-              font: { family: 'Kanit', size: 10, weight: '600' },
+              font: { family: 'Kanit', size: 14, weight: '600' },
               formatter: function(value) {
                 return formatNumber(value);
               }
@@ -1548,8 +1548,8 @@
               borderColor: 'rgba(74, 123, 167, 0.5)',
               borderWidth: 1,
               padding: 12,
-              titleFont: { family: 'Kanit', size: 14, weight: '600' },
-              bodyFont: { family: 'Kanit', size: 13 },
+              titleFont: { family: 'Kanit', size: 16, weight: '600' },
+              bodyFont: { family: 'Kanit', size: 15 },
               callbacks: {
                 label: function(context) {
                   return `จำนวนผู้เดินทาง: ${formatNumber(context.raw)} คน`;
@@ -1562,7 +1562,7 @@
               grid: { display: false },
               ticks: {
                 color: '#6b7280',
-                font: { family: 'Kanit', size: 10 },
+                font: { family: 'Kanit', size: 14 },
                 maxRotation: 45,
                 minRotation: 45
               }
@@ -1571,7 +1571,7 @@
               grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
               ticks: {
                 color: '#6b7280',
-                font: { family: 'Kanit', size: 11 },
+                font: { family: 'Kanit', size: 13 },
                 callback: function(value) { return formatNumber(value); }
               },
               beginAtZero: true,
@@ -2072,7 +2072,7 @@
             align: 'top',
             color: '#374151',
             font: {
-              size: 12,
+              size: 14,
               weight: 'bold',
               family: 'Kanit'
             },
@@ -2104,7 +2104,7 @@
           ticks: {
             font: {
               family: 'Kanit',
-              size: 14
+              size: 16
             }
           }
         },
@@ -2177,7 +2177,7 @@
             align: 'top',
             color: '#374151',
             font: {
-              size: 12,
+              size: 14,
               weight: 'bold',
               family: 'Kanit'
             },
@@ -2217,7 +2217,7 @@
             minRotation: 90,
             font: {
               family: 'Kanit',
-              size: 14
+              size: 16
             }
           }
         },
@@ -2292,7 +2292,7 @@
             align: 'top',
             color: '#374151',
             font: {
-              size: 12,
+              size: 14,
               weight: 'bold',
               family: 'Kanit'
             },
@@ -2332,7 +2332,7 @@
             minRotation: 90,
             font: {
               family: 'Kanit',
-              size: 14
+              size: 16
             }
           }
         },
@@ -2409,7 +2409,7 @@
             align: 'top',
             color: '#374151',
             font: {
-              size: 12,
+              size: 14,
               weight: 'bold',
               family: 'Kanit'
             },
@@ -2441,7 +2441,7 @@
           ticks: {
             font: {
               family: 'Kanit',
-              size: 14
+              size: 16
             }
           }
         },
@@ -2639,7 +2639,7 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
+      font-size: 15px;
       color: #666;
       font-family: 'Kanit', sans-serif;
     `;
@@ -2881,11 +2881,11 @@
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         padding: 12,
         titleFont: {
-          size: 14,
+          size: 16,
           family: 'Kanit'
         },
         bodyFont: {
-          size: 13,
+          size: 15,
           family: 'Kanit'
         },
         filter: function(tooltipItem) {
