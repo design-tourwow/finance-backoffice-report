@@ -1442,6 +1442,7 @@
             legend: {
               display: true,
               position: 'right',
+              align: 'start', // Align legend items to top
               labels: {
                 font: { family: 'Kanit', size: 11 },
                 padding: 8,
