@@ -427,17 +427,17 @@
     return `
       <thead>
         <tr class="header-main">
-          <th rowspan="2" style="text-align: center; width: 50px;">#</th>
-          <th rowspan="2" style="text-align: left;" data-sort="name" data-type="string">
+          <th rowspan="2" class="sticky-left sticky-left-first" style="text-align: center; width: 50px;">#</th>
+          <th rowspan="2" class="sticky-left sticky-left-second" style="text-align: left; min-width: 180px;" data-sort="name" data-type="string">
             Wholesale
             <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
           </th>
           <th colspan="${countries.length}" class="country-group-header">ประเทศ</th>
-          <th rowspan="2" style="text-align: right;" data-sort="total" data-type="number">
+          <th rowspan="2" class="sticky-right sticky-right-second" style="text-align: right;" data-sort="total" data-type="number">
             ยอดรวม
             <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
           </th>
-          <th rowspan="2" style="text-align: right;">สัดส่วน</th>
+          <th rowspan="2" class="sticky-right sticky-right-first" style="text-align: right;">สัดส่วน</th>
         </tr>
         <tr class="header-sub">
           ${countries.map(country => `
@@ -458,14 +458,14 @@
 
       return `
         <tr data-wholesale="${item.name}" data-index="${index}">
-          <td style="text-align: center; color: #9ca3af; font-size: 16px;">${index + 1}</td>
-          <td style="font-weight: 500;">${item.name}</td>
+          <td class="sticky-left sticky-left-first" style="text-align: center; color: #9ca3af; font-size: 16px;">${index + 1}</td>
+          <td class="sticky-left sticky-left-second" style="font-weight: 500;">${item.name}</td>
           ${countries.map(country => {
             const count = item.countries[country] || 0;
             return `<td class="country-cell ${count === 0 ? 'zero-value' : ''}">${count === 0 ? '-' : formatNumber(count)}</td>`;
           }).join('')}
-          <td style="text-align: right; font-weight: 600; color: #4a7ba7;">${formatNumber(item.total)}</td>
-          <td style="text-align: right; color: #6b7280;">${percent}%</td>
+          <td class="sticky-right sticky-right-second" style="text-align: right; font-weight: 600; color: #4a7ba7;">${formatNumber(item.total)}</td>
+          <td class="sticky-right sticky-right-first" style="text-align: right; color: #6b7280;">${percent}%</td>
         </tr>
       `;
     }).join('');

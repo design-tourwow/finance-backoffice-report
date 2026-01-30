@@ -669,6 +669,25 @@
 /* Table Styles */
 .dashboard-table-wrapper {
   overflow-x: auto;
+  max-width: 100%;
+}
+
+.dashboard-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.dashboard-table-wrapper::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.dashboard-table-wrapper::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.dashboard-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 .dashboard-table {
@@ -828,6 +847,60 @@
 
 .dashboard-table td.country-cell.zero-value {
   color: #d1d5db;
+}
+
+/* Sticky Columns - Left side (# and Wholesale) */
+.dashboard-table th.sticky-left,
+.dashboard-table td.sticky-left {
+  position: sticky;
+  background: #f9fafb;
+  z-index: 2;
+}
+
+.dashboard-table td.sticky-left {
+  background: #fff;
+}
+
+.dashboard-table tbody tr:hover td.sticky-left {
+  background: #f8fafc;
+}
+
+.dashboard-table th.sticky-left-first,
+.dashboard-table td.sticky-left-first {
+  left: 0;
+}
+
+.dashboard-table th.sticky-left-second,
+.dashboard-table td.sticky-left-second {
+  left: 50px;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Sticky Columns - Right side (ยอดรวม and สัดส่วน) */
+.dashboard-table th.sticky-right,
+.dashboard-table td.sticky-right {
+  position: sticky;
+  background: #f9fafb;
+  z-index: 2;
+}
+
+.dashboard-table td.sticky-right {
+  background: #fff;
+}
+
+.dashboard-table tbody tr:hover td.sticky-right {
+  background: #f8fafc;
+}
+
+.dashboard-table th.sticky-right-second,
+.dashboard-table td.sticky-right-second {
+  right: 90px;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-table th.sticky-right-first,
+.dashboard-table td.sticky-right-first {
+  right: 0;
 }
 
 /* Country Tags in Table (legacy - keeping for compatibility) */
