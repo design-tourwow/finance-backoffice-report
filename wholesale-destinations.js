@@ -835,16 +835,17 @@
     try {
       showDashboardLoading();
 
-      // TODO: Call API with date filters when available
-      // const response = await WholesaleDestinationsAPI.getWholesaleDestinations({
-      //   booking_date_from: dateFrom,
-      //   booking_date_to: dateTo
-      // });
+      const response = await WholesaleDestinationsAPI.getWholesaleDestinations({
+        booking_date_from: dateFrom,
+        booking_date_to: dateTo
+      });
 
-      // For now, just hide loading (using mock data)
-      setTimeout(() => {
-        hideDashboardLoading();
-      }, 500);
+      if (response && response.success && response.data) {
+        currentData = response.data;
+        renderDashboard(response.data);
+      } else {
+        showEmpty();
+      }
 
     } catch (error) {
       console.error('❌ Failed to apply period filter:', error);
