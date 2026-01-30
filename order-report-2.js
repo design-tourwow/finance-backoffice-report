@@ -45,7 +45,16 @@
 
   // Load country report
   async function loadCountryReport() {
-    showLoading();
+    // Show initial loading state
+    const section = document.querySelector('.report-content-section');
+    if (section) {
+      section.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; color: #6b7280;">
+          <div style="width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #4a7ba7; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          <p style="margin-top: 16px; font-family: Kanit, sans-serif;">กำลังโหลดข้อมูล...</p>
+        </div>
+      `;
+    }
 
     try {
       // Fetch available periods first
@@ -1186,21 +1195,37 @@
   }
 
   // Clear period filter
-  window.clearPeriodFilter = function() {
-    selectedPeriod = { type: 'yearly', year: null, quarter: null, month: null };
+  window.clearPeriodFilter = async function() {
+    selectedPeriod = { type: null, year: null, quarter: null, month: null };
 
-    // Reset button texts
-    document.querySelectorAll('.time-btn .time-btn-text').forEach((text, index) => {
-      const labels = ['รายปี', 'รายไตรมาส', 'รายเดือน'];
-      text.textContent = labels[index];
+    // Reset button texts and remove active state
+    document.querySelectorAll('.time-btn').forEach((btn, index) => {
+      btn.classList.remove('active');
+      const text = btn.querySelector('.time-btn-text');
+      if (text) {
+        const labels = ['รายปี', 'รายไตรมาส', 'รายเดือน'];
+        text.textContent = labels[index];
+      }
     });
 
     // Hide badge
     const badge = document.getElementById('selectedPeriodBadge');
     if (badge) badge.style.display = 'none';
 
-    // Reload all data
-    loadTabData('country');
+    // Reload all data without filters
+    try {
+      const tableBody = document.getElementById('dashboardTableBody');
+      if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="spinner" style="width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #4a7ba7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;"></div></td></tr>';
+      }
+
+      const response = await OrderReport2API.getReportByCountry({});
+      if (response && response.success && response.data) {
+        renderCountryDashboardContent(response.data);
+      }
+    } catch (error) {
+      console.error('❌ Failed to clear filter:', error);
+    }
   };
 
   // Render dashboard content (update existing elements or recreate)
