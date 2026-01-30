@@ -379,7 +379,6 @@
     initSearch(wholesales, summary.total_bookings, allCountries);
     initExport(wholesales, summary.total_bookings, allCountries);
     initTableSorting(wholesales, summary.total_bookings, allCountries);
-    initCenteredCountryHeader();
   }
 
   // Truncate long names
@@ -470,38 +469,6 @@
         </tr>
       `;
     }).join('');
-  }
-
-  // Initialize centered country header (sticky in viewport center)
-  function initCenteredCountryHeader() {
-    const wrapper = document.querySelector('.dashboard-table-wrapper');
-    const header = document.querySelector('.country-group-header');
-
-    if (!wrapper || !header) return;
-
-    function updateHeaderPosition() {
-      const wrapperWidth = wrapper.clientWidth;
-      const scrollLeft = wrapper.scrollLeft;
-
-      // Calculate center position relative to visible area
-      // Left sticky columns: ~230px, Right sticky columns: ~190px
-      const leftStickyWidth = 230;
-      const rightStickyWidth = 190;
-      const visibleWidth = wrapperWidth - leftStickyWidth - rightStickyWidth;
-      const centerPosition = leftStickyWidth + (visibleWidth / 2) - 40; // -40 for header width offset
-
-      // Set the left position considering scroll
-      header.style.left = centerPosition + 'px';
-    }
-
-    // Initial position
-    updateHeaderPosition();
-
-    // Update on scroll
-    wrapper.addEventListener('scroll', updateHeaderPosition);
-
-    // Update on resize
-    window.addEventListener('resize', updateHeaderPosition);
   }
 
   // Render Top 10 Wholesales horizontal bar chart

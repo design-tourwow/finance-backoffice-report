@@ -811,9 +811,6 @@
   font-weight: 600;
   border-left: 1px solid #e5e7eb;
   border-right: 1px solid #e5e7eb;
-  position: sticky !important;
-  z-index: 15 !important;
-  /* left value will be set by JavaScript */
 }
 
 .dashboard-table th.country-sub-header {
