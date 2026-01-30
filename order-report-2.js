@@ -45,6 +45,17 @@
 
   // Load country report
   async function loadCountryReport() {
+    // Show initial loading state
+    const section = document.querySelector('.report-content-section');
+    if (section) {
+      section.innerHTML = `
+        <div class="page-loading">
+          <div class="spinner"></div>
+          <p>กำลังโหลดข้อมูล...</p>
+        </div>
+      `;
+    }
+
     try {
       // Fetch available periods first
       const periodsResponse = await OrderReport2API.getAvailablePeriods();
@@ -628,6 +639,32 @@
     }
   }
 
+  // Show dashboard loading overlay
+  function showDashboardLoading() {
+    const dashboard = document.querySelector('.country-dashboard');
+    if (!dashboard) return;
+
+    // Remove existing overlay if any
+    hideDashboardLoading();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'dashboard-loading-overlay';
+    overlay.id = 'dashboardLoadingOverlay';
+    overlay.innerHTML = `
+      <div class="spinner"></div>
+      <p>กำลังโหลดข้อมูล...</p>
+    `;
+    dashboard.appendChild(overlay);
+  }
+
+  // Hide dashboard loading overlay
+  function hideDashboardLoading() {
+    const overlay = document.getElementById('dashboardLoadingOverlay');
+    if (overlay) {
+      overlay.remove();
+    }
+  }
+
   // Show content - not needed with new structure
   function showContent() {
     // Content is rendered directly to section
@@ -1203,23 +1240,26 @@
     };
 
     try {
-      // Show loading in table area only (don't destroy dashboard)
-      const tableBody = document.getElementById('dashboardTableBody');
-      if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="spinner" style="width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #4a7ba7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;"></div><p style="margin-top: 12px; color: #6b7280;">กำลังโหลดข้อมูล...</p></td></tr>';
-      }
+      // Show loading overlay on dashboard
+      showDashboardLoading();
 
       const response = await OrderReport2API.getReportByCountry(periodFilters);
+
+      // Hide loading overlay
+      hideDashboardLoading();
+
       if (response && response.success && response.data) {
         // Re-render dashboard with filtered data
         renderCountryDashboardContent(response.data);
       } else {
+        const tableBody = document.getElementById('dashboardTableBody');
         if (tableBody) {
-          tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูล</td></tr>';
+          tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลในช่วงเวลาที่เลือก</td></tr>';
         }
       }
     } catch (error) {
       console.error('❌ Failed to apply period filter:', error);
+      hideDashboardLoading();
       const tableBody = document.getElementById('dashboardTableBody');
       if (tableBody) {
         tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #dc2626;">เกิดข้อผิดพลาด</td></tr>';
@@ -1247,17 +1287,18 @@
 
     // Reload all data without filters
     try {
-      const tableBody = document.getElementById('dashboardTableBody');
-      if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="spinner" style="width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #4a7ba7; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto;"></div></td></tr>';
-      }
+      showDashboardLoading();
 
       const response = await OrderReport2API.getReportByCountry({});
+
+      hideDashboardLoading();
+
       if (response && response.success && response.data) {
         renderCountryDashboardContent(response.data);
       }
     } catch (error) {
       console.error('❌ Failed to clear filter:', error);
+      hideDashboardLoading();
     }
   };
 
@@ -1370,7 +1411,7 @@
       scrollWrapper.style.overflowX = 'visible';
       chartWrapper.style.width = '100%';
       chartWrapper.style.minWidth = 'auto';
-      chartWrapper.style.height = '350px';
+      chartWrapper.style.height = '380px';
 
       // Pie Chart with labels INSIDE
       countryDashboardChart = new Chart(ctx, {

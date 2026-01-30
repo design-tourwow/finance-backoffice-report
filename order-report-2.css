@@ -502,6 +502,68 @@ mark.search-highlight {
   margin: 0;
 }
 
+/* Dashboard Loading Overlay */
+.dashboard-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 12px;
+}
+
+.dashboard-loading-overlay .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4a7ba7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.dashboard-loading-overlay p {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #6b7280;
+  font-family: 'Kanit', sans-serif;
+}
+
+/* Initial Page Loading */
+.page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #6b7280;
+  font-family: 'Kanit', sans-serif;
+}
+
+.page-loading .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #4a7ba7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.page-loading p {
+  margin-top: 16px;
+  font-size: 15px;
+}
+
+/* Country Dashboard relative for overlay */
+.country-dashboard {
+  position: relative;
+}
+
 /* Empty State */
 .empty-state {
   display: flex;
@@ -1168,14 +1230,19 @@ mark.search-highlight {
   background: #9ca3af;
 }
 
-/* Pie chart specific - larger size, no scroll */
+/* Pie chart specific - larger size, no scroll, space for legend */
 .glass-chart-container.pie-mode .glass-chart-scroll-wrapper {
   overflow: visible;
 }
 
 .glass-chart-container.pie-mode .glass-chart-wrapper {
-  height: 350px;
+  height: 380px;
   width: 100%;
+  min-height: 380px;
+}
+
+.glass-chart-container.pie-mode canvas {
+  max-height: 380px !important;
 }
 
 /* Market Share Container */
