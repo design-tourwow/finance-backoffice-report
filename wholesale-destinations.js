@@ -604,6 +604,11 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: {
+            left: 10
+          }
+        },
         plugins: {
           legend: {
             display: true,
@@ -612,6 +617,7 @@
             labels: {
               font: { family: 'Kanit', size: 14 },
               padding: 16,
+              boxWidth: 12,
               usePointStyle: true,
               pointStyle: 'circle'
             }

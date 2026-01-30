@@ -8,6 +8,15 @@
   display: none !important;
 }
 
+/* Report Content Section - White background container */
+.report-content-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  min-height: 400px;
+}
+
 /* Dashboard Container */
 .wholesale-dashboard {
   position: relative;
@@ -854,7 +863,7 @@
 .dashboard-table td.sticky-left {
   position: sticky;
   background: #f9fafb;
-  z-index: 2;
+  z-index: 10;
 }
 
 .dashboard-table td.sticky-left {
@@ -868,12 +877,27 @@
 .dashboard-table th.sticky-left-first,
 .dashboard-table td.sticky-left-first {
   left: 0;
+  z-index: 11;
 }
 
 .dashboard-table th.sticky-left-second,
 .dashboard-table td.sticky-left-second {
   left: 50px;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  z-index: 11;
+  position: sticky;
+}
+
+/* Shadow overlay for left sticky */
+.dashboard-table th.sticky-left-second::after,
+.dashboard-table td.sticky-left-second::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -8px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to right, rgba(0,0,0,0.06), transparent);
+  pointer-events: none;
 }
 
 /* Sticky Columns - Right side (ยอดรวม and สัดส่วน) */
@@ -881,7 +905,7 @@
 .dashboard-table td.sticky-right {
   position: sticky;
   background: #f9fafb;
-  z-index: 2;
+  z-index: 10;
 }
 
 .dashboard-table td.sticky-right {
@@ -894,13 +918,27 @@
 
 .dashboard-table th.sticky-right-second,
 .dashboard-table td.sticky-right-second {
-  right: 90px;
-  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
+  right: 100px;
+  z-index: 11;
+}
+
+/* Shadow overlay for right sticky */
+.dashboard-table th.sticky-right-second::before,
+.dashboard-table td.sticky-right-second::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to left, rgba(0,0,0,0.06), transparent);
+  pointer-events: none;
 }
 
 .dashboard-table th.sticky-right-first,
 .dashboard-table td.sticky-right-first {
   right: 0;
+  z-index: 11;
 }
 
 /* Country Tags in Table (legacy - keeping for compatibility) */
