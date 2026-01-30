@@ -124,6 +124,10 @@
           .main-content {
             position: relative;
           }
+          .main-content.locked {
+            overflow: hidden !important;
+            height: 100vh !important;
+          }
           .page-protection-overlay {
             position: absolute;
             top: 0;
@@ -131,6 +135,8 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             z-index: 9999;
           }
           .page-protection-overlay.hidden {
@@ -214,10 +220,14 @@
           (function() {
             const CORRECT_PASSWORD = 'gapgap123456';
             const STORAGE_KEY = 'sales_by_country_unlocked';
+            const mainContent = document.getElementById('main-content');
 
             // Check if already unlocked
             if (sessionStorage.getItem(STORAGE_KEY) === 'true') {
               document.getElementById('pageProtectionOverlay').classList.add('hidden');
+            } else {
+              // Lock scrolling
+              mainContent.classList.add('locked');
             }
 
             document.getElementById('protectionSubmit').addEventListener('click', checkPassword);
@@ -232,6 +242,7 @@
               if (input.value === CORRECT_PASSWORD) {
                 sessionStorage.setItem(STORAGE_KEY, 'true');
                 document.getElementById('pageProtectionOverlay').classList.add('hidden');
+                mainContent.classList.remove('locked');
               } else {
                 error.style.display = 'block';
                 input.value = '';
