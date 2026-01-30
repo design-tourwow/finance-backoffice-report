@@ -427,7 +427,7 @@
     return `
       <thead>
         <tr class="header-main">
-          <th rowspan="2" class="sticky-left sticky-left-first" style="text-align: center; width: 50px;">#</th>
+          <th rowspan="2" class="sticky-left sticky-left-first" style="text-align: center;">#</th>
           <th rowspan="2" class="sticky-left sticky-left-second" style="text-align: left; min-width: 180px;" data-sort="name" data-type="string">
             Wholesale
             <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>

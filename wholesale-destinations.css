@@ -871,6 +871,7 @@
 .dashboard-table th.sticky-left,
 .dashboard-table td.sticky-left {
   position: sticky !important;
+  box-sizing: border-box;
 }
 
 .dashboard-table th.sticky-left {
@@ -890,6 +891,9 @@
 .dashboard-table th.sticky-left-first,
 .dashboard-table td.sticky-left-first {
   left: 0 !important;
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
 }
 
 .dashboard-table th.sticky-left-first {
@@ -902,7 +906,7 @@
 
 .dashboard-table th.sticky-left-second,
 .dashboard-table td.sticky-left-second {
-  left: 50px !important;
+  left: 60px !important;
   border-right: 1px solid #e5e7eb;
 }
 
