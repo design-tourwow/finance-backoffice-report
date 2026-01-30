@@ -822,7 +822,6 @@
   background: #fafbfc;
   border-left: 1px solid #f3f4f6;
   cursor: pointer;
-  position: relative;
 }
 
 .dashboard-table th.country-sub-header:first-of-type {
@@ -872,15 +871,16 @@
 .dashboard-table th.sticky-left,
 .dashboard-table td.sticky-left {
   position: sticky !important;
-  z-index: 10 !important;
 }
 
 .dashboard-table th.sticky-left {
   background: #f9fafb !important;
+  z-index: 25 !important;
 }
 
 .dashboard-table td.sticky-left {
   background: #fff !important;
+  z-index: 10 !important;
 }
 
 .dashboard-table tbody tr:hover td.sticky-left {
@@ -890,12 +890,26 @@
 .dashboard-table th.sticky-left-first,
 .dashboard-table td.sticky-left-first {
   left: 0 !important;
+}
+
+.dashboard-table th.sticky-left-first {
+  z-index: 26 !important;
+}
+
+.dashboard-table td.sticky-left-first {
   z-index: 12 !important;
 }
 
 .dashboard-table th.sticky-left-second,
 .dashboard-table td.sticky-left-second {
   left: 50px !important;
+}
+
+.dashboard-table th.sticky-left-second {
+  z-index: 26 !important;
+}
+
+.dashboard-table td.sticky-left-second {
   z-index: 12 !important;
 }
 
@@ -915,15 +929,16 @@
 .dashboard-table th.sticky-right,
 .dashboard-table td.sticky-right {
   position: sticky !important;
-  z-index: 20 !important;
 }
 
 .dashboard-table th.sticky-right {
   background: #f9fafb !important;
+  z-index: 25 !important;
 }
 
 .dashboard-table td.sticky-right {
   background: #fff !important;
+  z-index: 20 !important;
 }
 
 .dashboard-table tbody tr:hover td.sticky-right {
@@ -933,8 +948,15 @@
 .dashboard-table th.sticky-right-second,
 .dashboard-table td.sticky-right-second {
   right: 90px !important;
-  z-index: 21 !important;
   min-width: 100px;
+}
+
+.dashboard-table th.sticky-right-second {
+  z-index: 26 !important;
+}
+
+.dashboard-table td.sticky-right-second {
+  z-index: 21 !important;
 }
 
 /* Shadow overlay for right sticky */
@@ -952,6 +974,13 @@
 .dashboard-table th.sticky-right-first,
 .dashboard-table td.sticky-right-first {
   right: 0 !important;
+}
+
+.dashboard-table th.sticky-right-first {
+  z-index: 26 !important;
+}
+
+.dashboard-table td.sticky-right-first {
   z-index: 21 !important;
   min-width: 90px;
 }
