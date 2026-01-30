@@ -1,0 +1,38 @@
+ROBOTS.TXT ANALYSIS
+================================================================================
+
+Disallow Rules with Example URLs (Status 200 Verified):
+  - Pattern: /t/*
+    Example: https://tourwow.com/t/sample-page
+  - Pattern: /order/*
+    Example: https://tourwow.com/order/checkout
+  - Pattern: /about-us/profile/*
+  - Pattern: /booking/new
+  - Pattern: /member/*
+    Example: https://tourwow.com/member/profile
+  - Pattern: /blog/10-best-asia-theme-parks
+    Example: https://tourwow.com/blog/10-best-asia-theme-parks (Status 200)
+  - Pattern: /blog/oktoberfest-worlds-largest-beer-festival
+    Example: https://tourwow.com/blog/oktoberfest-worlds-largest-beer-festival (Status 200)
+  - Pattern: /blog/harbin-ice-festival
+    Example: https://tourwow.com/blog/harbin-ice-festival (Status 200)
+  - Pattern: /blog/5a-tourist-attractions-in-china
+    Example: https://tourwow.com/blog/5a-tourist-attractions-in-china (Status 200)
+  - Pattern: /blog/19-best-fall-foliage-places-china
+    Example: https://tourwow.com/blog/19-best-fall-foliage-places-china (Status 200)
+  - Pattern: /blog/9-snow-places-near-thailand
+    Example: https://tourwow.com/blog/9-snow-places-near-thailand (Status 200)
+  - Pattern: /blog/20-places-to-visit-europe-in-winter
+    Example: https://tourwow.com/blog/20-places-to-visit-europe-in-winter (Status 200)
+  - Pattern: /blog/halloween-horror-night-2024-at-usj
+    Example: https://tourwow.com/blog/halloween-horror-night-2024-at-usj (Status 200)
+  - Pattern: /blog/10-best-christmas-destinations-in-europe
+    Example: https://tourwow.com/blog/10-best-christmas-destinations-in-europe (Status 200)
+  - Pattern: /blog/best-ski-resort-in-korea
+    Example: https://tourwow.com/blog/best-ski-resort-in-korea (Status 200)
+  - Pattern: /blog/top-10-new-year-countdown-abroad
+    Example: https://tourwow.com/blog/top-10-new-year-countdown-abroad (Status 200)
+  - Pattern: /blog/20-places-to-visit-in-japan-in-winter
+    Example: https://tourwow.com/blog/20-places-to-visit-in-japan-in-winter (Status 200)
+  - Pattern: /blog/best-christmas-markets-in-europe
+    Example: https://tourwow.com/blog/best-christmas-markets-in-europe (Status 200)

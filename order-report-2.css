@@ -102,7 +102,16 @@
   line-height: 1.2;
 }
 
-/* Report Tabs */
+/* Report Section */
+.report-content-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  padding: 24px;
+}
+
+/* Report Tabs (legacy - keep for other reports) */
 .report-tabs-section {
   background: white;
   border-radius: 12px;

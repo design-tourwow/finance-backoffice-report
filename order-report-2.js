@@ -30,25 +30,43 @@
   });
 
   async function initOrderReport() {
-    console.log('🎯 Initializing Order Report...');
+    console.log('🎯 Initializing Country Report...');
 
     // Check authentication and token expiry
     if (!validateToken()) {
       return;
     }
 
-    // Initialize components
-    initTabs();
-    initFilters();
-    initDatePickers();
-    initFormHandler();
-    initTableSearch();
-    initExportButton();
-    
-    // Load initial data
-    await loadInitialData();
-    
-    console.log('✅ Order Report initialized');
+    // Load country report directly (no tabs)
+    await loadCountryReport();
+
+    console.log('✅ Country Report initialized');
+  }
+
+  // Load country report
+  async function loadCountryReport() {
+    showLoading();
+
+    try {
+      // Fetch available periods first
+      const periodsResponse = await OrderReport2API.getAvailablePeriods();
+      if (periodsResponse && periodsResponse.success && periodsResponse.data) {
+        availablePeriods = periodsResponse.data;
+        console.log('📅 Available Periods:', availablePeriods);
+      }
+
+      // Load all data (no filter)
+      const response = await OrderReport2API.getReportByCountry({});
+
+      if (response && response.success && response.data) {
+        renderCountryReport(response);
+      } else {
+        showEmpty();
+      }
+    } catch (error) {
+      console.error('❌ Failed to load country report:', error);
+      showEmpty();
+    }
   }
 
   // Check authentication (token exists)
@@ -637,7 +655,7 @@
     const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
 
     // Create dashboard HTML
-    const tabContent = document.querySelector('.report-tab-content');
+    const tabContent = document.querySelector('.report-content-section');
 
     // Remove existing dashboard if any
     const existingDashboard = document.querySelector('.country-dashboard');
@@ -979,13 +997,9 @@
       });
     });
 
-    // Set default selection (latest year)
-    if (availablePeriods && availablePeriods.years && availablePeriods.years.length > 0) {
-      const latestYear = availablePeriods.years[0];
-      selectedPeriod = { type: 'yearly', year: latestYear.year_ce, quarter: null, month: null };
-      updateSelectedPeriodBadge();
-      applyPeriodFilter(data);
-    }
+    // No default selection - show all data
+    // User must click dropdown to filter by period
+    selectedPeriod = { type: null, year: null, quarter: null, month: null };
   }
 
   // Populate time dropdowns with data from database
