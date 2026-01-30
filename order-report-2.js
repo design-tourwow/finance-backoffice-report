@@ -777,7 +777,7 @@
         <!-- Charts Row -->
         <div class="dashboard-charts-row">
           <!-- Main Chart with Toggle -->
-          <div class="glass-chart-container">
+          <div class="glass-chart-container" id="mainChartContainer">
             <div class="glass-chart-header">
               <div>
                 <div class="glass-chart-title">
@@ -788,7 +788,7 @@
                   </svg>
                   จำนวนผู้เดินทางตามประเทศ
                 </div>
-                <div class="glass-chart-subtitle">ทุกประเทศ (เรียงตามจำนวน)</div>
+                <div class="glass-chart-subtitle" id="chartSubtitle">ทุกประเทศ (เรียงตามจำนวน)</div>
               </div>
               <div class="chart-type-toggle">
                 <button class="chart-type-btn active" data-type="bar" title="Bar Chart">
@@ -806,8 +806,10 @@
                 </button>
               </div>
             </div>
-            <div class="glass-chart-wrapper">
-              <canvas id="countryAreaChart"></canvas>
+            <div class="glass-chart-scroll-wrapper" id="chartScrollWrapper">
+              <div class="glass-chart-wrapper" id="chartWrapper">
+                <canvas id="countryAreaChart"></canvas>
+              </div>
             </div>
           </div>
 
@@ -1337,7 +1339,9 @@
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    const chartWrapper = canvas.parentElement;
+    const chartWrapper = document.getElementById('chartWrapper');
+    const scrollWrapper = document.getElementById('chartScrollWrapper');
+    const chartContainer = document.getElementById('mainChartContainer');
 
     // Destroy existing chart
     if (countryDashboardChart) {
@@ -1359,12 +1363,16 @@
     const pieColors = sortedData.map((_, i) => baseColors[i % baseColors.length]);
 
     if (chartType === 'pie') {
-      // Reset chart wrapper for pie (no scroll needed)
-      chartWrapper.style.width = '100%';
-      chartWrapper.style.overflowX = 'visible';
-      canvas.style.width = '100%';
+      // Add pie-mode class for CSS
+      chartContainer.classList.add('pie-mode');
 
-      // Pie Chart with outside labels
+      // Reset scroll wrapper for pie (no scroll)
+      scrollWrapper.style.overflowX = 'visible';
+      chartWrapper.style.width = '100%';
+      chartWrapper.style.minWidth = 'auto';
+      chartWrapper.style.height = '350px';
+
+      // Pie Chart with labels INSIDE
       countryDashboardChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -1380,34 +1388,35 @@
           responsive: true,
           maintainAspectRatio: false,
           layout: {
-            padding: {
-              top: 30,
-              bottom: 30,
-              left: 20,
-              right: 20
-            }
+            padding: 10
           },
           plugins: {
             legend: {
-              display: false
+              display: true,
+              position: 'right',
+              labels: {
+                font: { family: 'Kanit', size: 11 },
+                padding: 8,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
             },
             datalabels: {
-              color: '#374151',
+              color: '#fff',
               font: {
                 family: 'Kanit',
-                size: 11,
-                weight: '500'
+                size: 10,
+                weight: '600'
               },
-              anchor: 'end',
-              align: 'end',
-              offset: 8,
+              anchor: 'center',
+              align: 'center',
               formatter: function(value, context) {
                 const label = context.chart.data.labels[context.dataIndex];
-                // Only show label if segment is large enough
                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                 const percent = (value / total) * 100;
-                if (percent < 3) return '';
-                return `${label}\n${formatNumber(value)}`;
+                // Only show if segment is large enough
+                if (percent < 5) return '';
+                return label;
               },
               textAlign: 'center'
             },
@@ -1431,20 +1440,27 @@
         plugins: [ChartDataLabels]
       });
     } else {
+      // Remove pie-mode class
+      chartContainer.classList.remove('pie-mode');
+
       // Bar Chart - calculate width based on data count for scrolling
       const barWidth = 50;
-      const minChartWidth = sortedData.length * (barWidth + 10);
-      const containerWidth = chartWrapper.parentElement.clientWidth - 40;
+      const gap = 10;
+      const minChartWidth = sortedData.length * (barWidth + gap);
+      const containerWidth = scrollWrapper.clientWidth - 20;
+
+      // Reset height for bar chart
+      chartWrapper.style.height = '280px';
 
       if (minChartWidth > containerWidth) {
-        // Enable horizontal scroll
+        // Enable horizontal scroll on scroll wrapper only
+        scrollWrapper.style.overflowX = 'auto';
         chartWrapper.style.width = minChartWidth + 'px';
         chartWrapper.style.minWidth = minChartWidth + 'px';
-        chartWrapper.parentElement.style.overflowX = 'auto';
       } else {
+        scrollWrapper.style.overflowX = 'visible';
         chartWrapper.style.width = '100%';
         chartWrapper.style.minWidth = 'auto';
-        chartWrapper.parentElement.style.overflowX = 'visible';
       }
 
       countryDashboardChart = new Chart(ctx, {

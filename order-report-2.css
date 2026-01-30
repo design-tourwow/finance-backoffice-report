@@ -1139,28 +1139,43 @@ mark.search-highlight {
   min-width: 100%;
 }
 
-/* Chart scroll container */
+/* Chart scroll container - header stays fixed */
 .glass-chart-container {
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: visible;
 }
 
-.glass-chart-container::-webkit-scrollbar {
+.glass-chart-scroll-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-top: 8px;
+}
+
+.glass-chart-scroll-wrapper::-webkit-scrollbar {
   height: 8px;
 }
 
-.glass-chart-container::-webkit-scrollbar-track {
+.glass-chart-scroll-wrapper::-webkit-scrollbar-track {
   background: #f3f4f6;
   border-radius: 4px;
 }
 
-.glass-chart-container::-webkit-scrollbar-thumb {
+.glass-chart-scroll-wrapper::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 4px;
 }
 
-.glass-chart-container::-webkit-scrollbar-thumb:hover {
+.glass-chart-scroll-wrapper::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+/* Pie chart specific - larger size, no scroll */
+.glass-chart-container.pie-mode .glass-chart-scroll-wrapper {
+  overflow: visible;
+}
+
+.glass-chart-container.pie-mode .glass-chart-wrapper {
+  height: 350px;
+  width: 100%;
 }
 
 /* Market Share Container */
