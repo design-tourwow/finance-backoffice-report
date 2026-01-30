@@ -447,6 +447,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   margin-top: 8px;
+  padding-left: 15px;
 }
 
 .glass-chart-scroll-wrapper::-webkit-scrollbar {
@@ -844,6 +845,18 @@
   font-size: 15px;
   padding: 12px 8px;
   border-left: 1px solid #f3f4f6;
+  background: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-table th.country-sub-header {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-table tbody tr:hover td.country-cell {
+  background: #f8fafc;
 }
 
 .dashboard-table td.country-cell:first-of-type {
@@ -861,84 +874,87 @@
 /* Sticky Columns - Left side (# and Wholesale) */
 .dashboard-table th.sticky-left,
 .dashboard-table td.sticky-left {
-  position: sticky;
-  background: #f9fafb;
-  z-index: 10;
+  position: sticky !important;
+  z-index: 10 !important;
+}
+
+.dashboard-table th.sticky-left {
+  background: #f9fafb !important;
 }
 
 .dashboard-table td.sticky-left {
-  background: #fff;
+  background: #fff !important;
 }
 
 .dashboard-table tbody tr:hover td.sticky-left {
-  background: #f8fafc;
+  background: #f8fafc !important;
 }
 
 .dashboard-table th.sticky-left-first,
 .dashboard-table td.sticky-left-first {
-  left: 0;
-  z-index: 11;
+  left: 0 !important;
+  z-index: 12 !important;
 }
 
 .dashboard-table th.sticky-left-second,
 .dashboard-table td.sticky-left-second {
-  left: 50px;
-  z-index: 11;
-  position: sticky;
+  left: 50px !important;
+  z-index: 12 !important;
 }
 
 /* Shadow overlay for left sticky */
-.dashboard-table th.sticky-left-second::after,
 .dashboard-table td.sticky-left-second::after {
   content: '';
   position: absolute;
   top: 0;
-  right: -8px;
+  right: -6px;
   bottom: 0;
-  width: 8px;
-  background: linear-gradient(to right, rgba(0,0,0,0.06), transparent);
+  width: 6px;
+  background: linear-gradient(to right, rgba(0,0,0,0.08), transparent);
   pointer-events: none;
 }
 
 /* Sticky Columns - Right side (ยอดรวม and สัดส่วน) */
 .dashboard-table th.sticky-right,
 .dashboard-table td.sticky-right {
-  position: sticky;
-  background: #f9fafb;
-  z-index: 10;
+  position: sticky !important;
+  z-index: 10 !important;
+}
+
+.dashboard-table th.sticky-right {
+  background: #f9fafb !important;
 }
 
 .dashboard-table td.sticky-right {
-  background: #fff;
+  background: #fff !important;
 }
 
 .dashboard-table tbody tr:hover td.sticky-right {
-  background: #f8fafc;
+  background: #f8fafc !important;
 }
 
 .dashboard-table th.sticky-right-second,
 .dashboard-table td.sticky-right-second {
-  right: 100px;
-  z-index: 11;
+  right: 100px !important;
+  z-index: 12 !important;
 }
 
 /* Shadow overlay for right sticky */
-.dashboard-table th.sticky-right-second::before,
 .dashboard-table td.sticky-right-second::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -8px;
+  left: -6px;
   bottom: 0;
-  width: 8px;
-  background: linear-gradient(to left, rgba(0,0,0,0.06), transparent);
+  width: 6px;
+  background: linear-gradient(to left, rgba(0,0,0,0.08), transparent);
   pointer-events: none;
 }
 
 .dashboard-table th.sticky-right-first,
 .dashboard-table td.sticky-right-first {
-  right: 0;
-  z-index: 11;
+  right: 0 !important;
+  z-index: 12 !important;
 }
 
 /* Country Tags in Table (legacy - keeping for compatibility) */

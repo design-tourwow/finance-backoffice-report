@@ -606,7 +606,8 @@
         maintainAspectRatio: false,
         layout: {
           padding: {
-            left: 10
+            left: 20,
+            top: 10
           }
         },
         plugins: {
@@ -616,10 +617,13 @@
             align: 'start',
             labels: {
               font: { family: 'Kanit', size: 14 },
-              padding: 16,
+              padding: 20,
               boxWidth: 12,
               usePointStyle: true,
               pointStyle: 'circle'
+            },
+            title: {
+              display: false
             }
           },
           datalabels: { display: false },
