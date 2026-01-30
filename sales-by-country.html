@@ -77,145 +77,6 @@
     </style>
   </head>
   <body>
-    <!-- Password Protection Overlay -->
-    <div id="pageProtectionOverlay" class="page-protection-overlay">
-      <div class="protection-modal">
-        <div class="protection-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-        </div>
-        <h2 class="protection-title">รายงานนี้ยังไม่ได้รับการอนุมัติให้ใช้งาน</h2>
-        <p class="protection-message">โปรดกรอกรหัสผ่านเพื่อใช้งาน</p>
-        <div class="protection-input-group">
-          <input type="password" id="protectionPassword" class="protection-input" placeholder="กรอกรหัสผ่าน" autocomplete="off">
-          <button type="button" id="protectionSubmit" class="protection-submit">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </button>
-        </div>
-        <p id="protectionError" class="protection-error" style="display: none;">รหัสผ่านไม่ถูกต้อง</p>
-      </div>
-    </div>
-    <style>
-      .page-protection-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
-        backdrop-filter: blur(5px);
-      }
-      .page-protection-overlay.hidden {
-        display: none;
-      }
-      .protection-modal {
-        background: white;
-        border-radius: 16px;
-        padding: 40px;
-        max-width: 400px;
-        width: 90%;
-        text-align: center;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      }
-      .protection-icon {
-        width: 80px;
-        height: 80px;
-        background: #f3f4f6;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 20px;
-        color: #6b7280;
-      }
-      .protection-title {
-        font-family: 'Kanit', sans-serif;
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0 0 8px;
-      }
-      .protection-message {
-        font-family: 'Kanit', sans-serif;
-        font-size: 14px;
-        color: #6b7280;
-        margin: 0 0 24px;
-      }
-      .protection-input-group {
-        display: flex;
-        gap: 8px;
-      }
-      .protection-input {
-        flex: 1;
-        padding: 12px 16px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-family: 'Kanit', sans-serif;
-        font-size: 16px;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-      .protection-input:focus {
-        border-color: #4a7ba7;
-      }
-      .protection-submit {
-        padding: 12px 16px;
-        background: #4a7ba7;
-        border: none;
-        border-radius: 8px;
-        color: white;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .protection-submit:hover {
-        background: #3d6a91;
-      }
-      .protection-error {
-        font-family: 'Kanit', sans-serif;
-        font-size: 14px;
-        color: #dc2626;
-        margin: 12px 0 0;
-      }
-    </style>
-    <script>
-      (function() {
-        const CORRECT_PASSWORD = 'gapgap123456';
-        const STORAGE_KEY = 'sales_by_country_unlocked';
-
-        // Check if already unlocked
-        if (sessionStorage.getItem(STORAGE_KEY) === 'true') {
-          document.getElementById('pageProtectionOverlay').classList.add('hidden');
-        }
-
-        document.getElementById('protectionSubmit').addEventListener('click', checkPassword);
-        document.getElementById('protectionPassword').addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') checkPassword();
-        });
-
-        function checkPassword() {
-          const input = document.getElementById('protectionPassword');
-          const error = document.getElementById('protectionError');
-
-          if (input.value === CORRECT_PASSWORD) {
-            sessionStorage.setItem(STORAGE_KEY, 'true');
-            document.getElementById('pageProtectionOverlay').classList.add('hidden');
-          } else {
-            error.style.display = 'block';
-            input.value = '';
-            input.focus();
-          }
-        }
-      })();
-    </script>
-
     <!-- Skip to main content -->
     <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
 
@@ -247,6 +108,131 @@
 
       <!-- Main Content -->
       <main class="main-content" id="main-content" role="main">
+        <!-- Password Protection Overlay (covers only main content) -->
+        <div id="pageProtectionOverlay" class="page-protection-overlay">
+          <div class="protection-modal">
+            <h2 class="protection-title">รายงานนี้ยังไม่ได้รับการอนุมัติให้ใช้งาน</h2>
+            <p class="protection-message">โปรดกรอกรหัสผ่านเพื่อใช้งาน</p>
+            <input type="password" id="protectionPassword" class="protection-input" placeholder="" autocomplete="off">
+            <div class="protection-actions">
+              <button type="button" id="protectionSubmit" class="protection-submit">Submit</button>
+            </div>
+            <p id="protectionError" class="protection-error" style="display: none;">รหัสผ่านไม่ถูกต้อง</p>
+          </div>
+        </div>
+        <style>
+          .page-protection-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+          }
+          .page-protection-overlay.hidden {
+            display: none;
+          }
+          .protection-modal {
+            background: #333;
+            border-radius: 12px;
+            padding: 28px 32px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          }
+          .protection-title {
+            font-family: 'Kanit', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #fff;
+            margin: 0 0 12px;
+          }
+          .protection-message {
+            font-family: 'Kanit', sans-serif;
+            font-size: 14px;
+            color: #aaa;
+            margin: 0 0 20px;
+          }
+          .protection-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 4px;
+            background: #666;
+            font-family: 'Kanit', sans-serif;
+            font-size: 16px;
+            color: #fff;
+            outline: none;
+            box-sizing: border-box;
+          }
+          .protection-input:focus {
+            background: #777;
+          }
+          .protection-input::placeholder {
+            color: #999;
+          }
+          .protection-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+          }
+          .protection-submit {
+            padding: 8px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 15px;
+            color: #aaa;
+            cursor: pointer;
+            transition: color 0.2s;
+          }
+          .protection-submit:hover {
+            color: #fff;
+          }
+          .protection-error {
+            font-family: 'Kanit', sans-serif;
+            font-size: 13px;
+            color: #ff6b6b;
+            margin: 12px 0 0;
+            text-align: center;
+          }
+        </style>
+        <script>
+          (function() {
+            const CORRECT_PASSWORD = 'gapgap123456';
+            const STORAGE_KEY = 'sales_by_country_unlocked';
+
+            // Check if already unlocked
+            if (sessionStorage.getItem(STORAGE_KEY) === 'true') {
+              document.getElementById('pageProtectionOverlay').classList.add('hidden');
+            }
+
+            document.getElementById('protectionSubmit').addEventListener('click', checkPassword);
+            document.getElementById('protectionPassword').addEventListener('keypress', function(e) {
+              if (e.key === 'Enter') checkPassword();
+            });
+
+            function checkPassword() {
+              const input = document.getElementById('protectionPassword');
+              const error = document.getElementById('protectionError');
+
+              if (input.value === CORRECT_PASSWORD) {
+                sessionStorage.setItem(STORAGE_KEY, 'true');
+                document.getElementById('pageProtectionOverlay').classList.add('hidden');
+              } else {
+                error.style.display = 'block';
+                input.value = '';
+                input.focus();
+              }
+            }
+          })();
+        </script>
+
         <!-- Top Bar -->
         <nav class="top-bar" role="banner">
           <div class="top-bar-container">
