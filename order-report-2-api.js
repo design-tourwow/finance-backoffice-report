@@ -230,13 +230,30 @@ const OrderReport2API = {
   async getLeadTimeAnalysis(filters = {}) {
     try {
       console.log('🔄 Fetching Lead Time Analysis with filters:', filters);
-      
+
       const queryString = this.buildQueryString(filters);
       const result = await this.fetchAPI(`/api/reports/lead-time-analysis${queryString}`);
-      
+
       return result;
     } catch (error) {
       console.error('❌ Lead Time Analysis Error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get Available Time Periods (years, quarters, months from database)
+   * @returns {Promise<Object>}
+   */
+  async getAvailablePeriods() {
+    try {
+      console.log('🔄 Fetching Available Time Periods');
+
+      const result = await this.fetchAPI('/api/reports/available-periods');
+
+      return result;
+    } catch (error) {
+      console.error('❌ Available Periods Error:', error);
       throw error;
     }
   }

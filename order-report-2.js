@@ -13,7 +13,9 @@
   // Country dashboard charts
   let countryDashboardChart = null;
   let marketShareChart = null;
-  let currentTimeGranularity = 'monthly';
+  let currentTimeGranularity = 'yearly';
+  let availablePeriods = null;
+  let selectedPeriod = { type: 'yearly', year: null, quarter: null, month: null };
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -645,14 +647,42 @@
 
     const dashboardHTML = `
       <div class="country-dashboard">
-        <!-- Time Granularity Control -->
+        <!-- Time Granularity Control with Dropdowns -->
         <div class="time-granularity-control">
           <span class="time-granularity-label">แสดงข้อมูล:</span>
           <div class="time-granularity-buttons">
-            <button class="time-btn" data-granularity="yearly">รายปี</button>
-            <button class="time-btn" data-granularity="quarterly">รายไตรมาส</button>
-            <button class="time-btn active" data-granularity="monthly">รายเดือน</button>
+            <!-- Yearly Dropdown -->
+            <div class="time-dropdown-wrapper">
+              <button class="time-btn active" data-granularity="yearly" id="yearlyBtn">
+                <span class="time-btn-text">รายปี</span>
+                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="time-dropdown-menu" id="yearlyDropdown"></div>
+            </div>
+            <!-- Quarterly Dropdown -->
+            <div class="time-dropdown-wrapper">
+              <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
+                <span class="time-btn-text">รายไตรมาส</span>
+                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
+            </div>
+            <!-- Monthly Dropdown -->
+            <div class="time-dropdown-wrapper">
+              <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
+                <span class="time-btn-text">รายเดือน</span>
+                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="time-dropdown-menu" id="monthlyDropdown"></div>
+            </div>
           </div>
+          <div class="selected-period-badge" id="selectedPeriodBadge" style="display: none;"></div>
         </div>
 
         <!-- KPI Cards -->
@@ -904,25 +934,286 @@
     `).join('');
   }
 
-  // Initialize time granularity buttons
-  function initTimeGranularityButtons(data) {
-    const buttons = document.querySelectorAll('.time-btn');
-    buttons.forEach(btn => {
-      btn.addEventListener('click', function() {
-        buttons.forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        currentTimeGranularity = this.dataset.granularity;
-
-        // Update subtitle
-        const subtitle = document.querySelector('.glass-chart-subtitle');
-        if (subtitle) {
-          subtitle.textContent = `แสดงข้อมูลตาม${getGranularityLabel(currentTimeGranularity)}`;
+  // Initialize time granularity dropdown buttons
+  async function initTimeGranularityButtons(data) {
+    // Fetch available periods if not already loaded
+    if (!availablePeriods) {
+      try {
+        const response = await OrderReport2API.getAvailablePeriods();
+        if (response && response.success && response.data) {
+          availablePeriods = response.data;
+          console.log('📅 Available Periods:', availablePeriods);
         }
+      } catch (error) {
+        console.error('❌ Failed to fetch available periods:', error);
+        availablePeriods = { years: [] };
+      }
+    }
 
-        // Re-render chart
-        renderCountryAreaChart(data, currentTimeGranularity);
+    // Populate dropdowns
+    populateTimeDropdowns();
+
+    // Initialize dropdown click handlers
+    const dropdownWrappers = document.querySelectorAll('.time-dropdown-wrapper');
+    dropdownWrappers.forEach(wrapper => {
+      const btn = wrapper.querySelector('.time-btn');
+      const dropdown = wrapper.querySelector('.time-dropdown-menu');
+
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        // Close other dropdowns
+        document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+          if (menu !== dropdown) menu.classList.remove('show');
+        });
+
+        // Toggle this dropdown
+        dropdown.classList.toggle('show');
       });
     });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+      });
+    });
+
+    // Set default selection (latest year)
+    if (availablePeriods && availablePeriods.years && availablePeriods.years.length > 0) {
+      const latestYear = availablePeriods.years[0];
+      selectedPeriod = { type: 'yearly', year: latestYear.year_ce, quarter: null, month: null };
+      updateSelectedPeriodBadge();
+      applyPeriodFilter(data);
+    }
+  }
+
+  // Populate time dropdowns with data from database
+  function populateTimeDropdowns() {
+    if (!availablePeriods || !availablePeriods.years) return;
+
+    const years = availablePeriods.years;
+
+    // Yearly dropdown
+    const yearlyDropdown = document.getElementById('yearlyDropdown');
+    if (yearlyDropdown) {
+      yearlyDropdown.innerHTML = years.map(year => `
+        <div class="time-dropdown-item" data-type="yearly" data-year="${year.year_ce}" data-label="${year.label}">
+          <span class="dropdown-item-label">พ.ศ. ${year.label}</span>
+          <span class="dropdown-item-count">${formatNumber(year.total_orders)} orders</span>
+        </div>
+      `).join('');
+    }
+
+    // Quarterly dropdown - grouped by year
+    const quarterlyDropdown = document.getElementById('quarterlyDropdown');
+    if (quarterlyDropdown) {
+      let quarterlyHTML = '';
+      years.forEach(year => {
+        quarterlyHTML += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+        year.quarters.forEach(q => {
+          quarterlyHTML += `
+            <div class="time-dropdown-item" data-type="quarterly" data-year="${year.year_ce}" data-quarter="${q.quarter}" data-label="${q.label} ${year.label}">
+              <span class="dropdown-item-label">${q.label}</span>
+            </div>
+          `;
+        });
+      });
+      quarterlyDropdown.innerHTML = quarterlyHTML;
+    }
+
+    // Monthly dropdown - grouped by year
+    const monthlyDropdown = document.getElementById('monthlyDropdown');
+    if (monthlyDropdown) {
+      let monthlyHTML = '';
+      years.forEach(year => {
+        monthlyHTML += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+        year.months.forEach(m => {
+          monthlyHTML += `
+            <div class="time-dropdown-item" data-type="monthly" data-year="${year.year_ce}" data-month="${m.month}" data-label="${m.label_short} ${year.label}">
+              <span class="dropdown-item-label">${m.label}</span>
+            </div>
+          `;
+        });
+      });
+      monthlyDropdown.innerHTML = monthlyHTML;
+    }
+
+    // Add click handlers to all dropdown items
+    document.querySelectorAll('.time-dropdown-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        const type = this.dataset.type;
+        const year = parseInt(this.dataset.year);
+        const quarter = this.dataset.quarter ? parseInt(this.dataset.quarter) : null;
+        const month = this.dataset.month ? parseInt(this.dataset.month) : null;
+        const label = this.dataset.label;
+
+        // Update selection
+        selectedPeriod = { type, year, quarter, month };
+        currentTimeGranularity = type;
+
+        // Update button states
+        document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-granularity="${type}"]`).classList.add('active');
+
+        // Update button text
+        const btnText = document.querySelector(`[data-granularity="${type}"] .time-btn-text`);
+        if (btnText) {
+          btnText.textContent = label;
+        }
+
+        // Close dropdown
+        document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+          menu.classList.remove('show');
+        });
+
+        // Update badge and reload data
+        updateSelectedPeriodBadge();
+        applyPeriodFilter(currentTabData);
+      });
+    });
+  }
+
+  // Update selected period badge
+  function updateSelectedPeriodBadge() {
+    const badge = document.getElementById('selectedPeriodBadge');
+    if (!badge || !selectedPeriod.year) return;
+
+    let label = '';
+    const yearBE = selectedPeriod.year + 543;
+
+    if (selectedPeriod.type === 'yearly') {
+      label = `พ.ศ. ${yearBE}`;
+    } else if (selectedPeriod.type === 'quarterly' && selectedPeriod.quarter) {
+      label = `ไตรมาส ${selectedPeriod.quarter}/${yearBE}`;
+    } else if (selectedPeriod.type === 'monthly' && selectedPeriod.month) {
+      const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      label = `${monthNames[selectedPeriod.month - 1]} ${yearBE}`;
+    }
+
+    badge.innerHTML = `
+      <span>${label}</span>
+      <button class="badge-clear" onclick="clearPeriodFilter()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    `;
+    badge.style.display = 'flex';
+  }
+
+  // Apply period filter and reload data
+  async function applyPeriodFilter(data) {
+    if (!selectedPeriod.year) return;
+
+    // Calculate date range based on selection
+    let dateFrom, dateTo;
+    const year = selectedPeriod.year;
+
+    if (selectedPeriod.type === 'yearly') {
+      dateFrom = `${year}-01-01`;
+      dateTo = `${year}-12-31`;
+    } else if (selectedPeriod.type === 'quarterly' && selectedPeriod.quarter) {
+      const q = selectedPeriod.quarter;
+      const startMonth = (q - 1) * 3 + 1;
+      const endMonth = q * 3;
+      dateFrom = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, endMonth, 0).getDate();
+      dateTo = `${year}-${String(endMonth).padStart(2, '0')}-${lastDay}`;
+    } else if (selectedPeriod.type === 'monthly' && selectedPeriod.month) {
+      const m = selectedPeriod.month;
+      dateFrom = `${year}-${String(m).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, m, 0).getDate();
+      dateTo = `${year}-${String(m).padStart(2, '0')}-${lastDay}`;
+    }
+
+    console.log('📅 Applying period filter:', { selectedPeriod, dateFrom, dateTo });
+
+    // Update filters and reload data
+    const periodFilters = {
+      ...currentFilters,
+      booking_date_from: dateFrom,
+      booking_date_to: dateTo
+    };
+
+    try {
+      showLoading();
+      const response = await OrderReport2API.getReportByCountry(periodFilters);
+      if (response && response.success && response.data) {
+        // Re-render dashboard with filtered data
+        renderCountryDashboardContent(response.data);
+      }
+    } catch (error) {
+      console.error('❌ Failed to apply period filter:', error);
+    }
+  }
+
+  // Clear period filter
+  window.clearPeriodFilter = function() {
+    selectedPeriod = { type: 'yearly', year: null, quarter: null, month: null };
+
+    // Reset button texts
+    document.querySelectorAll('.time-btn .time-btn-text').forEach((text, index) => {
+      const labels = ['รายปี', 'รายไตรมาส', 'รายเดือน'];
+      text.textContent = labels[index];
+    });
+
+    // Hide badge
+    const badge = document.getElementById('selectedPeriodBadge');
+    if (badge) badge.style.display = 'none';
+
+    // Reload all data
+    loadTabData('country');
+  };
+
+  // Render dashboard content (without recreating the whole structure)
+  function renderCountryDashboardContent(data) {
+    currentTabData = data;
+
+    // Show content
+    document.querySelector('.loading-state').style.display = 'none';
+    document.querySelector('.empty-state').style.display = 'none';
+
+    if (data.length === 0) {
+      showEmpty();
+      return;
+    }
+
+    // Calculate KPI metrics
+    const totalTravelers = data.reduce((sum, item) => sum + (item.total_customers || 0), 0);
+    const totalOrders = data.reduce((sum, item) => sum + (item.total_orders || 0), 0);
+    const totalRevenue = data.reduce((sum, item) => sum + (item.total_net_amount || 0), 0);
+    const topCountry = data.reduce((max, item) =>
+      (item.total_orders > (max?.total_orders || 0)) ? item : max, null);
+    const activeCountries = data.filter(item => item.total_orders > 0).length;
+    const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
+
+    // Update KPI values
+    document.getElementById('kpiTotalTravelers').textContent = formatNumber(totalTravelers);
+    document.getElementById('kpiTopCountry').textContent = topCountry?.country_name || '-';
+    document.getElementById('kpiTotalRevenue').textContent = formatCurrencyShort(totalRevenue);
+    document.getElementById('kpiActiveCountries').textContent = formatNumber(activeCountries);
+
+    // Update market share list
+    const marketShareList = document.getElementById('marketShareList');
+    if (marketShareList) {
+      marketShareList.innerHTML = renderMarketShareList(data);
+    }
+
+    // Update table
+    const tableBody = document.getElementById('dashboardTableBody');
+    if (tableBody) {
+      tableBody.innerHTML = renderDashboardTableRows(data);
+    }
+
+    // Re-render chart
+    renderCountryAreaChart(data, currentTimeGranularity);
+
+    // Re-render sparklines
+    renderSparklines(data);
   }
 
   // Render country area chart

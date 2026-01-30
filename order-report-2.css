@@ -772,6 +772,152 @@ mark.search-highlight {
   box-shadow: 0 2px 4px rgba(74, 123, 167, 0.3);
 }
 
+.time-btn .time-btn-arrow {
+  margin-left: 4px;
+  transition: transform 0.2s ease;
+}
+
+.time-dropdown-wrapper:has(.time-dropdown-menu.show) .time-btn-arrow {
+  transform: rotate(180deg);
+}
+
+/* Time Dropdown Menu */
+.time-dropdown-wrapper {
+  position: relative;
+}
+
+.time-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  display: none;
+}
+
+.time-dropdown-menu.show {
+  display: block;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-year-header {
+  padding: 10px 14px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+}
+
+.time-dropdown-item {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.time-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.time-dropdown-item:hover {
+  background: #f0f7ff;
+}
+
+.time-dropdown-item.selected {
+  background: #e3f2fd;
+  color: #4a7ba7;
+}
+
+.dropdown-item-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.time-dropdown-item:hover .dropdown-item-label {
+  color: #4a7ba7;
+}
+
+.dropdown-item-count {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Selected Period Badge */
+.selected-period-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-left: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1976d2;
+}
+
+.badge-clear {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #1976d2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.badge-clear:hover {
+  background: rgba(25, 118, 210, 0.1);
+}
+
+/* Dropdown scrollbar */
+.time-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.time-dropdown-menu::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.time-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.time-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
 /* Dashboard KPI Cards */
 .dashboard-kpi-cards {
   display: grid;
