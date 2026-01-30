@@ -379,6 +379,11 @@
     initSearch(wholesales, summary.total_bookings, allCountries);
     initExport(wholesales, summary.total_bookings, allCountries);
     initTableSorting(wholesales, summary.total_bookings, allCountries);
+
+    // Restore period badge if filter is active
+    if (selectedPeriod.year) {
+      updateSelectedBadge();
+    }
   }
 
   // Truncate long names
@@ -777,26 +782,26 @@
     });
   }
 
-  // Update selected badge
+  // Update selected badge (same format as sales-by-country)
   function updateSelectedBadge() {
     const badge = document.getElementById('selectedPeriodBadge');
     if (!badge || !selectedPeriod.year) return;
 
     let label = '';
+    const yearBE = selectedPeriod.year + 543;
+
     if (selectedPeriod.type === 'yearly') {
-      const year = availablePeriods.years.find(y => y.year_ce === selectedPeriod.year);
-      label = year ? year.year_be : selectedPeriod.year;
-    } else if (selectedPeriod.type === 'quarterly') {
-      label = `Q${selectedPeriod.quarter}/${selectedPeriod.year + 543}`;
-    } else if (selectedPeriod.type === 'monthly') {
-      const year = availablePeriods.years.find(y => y.year_ce === selectedPeriod.year);
-      const month = year?.months.find(m => m.month === selectedPeriod.month);
-      label = month ? month.label_with_year : '';
+      label = `พ.ศ. ${yearBE}`;
+    } else if (selectedPeriod.type === 'quarterly' && selectedPeriod.quarter) {
+      label = `ไตรมาส ${selectedPeriod.quarter}/${yearBE}`;
+    } else if (selectedPeriod.type === 'monthly' && selectedPeriod.month) {
+      const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      label = `${monthNames[selectedPeriod.month - 1]} ${yearBE}`;
     }
 
     badge.innerHTML = `
       <span>${label}</span>
-      <button class="clear-btn" onclick="clearPeriodFilter()">
+      <button class="badge-clear" onclick="clearPeriodFilter()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
