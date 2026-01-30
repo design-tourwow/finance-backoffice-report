@@ -78,7 +78,7 @@ const WholesaleDestinationsAPI = {
       console.log('🔄 Fetching Wholesale Destinations with filters:', filters);
 
       const queryString = this.buildQueryString(filters);
-      const result = await this.fetchAPI(`/api/reports/wholesale-destinations${queryString}`);
+      const result = await this.fetchAPI(`/api/reports/wholesale-by-country${queryString}`);
 
       return result;
     } catch (error) {
