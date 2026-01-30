@@ -20,6 +20,12 @@
           label: 'Sales by Country',
           url: '/sales-by-country',
           requireAuth: true
+        },
+        {
+          id: 'wholesale-destinations',
+          label: 'Wholesale Destinations',
+          url: '/wholesale-destinations',
+          requireAuth: true
         }
       ]
     }

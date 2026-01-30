@@ -15,6 +15,10 @@
     {
       "source": "/sales-by-country",
       "destination": "/sales-by-country.html"
+    },
+    {
+      "source": "/wholesale-destinations",
+      "destination": "/wholesale-destinations.html"
     }
   ],
   "headers": [
