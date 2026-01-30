@@ -889,7 +889,7 @@
   function renderDashboardTableRows(data) {
     return data.map((item, index) => `
       <tr data-country="${item.country_name || ''}">
-        <td style="text-align: center; color: rgba(255,255,255,0.5);">${index + 1}</td>
+        <td style="text-align: center; color: #9ca3af;">${index + 1}</td>
         <td style="font-weight: 500;">${item.country_name || 'ไม่ระบุ'}</td>
         <td style="text-align: right;">${formatNumber(item.total_orders)}</td>
         <td style="text-align: right;">${formatNumber(item.total_customers)}</td>
@@ -950,10 +950,10 @@
     labels = topCountries.map(item => item.country_name || 'ไม่ระบุ');
     chartData = topCountries.map(item => item.total_customers);
 
-    // Create gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.5)');
-    gradient.addColorStop(1, 'rgba(102, 126, 234, 0.0)');
+    // Create gradient - match website theme color (#4a7ba7)
+    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+    gradient.addColorStop(0, 'rgba(74, 123, 167, 0.25)');
+    gradient.addColorStop(1, 'rgba(74, 123, 167, 0.02)');
 
     countryDashboardChart = new Chart(ctx, {
       type: 'line',
@@ -964,14 +964,14 @@
           data: chartData,
           fill: true,
           backgroundColor: gradient,
-          borderColor: 'rgba(102, 126, 234, 1)',
-          borderWidth: 3,
+          borderColor: '#4a7ba7',
+          borderWidth: 2,
           tension: 0.4,
-          pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+          pointBackgroundColor: '#4a7ba7',
           pointBorderColor: '#fff',
           pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7
+          pointRadius: 4,
+          pointHoverRadius: 6
         }]
       },
       options: {
@@ -982,10 +982,10 @@
             display: false
           },
           tooltip: {
-            backgroundColor: 'rgba(26, 26, 46, 0.95)',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
             titleColor: '#fff',
-            bodyColor: 'rgba(255,255,255,0.8)',
-            borderColor: 'rgba(102, 126, 234, 0.5)',
+            bodyColor: 'rgba(255,255,255,0.9)',
+            borderColor: 'rgba(74, 123, 167, 0.5)',
             borderWidth: 1,
             padding: 12,
             titleFont: {
@@ -1007,11 +1007,11 @@
         scales: {
           x: {
             grid: {
-              color: 'rgba(255, 255, 255, 0.06)',
+              color: 'rgba(0, 0, 0, 0.05)',
               drawBorder: false
             },
             ticks: {
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: '#6b7280',
               font: {
                 family: 'Kanit',
                 size: 12
@@ -1022,11 +1022,11 @@
           },
           y: {
             grid: {
-              color: 'rgba(255, 255, 255, 0.06)',
+              color: 'rgba(0, 0, 0, 0.05)',
               drawBorder: false
             },
             ticks: {
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: '#6b7280',
               font: {
                 family: 'Kanit',
                 size: 12
@@ -1070,10 +1070,11 @@
 
       ctx.clearRect(0, 0, width, height);
       ctx.beginPath();
+      // Use website theme colors: green for positive, red for negative
       ctx.strokeStyle = sparkData[sparkData.length - 1] >= sparkData[0]
-        ? 'rgba(67, 233, 123, 0.8)'
-        : 'rgba(245, 87, 108, 0.8)';
-      ctx.lineWidth = 2;
+        ? '#388e3c'
+        : '#dc2626';
+      ctx.lineWidth = 1.5;
 
       sparkData.forEach((value, i) => {
         const x = (i / (sparkData.length - 1)) * width;

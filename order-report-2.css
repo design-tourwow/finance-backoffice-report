@@ -713,16 +713,16 @@ mark.search-highlight {
 }
 
 /* ========================================
-   Country Dashboard - Dark Mode / Glassmorphism
+   Country Dashboard - Light Theme (Match Website)
    ======================================== */
 
 /* Dashboard Container */
 .country-dashboard {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  border-radius: 16px;
-  padding: 24px;
-  margin: -24px;
-  min-height: 600px;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  min-height: 400px;
 }
 
 /* Time Granularity Control */
@@ -734,45 +734,42 @@ mark.search-highlight {
 }
 
 .time-granularity-label {
-  color: rgba(255, 255, 255, 0.7);
+  color: #6b7280;
   font-size: 14px;
   font-weight: 500;
 }
 
 .time-granularity-buttons {
   display: flex;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  gap: 4px;
+  background: #f3f4f6;
   padding: 4px;
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
 
 .time-btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
+  color: #6b7280;
   font-size: 14px;
   font-weight: 500;
   font-family: 'Kanit', sans-serif;
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .time-btn:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.1);
+  color: #4a7ba7;
+  background: rgba(74, 123, 167, 0.08);
 }
 
 .time-btn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #4a7ba7;
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 2px 4px rgba(74, 123, 167, 0.3);
 }
 
 /* Dashboard KPI Cards */
@@ -780,18 +777,18 @@ mark.search-highlight {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .dashboard-kpi-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
   padding: 20px;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .dashboard-kpi-card::before {
@@ -801,33 +798,32 @@ mark.search-highlight {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--kpi-color-start), var(--kpi-color-end));
+  background: var(--kpi-color);
 }
 
 .dashboard-kpi-card:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-kpi-card.kpi-travelers {
-  --kpi-color-start: #667eea;
-  --kpi-color-end: #764ba2;
+  --kpi-color: #4a7ba7;
+  --kpi-bg: #e3f2fd;
 }
 
 .dashboard-kpi-card.kpi-top-country {
-  --kpi-color-start: #f093fb;
-  --kpi-color-end: #f5576c;
+  --kpi-color: #7b1fa2;
+  --kpi-bg: #f3e5f5;
 }
 
 .dashboard-kpi-card.kpi-growth {
-  --kpi-color-start: #4facfe;
-  --kpi-color-end: #00f2fe;
+  --kpi-color: #388e3c;
+  --kpi-bg: #e8f5e9;
 }
 
 .dashboard-kpi-card.kpi-active {
-  --kpi-color-start: #43e97b;
-  --kpi-color-end: #38f9d7;
+  --kpi-color: #f57c00;
+  --kpi-bg: #fff3e0;
 }
 
 .kpi-icon {
@@ -837,28 +833,27 @@ mark.search-highlight {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--kpi-color-start), var(--kpi-color-end));
+  background: var(--kpi-bg);
   margin-bottom: 16px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .kpi-icon svg {
   width: 24px;
   height: 24px;
-  color: white;
+  stroke: var(--kpi-color);
 }
 
 .kpi-label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #6b7280;
   margin-bottom: 6px;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .kpi-value {
   font-size: 28px;
   font-weight: 700;
-  color: white;
+  color: #1f2937;
   line-height: 1.2;
   margin-bottom: 8px;
 }
@@ -871,15 +866,15 @@ mark.search-highlight {
 }
 
 .kpi-trend.positive {
-  color: #43e97b;
+  color: #388e3c;
 }
 
 .kpi-trend.negative {
-  color: #f5576c;
+  color: #dc2626;
 }
 
 .kpi-trend.neutral {
-  color: rgba(255, 255, 255, 0.5);
+  color: #6b7280;
 }
 
 .kpi-trend svg {
@@ -891,70 +886,70 @@ mark.search-highlight {
 .dashboard-charts-row {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 24px;
-  margin-bottom: 28px;
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
-/* Glassmorphism Chart Container */
+/* Chart Container - Light Theme */
 .glass-chart-container {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px;
-  position: relative;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .glass-chart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .glass-chart-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: white;
+  color: #1f2937;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .glass-chart-title svg {
-  width: 20px;
-  height: 20px;
-  color: rgba(255, 255, 255, 0.7);
+  width: 18px;
+  height: 18px;
+  color: #4a7ba7;
 }
 
 .glass-chart-subtitle {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #6b7280;
+  margin-top: 2px;
 }
 
 .glass-chart-wrapper {
-  height: 300px;
+  height: 280px;
   position: relative;
 }
 
-/* Market Share Chart */
+/* Market Share Container */
 .market-share-container {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .market-share-list {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .market-share-item {
   display: flex;
   align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
 }
 
 .market-share-item:last-child {
@@ -962,36 +957,36 @@ mark.search-highlight {
 }
 
 .market-share-rank {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  margin-right: 14px;
+  margin-right: 12px;
   flex-shrink: 0;
 }
 
 .market-share-rank.top-1 {
-  background: linear-gradient(135deg, #ffd700, #ffaa00);
-  color: #1a1a2e;
+  background: #fef3c7;
+  color: #d97706;
 }
 
 .market-share-rank.top-2 {
-  background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
-  color: #1a1a2e;
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .market-share-rank.top-3 {
-  background: linear-gradient(135deg, #cd7f32, #b87333);
-  color: white;
+  background: #fed7aa;
+  color: #c2410c;
 }
 
 .market-share-rank.other {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  background: #f3f4f6;
+  color: #9ca3af;
 }
 
 .market-share-info {
@@ -1002,8 +997,8 @@ mark.search-highlight {
 .market-share-name {
   font-size: 14px;
   font-weight: 500;
-  color: white;
-  margin-bottom: 4px;
+  color: #1f2937;
+  margin-bottom: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1011,7 +1006,7 @@ mark.search-highlight {
 
 .market-share-bar-wrapper {
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #f3f4f6;
   border-radius: 3px;
   overflow: hidden;
 }
@@ -1023,25 +1018,25 @@ mark.search-highlight {
 }
 
 .market-share-item.top-1 .market-share-bar {
-  background: linear-gradient(90deg, #ffd700, #ffaa00);
+  background: #4a7ba7;
 }
 
 .market-share-item.top-2 .market-share-bar {
-  background: linear-gradient(90deg, #c0c0c0, #a0a0a0);
+  background: #6b7280;
 }
 
 .market-share-item.top-3 .market-share-bar {
-  background: linear-gradient(90deg, #cd7f32, #b87333);
+  background: #9ca3af;
 }
 
 .market-share-item.other .market-share-bar {
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: #d1d5db;
 }
 
 .market-share-percent {
   font-size: 14px;
   font-weight: 600;
-  color: white;
+  color: #374151;
   margin-left: 16px;
   min-width: 50px;
   text-align: right;
@@ -1049,11 +1044,11 @@ mark.search-highlight {
 
 /* Dashboard Table */
 .dashboard-table-container {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
@@ -1061,16 +1056,22 @@ mark.search-highlight {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .dashboard-table-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: white;
+  color: #1f2937;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.dashboard-table-title svg {
+  width: 18px;
+  height: 18px;
+  color: #4a7ba7;
 }
 
 .dashboard-table-actions {
@@ -1078,7 +1079,7 @@ mark.search-highlight {
   gap: 12px;
 }
 
-/* Dark Mode Table */
+/* Light Mode Table */
 .dashboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -1086,14 +1087,15 @@ mark.search-highlight {
 }
 
 .dashboard-table thead th {
-  padding: 14px 16px;
+  padding: 12px 16px;
   text-align: left;
   font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
   white-space: nowrap;
 }
 
@@ -1102,13 +1104,13 @@ mark.search-highlight {
 }
 
 .dashboard-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f9fafb;
 }
 
 .dashboard-table tbody td {
-  padding: 16px;
-  color: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 14px 16px;
+  color: #1f2937;
+  border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
 }
 
@@ -1130,11 +1132,11 @@ mark.search-highlight {
 
 .sparkline-value {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
+  color: #6b7280;
   min-width: 50px;
 }
 
-/* Dark Mode Search */
+/* Light Mode Search */
 .dashboard-search-wrapper {
   position: relative;
   max-width: 280px;
@@ -1143,24 +1145,23 @@ mark.search-highlight {
 .dashboard-search-input {
   width: 100%;
   padding: 10px 40px 10px 40px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
   font-size: 14px;
   font-family: 'Kanit', sans-serif;
-  color: white;
-  background: rgba(255, 255, 255, 0.08);
+  color: #1f2937;
+  background: white;
   transition: all 0.2s ease;
 }
 
 .dashboard-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: #9ca3af;
 }
 
 .dashboard-search-input:focus {
   outline: none;
-  border-color: rgba(102, 126, 234, 0.6);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  border-color: #4a7ba7;
+  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
 }
 
 .dashboard-search-icon {
@@ -1168,17 +1169,17 @@ mark.search-highlight {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.4);
+  color: #9ca3af;
   pointer-events: none;
 }
 
-/* Dark Mode Export Button */
+/* Light Mode Export Button */
 .dashboard-export-btn {
   padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
   font-size: 14px;
   font-family: 'Kanit', sans-serif;
   cursor: pointer;
@@ -1189,9 +1190,8 @@ mark.search-highlight {
 }
 
 .dashboard-export-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.25);
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .dashboard-export-btn svg {
@@ -1211,11 +1211,6 @@ mark.search-highlight {
 }
 
 @media (max-width: 768px) {
-  .country-dashboard {
-    padding: 16px;
-    margin: -16px;
-  }
-
   .dashboard-kpi-cards {
     grid-template-columns: 1fr;
   }
