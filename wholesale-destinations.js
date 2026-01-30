@@ -168,6 +168,9 @@
 
     const { wholesales, summary, country_totals } = data;
 
+    // Get all unique countries for dynamic columns
+    const allCountries = getAllCountries(wholesales);
+
     const dashboardHTML = `
       <div class="wholesale-dashboard">
         <!-- Time Granularity Control -->
@@ -357,23 +360,9 @@
           </div>
           <div class="dashboard-table-wrapper">
             <table class="dashboard-table" id="dashboardTable">
-              <thead>
-                <tr>
-                  <th style="text-align: center; width: 50px;">#</th>
-                  <th style="text-align: left;" data-sort="name" data-type="string">
-                    Wholesale
-                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
-                  </th>
-                  <th style="text-align: left;">ประเทศหลัก</th>
-                  <th style="text-align: right;" data-sort="total" data-type="number">
-                    ยอดรวม
-                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
-                  </th>
-                  <th style="text-align: right;">สัดส่วน</th>
-                </tr>
-              </thead>
+              ${renderTableHeader(allCountries)}
               <tbody id="dashboardTableBody">
-                ${renderTableRows(wholesales, summary.total_bookings)}
+                ${renderTableRows(wholesales, summary.total_bookings, allCountries)}
               </tbody>
             </table>
           </div>
@@ -387,9 +376,9 @@
     initTimeGranularityButtons();
     renderTopWholesalesChart(wholesales.slice(0, 10));
     renderStackedChart(wholesales);
-    initSearch(wholesales, summary.total_bookings);
-    initExport(wholesales, summary.total_bookings);
-    initTableSorting(wholesales, summary.total_bookings);
+    initSearch(wholesales, summary.total_bookings, allCountries);
+    initExport(wholesales, summary.total_bookings, allCountries);
+    initTableSorting(wholesales, summary.total_bookings, allCountries);
   }
 
   // Truncate long names
@@ -419,28 +408,62 @@
     }).join('');
   }
 
-  // Render table rows
-  function renderTableRows(wholesales, totalBookings) {
+  // Get all unique countries from wholesales data (sorted by total bookings desc)
+  function getAllCountries(wholesales) {
+    const countryTotals = {};
+    wholesales.forEach(w => {
+      Object.entries(w.countries).forEach(([country, count]) => {
+        countryTotals[country] = (countryTotals[country] || 0) + count;
+      });
+    });
+    // Sort by total bookings descending
+    return Object.entries(countryTotals)
+      .sort((a, b) => b[1] - a[1])
+      .map(([country]) => country);
+  }
+
+  // Render table header with grouped country columns
+  function renderTableHeader(countries) {
+    return `
+      <thead>
+        <tr class="header-main">
+          <th rowspan="2" style="text-align: center; width: 50px;">#</th>
+          <th rowspan="2" style="text-align: left;" data-sort="name" data-type="string">
+            Wholesale
+            <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+          </th>
+          <th colspan="${countries.length}" class="country-group-header">ประเทศ</th>
+          <th rowspan="2" style="text-align: right;" data-sort="total" data-type="number">
+            ยอดรวม
+            <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+          </th>
+          <th rowspan="2" style="text-align: right;">สัดส่วน</th>
+        </tr>
+        <tr class="header-sub">
+          ${countries.map(country => `
+            <th class="country-sub-header" data-sort="country-${country}" data-type="number" data-country="${country}">
+              ${country}
+              <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+            </th>
+          `).join('')}
+        </tr>
+      </thead>
+    `;
+  }
+
+  // Render table rows with dynamic country columns
+  function renderTableRows(wholesales, totalBookings, countries) {
     return wholesales.map((item, index) => {
       const percent = ((item.total / totalBookings) * 100).toFixed(1);
-      const topCountry = Object.entries(item.countries)
-        .sort((a, b) => b[1] - a[1])[0];
-      const otherCountries = Object.entries(item.countries)
-        .sort((a, b) => b[1] - a[1])
-        .slice(1, 3);
 
       return `
         <tr data-wholesale="${item.name}" data-index="${index}">
           <td style="text-align: center; color: #9ca3af; font-size: 16px;">${index + 1}</td>
           <td style="font-weight: 500;">${item.name}</td>
-          <td>
-            <div class="country-tags">
-              <span class="country-tag primary">${topCountry[0]} (${formatNumber(topCountry[1])})</span>
-              ${otherCountries.map(([country, count]) =>
-                `<span class="country-tag">${country} (${formatNumber(count)})</span>`
-              ).join('')}
-            </div>
-          </td>
+          ${countries.map(country => {
+            const count = item.countries[country] || 0;
+            return `<td class="country-cell ${count === 0 ? 'zero-value' : ''}">${count === 0 ? '-' : formatNumber(count)}</td>`;
+          }).join('')}
           <td style="text-align: right; font-weight: 600; color: #4a7ba7;">${formatNumber(item.total)}</td>
           <td style="text-align: right; color: #6b7280;">${percent}%</td>
         </tr>
@@ -842,7 +865,7 @@
   };
 
   // Initialize search
-  function initSearch(wholesales, totalBookings) {
+  function initSearch(wholesales, totalBookings, countries) {
     const searchInput = document.getElementById('dashboardSearchInput');
     if (!searchInput) return;
 
@@ -854,33 +877,41 @@
 
       const tableBody = document.getElementById('dashboardTableBody');
       if (tableBody) {
-        tableBody.innerHTML = renderTableRows(filtered, totalBookings);
+        tableBody.innerHTML = renderTableRows(filtered, totalBookings, countries);
       }
     });
   }
 
   // Initialize export
-  function initExport(wholesales, totalBookings) {
+  function initExport(wholesales, totalBookings, countries) {
     const exportBtn = document.getElementById('dashboardExportBtn');
     if (!exportBtn) return;
 
     exportBtn.addEventListener('click', function() {
+      // Build CSV header
+      const header = ['No', 'Wholesale', ...countries, 'Total Bookings', 'Percentage'];
+      let csv = header.map(h => `"${h}"`).join(',') + '\n';
+
       // Get visible rows from table
       const tableBody = document.getElementById('dashboardTableBody');
       const visibleRows = tableBody.querySelectorAll('tr');
 
-      let csv = 'No,Wholesale,Top Country,Total Bookings,Percentage\n';
-
       visibleRows.forEach((row, index) => {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 5) {
+        if (cells.length >= 4 + countries.length) {
           const no = index + 1;
           const name = cells[1].textContent.trim();
-          const topCountry = cells[2].querySelector('.country-tag.primary')?.textContent.trim() || '';
-          const total = cells[3].textContent.trim();
-          const percent = cells[4].textContent.trim();
 
-          csv += `${no},"${name}","${topCountry}",${total},${percent}\n`;
+          // Get country values
+          const countryValues = countries.map((_, i) => {
+            const val = cells[2 + i].textContent.trim();
+            return val === '-' ? '0' : val.replace(/,/g, '');
+          });
+
+          const total = cells[2 + countries.length].textContent.trim().replace(/,/g, '');
+          const percent = cells[3 + countries.length].textContent.trim();
+
+          csv += `${no},"${name}",${countryValues.join(',')},${total},${percent}\n`;
         }
       });
 
@@ -895,7 +926,7 @@
   }
 
   // Initialize table sorting
-  function initTableSorting(wholesales, totalBookings) {
+  function initTableSorting(wholesales, totalBookings, countries) {
     const table = document.getElementById('dashboardTable');
     if (!table) return;
 
@@ -906,6 +937,7 @@
       header.addEventListener('click', function() {
         const field = this.dataset.sort;
         const type = this.dataset.type;
+        const country = this.dataset.country; // For country columns
 
         // Toggle direction
         if (currentSort.field === field) {
@@ -917,12 +949,21 @@
 
         // Sort data
         const sorted = [...wholesales].sort((a, b) => {
-          let valA = field === 'name' ? a.name : a.total;
-          let valB = field === 'name' ? b.name : b.total;
+          let valA, valB;
 
-          if (type === 'string') {
-            valA = valA.toLowerCase();
-            valB = valB.toLowerCase();
+          if (field === 'name') {
+            valA = a.name.toLowerCase();
+            valB = b.name.toLowerCase();
+          } else if (field === 'total') {
+            valA = a.total;
+            valB = b.total;
+          } else if (field.startsWith('country-') && country) {
+            // Sort by specific country
+            valA = a.countries[country] || 0;
+            valB = b.countries[country] || 0;
+          } else {
+            valA = a.total;
+            valB = b.total;
           }
 
           if (currentSort.direction === 'asc') {
@@ -935,7 +976,7 @@
         // Update table
         const tableBody = document.getElementById('dashboardTableBody');
         if (tableBody) {
-          tableBody.innerHTML = renderTableRows(sorted, totalBookings);
+          tableBody.innerHTML = renderTableRows(sorted, totalBookings, countries);
         }
 
         // Update header styles
