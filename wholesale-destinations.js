@@ -614,16 +614,14 @@
           legend: {
             display: true,
             position: 'top',
-            align: 'start',
+            align: 'center',
+            maxHeight: 40,
             labels: {
-              font: { family: 'Kanit', size: 14 },
-              padding: 20,
-              boxWidth: 12,
+              font: { family: 'Kanit', size: 11 },
+              padding: 8,
+              boxWidth: 8,
               usePointStyle: true,
               pointStyle: 'circle'
-            },
-            title: {
-              display: false
             }
           },
           datalabels: { display: false },
