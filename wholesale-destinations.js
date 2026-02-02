@@ -902,15 +902,14 @@
 
     if (!wholesaleBtn || !wholesaleDropdown) return;
 
-    // Fetch wholesales from API
-    try {
-      const response = await WholesaleDestinationsAPI.getWholesales();
-      if (response && response.success && response.data) {
-        availableWholesales = response.data;
-        renderWholesaleItems(availableWholesales);
-      }
-    } catch (error) {
-      console.error('❌ Failed to fetch wholesales:', error);
+    // Get wholesales from loaded data
+    if (currentData && currentData.wholesales) {
+      availableWholesales = currentData.wholesales.map((w, index) => ({
+        id: w.id || index + 1,
+        name: w.name,
+        total: w.total
+      }));
+      renderWholesaleItems(availableWholesales);
     }
 
     // Toggle dropdown
@@ -980,6 +979,7 @@
             <span class="checkbox-custom"></span>
           </label>
           <span class="dropdown-item-label">${wholesale.name}</span>
+          <span class="dropdown-item-count">${formatNumber(wholesale.total)} bookings</span>
         </div>
       `;
     }).join('');
