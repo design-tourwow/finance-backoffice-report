@@ -7,10 +7,7 @@
   let topWholesalesChart = null;
   let stackedChart = null;
   let availablePeriods = null;
-  let currentTimeGranularity = 'yearly';
-  let selectedPeriods = []; // Array for multi-select
-  let availableCountries = [];
-  let selectedCountries = []; // Array for multi-select
+  let isInitialized = false;
 
   document.addEventListener('DOMContentLoaded', function () {
     initWholesaleDestinations();
@@ -107,9 +104,9 @@
 
   // Show empty state
   function showEmpty() {
-    const section = document.querySelector('.report-content-section');
-    if (section) {
-      section.innerHTML = `
+    const dataContainer = document.getElementById('dashboardDataContainer');
+    if (dataContainer) {
+      dataContainer.innerHTML = `
         <div class="dashboard-table-empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -155,7 +152,7 @@
     return num.toLocaleString('th-TH');
   }
 
-  // Render main dashboard
+  // Render main dashboard (only called once on initial load)
   function renderDashboard(data) {
     console.log('🎨 Rendering Wholesale Dashboard:', data);
 
@@ -176,262 +173,301 @@
 
     const dashboardHTML = `
       <div class="wholesale-dashboard">
-        <!-- Time Granularity Control -->
-        <div class="time-granularity-control">
+        <!-- Filter Controls (stays fixed, not re-rendered) -->
+        <div class="time-granularity-control" id="filterControlsContainer">
+          <!-- Period Filter -->
           <span class="time-granularity-label">เลือกช่วงเวลา</span>
-
-          <!-- Period Type Selector (Master Dropdown) -->
-          <div class="time-dropdown-wrapper">
-            <button class="time-btn period-type-btn" id="periodTypeBtn">
-              <span class="time-btn-text">มุมมอง</span>
-              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div class="time-dropdown-menu" id="periodTypeDropdown">
-              <div class="time-dropdown-item" data-period-type="yearly">
-                <span class="dropdown-item-label">รายปี</span>
-              </div>
-              <div class="time-dropdown-item" data-period-type="quarterly">
-                <span class="dropdown-item-label">รายไตรมาส</span>
-              </div>
-              <div class="time-dropdown-item" data-period-type="monthly">
-                <span class="dropdown-item-label">รายเดือน</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Period Value Dropdowns (shown based on selected type) -->
-          <div class="time-granularity-buttons" id="periodValueButtons">
-            <div class="time-dropdown-wrapper" data-type="yearly" style="display: none;">
-              <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
-                <span class="time-btn-text">เลือกปี</span>
-                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <div class="time-dropdown-menu" id="yearlyDropdown"></div>
-            </div>
-            <div class="time-dropdown-wrapper" data-type="quarterly" style="display: none;">
-              <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
-                <span class="time-btn-text">เลือกไตรมาส</span>
-                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
-            </div>
-            <div class="time-dropdown-wrapper" data-type="monthly" style="display: none;">
-              <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
-                <span class="time-btn-text">เลือกเดือน</span>
-                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <div class="time-dropdown-menu" id="monthlyDropdown"></div>
-            </div>
-          </div>
-          <div class="selected-period-badge" id="selectedPeriodBadge" style="display: none;"></div>
+          <div id="periodFilterContainer"></div>
 
           <!-- Separator -->
           <div class="filter-separator"></div>
 
           <!-- Country Filter -->
           <span class="time-granularity-label">ประเทศ</span>
-          <div class="time-dropdown-wrapper">
-            <button class="time-btn" id="countryFilterBtn">
-              <span class="time-btn-text">เลือกประเทศ</span>
-              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div class="time-dropdown-menu country-dropdown-menu" id="countryFilterDropdown">
-              <div class="dropdown-search-wrapper">
-                <input type="text" class="dropdown-search-input" id="countrySearchInput" placeholder="ค้นหาประเทศ..." />
-              </div>
-              <div class="dropdown-items-container" id="countryItemsContainer">
-                <!-- Countries will be populated here -->
-              </div>
-              <div class="dropdown-actions">
-                <button type="button" class="dropdown-clear-btn" id="countryFilterClearBtn">ล้าง</button>
-                <button type="button" class="dropdown-confirm-btn" id="countryFilterConfirmBtn">ยืนยัน</button>
-              </div>
-            </div>
-          </div>
-          <div class="selected-period-badge" id="selectedCountryBadge" style="display: none;"></div>
+          <div id="countryFilterContainer"></div>
         </div>
 
-        <!-- KPI Cards -->
-        <div class="dashboard-kpi-cards">
-          <div class="dashboard-kpi-card kpi-travelers">
-            <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-                <rect x="9" y="3" width="6" height="4" rx="1"/>
-                <path d="M9 12h6M9 16h6"/>
-              </svg>
-            </div>
-            <div class="kpi-content">
-              <div class="kpi-label">ยอดจองทั้งหมด</div>
-              <div class="kpi-value" id="kpiTotalBookings">${formatNumber(summary.total_bookings)}</div>
-              <div class="kpi-subtext">Total Bookings</div>
-            </div>
-          </div>
-
-          <div class="dashboard-kpi-card kpi-top-wholesale">
-            <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-            </div>
-            <div class="kpi-content">
-              <div class="kpi-label">Wholesale ยอดนิยม</div>
-              <div class="kpi-value" id="kpiTopWholesale" title="${summary.top_wholesale.name}">${truncateName(summary.top_wholesale.name, 20)}</div>
-              <div class="kpi-subtext">${formatNumber(summary.top_wholesale.count)} bookings</div>
-            </div>
-          </div>
-
-          <div class="dashboard-kpi-card kpi-top-country">
-            <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-              </svg>
-            </div>
-            <div class="kpi-content">
-              <div class="kpi-label">ประเทศยอดนิยม</div>
-              <div class="kpi-value" id="kpiTopCountry">${summary.top_country.name}</div>
-              <div class="kpi-subtext">${formatNumber(summary.top_country.count)} bookings</div>
-            </div>
-          </div>
-
-          <div class="dashboard-kpi-card kpi-partners">
-            <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-              </svg>
-            </div>
-            <div class="kpi-content">
-              <div class="kpi-label">จำนวน Partner</div>
-              <div class="kpi-value" id="kpiPartners">${formatNumber(summary.total_partners)}</div>
-              <div class="kpi-subtext">Wholesales</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Charts Row -->
-        <div class="dashboard-charts-row">
-          <!-- Top 10 Wholesales Chart -->
-          <div class="glass-chart-container">
-            <div class="glass-chart-header">
-              <div>
-                <div class="glass-chart-title">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="20" x2="18" y2="10"/>
-                    <line x1="12" y1="20" x2="12" y2="4"/>
-                    <line x1="6" y1="20" x2="6" y2="14"/>
-                  </svg>
-                  Top 10 Wholesales
-                </div>
-                <div class="glass-chart-subtitle">เรียงตามยอดจอง</div>
-              </div>
-            </div>
-            <div class="glass-chart-wrapper">
-              <canvas id="topWholesalesChart"></canvas>
-            </div>
-          </div>
-
-          <!-- Top 5 Wholesales List -->
-          <div class="top-wholesales-container">
-            <div class="glass-chart-header">
-              <div>
-                <div class="glass-chart-title">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                  สัดส่วนยอดขาย
-                </div>
-                <div class="glass-chart-subtitle">Top 5 Wholesales</div>
-              </div>
-            </div>
-            <div class="top-wholesales-list" id="topWholesalesList">
-              ${renderTopWholesalesList(wholesales.slice(0, 5), summary.total_bookings)}
-            </div>
-          </div>
-        </div>
-
-        <!-- Stacked Bar Chart -->
-        <div class="glass-chart-container" style="margin-bottom: 24px;">
-          <div class="glass-chart-header">
-            <div>
-              <div class="glass-chart-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <path d="M3 9h18M9 21V9"/>
-                </svg>
-                สัดส่วนยอดจองแยกตามประเทศ
-              </div>
-              <div class="glass-chart-subtitle">แต่ละ Wholesale แบ่งตามประเทศปลายทาง</div>
-            </div>
-          </div>
-          <div class="glass-chart-scroll-wrapper">
-            <div class="glass-chart-wrapper" style="height: 350px; min-width: ${Math.max(800, wholesales.length * 60)}px;">
-              <canvas id="stackedChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Data Table -->
-        <div class="dashboard-table-container">
-          <div class="dashboard-table-header">
-            <div class="dashboard-table-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
-                <rect x="8" y="2" width="8" height="4" rx="1"/>
-              </svg>
-              รายละเอียด Wholesale
-            </div>
-            <div class="dashboard-table-actions">
-              <div class="dashboard-search-wrapper">
-                <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="M21 21l-4.35-4.35"/>
-                </svg>
-                <input type="text" class="dashboard-search-input" id="dashboardSearchInput" placeholder="ค้นหา Wholesale...">
-              </div>
-              <button class="dashboard-export-btn" id="dashboardExportBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Export CSV
-              </button>
-            </div>
-          </div>
-          <div class="dashboard-table-wrapper">
-            <table class="dashboard-table" id="dashboardTable">
-              ${renderTableHeader(allCountries)}
-              <tbody id="dashboardTableBody">
-                ${renderTableRows(wholesales, summary.total_bookings, allCountries)}
-              </tbody>
-            </table>
-          </div>
+        <!-- Data Container (this part gets updated on filter change) -->
+        <div id="dashboardDataContainer">
+          ${renderDashboardData(data)}
         </div>
       </div>
     `;
 
     tabContent.innerHTML = dashboardHTML;
 
-    // Initialize components
-    initFilterComponent();
+    // Initialize filter components (only once)
+    if (!isInitialized) {
+      initPeriodFilter();
+      initCountryFilter();
+      isInitialized = true;
+    }
+
+    // Initialize data components
+    initDataComponents(data);
+  }
+
+  // Render dashboard data (KPIs, Charts, Table)
+  function renderDashboardData(data) {
+    const { wholesales, summary, country_totals } = data;
+    const allCountries = getAllCountries(wholesales);
+
+    return `
+      <!-- KPI Cards -->
+      <div class="dashboard-kpi-cards">
+        <div class="dashboard-kpi-card kpi-travelers">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="M9 12h6M9 16h6"/>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">ยอดจองทั้งหมด</div>
+            <div class="kpi-value" id="kpiTotalBookings">${formatNumber(summary.total_bookings)}</div>
+            <div class="kpi-subtext">Total Bookings</div>
+          </div>
+        </div>
+
+        <div class="dashboard-kpi-card kpi-top-wholesale">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">Wholesale ยอดนิยม</div>
+            <div class="kpi-value" id="kpiTopWholesale" title="${summary.top_wholesale.name}">${truncateName(summary.top_wholesale.name, 20)}</div>
+            <div class="kpi-subtext">${formatNumber(summary.top_wholesale.count)} bookings</div>
+          </div>
+        </div>
+
+        <div class="dashboard-kpi-card kpi-top-country">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">ประเทศยอดนิยม</div>
+            <div class="kpi-value" id="kpiTopCountry">${summary.top_country.name}</div>
+            <div class="kpi-subtext">${formatNumber(summary.top_country.count)} bookings</div>
+          </div>
+        </div>
+
+        <div class="dashboard-kpi-card kpi-partners">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">จำนวน Partner</div>
+            <div class="kpi-value" id="kpiPartners">${formatNumber(summary.total_partners)}</div>
+            <div class="kpi-subtext">Wholesales</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="dashboard-charts-row">
+        <!-- Top 10 Wholesales Chart -->
+        <div class="glass-chart-container">
+          <div class="glass-chart-header">
+            <div>
+              <div class="glass-chart-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                Top 10 Wholesales
+              </div>
+              <div class="glass-chart-subtitle">เรียงตามยอดจอง</div>
+            </div>
+          </div>
+          <div class="glass-chart-wrapper">
+            <canvas id="topWholesalesChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top 5 Wholesales List -->
+        <div class="top-wholesales-container">
+          <div class="glass-chart-header">
+            <div>
+              <div class="glass-chart-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                สัดส่วนยอดขาย
+              </div>
+              <div class="glass-chart-subtitle">Top 5 Wholesales</div>
+            </div>
+          </div>
+          <div class="top-wholesales-list" id="topWholesalesList">
+            ${renderTopWholesalesList(wholesales.slice(0, 5), summary.total_bookings)}
+          </div>
+        </div>
+      </div>
+
+      <!-- Stacked Bar Chart -->
+      <div class="glass-chart-container" style="margin-bottom: 24px;">
+        <div class="glass-chart-header">
+          <div>
+            <div class="glass-chart-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M3 9h18M9 21V9"/>
+              </svg>
+              สัดส่วนยอดจองแยกตามประเทศ
+            </div>
+            <div class="glass-chart-subtitle">แต่ละ Wholesale แบ่งตามประเทศปลายทาง</div>
+          </div>
+        </div>
+        <div class="glass-chart-scroll-wrapper">
+          <div class="glass-chart-wrapper" style="height: 350px; min-width: ${Math.max(800, wholesales.length * 60)}px;">
+            <canvas id="stackedChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="dashboard-table-container">
+        <div class="dashboard-table-header">
+          <div class="dashboard-table-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1"/>
+            </svg>
+            รายละเอียด Wholesale
+          </div>
+          <div class="dashboard-table-actions">
+            <div class="dashboard-search-wrapper">
+              <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input type="text" class="dashboard-search-input" id="dashboardSearchInput" placeholder="ค้นหา Wholesale...">
+            </div>
+            <button class="dashboard-export-btn" id="dashboardExportBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-table-wrapper">
+          <table class="dashboard-table" id="dashboardTable">
+            ${renderTableHeader(allCountries)}
+            <tbody id="dashboardTableBody">
+              ${renderTableRows(wholesales, summary.total_bookings, allCountries)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // Update dashboard data only (without re-rendering filters)
+  function updateDashboardData(data) {
+    console.log('🔄 Updating dashboard data:', data);
+
+    const dataContainer = document.getElementById('dashboardDataContainer');
+    if (!dataContainer) {
+      console.error('Data container not found');
+      return;
+    }
+
+    if (!data || !data.wholesales || data.wholesales.length === 0) {
+      showEmpty();
+      return;
+    }
+
+    currentData = data;
+    dataContainer.innerHTML = renderDashboardData(data);
+    initDataComponents(data);
+  }
+
+  // Initialize data-related components (charts, search, export, sorting)
+  function initDataComponents(data) {
+    const { wholesales, summary } = data;
+    const allCountries = getAllCountries(wholesales);
+
     renderTopWholesalesChart(wholesales.slice(0, 10));
     renderStackedChart(wholesales);
     initSearch(wholesales, summary.total_bookings, allCountries);
     initExport(wholesales, summary.total_bookings, allCountries);
     initTableSorting(wholesales, summary.total_bookings, allCountries);
+  }
+
+  // Initialize Period Filter Component
+  function initPeriodFilter() {
+    if (typeof PeriodFilterComponent === 'undefined') {
+      console.error('❌ PeriodFilterComponent not loaded');
+      return;
+    }
+
+    PeriodFilterComponent.init({
+      containerId: 'periodFilterContainer',
+      onFilterChange: handleFilterChange,
+      fetchAvailablePeriods: async function(filters) {
+        return await WholesaleDestinationsAPI.getAvailablePeriods(filters);
+      }
+    });
+  }
+
+  // Initialize Country Filter Component
+  function initCountryFilter() {
+    if (typeof CountryFilterComponent === 'undefined') {
+      console.error('❌ CountryFilterComponent not loaded');
+      return;
+    }
+
+    CountryFilterComponent.init({
+      containerId: 'countryFilterContainer',
+      onFilterChange: handleFilterChange,
+      fetchCountries: async function() {
+        return await WholesaleDestinationsAPI.getCountries();
+      }
+    });
+  }
+
+  // Handle filter changes from both components
+  async function handleFilterChange() {
+    console.log('📅 Handling filter change...');
+
+    // Get filters from both components
+    const periodFilters = typeof PeriodFilterComponent !== 'undefined' ? PeriodFilterComponent.getFilters() : {};
+    const countryFilters = typeof CountryFilterComponent !== 'undefined' ? CountryFilterComponent.getFilters() : {};
+
+    // Merge filters
+    const filters = { ...periodFilters, ...countryFilters };
+    console.log('📅 Combined filters:', filters);
+
+    // Store current filters
+    currentFilters = filters;
+
+    try {
+      showDashboardLoading();
+      const response = await WholesaleDestinationsAPI.getWholesaleDestinations(filters);
+      hideDashboardLoading();
+
+      if (response && response.success && response.data) {
+        updateDashboardData(response.data);
+      } else {
+        showEmpty();
+      }
+    } catch (error) {
+      console.error('❌ Failed to apply filters:', error);
+      hideDashboardLoading();
+    }
   }
 
   // Truncate long names
@@ -714,44 +750,6 @@
             }
           }
         }
-      }
-    });
-  }
-
-  // Initialize filter component (period + country)
-  function initFilterComponent() {
-    if (typeof PeriodCountryFilterComponent === 'undefined') {
-      console.error('❌ PeriodCountryFilterComponent not loaded');
-      return;
-    }
-
-    PeriodCountryFilterComponent.init({
-      onFilterChange: async function(filters) {
-        console.log('📅 Filters changed:', filters);
-        try {
-          showDashboardLoading();
-          const response = await WholesaleDestinationsAPI.getWholesaleDestinations(filters);
-          hideDashboardLoading();
-
-          if (response && response.success && response.data) {
-            currentData = response.data;
-            renderDashboard(response.data);
-          } else {
-            showEmpty();
-          }
-        } catch (error) {
-          console.error('❌ Failed to apply filters:', error);
-          hideDashboardLoading();
-        }
-      },
-      fetchReportData: async function(filters) {
-        return await WholesaleDestinationsAPI.getWholesaleDestinations(filters);
-      },
-      fetchAvailablePeriods: async function(filters) {
-        return await WholesaleDestinationsAPI.getAvailablePeriods(filters);
-      },
-      fetchCountries: async function() {
-        return await WholesaleDestinationsAPI.getCountries();
       }
     });
   }
