@@ -9,8 +9,8 @@
   let availablePeriods = null;
   let currentTimeGranularity = 'yearly';
   let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
-  let availableCountries = []; // List of countries from API
-  let selectedCountries = []; // Array for multi-select: [{ id, name }]
+  let availableWholesales = []; // List of wholesales from API
+  let selectedWholesales = []; // Array for multi-select: [{ id, name }]
 
   document.addEventListener('DOMContentLoaded', function () {
     initWholesaleDestinations();
@@ -236,29 +236,29 @@
           <!-- Separator -->
           <div class="filter-separator"></div>
 
-          <!-- Country Filter -->
-          <span class="time-granularity-label">ประเทศ</span>
+          <!-- Wholesale Filter -->
+          <span class="time-granularity-label">Wholesale</span>
           <div class="time-dropdown-wrapper">
-            <button class="time-btn" id="countryFilterBtn">
-              <span class="time-btn-text">เลือกประเทศ</span>
+            <button class="time-btn" id="wholesaleFilterBtn">
+              <span class="time-btn-text">เลือก Wholesale</span>
               <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
-            <div class="time-dropdown-menu country-dropdown-menu" id="countryFilterDropdown">
+            <div class="time-dropdown-menu wholesale-dropdown-menu" id="wholesaleFilterDropdown">
               <div class="dropdown-search-wrapper">
-                <input type="text" class="dropdown-search-input" id="countrySearchInput" placeholder="ค้นหาประเทศ..." />
+                <input type="text" class="dropdown-search-input" id="wholesaleSearchInput" placeholder="ค้นหา Wholesale..." />
               </div>
-              <div class="dropdown-items-container" id="countryItemsContainer">
-                <!-- Countries will be populated here -->
+              <div class="dropdown-items-container" id="wholesaleItemsContainer">
+                <!-- Wholesales will be populated here -->
               </div>
               <div class="dropdown-actions">
-                <button type="button" class="dropdown-clear-btn" id="countryFilterClearBtn">ล้าง</button>
-                <button type="button" class="dropdown-confirm-btn" id="countryFilterConfirmBtn">ยืนยัน</button>
+                <button type="button" class="dropdown-clear-btn" id="wholesaleFilterClearBtn">ล้าง</button>
+                <button type="button" class="dropdown-confirm-btn" id="wholesaleFilterConfirmBtn">ยืนยัน</button>
               </div>
             </div>
           </div>
-          <div class="selected-period-badge" id="selectedCountryBadge" style="display: none;"></div>
+          <div class="selected-period-badge" id="selectedWholesaleBadge" style="display: none;"></div>
         </div>
 
         <!-- KPI Cards -->
@@ -427,7 +427,7 @@
 
     // Initialize components
     initTimeGranularityButtons(data);
-    initCountryFilter();
+    initWholesaleFilter();
     renderTopWholesalesChart(wholesales.slice(0, 10));
     renderStackedChart(wholesales);
     initSearch(wholesales, summary.total_bookings, allCountries);
@@ -782,12 +782,12 @@
     // Update badge and reload data
     updateSelectedPeriodBadge();
     if (selectedPeriods.length > 0) {
-      // Filter countries based on selected periods
-      await updateCountryDropdownByPeriod();
+      // Filter wholesales based on selected periods
+      await updateWholesaleDropdownByPeriod();
       applyAllFilters();
     } else {
-      // Reset country dropdown to show all
-      renderCountryItems(availableCountries);
+      // Reset wholesale dropdown to show all
+      renderWholesaleItems(availableWholesales);
     }
   }
 
@@ -820,10 +820,10 @@
     badge.style.display = 'flex';
   }
 
-  // Update country dropdown based on selected periods
-  async function updateCountryDropdownByPeriod() {
+  // Update wholesale dropdown based on selected periods
+  async function updateWholesaleDropdownByPeriod() {
     if (selectedPeriods.length === 0) {
-      renderCountryItems(availableCountries);
+      renderWholesaleItems(availableWholesales);
       return;
     }
 
@@ -837,41 +837,33 @@
     });
 
     try {
-      // Fetch data with period filter to get available countries
+      // Fetch data with period filter to get available wholesales
       const response = await WholesaleDestinationsAPI.getWholesaleDestinations({
         booking_date_from: allDateFrom,
         booking_date_to: allDateTo
       });
 
       if (response && response.success && response.data && response.data.wholesales) {
-        // Get country names that have data in this period
-        const countriesSet = new Set();
-        response.data.wholesales.forEach(w => {
-          if (w.countries) {
-            Object.keys(w.countries).forEach(countryName => {
-              countriesSet.add(countryName);
-            });
-          }
-        });
-        const countryNamesWithData = Array.from(countriesSet);
+        // Get wholesale names that have data in this period
+        const wholesaleNames = response.data.wholesales.map(w => w.name);
 
-        // Filter available countries
-        const filteredCountries = availableCountries.filter(c =>
-          countryNamesWithData.includes(c.name_th)
+        // Filter available wholesales
+        const filteredWholesales = availableWholesales.filter(ws =>
+          wholesaleNames.includes(ws.name)
         );
 
-        // Clear previously selected countries that are no longer available
-        selectedCountries = selectedCountries.filter(sc =>
-          countryNamesWithData.includes(sc.name)
+        // Clear previously selected wholesales that are no longer available
+        selectedWholesales = selectedWholesales.filter(sw =>
+          wholesaleNames.includes(sw.name)
         );
 
-        // Update country dropdown
-        renderCountryItems(filteredCountries.length > 0 ? filteredCountries : availableCountries);
-        updateCountryButtonText();
-        updateSelectedCountryBadge();
+        // Update wholesale dropdown
+        renderWholesaleItems(filteredWholesales.length > 0 ? filteredWholesales : availableWholesales);
+        updateWholesaleButtonText();
+        updateSelectedWholesaleBadge();
       }
     } catch (error) {
-      console.error('❌ Failed to filter countries by period:', error);
+      console.error('❌ Failed to filter wholesales by period:', error);
     }
   }
 
@@ -900,61 +892,60 @@
     return { dateFrom, dateTo };
   }
 
-  // Initialize country filter dropdown
-  async function initCountryFilter() {
-    const countryBtn = document.getElementById('countryFilterBtn');
-    const countryDropdown = document.getElementById('countryFilterDropdown');
-    const countrySearchInput = document.getElementById('countrySearchInput');
-    const confirmBtn = document.getElementById('countryFilterConfirmBtn');
-    const clearBtn = document.getElementById('countryFilterClearBtn');
+  // Initialize wholesale filter dropdown
+  async function initWholesaleFilter() {
+    const wholesaleBtn = document.getElementById('wholesaleFilterBtn');
+    const wholesaleDropdown = document.getElementById('wholesaleFilterDropdown');
+    const wholesaleSearchInput = document.getElementById('wholesaleSearchInput');
+    const confirmBtn = document.getElementById('wholesaleFilterConfirmBtn');
+    const clearBtn = document.getElementById('wholesaleFilterClearBtn');
 
-    if (!countryBtn || !countryDropdown) return;
+    if (!wholesaleBtn || !wholesaleDropdown) return;
 
-    // Fetch countries from API
+    // Fetch wholesales from API
     try {
-      const response = await WholesaleDestinationsAPI.getCountries();
+      const response = await WholesaleDestinationsAPI.getWholesales();
       if (response && response.success && response.data) {
-        availableCountries = response.data;
-        renderCountryItems(availableCountries);
+        availableWholesales = response.data;
+        renderWholesaleItems(availableWholesales);
       }
     } catch (error) {
-      console.error('❌ Failed to fetch countries:', error);
+      console.error('❌ Failed to fetch wholesales:', error);
     }
 
     // Toggle dropdown
-    countryBtn.addEventListener('click', function(e) {
+    wholesaleBtn.addEventListener('click', function(e) {
       e.stopPropagation();
 
       // Close other dropdowns
       document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
-        if (menu !== countryDropdown) menu.classList.remove('show');
+        if (menu !== wholesaleDropdown) menu.classList.remove('show');
       });
 
       // Toggle this dropdown
-      countryDropdown.classList.toggle('show');
+      wholesaleDropdown.classList.toggle('show');
 
       // Focus search input when opened
-      if (countryDropdown.classList.contains('show') && countrySearchInput) {
-        countrySearchInput.value = '';
-        renderCountryItems(availableCountries);
-        countrySearchInput.focus();
+      if (wholesaleDropdown.classList.contains('show') && wholesaleSearchInput) {
+        wholesaleSearchInput.value = '';
+        renderWholesaleItems(availableWholesales);
+        wholesaleSearchInput.focus();
       }
     });
 
     // Search filter
-    if (countrySearchInput) {
-      countrySearchInput.addEventListener('input', function(e) {
+    if (wholesaleSearchInput) {
+      wholesaleSearchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase();
-        const filtered = availableCountries.filter(c =>
-          c.name_th.toLowerCase().includes(searchTerm) ||
-          c.name_en.toLowerCase().includes(searchTerm)
+        const filtered = availableWholesales.filter(w =>
+          w.name.toLowerCase().includes(searchTerm)
         );
-        renderCountryItems(filtered);
+        renderWholesaleItems(filtered);
       });
     }
 
     // Prevent dropdown close when clicking inside
-    countryDropdown.addEventListener('click', function(e) {
+    wholesaleDropdown.addEventListener('click', function(e) {
       e.stopPropagation();
     });
 
@@ -962,7 +953,7 @@
     if (confirmBtn) {
       confirmBtn.addEventListener('click', async function(e) {
         e.stopPropagation();
-        await confirmCountrySelection();
+        await confirmWholesaleSelection();
       });
     }
 
@@ -970,42 +961,41 @@
     if (clearBtn) {
       clearBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        clearCountryDropdownSelection();
+        clearWholesaleDropdownSelection();
       });
     }
   }
 
-  // Render country items in dropdown
-  function renderCountryItems(countries) {
-    const container = document.getElementById('countryItemsContainer');
+  // Render wholesale items in dropdown
+  function renderWholesaleItems(wholesales) {
+    const container = document.getElementById('wholesaleItemsContainer');
     if (!container) return;
 
-    container.innerHTML = countries.map(country => {
-      const isSelected = selectedCountries.some(c => c.id === country.id);
+    container.innerHTML = wholesales.map(wholesale => {
+      const isSelected = selectedWholesales.some(w => w.id === wholesale.id);
       return `
-        <div class="time-dropdown-item country-item ${isSelected ? 'selected' : ''}" data-country-id="${country.id}" data-country-name="${country.name_th}">
+        <div class="time-dropdown-item wholesale-item ${isSelected ? 'selected' : ''}" data-wholesale-id="${wholesale.id}" data-wholesale-name="${wholesale.name}">
           <label class="dropdown-checkbox">
-            <input type="checkbox" class="country-checkbox" ${isSelected ? 'checked' : ''} />
+            <input type="checkbox" class="wholesale-checkbox" ${isSelected ? 'checked' : ''} />
             <span class="checkbox-custom"></span>
           </label>
-          <span class="dropdown-item-label">${country.name_th}</span>
-          <span class="dropdown-item-count">${country.name_en}</span>
+          <span class="dropdown-item-label">${wholesale.name}</span>
         </div>
       `;
     }).join('');
 
     // Attach click handlers
-    container.querySelectorAll('.country-item').forEach(item => {
+    container.querySelectorAll('.wholesale-item').forEach(item => {
       item.addEventListener('click', function(e) {
         e.stopPropagation();
-        const checkbox = this.querySelector('.country-checkbox');
+        const checkbox = this.querySelector('.wholesale-checkbox');
         if (checkbox && e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
           checkbox.checked = !checkbox.checked;
         }
         this.classList.toggle('selected', checkbox?.checked);
       });
 
-      const checkbox = item.querySelector('.country-checkbox');
+      const checkbox = item.querySelector('.wholesale-checkbox');
       if (checkbox) {
         checkbox.addEventListener('click', function(e) {
           e.stopPropagation();
@@ -1021,31 +1011,31 @@
     });
   }
 
-  // Confirm country selection
-  async function confirmCountrySelection() {
-    const container = document.getElementById('countryItemsContainer');
+  // Confirm wholesale selection
+  async function confirmWholesaleSelection() {
+    const container = document.getElementById('wholesaleItemsContainer');
     if (!container) return;
 
-    // Collect selected countries
-    selectedCountries = [];
-    container.querySelectorAll('.country-item.selected, .country-item:has(.country-checkbox:checked)').forEach(item => {
-      const id = parseInt(item.dataset.countryId);
-      const name = item.dataset.countryName;
-      selectedCountries.push({ id, name });
+    // Collect selected wholesales
+    selectedWholesales = [];
+    container.querySelectorAll('.wholesale-item.selected, .wholesale-item:has(.wholesale-checkbox:checked)').forEach(item => {
+      const id = parseInt(item.dataset.wholesaleId);
+      const name = item.dataset.wholesaleName;
+      selectedWholesales.push({ id, name });
     });
 
     // Update button text
-    updateCountryButtonText();
+    updateWholesaleButtonText();
 
     // Close dropdown
-    document.getElementById('countryFilterDropdown')?.classList.remove('show');
+    document.getElementById('wholesaleFilterDropdown')?.classList.remove('show');
 
     // Update badge and reload data
-    updateSelectedCountryBadge();
+    updateSelectedWholesaleBadge();
 
-    if (selectedCountries.length > 0) {
-      // Filter periods based on selected countries
-      await updatePeriodDropdownsByCountry();
+    if (selectedWholesales.length > 0) {
+      // Filter periods based on selected wholesales
+      await updatePeriodDropdownsByWholesale();
     } else {
       // Reset period dropdowns to show all
       populateTimeDropdowns();
@@ -1054,56 +1044,56 @@
     applyAllFilters();
   }
 
-  // Clear country dropdown selection
-  function clearCountryDropdownSelection() {
-    const container = document.getElementById('countryItemsContainer');
+  // Clear wholesale dropdown selection
+  function clearWholesaleDropdownSelection() {
+    const container = document.getElementById('wholesaleItemsContainer');
     if (container) {
-      container.querySelectorAll('.country-item').forEach(item => {
+      container.querySelectorAll('.wholesale-item').forEach(item => {
         item.classList.remove('selected');
-        const checkbox = item.querySelector('.country-checkbox');
+        const checkbox = item.querySelector('.wholesale-checkbox');
         if (checkbox) checkbox.checked = false;
       });
     }
   }
 
-  // Update country button text
-  function updateCountryButtonText() {
-    const btn = document.getElementById('countryFilterBtn');
+  // Update wholesale button text
+  function updateWholesaleButtonText() {
+    const btn = document.getElementById('wholesaleFilterBtn');
     const btnText = btn?.querySelector('.time-btn-text');
     if (btnText) {
-      if (selectedCountries.length === 0) {
-        btnText.textContent = 'เลือกประเทศ';
+      if (selectedWholesales.length === 0) {
+        btnText.textContent = 'เลือก Wholesale';
         btn?.classList.remove('active');
-      } else if (selectedCountries.length === 1) {
-        btnText.textContent = selectedCountries[0].name;
+      } else if (selectedWholesales.length === 1) {
+        btnText.textContent = selectedWholesales[0].name;
         btn?.classList.add('active');
       } else {
-        btnText.textContent = `${selectedCountries.length} ประเทศ`;
+        btnText.textContent = `${selectedWholesales.length} Wholesale`;
         btn?.classList.add('active');
       }
     }
   }
 
-  // Update selected country badge
-  function updateSelectedCountryBadge() {
-    const badge = document.getElementById('selectedCountryBadge');
+  // Update selected wholesale badge
+  function updateSelectedWholesaleBadge() {
+    const badge = document.getElementById('selectedWholesaleBadge');
     if (!badge) return;
 
-    if (selectedCountries.length === 0) {
+    if (selectedWholesales.length === 0) {
       badge.style.display = 'none';
       return;
     }
 
     let label = '';
-    if (selectedCountries.length === 1) {
-      label = selectedCountries[0].name;
+    if (selectedWholesales.length === 1) {
+      label = selectedWholesales[0].name;
     } else {
-      label = `${selectedCountries.length} ประเทศ`;
+      label = `${selectedWholesales.length} Wholesale`;
     }
 
     badge.innerHTML = `
       <span>${label}</span>
-      <button class="badge-clear" onclick="clearCountryFilter()">
+      <button class="badge-clear" onclick="clearWholesaleFilter()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
@@ -1113,18 +1103,18 @@
     badge.style.display = 'flex';
   }
 
-  // Update period dropdowns based on selected countries
-  async function updatePeriodDropdownsByCountry() {
-    if (selectedCountries.length === 0) {
+  // Update period dropdowns based on selected wholesales
+  async function updatePeriodDropdownsByWholesale() {
+    if (selectedWholesales.length === 0) {
       // Reset to show all periods
       populateTimeDropdowns();
       return;
     }
 
     try {
-      // Fetch available periods for selected countries
-      const countryIds = selectedCountries.map(c => c.id).join(',');
-      const response = await WholesaleDestinationsAPI.getAvailablePeriods({ country_id: countryIds });
+      // Fetch available periods for selected wholesales
+      const wholesaleIds = selectedWholesales.map(w => w.id).join(',');
+      const response = await WholesaleDestinationsAPI.getAvailablePeriods({ wholesale_id: wholesaleIds });
 
       if (response && response.success && response.data) {
         const periodsData = response.data;
@@ -1136,8 +1126,8 @@
         filterSelectedPeriodsByAvailable(periodsData);
       }
     } catch (error) {
-      console.error('❌ Failed to filter periods by country:', error);
-      // If API doesn't support country filter, keep all periods
+      console.error('❌ Failed to filter periods by wholesale:', error);
+      // If API doesn't support wholesale filter, keep all periods
     }
   }
 
@@ -1351,9 +1341,9 @@
       filters.booking_date_to = allDateTo;
     }
 
-    // Add country filter
-    if (selectedCountries.length > 0) {
-      filters.country_id = selectedCountries.map(c => c.id).join(',');
+    // Add wholesale filter
+    if (selectedWholesales.length > 0) {
+      filters.wholesale_id = selectedWholesales.map(w => w.id).join(',');
     }
 
     console.log('📅 Applying filters:', filters);
@@ -1906,23 +1896,23 @@
     applyAllFilters();
   };
 
-  // Global function for clearing country filter (called from badge button)
-  window.clearCountryFilter = function() {
-    selectedCountries = [];
+  // Global function for clearing wholesale filter (called from badge button)
+  window.clearWholesaleFilter = function() {
+    selectedWholesales = [];
 
     // Reset button
-    const btn = document.getElementById('countryFilterBtn');
+    const btn = document.getElementById('wholesaleFilterBtn');
     if (btn) {
       btn.classList.remove('active');
       const btnText = btn.querySelector('.time-btn-text');
-      if (btnText) btnText.textContent = 'เลือกประเทศ';
+      if (btnText) btnText.textContent = 'เลือก Wholesale';
     }
 
     // Clear dropdown selection
-    clearCountryDropdownSelection();
+    clearWholesaleDropdownSelection();
 
     // Hide badge
-    const badge = document.getElementById('selectedCountryBadge');
+    const badge = document.getElementById('selectedWholesaleBadge');
     if (badge) badge.style.display = 'none';
 
     // Reset period dropdowns

@@ -1202,16 +1202,19 @@
 }
 
 /* Country Dropdown Menu */
-.country-dropdown-menu {
+.country-dropdown-menu,
+.wholesale-dropdown-menu {
   min-width: 280px;
 }
 
-.country-dropdown-menu .dropdown-items-container {
+.country-dropdown-menu .dropdown-items-container,
+.wholesale-dropdown-menu .dropdown-items-container {
   max-height: 240px;
 }
 
-.country-item .dropdown-item-count {
-  font-size: 12px;
+.country-item .dropdown-item-count,
+.wholesale-item .dropdown-item-label {
+  font-size: 14px;
   color: #9ca3af;
   margin-left: auto;
 }

@@ -124,6 +124,23 @@ const WholesaleDestinationsAPI = {
   },
 
   /**
+   * Get Wholesales List
+   * @returns {Promise<Object>}
+   */
+  async getWholesales() {
+    try {
+      console.log('🔄 Fetching Wholesales');
+
+      const result = await this.fetchAPI('/api/wholesales');
+
+      return result;
+    } catch (error) {
+      console.error('❌ Wholesales Error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Get Mock Data for development
    * @returns {Object}
    */
