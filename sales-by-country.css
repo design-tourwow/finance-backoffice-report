@@ -962,6 +962,103 @@ mark.search-highlight {
   color: white;
 }
 
+/* Multi-select Dropdown Styles */
+.dropdown-items-container {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.dropdown-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.dropdown-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  background: white;
+}
+
+.dropdown-checkbox input[type="checkbox"]:checked + .checkbox-custom {
+  background: #4a7ba7;
+  border-color: #4a7ba7;
+}
+
+.dropdown-checkbox input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+
+.time-dropdown-item.selected {
+  background: #e3f2fd;
+}
+
+.time-dropdown-item.selected .dropdown-item-label {
+  color: #4a7ba7;
+  font-weight: 600;
+}
+
+/* Dropdown Actions (Clear & Confirm buttons) */
+.dropdown-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  position: sticky;
+  bottom: 0;
+}
+
+.dropdown-clear-btn,
+.dropdown-confirm-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: 'Kanit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dropdown-clear-btn {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #6b7280;
+}
+
+.dropdown-clear-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.dropdown-confirm-btn {
+  background: #4a7ba7;
+  border: 1px solid #4a7ba7;
+  color: white;
+}
+
+.dropdown-confirm-btn:hover {
+  background: #3d6a94;
+}
+
 /* Selected Period Badge */
 .selected-period-badge {
   display: flex;

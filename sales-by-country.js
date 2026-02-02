@@ -15,7 +15,7 @@
   let marketShareChart = null;
   let currentTimeGranularity = 'yearly';
   let availablePeriods = null;
-  let selectedPeriod = { type: 'yearly', year: null, quarter: null, month: null };
+  let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -1171,7 +1171,7 @@
             'monthly': 'เลือกเดือน'
           };
 
-          // Reset ALL period value dropdowns (clear labels and remove active state)
+          // Reset ALL period value dropdowns (clear labels, checkboxes and remove active state)
           periodValueButtons.querySelectorAll('.time-dropdown-wrapper').forEach(wrapper => {
             const type = wrapper.dataset.type;
             const btn = wrapper.querySelector('.time-btn');
@@ -1186,6 +1186,13 @@
             if (btn) {
               btn.classList.remove('active');
             }
+
+            // Clear all checkboxes and selected states
+            wrapper.querySelectorAll('.time-dropdown-item').forEach(item => {
+              item.classList.remove('selected');
+              const checkbox = item.querySelector('.period-checkbox');
+              if (checkbox) checkbox.checked = false;
+            });
 
             // Hide all wrappers
             wrapper.style.display = 'none';
@@ -1208,7 +1215,7 @@
         this.classList.add('selected');
 
         // Always reset period selection when changing type
-        selectedPeriod = { type: periodType, year: null, quarter: null, month: null };
+        selectedPeriods = [];
         currentTimeGranularity = periodType;
 
         // Hide the badge
@@ -1224,103 +1231,199 @@
 
     const years = availablePeriods.years;
 
+    // Helper to create dropdown content with checkboxes and confirm button
+    function createDropdownContent(items, type) {
+      let html = '<div class="dropdown-items-container">';
+      html += items;
+      html += '</div>';
+      html += `
+        <div class="dropdown-actions">
+          <button type="button" class="dropdown-clear-btn" data-type="${type}">ล้าง</button>
+          <button type="button" class="dropdown-confirm-btn" data-type="${type}">ยืนยัน</button>
+        </div>
+      `;
+      return html;
+    }
+
     // Yearly dropdown
     const yearlyDropdown = document.getElementById('yearlyDropdown');
     if (yearlyDropdown) {
-      yearlyDropdown.innerHTML = years.map(year => `
-        <div class="time-dropdown-item" data-type="yearly" data-year="${year.year_ce}" data-label="${year.label}">
+      const items = years.map(year => `
+        <div class="time-dropdown-item" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label}">
+          <label class="dropdown-checkbox">
+            <input type="checkbox" class="period-checkbox" />
+            <span class="checkbox-custom"></span>
+          </label>
           <span class="dropdown-item-label">พ.ศ. ${year.label}</span>
           <span class="dropdown-item-count">${formatNumber(year.total_orders)} orders</span>
         </div>
       `).join('');
+      yearlyDropdown.innerHTML = createDropdownContent(items, 'yearly');
     }
 
     // Quarterly dropdown - grouped by year
     const quarterlyDropdown = document.getElementById('quarterlyDropdown');
     if (quarterlyDropdown) {
-      let quarterlyHTML = '';
+      let quarterlyItems = '';
       years.forEach(year => {
-        quarterlyHTML += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+        quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
         year.quarters.forEach(q => {
-          quarterlyHTML += `
+          quarterlyItems += `
             <div class="time-dropdown-item" data-type="quarterly" data-year="${year.year_ce}" data-quarter="${q.quarter}" data-label="${q.label} ${year.label}">
+              <label class="dropdown-checkbox">
+                <input type="checkbox" class="period-checkbox" />
+                <span class="checkbox-custom"></span>
+              </label>
               <span class="dropdown-item-label">${q.label}</span>
             </div>
           `;
         });
       });
-      quarterlyDropdown.innerHTML = quarterlyHTML;
+      quarterlyDropdown.innerHTML = createDropdownContent(quarterlyItems, 'quarterly');
     }
 
     // Monthly dropdown - grouped by year
     const monthlyDropdown = document.getElementById('monthlyDropdown');
     if (monthlyDropdown) {
-      let monthlyHTML = '';
+      let monthlyItems = '';
       years.forEach(year => {
-        monthlyHTML += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+        monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
         year.months.forEach(m => {
-          monthlyHTML += `
+          monthlyItems += `
             <div class="time-dropdown-item" data-type="monthly" data-year="${year.year_ce}" data-month="${m.month}" data-label="${m.label_short} ${year.label}">
+              <label class="dropdown-checkbox">
+                <input type="checkbox" class="period-checkbox" />
+                <span class="checkbox-custom"></span>
+              </label>
               <span class="dropdown-item-label">${m.label}</span>
             </div>
           `;
         });
       });
-      monthlyDropdown.innerHTML = monthlyHTML;
+      monthlyDropdown.innerHTML = createDropdownContent(monthlyItems, 'monthly');
     }
 
-    // Add click handlers to all dropdown items
-    document.querySelectorAll('.time-dropdown-item').forEach(item => {
+    // Add click handlers to dropdown items (toggle checkbox)
+    document.querySelectorAll('#periodValueButtons .time-dropdown-item').forEach(item => {
       item.addEventListener('click', function(e) {
         e.stopPropagation();
 
-        const type = this.dataset.type;
-        const year = parseInt(this.dataset.year);
-        const quarter = this.dataset.quarter ? parseInt(this.dataset.quarter) : null;
-        const month = this.dataset.month ? parseInt(this.dataset.month) : null;
-        const label = this.dataset.label;
+        // Don't toggle if clicking directly on checkbox (it will toggle itself)
+        if (e.target.type === 'checkbox') return;
 
-        // Update selection
-        selectedPeriod = { type, year, quarter, month };
-        currentTimeGranularity = type;
-
-        // Update button states
-        document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`[data-granularity="${type}"]`).classList.add('active');
-
-        // Update button text
-        const btnText = document.querySelector(`[data-granularity="${type}"] .time-btn-text`);
-        if (btnText) {
-          btnText.textContent = label;
+        const checkbox = this.querySelector('.period-checkbox');
+        if (checkbox) {
+          checkbox.checked = !checkbox.checked;
+          this.classList.toggle('selected', checkbox.checked);
         }
+      });
 
-        // Close dropdown
-        document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
-          menu.classList.remove('show');
+      // Handle checkbox change
+      const checkbox = item.querySelector('.period-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('change', function() {
+          item.classList.toggle('selected', this.checked);
         });
+      }
+    });
 
-        // Update badge and reload data
-        updateSelectedPeriodBadge();
-        applyPeriodFilter(currentTabData);
+    // Add confirm button handlers
+    document.querySelectorAll('.dropdown-confirm-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        confirmPeriodSelection(type);
       });
     });
+
+    // Add clear button handlers
+    document.querySelectorAll('.dropdown-clear-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        clearDropdownSelection(type);
+      });
+    });
+  }
+
+  // Clear selection in a specific dropdown
+  function clearDropdownSelection(type) {
+    const dropdownId = type + 'Dropdown';
+    const dropdown = document.getElementById(dropdownId);
+    if (dropdown) {
+      dropdown.querySelectorAll('.time-dropdown-item').forEach(item => {
+        item.classList.remove('selected');
+        const checkbox = item.querySelector('.period-checkbox');
+        if (checkbox) checkbox.checked = false;
+      });
+    }
+  }
+
+  // Confirm period selection from dropdown
+  function confirmPeriodSelection(type) {
+    const dropdownId = type + 'Dropdown';
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+
+    // Collect selected items
+    selectedPeriods = [];
+    dropdown.querySelectorAll('.time-dropdown-item.selected, .time-dropdown-item:has(.period-checkbox:checked)').forEach(item => {
+      const year = parseInt(item.dataset.year);
+      const quarter = item.dataset.quarter ? parseInt(item.dataset.quarter) : null;
+      const month = item.dataset.month ? parseInt(item.dataset.month) : null;
+      const label = item.dataset.label;
+
+      selectedPeriods.push({ type, year, quarter, month, label });
+    });
+
+    currentTimeGranularity = type;
+
+    // Update button text
+    const btn = document.querySelector(`[data-granularity="${type}"]`);
+    const btnText = btn?.querySelector('.time-btn-text');
+    if (btnText) {
+      if (selectedPeriods.length === 0) {
+        const defaultTexts = {
+          'yearly': 'เลือกปี',
+          'quarterly': 'เลือกไตรมาส',
+          'monthly': 'เลือกเดือน'
+        };
+        btnText.textContent = defaultTexts[type];
+        btn.classList.remove('active');
+      } else if (selectedPeriods.length === 1) {
+        btnText.textContent = selectedPeriods[0].label;
+        btn.classList.add('active');
+      } else {
+        btnText.textContent = `${selectedPeriods.length} รายการ`;
+        btn.classList.add('active');
+      }
+    }
+
+    // Close dropdown
+    dropdown.classList.remove('show');
+
+    // Update badge and reload data
+    updateSelectedPeriodBadge();
+    if (selectedPeriods.length > 0) {
+      applyPeriodFilter(currentTabData);
+    }
   }
 
   // Update selected period badge
   function updateSelectedPeriodBadge() {
     const badge = document.getElementById('selectedPeriodBadge');
-    if (!badge || !selectedPeriod.year) return;
+    if (!badge) return;
+
+    if (selectedPeriods.length === 0) {
+      badge.style.display = 'none';
+      return;
+    }
 
     let label = '';
-    const yearBE = selectedPeriod.year + 543;
-
-    if (selectedPeriod.type === 'yearly') {
-      label = `พ.ศ. ${yearBE}`;
-    } else if (selectedPeriod.type === 'quarterly' && selectedPeriod.quarter) {
-      label = `ไตรมาส ${selectedPeriod.quarter}/${yearBE}`;
-    } else if (selectedPeriod.type === 'monthly' && selectedPeriod.month) {
-      const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-      label = `${monthNames[selectedPeriod.month - 1]} ${yearBE}`;
+    if (selectedPeriods.length === 1) {
+      label = selectedPeriods[0].label;
+    } else {
+      label = `${selectedPeriods.length} ช่วงเวลา`;
     }
 
     badge.innerHTML = `
@@ -1335,38 +1438,52 @@
     badge.style.display = 'flex';
   }
 
-  // Apply period filter and reload data
-  async function applyPeriodFilter(data) {
-    if (!selectedPeriod.year) return;
-
-    // Calculate date range based on selection
+  // Calculate date range for a single period
+  function getPeriodDateRange(period) {
+    const year = period.year;
     let dateFrom, dateTo;
-    const year = selectedPeriod.year;
 
-    if (selectedPeriod.type === 'yearly') {
+    if (period.type === 'yearly') {
       dateFrom = `${year}-01-01`;
       dateTo = `${year}-12-31`;
-    } else if (selectedPeriod.type === 'quarterly' && selectedPeriod.quarter) {
-      const q = selectedPeriod.quarter;
+    } else if (period.type === 'quarterly' && period.quarter) {
+      const q = period.quarter;
       const startMonth = (q - 1) * 3 + 1;
       const endMonth = q * 3;
       dateFrom = `${year}-${String(startMonth).padStart(2, '0')}-01`;
       const lastDay = new Date(year, endMonth, 0).getDate();
       dateTo = `${year}-${String(endMonth).padStart(2, '0')}-${lastDay}`;
-    } else if (selectedPeriod.type === 'monthly' && selectedPeriod.month) {
-      const m = selectedPeriod.month;
+    } else if (period.type === 'monthly' && period.month) {
+      const m = period.month;
       dateFrom = `${year}-${String(m).padStart(2, '0')}-01`;
       const lastDay = new Date(year, m, 0).getDate();
       dateTo = `${year}-${String(m).padStart(2, '0')}-${lastDay}`;
     }
 
-    console.log('📅 Applying period filter:', { selectedPeriod, dateFrom, dateTo });
+    return { dateFrom, dateTo };
+  }
+
+  // Apply period filter and reload data
+  async function applyPeriodFilter(data) {
+    if (selectedPeriods.length === 0) return;
+
+    // Calculate combined date range from all selected periods
+    let allDateFrom = null;
+    let allDateTo = null;
+
+    selectedPeriods.forEach(period => {
+      const { dateFrom, dateTo } = getPeriodDateRange(period);
+      if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
+      if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
+    });
+
+    console.log('📅 Applying period filter:', { selectedPeriods, allDateFrom, allDateTo });
 
     // Update filters and reload data
     const periodFilters = {
       ...currentFilters,
-      booking_date_from: dateFrom,
-      booking_date_to: dateTo
+      booking_date_from: allDateFrom,
+      booking_date_to: allDateTo
     };
 
     try {
@@ -1399,7 +1516,7 @@
 
   // Clear period filter
   window.clearPeriodFilter = async function() {
-    selectedPeriod = { type: null, year: null, quarter: null, month: null };
+    selectedPeriods = [];
 
     // Reset period type selector
     const periodTypeBtn = document.getElementById('periodTypeBtn');
@@ -1417,7 +1534,7 @@
       });
     }
 
-    // Hide all period value dropdowns
+    // Hide all period value dropdowns and clear checkboxes
     const periodValueButtons = document.getElementById('periodValueButtons');
     if (periodValueButtons) {
       periodValueButtons.querySelectorAll('.time-dropdown-wrapper').forEach(wrapper => {
@@ -1436,6 +1553,13 @@
             text.textContent = defaultTexts[type] || '';
           }
         }
+
+        // Clear all checkboxes and selected states in dropdown
+        wrapper.querySelectorAll('.time-dropdown-item').forEach(item => {
+          item.classList.remove('selected');
+          const checkbox = item.querySelector('.period-checkbox');
+          if (checkbox) checkbox.checked = false;
+        });
       });
     }
 
