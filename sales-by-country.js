@@ -2201,8 +2201,9 @@
     // Sort data by customers for visualization (show ALL data, synced with table)
     const sortedData = [...data].sort((a, b) => b.total_customers - a.total_customers);
 
-    // Use country names as labels
-    const labels = sortedData.map(item => item.country_name || 'ไม่ระบุ');
+    // Use country names as labels (with customer count for pie chart legend)
+    const labels = sortedData.map(item => `${item.country_name || 'ไม่ระบุ'} (${formatNumber(item.total_customers)})`);
+    const labelsShort = sortedData.map(item => item.country_name || 'ไม่ระบุ'); // Short labels for inside pie
     const chartData = sortedData.map(item => item.total_customers);
 
     // Generate colors for pie chart (cycle through if more than 10)
@@ -2262,12 +2263,12 @@
               anchor: 'center',
               align: 'center',
               formatter: function(value, context) {
-                const label = context.chart.data.labels[context.dataIndex];
                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                 const percent = (value / total) * 100;
                 // Only show if segment is large enough
                 if (percent < 5) return '';
-                return label;
+                // Use short label (country name only) for inside pie
+                return labelsShort[context.dataIndex];
               },
               textAlign: 'center'
             },
