@@ -183,7 +183,7 @@
           <!-- Period Type Selector (Master Dropdown) -->
           <div class="time-dropdown-wrapper">
             <button class="time-btn period-type-btn" id="periodTypeBtn">
-              <span class="time-btn-text">มุมมอง</span>
+              <span class="time-btn-text">ทั้งหมด</span>
               <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
@@ -1843,7 +1843,7 @@
     if (periodTypeBtn) {
       periodTypeBtn.classList.remove('active');
       const btnText = periodTypeBtn.querySelector('.time-btn-text');
-      if (btnText) btnText.textContent = 'มุมมอง';
+      if (btnText) btnText.textContent = 'ทั้งหมด';
     }
 
     // Clear selected state in period type dropdown
