@@ -1153,68 +1153,67 @@
           'monthly': 'รายเดือน'
         };
 
-        // Update button text
+        // Update period type button text
         const btnText = periodTypeBtn.querySelector('.time-btn-text');
         if (btnText) {
           btnText.textContent = periodTypeLabels[periodType];
         }
 
-        // Mark as active
+        // Mark period type button as active
         periodTypeBtn.classList.add('active');
 
-        // Show only the corresponding period value dropdown
+        // Reset ALL period value dropdowns and show only the selected type
         const periodValueButtons = document.getElementById('periodValueButtons');
         if (periodValueButtons) {
-          // Hide all period value dropdowns first
+          const defaultTexts = {
+            'yearly': 'เลือกปี',
+            'quarterly': 'เลือกไตรมาส',
+            'monthly': 'เลือกเดือน'
+          };
+
+          // Reset ALL period value dropdowns (clear labels and remove active state)
           periodValueButtons.querySelectorAll('.time-dropdown-wrapper').forEach(wrapper => {
+            const type = wrapper.dataset.type;
+            const btn = wrapper.querySelector('.time-btn');
+            const btnText = btn?.querySelector('.time-btn-text');
+
+            // Reset button text to default
+            if (btnText && defaultTexts[type]) {
+              btnText.textContent = defaultTexts[type];
+            }
+
+            // Remove active state
+            if (btn) {
+              btn.classList.remove('active');
+            }
+
+            // Hide all wrappers
             wrapper.style.display = 'none';
           });
 
-          // Show the selected type dropdown
+          // Show only the selected type dropdown
           const targetWrapper = periodValueButtons.querySelector(`[data-type="${periodType}"]`);
           if (targetWrapper) {
             targetWrapper.style.display = 'block';
-
-            // Reset the period value button text
-            const targetBtn = targetWrapper.querySelector('.time-btn');
-            const targetBtnText = targetBtn?.querySelector('.time-btn-text');
-            if (targetBtnText) {
-              const defaultTexts = {
-                'yearly': 'เลือกปี',
-                'quarterly': 'เลือกไตรมาส',
-                'monthly': 'เลือกเดือน'
-              };
-              targetBtnText.textContent = defaultTexts[periodType];
-            }
-            if (targetBtn) {
-              targetBtn.classList.remove('active');
-            }
           }
         }
 
         // Close dropdown
         periodTypeDropdown.classList.remove('show');
 
-        // Update selected item state
+        // Update selected item state in period type dropdown
         periodTypeDropdown.querySelectorAll('.time-dropdown-item').forEach(i => {
           i.classList.remove('selected');
         });
         this.classList.add('selected');
 
-        // Clear any existing period filter when changing type
-        if (selectedPeriod.year) {
-          // Reset period selection but keep the type
-          selectedPeriod = { type: periodType, year: null, quarter: null, month: null };
-          currentTimeGranularity = periodType;
+        // Always reset period selection when changing type
+        selectedPeriod = { type: periodType, year: null, quarter: null, month: null };
+        currentTimeGranularity = periodType;
 
-          // Hide the badge
-          const badge = document.getElementById('selectedPeriodBadge');
-          if (badge) badge.style.display = 'none';
-        } else {
-          // Just set the type
-          selectedPeriod.type = periodType;
-          currentTimeGranularity = periodType;
-        }
+        // Hide the badge
+        const badge = document.getElementById('selectedPeriodBadge');
+        if (badge) badge.style.display = 'none';
       });
     });
   }
