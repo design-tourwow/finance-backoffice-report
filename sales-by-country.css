@@ -948,13 +948,15 @@ mark.search-highlight {
 
 /* Period Type Selector (Master Dropdown) */
 .period-type-btn {
-  background: #f0f7ff;
-  border-color: #4a7ba7;
-  color: #4a7ba7;
+  background: #fff;
+  border-color: #d1d5db;
+  color: #1f2937;
 }
 
 .period-type-btn:hover {
-  background: #e3f2fd;
+  color: #4a7ba7;
+  border-color: #4a7ba7;
+  background: rgba(74, 123, 167, 0.05);
 }
 
 .period-type-btn.active {
