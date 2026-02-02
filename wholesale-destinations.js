@@ -112,14 +112,9 @@
     if (section) {
       section.innerHTML = `
         <div class="dashboard-table-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
-            <line x1="9" y1="9" x2="9.01" y2="9"/>
-            <line x1="15" y1="9" x2="15.01" y2="9"/>
-          </svg>
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #374151;">ไม่พบข้อมูล</h3>
-          <p style="margin: 0; font-size: 16px;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
+          <img src="assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom: 16px; opacity: 0.8;" />
+          <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #374151;">ไม่พบข้อมูล</h3>
+          <p style="margin: 0; font-size: 15px; color: #6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
         </div>
       `;
     }
@@ -1432,9 +1427,17 @@
     const chartsRow = document.querySelector('.dashboard-charts-row');
     const tableContainer = document.querySelector('.dashboard-table-container');
 
-    if (kpiCards) kpiCards.innerHTML = '<p style="text-align: center; padding: 20px; color: #6b7280;">ไม่พบข้อมูล</p>';
+    const emptyHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
+        <img src="assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="160" height="160" style="margin-bottom: 16px; opacity: 0.8;" />
+        <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #374151;">ไม่พบข้อมูล</h3>
+        <p style="margin: 0; font-size: 15px; color: #6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
+      </div>
+    `;
+
+    if (kpiCards) kpiCards.innerHTML = '';
     if (chartsRow) chartsRow.innerHTML = '';
-    if (tableContainer) tableContainer.innerHTML = '<p style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</p>';
+    if (tableContainer) tableContainer.innerHTML = emptyHTML;
   }
 
   // Update dashboard data (KPIs, Charts, Table) without re-rendering filters
@@ -1599,7 +1602,7 @@
   function renderTableRows(wholesales, totalValue, countries) {
     return wholesales.map((item, index) => {
       const percent = totalValue > 0 ? ((item.total / totalValue) * 100).toFixed(1) : '0.0';
-      const formattedTotal = currentViewMode === 'travelers' ? formatNumber(item.total) + ' คน' : formatCurrency(item.total);
+      const formattedTotal = currentViewMode === 'travelers' ? formatNumber(item.total) + ' คน' : formatNumber(item.total);
 
       return `
         <tr data-wholesale="${item.name}" data-index="${index}">
