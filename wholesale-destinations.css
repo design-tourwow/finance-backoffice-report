@@ -129,9 +129,6 @@
   font-family: 'Kanit', sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .time-btn:hover {
@@ -143,7 +140,6 @@
 .time-btn.active {
   background: #4a7ba7;
   color: white;
-  border-color: #4a7ba7;
   box-shadow: 0 2px 4px rgba(74, 123, 167, 0.3);
 }
 
@@ -152,15 +148,15 @@
   transition: transform 0.2s ease;
 }
 
-.time-dropdown-wrapper {
-  position: relative;
-}
-
 .time-dropdown-wrapper:has(.time-dropdown-menu.show) .time-btn-arrow {
   transform: rotate(180deg);
 }
 
 /* Time Dropdown Menu */
+.time-dropdown-wrapper {
+  position: relative;
+}
+
 .time-dropdown-menu {
   position: absolute;
   top: calc(100% + 4px);

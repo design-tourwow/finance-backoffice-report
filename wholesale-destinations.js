@@ -7,7 +7,10 @@
   let topWholesalesChart = null;
   let stackedChart = null;
   let availablePeriods = null;
-  let isInitialized = false;
+  let currentTimeGranularity = 'yearly';
+  let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
+  let availableCountries = []; // List of countries from API
+  let selectedCountries = []; // Array for multi-select: [{ id, name }]
 
   document.addEventListener('DOMContentLoaded', function () {
     initWholesaleDestinations();
@@ -104,9 +107,9 @@
 
   // Show empty state
   function showEmpty() {
-    const dataContainer = document.getElementById('dashboardDataContainer');
-    if (dataContainer) {
-      dataContainer.innerHTML = `
+    const section = document.querySelector('.report-content-section');
+    if (section) {
+      section.innerHTML = `
         <div class="dashboard-table-empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -152,7 +155,7 @@
     return num.toLocaleString('th-TH');
   }
 
-  // Render main dashboard (only called once on initial load)
+  // Render main dashboard
   function renderDashboard(data) {
     console.log('🎨 Rendering Wholesale Dashboard:', data);
 
@@ -173,233 +176,258 @@
 
     const dashboardHTML = `
       <div class="wholesale-dashboard">
-        <!-- Filter Controls (stays fixed, not re-rendered) -->
-        <div class="time-granularity-control" id="filterControlsContainer">
-          <!-- Period Filter -->
+        <!-- Time Granularity Control -->
+        <div class="time-granularity-control">
           <span class="time-granularity-label">เลือกช่วงเวลา</span>
-          <div id="periodFilterContainer"></div>
+
+          <!-- Period Type Selector (Master Dropdown) -->
+          <div class="time-dropdown-wrapper">
+            <button class="time-btn period-type-btn" id="periodTypeBtn">
+              <span class="time-btn-text">มุมมอง</span>
+              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="time-dropdown-menu" id="periodTypeDropdown">
+              <div class="time-dropdown-item" data-period-type="yearly">
+                <span class="dropdown-item-label">รายปี</span>
+              </div>
+              <div class="time-dropdown-item" data-period-type="quarterly">
+                <span class="dropdown-item-label">รายไตรมาส</span>
+              </div>
+              <div class="time-dropdown-item" data-period-type="monthly">
+                <span class="dropdown-item-label">รายเดือน</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Period Value Dropdowns (shown based on selected type) -->
+          <div class="time-granularity-buttons" id="periodValueButtons">
+            <div class="time-dropdown-wrapper" data-type="yearly" style="display: none;">
+              <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
+                <span class="time-btn-text">เลือกปี</span>
+                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="time-dropdown-menu" id="yearlyDropdown"></div>
+            </div>
+            <div class="time-dropdown-wrapper" data-type="quarterly" style="display: none;">
+              <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
+                <span class="time-btn-text">เลือกไตรมาส</span>
+                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
+            </div>
+            <div class="time-dropdown-wrapper" data-type="monthly" style="display: none;">
+              <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
+                <span class="time-btn-text">เลือกเดือน</span>
+                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="time-dropdown-menu" id="monthlyDropdown"></div>
+            </div>
+          </div>
+          <div class="selected-period-badge" id="selectedPeriodBadge" style="display: none;"></div>
 
           <!-- Separator -->
           <div class="filter-separator"></div>
 
           <!-- Country Filter -->
           <span class="time-granularity-label">ประเทศ</span>
-          <div id="countryFilterContainer"></div>
+          <div class="time-dropdown-wrapper">
+            <button class="time-btn" id="countryFilterBtn">
+              <span class="time-btn-text">เลือกประเทศ</span>
+              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="time-dropdown-menu country-dropdown-menu" id="countryFilterDropdown">
+              <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search-input" id="countrySearchInput" placeholder="ค้นหาประเทศ..." />
+              </div>
+              <div class="dropdown-items-container" id="countryItemsContainer">
+                <!-- Countries will be populated here -->
+              </div>
+              <div class="dropdown-actions">
+                <button type="button" class="dropdown-clear-btn" id="countryFilterClearBtn">ล้าง</button>
+                <button type="button" class="dropdown-confirm-btn" id="countryFilterConfirmBtn">ยืนยัน</button>
+              </div>
+            </div>
+          </div>
+          <div class="selected-period-badge" id="selectedCountryBadge" style="display: none;"></div>
         </div>
 
-        <!-- Data Container (this part gets updated on filter change) -->
-        <div id="dashboardDataContainer">
-          ${renderDashboardData(data)}
+        <!-- KPI Cards -->
+        <div class="dashboard-kpi-cards">
+          <div class="dashboard-kpi-card kpi-travelers">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                <rect x="9" y="3" width="6" height="4" rx="1"/>
+                <path d="M9 12h6M9 16h6"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">ยอดจองทั้งหมด</div>
+              <div class="kpi-value" id="kpiTotalBookings">${formatNumber(summary.total_bookings)}</div>
+              <div class="kpi-subtext">Total Bookings</div>
+            </div>
+          </div>
+
+          <div class="dashboard-kpi-card kpi-top-wholesale">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Wholesale ยอดนิยม</div>
+              <div class="kpi-value" id="kpiTopWholesale" title="${summary.top_wholesale.name}">${truncateName(summary.top_wholesale.name, 20)}</div>
+              <div class="kpi-subtext">${formatNumber(summary.top_wholesale.count)} bookings</div>
+            </div>
+          </div>
+
+          <div class="dashboard-kpi-card kpi-top-country">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">ประเทศยอดนิยม</div>
+              <div class="kpi-value" id="kpiTopCountry">${summary.top_country.name}</div>
+              <div class="kpi-subtext">${formatNumber(summary.top_country.count)} bookings</div>
+            </div>
+          </div>
+
+          <div class="dashboard-kpi-card kpi-partners">
+            <div class="kpi-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">จำนวน Partner</div>
+              <div class="kpi-value" id="kpiPartners">${formatNumber(summary.total_partners)}</div>
+              <div class="kpi-subtext">Wholesales</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="dashboard-charts-row">
+          <!-- Top 10 Wholesales Chart -->
+          <div class="glass-chart-container">
+            <div class="glass-chart-header">
+              <div>
+                <div class="glass-chart-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                  Top 10 Wholesales
+                </div>
+                <div class="glass-chart-subtitle">เรียงตามยอดจอง</div>
+              </div>
+            </div>
+            <div class="glass-chart-wrapper">
+              <canvas id="topWholesalesChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Top 5 Wholesales List -->
+          <div class="top-wholesales-container">
+            <div class="glass-chart-header">
+              <div>
+                <div class="glass-chart-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  สัดส่วนยอดขาย
+                </div>
+                <div class="glass-chart-subtitle">Top 5 Wholesales</div>
+              </div>
+            </div>
+            <div class="top-wholesales-list" id="topWholesalesList">
+              ${renderTopWholesalesList(wholesales.slice(0, 5), summary.total_bookings)}
+            </div>
+          </div>
+        </div>
+
+        <!-- Stacked Bar Chart -->
+        <div class="glass-chart-container" style="margin-bottom: 24px;">
+          <div class="glass-chart-header">
+            <div>
+              <div class="glass-chart-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M3 9h18M9 21V9"/>
+                </svg>
+                สัดส่วนยอดจองแยกตามประเทศ
+              </div>
+              <div class="glass-chart-subtitle">แต่ละ Wholesale แบ่งตามประเทศปลายทาง</div>
+            </div>
+          </div>
+          <div class="glass-chart-scroll-wrapper">
+            <div class="glass-chart-wrapper" style="height: 350px; min-width: ${Math.max(800, wholesales.length * 60)}px;">
+              <canvas id="stackedChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="dashboard-table-container">
+          <div class="dashboard-table-header">
+            <div class="dashboard-table-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1"/>
+              </svg>
+              รายละเอียด Wholesale
+            </div>
+            <div class="dashboard-table-actions">
+              <div class="dashboard-search-wrapper">
+                <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" class="dashboard-search-input" id="dashboardSearchInput" placeholder="ค้นหา Wholesale...">
+              </div>
+              <button class="dashboard-export-btn" id="dashboardExportBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export CSV
+              </button>
+            </div>
+          </div>
+          <div class="dashboard-table-wrapper">
+            <table class="dashboard-table" id="dashboardTable">
+              ${renderTableHeader(allCountries)}
+              <tbody id="dashboardTableBody">
+                ${renderTableRows(wholesales, summary.total_bookings, allCountries)}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     `;
 
     tabContent.innerHTML = dashboardHTML;
 
-    // Initialize filter components (only once)
-    if (!isInitialized) {
-      initPeriodFilter();
-      initCountryFilter();
-      isInitialized = true;
-    }
-
-    // Initialize data components
-    initDataComponents(data);
-  }
-
-  // Render dashboard data (KPIs, Charts, Table)
-  function renderDashboardData(data) {
-    const { wholesales, summary, country_totals } = data;
-    const allCountries = getAllCountries(wholesales);
-
-    return `
-      <!-- KPI Cards -->
-      <div class="dashboard-kpi-cards">
-        <div class="dashboard-kpi-card kpi-travelers">
-          <div class="kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-              <rect x="9" y="3" width="6" height="4" rx="1"/>
-              <path d="M9 12h6M9 16h6"/>
-            </svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">ยอดจองทั้งหมด</div>
-            <div class="kpi-value" id="kpiTotalBookings">${formatNumber(summary.total_bookings)}</div>
-            <div class="kpi-subtext">Total Bookings</div>
-          </div>
-        </div>
-
-        <div class="dashboard-kpi-card kpi-top-wholesale">
-          <div class="kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">Wholesale ยอดนิยม</div>
-            <div class="kpi-value" id="kpiTopWholesale" title="${summary.top_wholesale.name}">${truncateName(summary.top_wholesale.name, 20)}</div>
-            <div class="kpi-subtext">${formatNumber(summary.top_wholesale.count)} bookings</div>
-          </div>
-        </div>
-
-        <div class="dashboard-kpi-card kpi-top-country">
-          <div class="kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-            </svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">ประเทศยอดนิยม</div>
-            <div class="kpi-value" id="kpiTopCountry">${summary.top_country.name}</div>
-            <div class="kpi-subtext">${formatNumber(summary.top_country.count)} bookings</div>
-          </div>
-        </div>
-
-        <div class="dashboard-kpi-card kpi-partners">
-          <div class="kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-            </svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">จำนวน Partner</div>
-            <div class="kpi-value" id="kpiPartners">${formatNumber(summary.total_partners)}</div>
-            <div class="kpi-subtext">Wholesales</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Charts Row -->
-      <div class="dashboard-charts-row">
-        <!-- Top 10 Wholesales Chart -->
-        <div class="glass-chart-container">
-          <div class="glass-chart-header">
-            <div>
-              <div class="glass-chart-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
-                Top 10 Wholesales
-              </div>
-              <div class="glass-chart-subtitle">เรียงตามยอดจอง</div>
-            </div>
-          </div>
-          <div class="glass-chart-wrapper">
-            <canvas id="topWholesalesChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Top 5 Wholesales List -->
-        <div class="top-wholesales-container">
-          <div class="glass-chart-header">
-            <div>
-              <div class="glass-chart-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                สัดส่วนยอดขาย
-              </div>
-              <div class="glass-chart-subtitle">Top 5 Wholesales</div>
-            </div>
-          </div>
-          <div class="top-wholesales-list" id="topWholesalesList">
-            ${renderTopWholesalesList(wholesales.slice(0, 5), summary.total_bookings)}
-          </div>
-        </div>
-      </div>
-
-      <!-- Stacked Bar Chart -->
-      <div class="glass-chart-container" style="margin-bottom: 24px;">
-        <div class="glass-chart-header">
-          <div>
-            <div class="glass-chart-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <path d="M3 9h18M9 21V9"/>
-              </svg>
-              สัดส่วนยอดจองแยกตามประเทศ
-            </div>
-            <div class="glass-chart-subtitle">แต่ละ Wholesale แบ่งตามประเทศปลายทาง</div>
-          </div>
-        </div>
-        <div class="glass-chart-scroll-wrapper">
-          <div class="glass-chart-wrapper" style="height: 350px; min-width: ${Math.max(800, wholesales.length * 60)}px;">
-            <canvas id="stackedChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Data Table -->
-      <div class="dashboard-table-container">
-        <div class="dashboard-table-header">
-          <div class="dashboard-table-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
-              <rect x="8" y="2" width="8" height="4" rx="1"/>
-            </svg>
-            รายละเอียด Wholesale
-          </div>
-          <div class="dashboard-table-actions">
-            <div class="dashboard-search-wrapper">
-              <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35"/>
-              </svg>
-              <input type="text" class="dashboard-search-input" id="dashboardSearchInput" placeholder="ค้นหา Wholesale...">
-            </div>
-            <button class="dashboard-export-btn" id="dashboardExportBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              Export CSV
-            </button>
-          </div>
-        </div>
-        <div class="dashboard-table-wrapper">
-          <table class="dashboard-table" id="dashboardTable">
-            ${renderTableHeader(allCountries)}
-            <tbody id="dashboardTableBody">
-              ${renderTableRows(wholesales, summary.total_bookings, allCountries)}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-
-  // Update dashboard data only (without re-rendering filters)
-  function updateDashboardData(data) {
-    console.log('🔄 Updating dashboard data:', data);
-
-    const dataContainer = document.getElementById('dashboardDataContainer');
-    if (!dataContainer) {
-      console.error('Data container not found');
-      return;
-    }
-
-    if (!data || !data.wholesales || data.wholesales.length === 0) {
-      showEmpty();
-      return;
-    }
-
-    currentData = data;
-    dataContainer.innerHTML = renderDashboardData(data);
-    initDataComponents(data);
-  }
-
-  // Initialize data-related components (charts, search, export, sorting)
-  function initDataComponents(data) {
-    const { wholesales, summary } = data;
-    const allCountries = getAllCountries(wholesales);
-
+    // Initialize components
+    initTimeGranularityButtons(data);
+    initCountryFilter();
     renderTopWholesalesChart(wholesales.slice(0, 10));
     renderStackedChart(wholesales);
     initSearch(wholesales, summary.total_bookings, allCountries);
@@ -407,52 +435,928 @@
     initTableSorting(wholesales, summary.total_bookings, allCountries);
   }
 
-  // Initialize Period Filter Component
-  function initPeriodFilter() {
-    if (typeof PeriodFilterComponent === 'undefined') {
-      console.error('❌ PeriodFilterComponent not loaded');
+  // Initialize time granularity dropdown buttons
+  async function initTimeGranularityButtons(data) {
+    // Fetch available periods if not already loaded
+    if (!availablePeriods) {
+      try {
+        const response = await WholesaleDestinationsAPI.getAvailablePeriods();
+        if (response && response.success && response.data) {
+          availablePeriods = response.data;
+          console.log('📅 Available Periods:', availablePeriods);
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch available periods:', error);
+        availablePeriods = { years: [] };
+      }
+    }
+
+    // Populate dropdowns
+    populateTimeDropdowns();
+
+    // Initialize period type selector (master dropdown)
+    initPeriodTypeSelector();
+
+    // Initialize dropdown click handlers for period value dropdowns
+    const dropdownWrappers = document.querySelectorAll('#periodValueButtons .time-dropdown-wrapper');
+    dropdownWrappers.forEach(wrapper => {
+      const btn = wrapper.querySelector('.time-btn');
+      const dropdown = wrapper.querySelector('.time-dropdown-menu');
+
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        // Close other dropdowns
+        document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+          if (menu !== dropdown) menu.classList.remove('show');
+        });
+
+        // Toggle this dropdown
+        dropdown.classList.toggle('show');
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+      });
+    });
+  }
+
+  // Initialize period type selector (master dropdown)
+  function initPeriodTypeSelector() {
+    const periodTypeBtn = document.getElementById('periodTypeBtn');
+    const periodTypeDropdown = document.getElementById('periodTypeDropdown');
+
+    if (!periodTypeBtn || !periodTypeDropdown) return;
+
+    // Toggle dropdown on button click
+    periodTypeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+
+      // Close other dropdowns
+      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+        if (menu !== periodTypeDropdown) menu.classList.remove('show');
+      });
+
+      // Toggle this dropdown
+      periodTypeDropdown.classList.toggle('show');
+    });
+
+    // Handle period type selection
+    periodTypeDropdown.querySelectorAll('.time-dropdown-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        const periodType = this.dataset.periodType;
+        const periodTypeLabels = {
+          'yearly': 'รายปี',
+          'quarterly': 'รายไตรมาส',
+          'monthly': 'รายเดือน'
+        };
+
+        // Update period type button text
+        const btnText = periodTypeBtn.querySelector('.time-btn-text');
+        if (btnText) {
+          btnText.textContent = periodTypeLabels[periodType];
+        }
+
+        // Mark period type button as active
+        periodTypeBtn.classList.add('active');
+
+        // Reset ALL period value dropdowns and show only the selected type
+        const periodValueButtons = document.getElementById('periodValueButtons');
+        if (periodValueButtons) {
+          const defaultTexts = {
+            'yearly': 'เลือกปี',
+            'quarterly': 'เลือกไตรมาส',
+            'monthly': 'เลือกเดือน'
+          };
+
+          // Reset ALL period value dropdowns (clear labels, checkboxes and remove active state)
+          periodValueButtons.querySelectorAll('.time-dropdown-wrapper').forEach(wrapper => {
+            const type = wrapper.dataset.type;
+            const btn = wrapper.querySelector('.time-btn');
+            const btnText = btn?.querySelector('.time-btn-text');
+
+            // Reset button text to default
+            if (btnText && defaultTexts[type]) {
+              btnText.textContent = defaultTexts[type];
+            }
+
+            // Remove active state
+            if (btn) {
+              btn.classList.remove('active');
+            }
+
+            // Clear all checkboxes and selected states
+            wrapper.querySelectorAll('.time-dropdown-item').forEach(item => {
+              item.classList.remove('selected');
+              const checkbox = item.querySelector('.period-checkbox');
+              if (checkbox) checkbox.checked = false;
+            });
+
+            // Hide all wrappers
+            wrapper.style.display = 'none';
+          });
+
+          // Show only the selected type dropdown
+          const targetWrapper = periodValueButtons.querySelector(`[data-type="${periodType}"]`);
+          if (targetWrapper) {
+            targetWrapper.style.display = 'block';
+          }
+        }
+
+        // Close dropdown
+        periodTypeDropdown.classList.remove('show');
+
+        // Update selected item state in period type dropdown
+        periodTypeDropdown.querySelectorAll('.time-dropdown-item').forEach(i => {
+          i.classList.remove('selected');
+        });
+        this.classList.add('selected');
+
+        // Always reset period selection when changing type
+        selectedPeriods = [];
+        currentTimeGranularity = periodType;
+
+        // Hide the badge
+        const badge = document.getElementById('selectedPeriodBadge');
+        if (badge) badge.style.display = 'none';
+      });
+    });
+  }
+
+  // Populate time dropdowns with data from database
+  function populateTimeDropdowns() {
+    if (!availablePeriods || !availablePeriods.years) return;
+
+    const years = availablePeriods.years;
+
+    // Helper to create dropdown content with checkboxes and confirm button
+    function createDropdownContent(items, type) {
+      let html = '<div class="dropdown-items-container">';
+      html += items;
+      html += '</div>';
+      html += `
+        <div class="dropdown-actions">
+          <button type="button" class="dropdown-clear-btn" data-type="${type}">ล้าง</button>
+          <button type="button" class="dropdown-confirm-btn" data-type="${type}">ยืนยัน</button>
+        </div>
+      `;
+      return html;
+    }
+
+    // Yearly dropdown
+    const yearlyDropdown = document.getElementById('yearlyDropdown');
+    if (yearlyDropdown) {
+      const items = years.map(year => `
+        <div class="time-dropdown-item" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label}">
+          <label class="dropdown-checkbox">
+            <input type="checkbox" class="period-checkbox" />
+            <span class="checkbox-custom"></span>
+          </label>
+          <span class="dropdown-item-label">พ.ศ. ${year.label}</span>
+          <span class="dropdown-item-count">${formatNumber(year.total_orders || 0)} orders</span>
+        </div>
+      `).join('');
+      yearlyDropdown.innerHTML = createDropdownContent(items, 'yearly');
+    }
+
+    // Quarterly dropdown - grouped by year
+    const quarterlyDropdown = document.getElementById('quarterlyDropdown');
+    if (quarterlyDropdown) {
+      let quarterlyItems = '';
+      years.forEach(year => {
+        if (year.quarters && year.quarters.length > 0) {
+          quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          year.quarters.forEach(q => {
+            quarterlyItems += `
+              <div class="time-dropdown-item" data-type="quarterly" data-year="${year.year_ce}" data-quarter="${q.quarter}" data-label="${q.label} ${year.label}">
+                <label class="dropdown-checkbox">
+                  <input type="checkbox" class="period-checkbox" />
+                  <span class="checkbox-custom"></span>
+                </label>
+                <span class="dropdown-item-label">${q.label}</span>
+              </div>
+            `;
+          });
+        }
+      });
+      quarterlyDropdown.innerHTML = createDropdownContent(quarterlyItems, 'quarterly');
+    }
+
+    // Monthly dropdown - grouped by year
+    const monthlyDropdown = document.getElementById('monthlyDropdown');
+    if (monthlyDropdown) {
+      let monthlyItems = '';
+      years.forEach(year => {
+        if (year.months && year.months.length > 0) {
+          monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          year.months.forEach(m => {
+            monthlyItems += `
+              <div class="time-dropdown-item" data-type="monthly" data-year="${year.year_ce}" data-month="${m.month}" data-label="${m.label_short} ${year.label}">
+                <label class="dropdown-checkbox">
+                  <input type="checkbox" class="period-checkbox" />
+                  <span class="checkbox-custom"></span>
+                </label>
+                <span class="dropdown-item-label">${m.label}</span>
+              </div>
+            `;
+          });
+        }
+      });
+      monthlyDropdown.innerHTML = createDropdownContent(monthlyItems, 'monthly');
+    }
+
+    // Add click handlers to dropdown items (toggle checkbox)
+    document.querySelectorAll('#periodValueButtons .time-dropdown-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        const checkbox = this.querySelector('.period-checkbox');
+        if (checkbox) {
+          // If clicking on checkbox or label, let default behavior handle it
+          // Otherwise toggle manually
+          if (e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
+            checkbox.checked = !checkbox.checked;
+          }
+          // Update selected state
+          this.classList.toggle('selected', checkbox.checked);
+        }
+      });
+
+      // Handle direct checkbox click
+      const checkbox = item.querySelector('.period-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('click', function(e) {
+          e.stopPropagation();
+          // Checkbox toggles itself, just update parent state
+          setTimeout(() => {
+            item.classList.toggle('selected', this.checked);
+          }, 0);
+        });
+
+        checkbox.addEventListener('change', function() {
+          item.classList.toggle('selected', this.checked);
+        });
+      }
+    });
+
+    // Add confirm button handlers (only for period dropdowns with data-type attribute)
+    document.querySelectorAll('.dropdown-confirm-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        if (type) confirmPeriodSelection(type);
+      });
+    });
+
+    // Add clear button handlers (only for period dropdowns with data-type attribute)
+    document.querySelectorAll('.dropdown-clear-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        if (type) clearDropdownSelection(type);
+      });
+    });
+  }
+
+  // Clear selection in a specific dropdown
+  function clearDropdownSelection(type) {
+    const dropdownId = type + 'Dropdown';
+    const dropdown = document.getElementById(dropdownId);
+    if (dropdown) {
+      dropdown.querySelectorAll('.time-dropdown-item').forEach(item => {
+        item.classList.remove('selected');
+        const checkbox = item.querySelector('.period-checkbox');
+        if (checkbox) checkbox.checked = false;
+      });
+    }
+  }
+
+  // Confirm period selection from dropdown
+  async function confirmPeriodSelection(type) {
+    const dropdownId = type + 'Dropdown';
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+
+    // Collect selected items
+    selectedPeriods = [];
+    dropdown.querySelectorAll('.time-dropdown-item.selected, .time-dropdown-item:has(.period-checkbox:checked)').forEach(item => {
+      const year = parseInt(item.dataset.year);
+      const quarter = item.dataset.quarter ? parseInt(item.dataset.quarter) : null;
+      const month = item.dataset.month ? parseInt(item.dataset.month) : null;
+      const label = item.dataset.label;
+
+      selectedPeriods.push({ type, year, quarter, month, label });
+    });
+
+    currentTimeGranularity = type;
+
+    // Update button text
+    const btn = document.querySelector(`[data-granularity="${type}"]`);
+    const btnText = btn?.querySelector('.time-btn-text');
+    if (btnText) {
+      if (selectedPeriods.length === 0) {
+        const defaultTexts = {
+          'yearly': 'เลือกปี',
+          'quarterly': 'เลือกไตรมาส',
+          'monthly': 'เลือกเดือน'
+        };
+        btnText.textContent = defaultTexts[type];
+        btn.classList.remove('active');
+      } else if (selectedPeriods.length === 1) {
+        btnText.textContent = selectedPeriods[0].label;
+        btn.classList.add('active');
+      } else {
+        btnText.textContent = `${selectedPeriods.length} รายการ`;
+        btn.classList.add('active');
+      }
+    }
+
+    // Close dropdown
+    dropdown.classList.remove('show');
+
+    // Update badge and reload data
+    updateSelectedPeriodBadge();
+    if (selectedPeriods.length > 0) {
+      // Filter countries based on selected periods
+      await updateCountryDropdownByPeriod();
+      applyAllFilters();
+    } else {
+      // Reset country dropdown to show all
+      renderCountryItems(availableCountries);
+    }
+  }
+
+  // Update selected period badge
+  function updateSelectedPeriodBadge() {
+    const badge = document.getElementById('selectedPeriodBadge');
+    if (!badge) return;
+
+    if (selectedPeriods.length === 0) {
+      badge.style.display = 'none';
       return;
     }
 
-    PeriodFilterComponent.init({
-      containerId: 'periodFilterContainer',
-      onFilterChange: handleFilterChange,
-      fetchAvailablePeriods: async function(filters) {
-        return await WholesaleDestinationsAPI.getAvailablePeriods(filters);
+    let label = '';
+    if (selectedPeriods.length === 1) {
+      label = selectedPeriods[0].label;
+    } else {
+      label = `${selectedPeriods.length} ช่วงเวลา`;
+    }
+
+    badge.innerHTML = `
+      <span>${label}</span>
+      <button class="badge-clear" onclick="clearPeriodFilter()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    `;
+    badge.style.display = 'flex';
+  }
+
+  // Update country dropdown based on selected periods
+  async function updateCountryDropdownByPeriod() {
+    if (selectedPeriods.length === 0) {
+      renderCountryItems(availableCountries);
+      return;
+    }
+
+    // Calculate date range from selected periods
+    let allDateFrom = null;
+    let allDateTo = null;
+    selectedPeriods.forEach(period => {
+      const { dateFrom, dateTo } = getPeriodDateRange(period);
+      if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
+      if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
+    });
+
+    try {
+      // Fetch data with period filter to get available countries
+      const response = await WholesaleDestinationsAPI.getWholesaleDestinations({
+        booking_date_from: allDateFrom,
+        booking_date_to: allDateTo
+      });
+
+      if (response && response.success && response.data && response.data.wholesales) {
+        // Get country names that have data in this period
+        const countriesSet = new Set();
+        response.data.wholesales.forEach(w => {
+          if (w.countries) {
+            Object.keys(w.countries).forEach(countryName => {
+              countriesSet.add(countryName);
+            });
+          }
+        });
+        const countryNamesWithData = Array.from(countriesSet);
+
+        // Filter available countries
+        const filteredCountries = availableCountries.filter(c =>
+          countryNamesWithData.includes(c.name_th)
+        );
+
+        // Clear previously selected countries that are no longer available
+        selectedCountries = selectedCountries.filter(sc =>
+          countryNamesWithData.includes(sc.name)
+        );
+
+        // Update country dropdown
+        renderCountryItems(filteredCountries.length > 0 ? filteredCountries : availableCountries);
+        updateCountryButtonText();
+        updateSelectedCountryBadge();
+      }
+    } catch (error) {
+      console.error('❌ Failed to filter countries by period:', error);
+    }
+  }
+
+  // Get period date range
+  function getPeriodDateRange(period) {
+    const year = period.year;
+    let dateFrom, dateTo;
+
+    if (period.type === 'yearly') {
+      dateFrom = `${year}-01-01`;
+      dateTo = `${year}-12-31`;
+    } else if (period.type === 'quarterly' && period.quarter) {
+      const q = period.quarter;
+      const startMonth = (q - 1) * 3 + 1;
+      const endMonth = q * 3;
+      dateFrom = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, endMonth, 0).getDate();
+      dateTo = `${year}-${String(endMonth).padStart(2, '0')}-${lastDay}`;
+    } else if (period.type === 'monthly' && period.month) {
+      const m = period.month;
+      dateFrom = `${year}-${String(m).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, m, 0).getDate();
+      dateTo = `${year}-${String(m).padStart(2, '0')}-${lastDay}`;
+    }
+
+    return { dateFrom, dateTo };
+  }
+
+  // Initialize country filter dropdown
+  async function initCountryFilter() {
+    const countryBtn = document.getElementById('countryFilterBtn');
+    const countryDropdown = document.getElementById('countryFilterDropdown');
+    const countrySearchInput = document.getElementById('countrySearchInput');
+    const confirmBtn = document.getElementById('countryFilterConfirmBtn');
+    const clearBtn = document.getElementById('countryFilterClearBtn');
+
+    if (!countryBtn || !countryDropdown) return;
+
+    // Fetch countries from API
+    try {
+      const response = await WholesaleDestinationsAPI.getCountries();
+      if (response && response.success && response.data) {
+        availableCountries = response.data;
+        renderCountryItems(availableCountries);
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch countries:', error);
+    }
+
+    // Toggle dropdown
+    countryBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+
+      // Close other dropdowns
+      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+        if (menu !== countryDropdown) menu.classList.remove('show');
+      });
+
+      // Toggle this dropdown
+      countryDropdown.classList.toggle('show');
+
+      // Focus search input when opened
+      if (countryDropdown.classList.contains('show') && countrySearchInput) {
+        countrySearchInput.value = '';
+        renderCountryItems(availableCountries);
+        countrySearchInput.focus();
+      }
+    });
+
+    // Search filter
+    if (countrySearchInput) {
+      countrySearchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = availableCountries.filter(c =>
+          c.name_th.toLowerCase().includes(searchTerm) ||
+          c.name_en.toLowerCase().includes(searchTerm)
+        );
+        renderCountryItems(filtered);
+      });
+    }
+
+    // Prevent dropdown close when clicking inside
+    countryDropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    // Confirm button
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        await confirmCountrySelection();
+      });
+    }
+
+    // Clear button
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        clearCountryDropdownSelection();
+      });
+    }
+  }
+
+  // Render country items in dropdown
+  function renderCountryItems(countries) {
+    const container = document.getElementById('countryItemsContainer');
+    if (!container) return;
+
+    container.innerHTML = countries.map(country => {
+      const isSelected = selectedCountries.some(c => c.id === country.id);
+      return `
+        <div class="time-dropdown-item country-item ${isSelected ? 'selected' : ''}" data-country-id="${country.id}" data-country-name="${country.name_th}">
+          <label class="dropdown-checkbox">
+            <input type="checkbox" class="country-checkbox" ${isSelected ? 'checked' : ''} />
+            <span class="checkbox-custom"></span>
+          </label>
+          <span class="dropdown-item-label">${country.name_th}</span>
+          <span class="dropdown-item-count">${country.name_en}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Attach click handlers
+    container.querySelectorAll('.country-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const checkbox = this.querySelector('.country-checkbox');
+        if (checkbox && e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
+          checkbox.checked = !checkbox.checked;
+        }
+        this.classList.toggle('selected', checkbox?.checked);
+      });
+
+      const checkbox = item.querySelector('.country-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('click', function(e) {
+          e.stopPropagation();
+          setTimeout(() => {
+            item.classList.toggle('selected', this.checked);
+          }, 0);
+        });
+
+        checkbox.addEventListener('change', function() {
+          item.classList.toggle('selected', this.checked);
+        });
       }
     });
   }
 
-  // Initialize Country Filter Component
-  function initCountryFilter() {
-    if (typeof CountryFilterComponent === 'undefined') {
-      console.error('❌ CountryFilterComponent not loaded');
+  // Confirm country selection
+  async function confirmCountrySelection() {
+    const container = document.getElementById('countryItemsContainer');
+    if (!container) return;
+
+    // Collect selected countries
+    selectedCountries = [];
+    container.querySelectorAll('.country-item.selected, .country-item:has(.country-checkbox:checked)').forEach(item => {
+      const id = parseInt(item.dataset.countryId);
+      const name = item.dataset.countryName;
+      selectedCountries.push({ id, name });
+    });
+
+    // Update button text
+    updateCountryButtonText();
+
+    // Close dropdown
+    document.getElementById('countryFilterDropdown')?.classList.remove('show');
+
+    // Update badge and reload data
+    updateSelectedCountryBadge();
+
+    if (selectedCountries.length > 0) {
+      // Filter periods based on selected countries
+      await updatePeriodDropdownsByCountry();
+    } else {
+      // Reset period dropdowns to show all
+      populateTimeDropdowns();
+    }
+
+    applyAllFilters();
+  }
+
+  // Clear country dropdown selection
+  function clearCountryDropdownSelection() {
+    const container = document.getElementById('countryItemsContainer');
+    if (container) {
+      container.querySelectorAll('.country-item').forEach(item => {
+        item.classList.remove('selected');
+        const checkbox = item.querySelector('.country-checkbox');
+        if (checkbox) checkbox.checked = false;
+      });
+    }
+  }
+
+  // Update country button text
+  function updateCountryButtonText() {
+    const btn = document.getElementById('countryFilterBtn');
+    const btnText = btn?.querySelector('.time-btn-text');
+    if (btnText) {
+      if (selectedCountries.length === 0) {
+        btnText.textContent = 'เลือกประเทศ';
+        btn?.classList.remove('active');
+      } else if (selectedCountries.length === 1) {
+        btnText.textContent = selectedCountries[0].name;
+        btn?.classList.add('active');
+      } else {
+        btnText.textContent = `${selectedCountries.length} ประเทศ`;
+        btn?.classList.add('active');
+      }
+    }
+  }
+
+  // Update selected country badge
+  function updateSelectedCountryBadge() {
+    const badge = document.getElementById('selectedCountryBadge');
+    if (!badge) return;
+
+    if (selectedCountries.length === 0) {
+      badge.style.display = 'none';
       return;
     }
 
-    CountryFilterComponent.init({
-      containerId: 'countryFilterContainer',
-      onFilterChange: handleFilterChange,
-      fetchCountries: async function() {
-        return await WholesaleDestinationsAPI.getCountries();
+    let label = '';
+    if (selectedCountries.length === 1) {
+      label = selectedCountries[0].name;
+    } else {
+      label = `${selectedCountries.length} ประเทศ`;
+    }
+
+    badge.innerHTML = `
+      <span>${label}</span>
+      <button class="badge-clear" onclick="clearCountryFilter()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    `;
+    badge.style.display = 'flex';
+  }
+
+  // Update period dropdowns based on selected countries
+  async function updatePeriodDropdownsByCountry() {
+    if (selectedCountries.length === 0) {
+      // Reset to show all periods
+      populateTimeDropdowns();
+      return;
+    }
+
+    try {
+      // Fetch available periods for selected countries
+      const countryIds = selectedCountries.map(c => c.id).join(',');
+      const response = await WholesaleDestinationsAPI.getAvailablePeriods({ country_id: countryIds });
+
+      if (response && response.success && response.data) {
+        const periodsData = response.data;
+
+        // Update period dropdowns with filtered data
+        updatePeriodDropdownsWithData(periodsData);
+
+        // Clear previously selected periods that are no longer available
+        filterSelectedPeriodsByAvailable(periodsData);
+      }
+    } catch (error) {
+      console.error('❌ Failed to filter periods by country:', error);
+      // If API doesn't support country filter, keep all periods
+    }
+  }
+
+  // Update period dropdowns with filtered data (preserves selected state)
+  function updatePeriodDropdownsWithData(periodsData) {
+    if (!periodsData || !periodsData.years) return;
+
+    const years = periodsData.years;
+
+    // Helper to create dropdown content
+    function createDropdownContent(items, type) {
+      let html = '<div class="dropdown-items-container">';
+      html += items;
+      html += '</div>';
+      html += `
+        <div class="dropdown-actions">
+          <button type="button" class="dropdown-clear-btn" data-type="${type}">ล้าง</button>
+          <button type="button" class="dropdown-confirm-btn" data-type="${type}">ยืนยัน</button>
+        </div>
+      `;
+      return html;
+    }
+
+    // Yearly dropdown
+    const yearlyDropdown = document.getElementById('yearlyDropdown');
+    if (yearlyDropdown) {
+      const items = years.map(year => {
+        const isSelected = selectedPeriods.some(p => p.type === 'yearly' && p.year === year.year_ce);
+        return `
+          <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label}">
+            <label class="dropdown-checkbox">
+              <input type="checkbox" class="period-checkbox" ${isSelected ? 'checked' : ''} />
+              <span class="checkbox-custom"></span>
+            </label>
+            <span class="dropdown-item-label">พ.ศ. ${year.label}</span>
+            <span class="dropdown-item-count">${formatNumber(year.total_orders || 0)} orders</span>
+          </div>
+        `;
+      }).join('');
+      yearlyDropdown.innerHTML = createDropdownContent(items, 'yearly');
+      reattachPeriodItemHandlers(yearlyDropdown);
+    }
+
+    // Quarterly dropdown
+    const quarterlyDropdown = document.getElementById('quarterlyDropdown');
+    if (quarterlyDropdown) {
+      let quarterlyItems = '';
+      years.forEach(year => {
+        if (year.quarters && year.quarters.length > 0) {
+          quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          year.quarters.forEach(q => {
+            const isSelected = selectedPeriods.some(p => p.type === 'quarterly' && p.year === year.year_ce && p.quarter === q.quarter);
+            quarterlyItems += `
+              <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="quarterly" data-year="${year.year_ce}" data-quarter="${q.quarter}" data-label="${q.label} ${year.label}">
+                <label class="dropdown-checkbox">
+                  <input type="checkbox" class="period-checkbox" ${isSelected ? 'checked' : ''} />
+                  <span class="checkbox-custom"></span>
+                </label>
+                <span class="dropdown-item-label">${q.label}</span>
+              </div>
+            `;
+          });
+        }
+      });
+      quarterlyDropdown.innerHTML = createDropdownContent(quarterlyItems, 'quarterly');
+      reattachPeriodItemHandlers(quarterlyDropdown);
+    }
+
+    // Monthly dropdown
+    const monthlyDropdown = document.getElementById('monthlyDropdown');
+    if (monthlyDropdown) {
+      let monthlyItems = '';
+      years.forEach(year => {
+        if (year.months && year.months.length > 0) {
+          monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          year.months.forEach(m => {
+            const isSelected = selectedPeriods.some(p => p.type === 'monthly' && p.year === year.year_ce && p.month === m.month);
+            monthlyItems += `
+              <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="monthly" data-year="${year.year_ce}" data-month="${m.month}" data-label="${m.label_short} ${year.label}">
+                <label class="dropdown-checkbox">
+                  <input type="checkbox" class="period-checkbox" ${isSelected ? 'checked' : ''} />
+                  <span class="checkbox-custom"></span>
+                </label>
+                <span class="dropdown-item-label">${m.label}</span>
+              </div>
+            `;
+          });
+        }
+      });
+      monthlyDropdown.innerHTML = createDropdownContent(monthlyItems, 'monthly');
+      reattachPeriodItemHandlers(monthlyDropdown);
+    }
+
+    // Reattach button handlers
+    document.querySelectorAll('.dropdown-confirm-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        if (type) confirmPeriodSelection(type);
+      });
+    });
+
+    document.querySelectorAll('.dropdown-clear-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        if (type) clearDropdownSelection(type);
+      });
+    });
+  }
+
+  // Reattach event handlers to period dropdown items
+  function reattachPeriodItemHandlers(container) {
+    container.querySelectorAll('.time-dropdown-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const checkbox = this.querySelector('.period-checkbox');
+        if (checkbox && e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
+          checkbox.checked = !checkbox.checked;
+        }
+        this.classList.toggle('selected', checkbox?.checked);
+      });
+
+      const checkbox = item.querySelector('.period-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('click', function(e) {
+          e.stopPropagation();
+          setTimeout(() => {
+            item.classList.toggle('selected', this.checked);
+          }, 0);
+        });
       }
     });
   }
 
-  // Handle filter changes from both components
-  async function handleFilterChange() {
-    console.log('📅 Handling filter change...');
+  // Filter selected periods by available data
+  function filterSelectedPeriodsByAvailable(periodsData) {
+    if (!periodsData || !periodsData.years) return;
 
-    // Get filters from both components
-    const periodFilters = typeof PeriodFilterComponent !== 'undefined' ? PeriodFilterComponent.getFilters() : {};
-    const countryFilters = typeof CountryFilterComponent !== 'undefined' ? CountryFilterComponent.getFilters() : {};
+    const availableYears = periodsData.years.map(y => y.year_ce);
+    const availableQuarters = [];
+    const availableMonths = [];
 
-    // Merge filters
-    const filters = { ...periodFilters, ...countryFilters };
-    console.log('📅 Combined filters:', filters);
+    periodsData.years.forEach(year => {
+      if (year.quarters) {
+        year.quarters.forEach(q => {
+          availableQuarters.push(`${year.year_ce}-${q.quarter}`);
+        });
+      }
+      if (year.months) {
+        year.months.forEach(m => {
+          availableMonths.push(`${year.year_ce}-${m.month}`);
+        });
+      }
+    });
 
-    // Store current filters
-    currentFilters = filters;
+    // Filter out periods that are no longer available
+    selectedPeriods = selectedPeriods.filter(p => {
+      if (p.type === 'yearly') {
+        return availableYears.includes(p.year);
+      } else if (p.type === 'quarterly') {
+        return availableQuarters.includes(`${p.year}-${p.quarter}`);
+      } else if (p.type === 'monthly') {
+        return availableMonths.includes(`${p.year}-${p.month}`);
+      }
+      return false;
+    });
+
+    // Update UI
+    updatePeriodButtonTextForType(currentTimeGranularity);
+    updateSelectedPeriodBadge();
+  }
+
+  // Update period button text for a specific type
+  function updatePeriodButtonTextForType(type) {
+    const btn = document.querySelector(`[data-granularity="${type}"]`);
+    const btnText = btn?.querySelector('.time-btn-text');
+    if (btnText) {
+      const defaultTexts = {
+        'yearly': 'เลือกปี',
+        'quarterly': 'เลือกไตรมาส',
+        'monthly': 'เลือกเดือน'
+      };
+      if (selectedPeriods.length === 0) {
+        btnText.textContent = defaultTexts[type];
+        btn?.classList.remove('active');
+      } else if (selectedPeriods.length === 1) {
+        btnText.textContent = selectedPeriods[0].label;
+        btn?.classList.add('active');
+      } else {
+        btnText.textContent = `${selectedPeriods.length} รายการ`;
+        btn?.classList.add('active');
+      }
+    }
+  }
+
+  // Apply all filters and reload data
+  async function applyAllFilters() {
+    const filters = {};
+
+    // Add period filter
+    if (selectedPeriods.length > 0) {
+      let allDateFrom = null;
+      let allDateTo = null;
+      selectedPeriods.forEach(period => {
+        const { dateFrom, dateTo } = getPeriodDateRange(period);
+        if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
+        if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
+      });
+      filters.booking_date_from = allDateFrom;
+      filters.booking_date_to = allDateTo;
+    }
+
+    // Add country filter
+    if (selectedCountries.length > 0) {
+      filters.country_id = selectedCountries.map(c => c.id).join(',');
+    }
+
+    console.log('📅 Applying filters:', filters);
 
     try {
       showDashboardLoading();
@@ -460,14 +1364,67 @@
       hideDashboardLoading();
 
       if (response && response.success && response.data) {
+        currentData = response.data;
         updateDashboardData(response.data);
       } else {
-        showEmpty();
+        showEmptyData();
       }
     } catch (error) {
       console.error('❌ Failed to apply filters:', error);
       hideDashboardLoading();
     }
+  }
+
+  // Show empty data state (within existing dashboard)
+  function showEmptyData() {
+    const kpiCards = document.querySelector('.dashboard-kpi-cards');
+    const chartsRow = document.querySelector('.dashboard-charts-row');
+    const tableContainer = document.querySelector('.dashboard-table-container');
+
+    if (kpiCards) kpiCards.innerHTML = '<p style="text-align: center; padding: 20px; color: #6b7280;">ไม่พบข้อมูล</p>';
+    if (chartsRow) chartsRow.innerHTML = '';
+    if (tableContainer) tableContainer.innerHTML = '<p style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</p>';
+  }
+
+  // Update dashboard data (KPIs, Charts, Table) without re-rendering filters
+  function updateDashboardData(data) {
+    if (!data || !data.wholesales || data.wholesales.length === 0) {
+      showEmptyData();
+      return;
+    }
+
+    const { wholesales, summary } = data;
+    const allCountries = getAllCountries(wholesales);
+
+    // Update KPIs
+    document.getElementById('kpiTotalBookings').textContent = formatNumber(summary.total_bookings);
+    document.getElementById('kpiTopWholesale').textContent = truncateName(summary.top_wholesale.name, 20);
+    document.getElementById('kpiTopWholesale').title = summary.top_wholesale.name;
+    document.getElementById('kpiTopWholesale').nextElementSibling.textContent = `${formatNumber(summary.top_wholesale.count)} bookings`;
+    document.getElementById('kpiTopCountry').textContent = summary.top_country.name;
+    document.getElementById('kpiTopCountry').nextElementSibling.textContent = `${formatNumber(summary.top_country.count)} bookings`;
+    document.getElementById('kpiPartners').textContent = formatNumber(summary.total_partners);
+
+    // Update Charts
+    renderTopWholesalesChart(wholesales.slice(0, 10));
+    renderStackedChart(wholesales);
+
+    // Update Top Wholesales List
+    const listContainer = document.getElementById('topWholesalesList');
+    if (listContainer) {
+      listContainer.innerHTML = renderTopWholesalesList(wholesales.slice(0, 5), summary.total_bookings);
+    }
+
+    // Update Table
+    const table = document.getElementById('dashboardTable');
+    if (table) {
+      table.innerHTML = renderTableHeader(allCountries) + `<tbody id="dashboardTableBody">${renderTableRows(wholesales, summary.total_bookings, allCountries)}</tbody>`;
+      initTableSorting(wholesales, summary.total_bookings, allCountries);
+    }
+
+    // Re-init search with new data
+    initSearch(wholesales, summary.total_bookings, allCountries);
+    initExport(wholesales, summary.total_bookings, allCountries);
   }
 
   // Truncate long names
@@ -651,11 +1608,11 @@
     }
 
     // Get all unique countries
-    const allCountries = new Set();
+    const allCountriesSet = new Set();
     wholesales.forEach(w => {
-      Object.keys(w.countries).forEach(c => allCountries.add(c));
+      Object.keys(w.countries).forEach(c => allCountriesSet.add(c));
     });
-    const countries = Array.from(allCountries);
+    const countries = Array.from(allCountriesSet);
 
     // Define colors for countries
     const countryColors = {
@@ -759,7 +1716,11 @@
     const searchInput = document.getElementById('dashboardSearchInput');
     if (!searchInput) return;
 
-    searchInput.addEventListener('input', function() {
+    // Remove old event listeners by replacing the element
+    const newSearchInput = searchInput.cloneNode(true);
+    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+
+    newSearchInput.addEventListener('input', function() {
       const query = this.value.toLowerCase().trim();
       const filtered = wholesales.filter(w =>
         w.name.toLowerCase().includes(query)
@@ -777,7 +1738,11 @@
     const exportBtn = document.getElementById('dashboardExportBtn');
     if (!exportBtn) return;
 
-    exportBtn.addEventListener('click', function() {
+    // Remove old event listeners by replacing the element
+    const newExportBtn = exportBtn.cloneNode(true);
+    exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
+
+    newExportBtn.addEventListener('click', function() {
       // Build CSV header
       const header = ['No', 'Wholesale', ...countries, 'Total Bookings', 'Percentage'];
       let csv = header.map(h => `"${h}"`).join(',') + '\n';
@@ -824,10 +1789,14 @@
     let currentSort = { field: null, direction: 'asc' };
 
     headers.forEach(header => {
-      header.addEventListener('click', function() {
+      // Remove old event listeners by replacing the element
+      const newHeader = header.cloneNode(true);
+      header.parentNode.replaceChild(newHeader, header);
+
+      newHeader.addEventListener('click', function() {
         const field = this.dataset.sort;
         const type = this.dataset.type;
-        const country = this.dataset.country; // For country columns
+        const country = this.dataset.country;
 
         // Toggle direction
         if (currentSort.field === field) {
@@ -848,7 +1817,6 @@
             valA = a.total;
             valB = b.total;
           } else if (field.startsWith('country-') && country) {
-            // Sort by specific country
             valA = a.countries[country] || 0;
             valB = b.countries[country] || 0;
           } else {
@@ -870,10 +1838,98 @@
         }
 
         // Update header styles
-        headers.forEach(h => h.classList.remove('sorted', 'asc', 'desc'));
-        this.classList.add('sorted', currentSort.direction);
+        table.querySelectorAll('th[data-sort]').forEach(h => h.classList.remove('sorted', 'sort-asc', 'sort-desc'));
+        this.classList.add('sorted', currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
       });
     });
   }
+
+  // Global function for clearing period filter (called from badge button)
+  window.clearPeriodFilter = function() {
+    selectedPeriods = [];
+
+    // Reset period type selector
+    const periodTypeBtn = document.getElementById('periodTypeBtn');
+    if (periodTypeBtn) {
+      periodTypeBtn.classList.remove('active');
+      const btnText = periodTypeBtn.querySelector('.time-btn-text');
+      if (btnText) btnText.textContent = 'มุมมอง';
+    }
+
+    // Clear selected state in period type dropdown
+    const periodTypeDropdown = document.getElementById('periodTypeDropdown');
+    if (periodTypeDropdown) {
+      periodTypeDropdown.querySelectorAll('.time-dropdown-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+    }
+
+    // Reset all period dropdowns
+    const periodValueButtons = document.getElementById('periodValueButtons');
+    if (periodValueButtons) {
+      const defaultTexts = {
+        'yearly': 'เลือกปี',
+        'quarterly': 'เลือกไตรมาส',
+        'monthly': 'เลือกเดือน'
+      };
+
+      periodValueButtons.querySelectorAll('.time-dropdown-wrapper').forEach(wrapper => {
+        const type = wrapper.dataset.type;
+        const btn = wrapper.querySelector('.time-btn');
+        const btnText = btn?.querySelector('.time-btn-text');
+
+        if (btnText && defaultTexts[type]) {
+          btnText.textContent = defaultTexts[type];
+        }
+        if (btn) {
+          btn.classList.remove('active');
+        }
+
+        wrapper.querySelectorAll('.time-dropdown-item').forEach(item => {
+          item.classList.remove('selected');
+          const checkbox = item.querySelector('.period-checkbox');
+          if (checkbox) checkbox.checked = false;
+        });
+
+        wrapper.style.display = 'none';
+      });
+    }
+
+    // Hide badge
+    const badge = document.getElementById('selectedPeriodBadge');
+    if (badge) badge.style.display = 'none';
+
+    // Reset country dropdown to show all
+    renderCountryItems(availableCountries);
+
+    // Apply filters
+    applyAllFilters();
+  };
+
+  // Global function for clearing country filter (called from badge button)
+  window.clearCountryFilter = function() {
+    selectedCountries = [];
+
+    // Reset button
+    const btn = document.getElementById('countryFilterBtn');
+    if (btn) {
+      btn.classList.remove('active');
+      const btnText = btn.querySelector('.time-btn-text');
+      if (btnText) btnText.textContent = 'เลือกประเทศ';
+    }
+
+    // Clear dropdown selection
+    clearCountryDropdownSelection();
+
+    // Hide badge
+    const badge = document.getElementById('selectedCountryBadge');
+    if (badge) badge.style.display = 'none';
+
+    // Reset period dropdowns
+    populateTimeDropdowns();
+
+    // Apply filters
+    applyAllFilters();
+  };
 
 })();
