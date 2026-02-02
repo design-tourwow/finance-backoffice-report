@@ -1401,8 +1401,295 @@
     }
   }
 
+  // Update country dropdown based on selected periods
+  async function updateCountryDropdownByPeriod() {
+    if (selectedPeriods.length === 0) {
+      renderCountryItems(availableCountries);
+      return;
+    }
+
+    // Calculate date range from selected periods
+    let allDateFrom = null;
+    let allDateTo = null;
+    selectedPeriods.forEach(period => {
+      const { dateFrom, dateTo } = getPeriodDateRange(period);
+      if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
+      if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
+    });
+
+    try {
+      // Fetch data with period filter to get available countries
+      const response = await SalesByCountryAPI.getReportByCountry({
+        booking_date_from: allDateFrom,
+        booking_date_to: allDateTo
+      });
+
+      if (response && response.success && response.data) {
+        // Get country IDs that have data in this period
+        const countryIdsWithData = response.data.map(item => item.country_id);
+
+        // Filter available countries
+        const filteredCountries = availableCountries.filter(c =>
+          countryIdsWithData.includes(c.id)
+        );
+
+        // Clear previously selected countries that are no longer available
+        selectedCountries = selectedCountries.filter(sc =>
+          countryIdsWithData.includes(sc.id)
+        );
+
+        // Update country dropdown
+        renderCountryItems(filteredCountries);
+        updateCountryButtonText();
+        updateSelectedCountryBadge();
+      }
+    } catch (error) {
+      console.error('❌ Failed to filter countries by period:', error);
+    }
+  }
+
+  // Update period dropdowns based on selected countries
+  async function updatePeriodDropdownsByCountry() {
+    if (selectedCountries.length === 0) {
+      // Reset to show all periods
+      populateTimeDropdowns();
+      return;
+    }
+
+    try {
+      // Fetch available periods for selected countries
+      const countryIds = selectedCountries.map(c => c.id).join(',');
+      const response = await SalesByCountryAPI.getAvailablePeriods({ country_id: countryIds });
+
+      if (response && response.success && response.data) {
+        const periodsData = response.data;
+
+        // Update period dropdowns with filtered data
+        updatePeriodDropdownsWithData(periodsData);
+
+        // Clear previously selected periods that are no longer available
+        filterSelectedPeriodsByAvailable(periodsData);
+      }
+    } catch (error) {
+      console.error('❌ Failed to filter periods by country:', error);
+      // If API doesn't support country filter, keep all periods
+    }
+  }
+
+  // Update period dropdowns with filtered data
+  function updatePeriodDropdownsWithData(periodsData) {
+    if (!periodsData || !periodsData.years) return;
+
+    const years = periodsData.years;
+
+    // Helper to create dropdown content
+    function createDropdownContent(items, type) {
+      let html = '<div class="dropdown-items-container">';
+      html += items;
+      html += '</div>';
+      html += `
+        <div class="dropdown-actions">
+          <button type="button" class="dropdown-clear-btn" data-type="${type}">ล้าง</button>
+          <button type="button" class="dropdown-confirm-btn" data-type="${type}">ยืนยัน</button>
+        </div>
+      `;
+      return html;
+    }
+
+    // Yearly dropdown
+    const yearlyDropdown = document.getElementById('yearlyDropdown');
+    if (yearlyDropdown) {
+      const items = years.map(year => {
+        const isSelected = selectedPeriods.some(p => p.type === 'yearly' && p.year === year.year_ce);
+        return `
+          <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label}">
+            <label class="dropdown-checkbox">
+              <input type="checkbox" class="period-checkbox" ${isSelected ? 'checked' : ''} />
+              <span class="checkbox-custom"></span>
+            </label>
+            <span class="dropdown-item-label">พ.ศ. ${year.label}</span>
+            <span class="dropdown-item-count">${formatNumber(year.total_orders)} orders</span>
+          </div>
+        `;
+      }).join('');
+      yearlyDropdown.innerHTML = createDropdownContent(items, 'yearly');
+      reattachPeriodItemHandlers(yearlyDropdown);
+    }
+
+    // Quarterly dropdown
+    const quarterlyDropdown = document.getElementById('quarterlyDropdown');
+    if (quarterlyDropdown) {
+      let quarterlyItems = '';
+      years.forEach(year => {
+        if (year.quarters && year.quarters.length > 0) {
+          quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          year.quarters.forEach(q => {
+            const isSelected = selectedPeriods.some(p => p.type === 'quarterly' && p.year === year.year_ce && p.quarter === q.quarter);
+            quarterlyItems += `
+              <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="quarterly" data-year="${year.year_ce}" data-quarter="${q.quarter}" data-label="${q.label} ${year.label}">
+                <label class="dropdown-checkbox">
+                  <input type="checkbox" class="period-checkbox" ${isSelected ? 'checked' : ''} />
+                  <span class="checkbox-custom"></span>
+                </label>
+                <span class="dropdown-item-label">${q.label}</span>
+              </div>
+            `;
+          });
+        }
+      });
+      quarterlyDropdown.innerHTML = createDropdownContent(quarterlyItems, 'quarterly');
+      reattachPeriodItemHandlers(quarterlyDropdown);
+    }
+
+    // Monthly dropdown
+    const monthlyDropdown = document.getElementById('monthlyDropdown');
+    if (monthlyDropdown) {
+      let monthlyItems = '';
+      years.forEach(year => {
+        if (year.months && year.months.length > 0) {
+          monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          year.months.forEach(m => {
+            const isSelected = selectedPeriods.some(p => p.type === 'monthly' && p.year === year.year_ce && p.month === m.month);
+            monthlyItems += `
+              <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="monthly" data-year="${year.year_ce}" data-month="${m.month}" data-label="${m.label_short} ${year.label}">
+                <label class="dropdown-checkbox">
+                  <input type="checkbox" class="period-checkbox" ${isSelected ? 'checked' : ''} />
+                  <span class="checkbox-custom"></span>
+                </label>
+                <span class="dropdown-item-label">${m.label}</span>
+              </div>
+            `;
+          });
+        }
+      });
+      monthlyDropdown.innerHTML = createDropdownContent(monthlyItems, 'monthly');
+      reattachPeriodItemHandlers(monthlyDropdown);
+    }
+
+    // Reattach button handlers
+    document.querySelectorAll('.dropdown-confirm-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        if (type) confirmPeriodSelection(type);
+      });
+    });
+
+    document.querySelectorAll('.dropdown-clear-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        if (type) clearDropdownSelection(type);
+      });
+    });
+  }
+
+  // Reattach click handlers to period items
+  function reattachPeriodItemHandlers(container) {
+    container.querySelectorAll('.time-dropdown-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const checkbox = this.querySelector('.period-checkbox');
+        if (checkbox && e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
+          checkbox.checked = !checkbox.checked;
+        }
+        this.classList.toggle('selected', checkbox?.checked);
+      });
+
+      const checkbox = item.querySelector('.period-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('click', function(e) {
+          e.stopPropagation();
+          setTimeout(() => {
+            item.classList.toggle('selected', this.checked);
+          }, 0);
+        });
+      }
+    });
+  }
+
+  // Filter selected periods by available data
+  function filterSelectedPeriodsByAvailable(periodsData) {
+    if (!periodsData || !periodsData.years) return;
+
+    const availableYears = periodsData.years.map(y => y.year_ce);
+    const availableQuarters = [];
+    const availableMonths = [];
+
+    periodsData.years.forEach(year => {
+      if (year.quarters) {
+        year.quarters.forEach(q => {
+          availableQuarters.push(`${year.year_ce}-${q.quarter}`);
+        });
+      }
+      if (year.months) {
+        year.months.forEach(m => {
+          availableMonths.push(`${year.year_ce}-${m.month}`);
+        });
+      }
+    });
+
+    // Filter out periods that are no longer available
+    selectedPeriods = selectedPeriods.filter(p => {
+      if (p.type === 'yearly') {
+        return availableYears.includes(p.year);
+      } else if (p.type === 'quarterly') {
+        return availableQuarters.includes(`${p.year}-${p.quarter}`);
+      } else if (p.type === 'monthly') {
+        return availableMonths.includes(`${p.year}-${p.month}`);
+      }
+      return false;
+    });
+
+    // Update UI
+    updatePeriodButtonText();
+    updateSelectedPeriodBadge();
+  }
+
+  // Update period button text
+  function updatePeriodButtonText() {
+    const type = currentTimeGranularity;
+    const btn = document.querySelector(`[data-granularity="${type}"]`);
+    const btnText = btn?.querySelector('.time-btn-text');
+    if (btnText) {
+      const defaultTexts = {
+        'yearly': 'เลือกปี',
+        'quarterly': 'เลือกไตรมาส',
+        'monthly': 'เลือกเดือน'
+      };
+      if (selectedPeriods.length === 0) {
+        btnText.textContent = defaultTexts[type];
+        btn?.classList.remove('active');
+      } else if (selectedPeriods.length === 1) {
+        btnText.textContent = selectedPeriods[0].label;
+        btn?.classList.add('active');
+      } else {
+        btnText.textContent = `${selectedPeriods.length} รายการ`;
+        btn?.classList.add('active');
+      }
+    }
+  }
+
+  // Update country button text
+  function updateCountryButtonText() {
+    const btn = document.getElementById('countryFilterBtn');
+    const btnText = btn?.querySelector('.time-btn-text');
+    if (btnText) {
+      if (selectedCountries.length === 0) {
+        btnText.textContent = 'เลือกประเทศ';
+        btn?.classList.remove('active');
+      } else if (selectedCountries.length === 1) {
+        btnText.textContent = selectedCountries[0].name;
+        btn?.classList.add('active');
+      } else {
+        btnText.textContent = `${selectedCountries.length} ประเทศ`;
+        btn?.classList.add('active');
+      }
+    }
+  }
+
   // Confirm period selection from dropdown
-  function confirmPeriodSelection(type) {
+  async function confirmPeriodSelection(type) {
     const dropdownId = type + 'Dropdown';
     const dropdown = document.getElementById(dropdownId);
     if (!dropdown) return;
@@ -1447,7 +1734,12 @@
     // Update badge and reload data
     updateSelectedPeriodBadge();
     if (selectedPeriods.length > 0) {
-      applyPeriodFilter(currentTabData);
+      // Filter countries based on selected periods
+      await updateCountryDropdownByPeriod();
+      applyAllFilters();
+    } else {
+      // Reset country dropdown to show all
+      renderCountryItems(availableCountries);
     }
   }
 
@@ -1585,7 +1877,7 @@
   }
 
   // Confirm country selection
-  function confirmCountrySelection() {
+  async function confirmCountrySelection() {
     const container = document.getElementById('countryItemsContainer');
     if (!container) return;
 
@@ -1597,26 +1889,21 @@
     });
 
     // Update button text
-    const btn = document.getElementById('countryFilterBtn');
-    const btnText = btn?.querySelector('.time-btn-text');
-    if (btnText) {
-      if (selectedCountries.length === 0) {
-        btnText.textContent = 'เลือกประเทศ';
-        btn.classList.remove('active');
-      } else if (selectedCountries.length === 1) {
-        btnText.textContent = selectedCountries[0].name;
-        btn.classList.add('active');
-      } else {
-        btnText.textContent = `${selectedCountries.length} ประเทศ`;
-        btn.classList.add('active');
-      }
-    }
+    updateCountryButtonText();
 
     // Close dropdown
     document.getElementById('countryFilterDropdown')?.classList.remove('show');
 
     // Update badge
     updateSelectedCountryBadge();
+
+    // Filter periods based on selected countries
+    if (selectedCountries.length > 0) {
+      await updatePeriodDropdownsByCountry();
+    } else {
+      // Reset period dropdowns to show all
+      populateTimeDropdowns();
+    }
 
     // Reload data with filter
     applyAllFilters();
@@ -1682,6 +1969,9 @@
     // Hide badge
     const badge = document.getElementById('selectedCountryBadge');
     if (badge) badge.style.display = 'none';
+
+    // Reset period dropdowns to show all periods
+    populateTimeDropdowns();
 
     // Reload data
     applyAllFilters();
@@ -1814,21 +2104,11 @@
     const badge = document.getElementById('selectedPeriodBadge');
     if (badge) badge.style.display = 'none';
 
-    // Reload all data without filters
-    try {
-      showDashboardLoading();
+    // Reset country dropdown to show all countries
+    renderCountryItems(availableCountries);
 
-      const response = await SalesByCountryAPI.getReportByCountry({});
-
-      hideDashboardLoading();
-
-      if (response && response.success && response.data) {
-        renderCountryDashboardContent(response.data);
-      }
-    } catch (error) {
-      console.error('❌ Failed to clear filter:', error);
-      hideDashboardLoading();
-    }
+    // Reload all data
+    applyAllFilters();
   };
 
   // Render dashboard content (update existing elements or recreate)
