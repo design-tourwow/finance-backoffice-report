@@ -22,8 +22,9 @@ const WholesaleDestinationsAPI = {
 
     if (filters.booking_date_from) params.append('booking_date_from', filters.booking_date_from);
     if (filters.booking_date_to) params.append('booking_date_to', filters.booking_date_to);
-    if (filters.wholesale_id) params.append('wholesale_id', filters.wholesale_id);
+    if (filters.wholesale_id) params.append('supplier_id', filters.wholesale_id);
     if (filters.country_id) params.append('country_id', filters.country_id);
+    if (filters.view_mode) params.append('view_mode', filters.view_mode);
 
     const queryString = params.toString();
     return queryString ? `?${queryString}` : '';

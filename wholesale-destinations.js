@@ -11,6 +11,7 @@
   let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
   let availableWholesales = []; // List of wholesales from API
   let selectedWholesales = []; // Array for multi-select: [{ id, name }]
+  let currentViewMode = 'sales'; // 'sales' or 'travelers'
 
   document.addEventListener('DOMContentLoaded', function () {
     initWholesaleDestinations();
@@ -51,8 +52,8 @@
         console.log('📅 Available Periods:', availablePeriods);
       }
 
-      // Load data
-      const response = await WholesaleDestinationsAPI.getWholesaleDestinations({});
+      // Load data with current view mode
+      const response = await WholesaleDestinationsAPI.getWholesaleDestinations({ view_mode: currentViewMode });
 
       if (response && response.success && response.data) {
         currentData = response.data;
@@ -153,6 +154,20 @@
   function formatNumber(num) {
     if (num === null || num === undefined) return '-';
     return num.toLocaleString('th-TH');
+  }
+
+  // Format currency (Thai Baht)
+  function formatCurrency(num) {
+    if (num === null || num === undefined) return '-';
+    return num.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' บาท';
+  }
+
+  // Format value based on view mode
+  function formatValueByMode(num, viewMode) {
+    if (viewMode === 'travelers') {
+      return formatNumber(num) + ' คน';
+    }
+    return formatCurrency(num);
   }
 
   // Render main dashboard
@@ -263,14 +278,14 @@
 
         <!-- View Mode Tabs -->
         <div class="view-mode-tabs">
-          <button class="view-mode-tab active" data-view="sales">
+          <button class="view-mode-tab ${currentViewMode === 'sales' ? 'active' : ''}" data-view="sales">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="1" x2="12" y2="23"></line>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
             <span>ดูตามยอดขาย</span>
           </button>
-          <button class="view-mode-tab" data-view="travelers">
+          <button class="view-mode-tab ${currentViewMode === 'travelers' ? 'active' : ''}" data-view="travelers">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
@@ -292,9 +307,9 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">ยอดจองทั้งหมด</div>
-              <div class="kpi-value" id="kpiTotalBookings">${formatNumber(summary.total_bookings)}</div>
-              <div class="kpi-subtext">Total Bookings</div>
+              <div class="kpi-label" id="kpiTotalLabel">${currentViewMode === 'travelers' ? 'จำนวนผู้เดินทาง' : 'ยอดขายรวม'}</div>
+              <div class="kpi-value" id="kpiTotalValue">${currentViewMode === 'travelers' ? formatNumber(summary.total_value || 0) + ' คน' : formatCurrency(summary.total_value || 0)}</div>
+              <div class="kpi-subtext" id="kpiTotalSubtext">${currentViewMode === 'travelers' ? 'Total Travelers' : 'Total Sales'}</div>
             </div>
           </div>
 
@@ -307,7 +322,7 @@
             <div class="kpi-content">
               <div class="kpi-label">Wholesale ยอดนิยม</div>
               <div class="kpi-value" id="kpiTopWholesale" title="${summary.top_wholesale.name}">${truncateName(summary.top_wholesale.name, 20)}</div>
-              <div class="kpi-subtext">${formatNumber(summary.top_wholesale.count)} bookings</div>
+              <div class="kpi-subtext" id="kpiTopWholesaleSubtext">${currentViewMode === 'travelers' ? formatNumber(summary.top_wholesale.count) + ' คน' : formatCurrency(summary.top_wholesale.count)}</div>
             </div>
           </div>
 
@@ -321,7 +336,7 @@
             <div class="kpi-content">
               <div class="kpi-label">ประเทศยอดนิยม</div>
               <div class="kpi-value" id="kpiTopCountry">${summary.top_country.name}</div>
-              <div class="kpi-subtext">${formatNumber(summary.top_country.count)} bookings</div>
+              <div class="kpi-subtext" id="kpiTopCountrySubtext">${currentViewMode === 'travelers' ? formatNumber(summary.top_country.count) + ' คน' : formatCurrency(summary.top_country.count)}</div>
             </div>
           </div>
 
@@ -355,7 +370,7 @@
                   </svg>
                   Top 10 Wholesales
                 </div>
-                <div class="glass-chart-subtitle">เรียงตามยอดจอง</div>
+                <div class="glass-chart-subtitle" id="chartSubtitle">${currentViewMode === 'travelers' ? 'เรียงตามจำนวนผู้เดินทาง' : 'เรียงตามยอดขาย'}</div>
               </div>
             </div>
             <div class="glass-chart-wrapper">
@@ -367,17 +382,17 @@
           <div class="top-wholesales-container">
             <div class="glass-chart-header">
               <div>
-                <div class="glass-chart-title">
+                <div class="glass-chart-title" id="topWholesalesTitle">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
-                  สัดส่วนยอดขาย
+                  ${currentViewMode === 'travelers' ? 'สัดส่วนผู้เดินทาง' : 'สัดส่วนยอดขาย'}
                 </div>
                 <div class="glass-chart-subtitle">Top 5 Wholesales</div>
               </div>
             </div>
             <div class="top-wholesales-list" id="topWholesalesList">
-              ${renderTopWholesalesList(wholesales.slice(0, 5), summary.total_bookings)}
+              ${renderTopWholesalesList(wholesales.slice(0, 5), summary.total_value || 0)}
             </div>
           </div>
         </div>
@@ -386,12 +401,12 @@
         <div class="glass-chart-container" style="margin-bottom: 24px;">
           <div class="glass-chart-header">
             <div>
-              <div class="glass-chart-title">
+              <div class="glass-chart-title" id="stackedChartTitle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="3" width="18" height="18" rx="2"/>
                   <path d="M3 9h18M9 21V9"/>
                 </svg>
-                สัดส่วนยอดจองแยกตามประเทศ
+                ${currentViewMode === 'travelers' ? 'สัดส่วนผู้เดินทางแยกตามประเทศ' : 'สัดส่วนยอดขายแยกตามประเทศ'}
               </div>
               <div class="glass-chart-subtitle">แต่ละ Wholesale แบ่งตามประเทศปลายทาง</div>
             </div>
@@ -435,7 +450,7 @@
             <table class="dashboard-table" id="dashboardTable">
               ${renderTableHeader(allCountries)}
               <tbody id="dashboardTableBody">
-                ${renderTableRows(wholesales, summary.total_bookings, allCountries)}
+                ${renderTableRows(wholesales, summary.total_value || 0, allCountries)}
               </tbody>
             </table>
           </div>
@@ -451,13 +466,10 @@
     initWholesaleFilter();
     renderTopWholesalesChart(wholesales.slice(0, 10));
     renderStackedChart(wholesales);
-    initSearch(wholesales, summary.total_bookings, allCountries);
-    initExport(wholesales, summary.total_bookings, allCountries);
-    initTableSorting(wholesales, summary.total_bookings, allCountries);
+    initSearch(wholesales, summary.total_value || 0, allCountries);
+    initExport(wholesales, summary.total_value || 0, allCountries);
+    initTableSorting(wholesales, summary.total_value || 0, allCountries);
   }
-
-  // Current view mode: 'sales' or 'travelers'
-  let currentViewMode = 'sales';
 
   // Initialize view mode tabs
   function initViewModeTabs() {
@@ -1374,6 +1386,9 @@
   async function applyAllFilters() {
     const filters = {};
 
+    // Add view mode filter
+    filters.view_mode = currentViewMode;
+
     // Add period filter
     if (selectedPeriods.length > 0) {
       let allDateFrom = null;
@@ -1432,14 +1447,59 @@
     const { wholesales, summary } = data;
     const allCountries = getAllCountries(wholesales);
 
-    // Update KPIs
-    document.getElementById('kpiTotalBookings').textContent = formatNumber(summary.total_bookings);
+    // Update KPIs based on view mode
+    const viewMode = summary.view_mode || currentViewMode;
+
+    // Update total value label and value
+    const kpiTotalLabel = document.getElementById('kpiTotalLabel');
+    const kpiTotalValue = document.getElementById('kpiTotalValue');
+    const kpiTotalSubtext = document.getElementById('kpiTotalSubtext');
+    if (kpiTotalLabel) kpiTotalLabel.textContent = viewMode === 'travelers' ? 'จำนวนผู้เดินทาง' : 'ยอดขายรวม';
+    if (kpiTotalValue) kpiTotalValue.textContent = viewMode === 'travelers' ? formatNumber(summary.total_value || 0) + ' คน' : formatCurrency(summary.total_value || 0);
+    if (kpiTotalSubtext) kpiTotalSubtext.textContent = viewMode === 'travelers' ? 'Total Travelers' : 'Total Sales';
+
+    // Update top wholesale
     document.getElementById('kpiTopWholesale').textContent = truncateName(summary.top_wholesale.name, 20);
     document.getElementById('kpiTopWholesale').title = summary.top_wholesale.name;
-    document.getElementById('kpiTopWholesale').nextElementSibling.textContent = `${formatNumber(summary.top_wholesale.count)} bookings`;
+    const kpiTopWholesaleSubtext = document.getElementById('kpiTopWholesaleSubtext');
+    if (kpiTopWholesaleSubtext) kpiTopWholesaleSubtext.textContent = viewMode === 'travelers' ? formatNumber(summary.top_wholesale.count) + ' คน' : formatCurrency(summary.top_wholesale.count);
+
+    // Update top country
     document.getElementById('kpiTopCountry').textContent = summary.top_country.name;
-    document.getElementById('kpiTopCountry').nextElementSibling.textContent = `${formatNumber(summary.top_country.count)} bookings`;
+    const kpiTopCountrySubtext = document.getElementById('kpiTopCountrySubtext');
+    if (kpiTopCountrySubtext) kpiTopCountrySubtext.textContent = viewMode === 'travelers' ? formatNumber(summary.top_country.count) + ' คน' : formatCurrency(summary.top_country.count);
+
+    // Update partners
     document.getElementById('kpiPartners').textContent = formatNumber(summary.total_partners);
+
+    // Update chart subtitle
+    const chartSubtitle = document.getElementById('chartSubtitle');
+    if (chartSubtitle) {
+      chartSubtitle.textContent = viewMode === 'travelers' ? 'เรียงตามจำนวนผู้เดินทาง' : 'เรียงตามยอดขาย';
+    }
+
+    // Update top wholesales title
+    const topWholesalesTitle = document.getElementById('topWholesalesTitle');
+    if (topWholesalesTitle) {
+      topWholesalesTitle.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        ${viewMode === 'travelers' ? 'สัดส่วนผู้เดินทาง' : 'สัดส่วนยอดขาย'}
+      `;
+    }
+
+    // Update stacked chart title
+    const stackedChartTitle = document.getElementById('stackedChartTitle');
+    if (stackedChartTitle) {
+      stackedChartTitle.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M9 21V9"/>
+        </svg>
+        ${viewMode === 'travelers' ? 'สัดส่วนผู้เดินทางแยกตามประเทศ' : 'สัดส่วนยอดขายแยกตามประเทศ'}
+      `;
+    }
 
     // Update Charts
     renderTopWholesalesChart(wholesales.slice(0, 10));
@@ -1448,19 +1508,19 @@
     // Update Top Wholesales List
     const listContainer = document.getElementById('topWholesalesList');
     if (listContainer) {
-      listContainer.innerHTML = renderTopWholesalesList(wholesales.slice(0, 5), summary.total_bookings);
+      listContainer.innerHTML = renderTopWholesalesList(wholesales.slice(0, 5), summary.total_value || 0);
     }
 
     // Update Table
     const table = document.getElementById('dashboardTable');
     if (table) {
-      table.innerHTML = renderTableHeader(allCountries) + `<tbody id="dashboardTableBody">${renderTableRows(wholesales, summary.total_bookings, allCountries)}</tbody>`;
-      initTableSorting(wholesales, summary.total_bookings, allCountries);
+      table.innerHTML = renderTableHeader(allCountries) + `<tbody id="dashboardTableBody">${renderTableRows(wholesales, summary.total_value || 0, allCountries)}</tbody>`;
+      initTableSorting(wholesales, summary.total_value || 0, allCountries);
     }
 
     // Re-init search with new data
-    initSearch(wholesales, summary.total_bookings, allCountries);
-    initExport(wholesales, summary.total_bookings, allCountries);
+    initSearch(wholesales, summary.total_value || 0, allCountries);
+    initExport(wholesales, summary.total_value || 0, allCountries);
   }
 
   // Truncate long names
@@ -1470,9 +1530,9 @@
   }
 
   // Render top wholesales list
-  function renderTopWholesalesList(wholesales, totalBookings) {
+  function renderTopWholesalesList(wholesales, totalValue) {
     return wholesales.map((item, index) => {
-      const percent = ((item.total / totalBookings) * 100);
+      const percent = totalValue > 0 ? ((item.total / totalValue) * 100) : 0;
       const rankClass = index < 3 ? `top-${index + 1}` : 'other';
 
       return `
@@ -1506,6 +1566,8 @@
 
   // Render table header with grouped country columns
   function renderTableHeader(countries) {
+    const totalLabel = currentViewMode === 'travelers' ? 'จำนวนผู้เดินทาง' : 'ยอดขายรวม';
+
     return `
       <thead>
         <tr class="header-main">
@@ -1515,8 +1577,8 @@
             <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
           </th>
           <th colspan="${countries.length}" class="country-group-header">ประเทศ</th>
-          <th rowspan="2" class="sticky-right sticky-right-second" style="text-align: right;" data-sort="total" data-type="number">
-            ยอดรวม
+          <th rowspan="2" class="sticky-right sticky-right-second" style="text-align: right;" data-sort="total" data-type="number" id="tableTotalHeader">
+            ${totalLabel}
             <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
           </th>
           <th rowspan="2" class="sticky-right sticky-right-first" style="text-align: right;">สัดส่วน</th>
@@ -1534,9 +1596,10 @@
   }
 
   // Render table rows with dynamic country columns
-  function renderTableRows(wholesales, totalBookings, countries) {
+  function renderTableRows(wholesales, totalValue, countries) {
     return wholesales.map((item, index) => {
-      const percent = ((item.total / totalBookings) * 100).toFixed(1);
+      const percent = totalValue > 0 ? ((item.total / totalValue) * 100).toFixed(1) : '0.0';
+      const formattedTotal = currentViewMode === 'travelers' ? formatNumber(item.total) + ' คน' : formatCurrency(item.total);
 
       return `
         <tr data-wholesale="${item.name}" data-index="${index}">
@@ -1544,9 +1607,10 @@
           <td class="sticky-left sticky-left-second" style="font-weight: 500;">${item.name}</td>
           ${countries.map(country => {
             const count = item.countries[country] || 0;
-            return `<td class="country-cell ${count === 0 ? 'zero-value' : ''}">${count === 0 ? '-' : formatNumber(count)}</td>`;
+            const formattedCount = currentViewMode === 'travelers' ? formatNumber(count) : formatNumber(count);
+            return `<td class="country-cell ${count === 0 ? 'zero-value' : ''}">${count === 0 ? '-' : formattedCount}</td>`;
           }).join('')}
-          <td class="sticky-right sticky-right-second" style="text-align: right; font-weight: 600; color: #4a7ba7;">${formatNumber(item.total)}</td>
+          <td class="sticky-right sticky-right-second" style="text-align: right; font-weight: 600; color: #4a7ba7;">${formattedTotal}</td>
           <td class="sticky-right sticky-right-first" style="text-align: right; color: #6b7280;">${percent}%</td>
         </tr>
       `;
@@ -1567,12 +1631,14 @@
     const labels = wholesales.map(w => truncateName(w.name, 20));
     const data = wholesales.map(w => w.total);
 
+    const chartLabel = currentViewMode === 'travelers' ? 'จำนวนผู้เดินทาง' : 'ยอดขาย';
+
     topWholesalesChart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: labels,
         datasets: [{
-          label: 'ยอดจอง',
+          label: chartLabel,
           data: data,
           backgroundColor: '#4a7ba7',
           borderColor: '#3d6a91',
@@ -1592,7 +1658,7 @@
             color: '#374151',
             font: { family: 'Kanit', size: 14, weight: '600' },
             formatter: function(value) {
-              return formatNumber(value);
+              return currentViewMode === 'travelers' ? formatNumber(value) : formatNumber(value);
             }
           },
           tooltip: {
@@ -1604,7 +1670,9 @@
             bodyFont: { family: 'Kanit', size: 15 },
             callbacks: {
               label: function(context) {
-                return `ยอดจอง: ${formatNumber(context.raw)}`;
+                const label = currentViewMode === 'travelers' ? 'ผู้เดินทาง' : 'ยอดขาย';
+                const value = currentViewMode === 'travelers' ? formatNumber(context.raw) + ' คน' : formatCurrency(context.raw);
+                return `${label}: ${value}`;
               }
             }
           }
@@ -1716,7 +1784,8 @@
             bodyFont: { family: 'Kanit', size: 15 },
             callbacks: {
               label: function(context) {
-                return `${context.dataset.label}: ${formatNumber(context.raw)}`;
+                const value = currentViewMode === 'travelers' ? formatNumber(context.raw) + ' คน' : formatCurrency(context.raw);
+                return `${context.dataset.label}: ${value}`;
               }
             }
           }
