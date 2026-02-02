@@ -89,17 +89,36 @@ const WholesaleDestinationsAPI = {
 
   /**
    * Get Available Time Periods
+   * @param {Object} filters - Optional filter parameters (e.g., country_id)
    * @returns {Promise<Object>}
    */
-  async getAvailablePeriods() {
+  async getAvailablePeriods(filters = {}) {
     try {
-      console.log('🔄 Fetching Available Time Periods');
+      console.log('🔄 Fetching Available Time Periods', filters);
 
-      const result = await this.fetchAPI('/api/reports/available-periods');
+      const queryString = this.buildQueryString(filters);
+      const result = await this.fetchAPI(`/api/reports/available-periods${queryString}`);
 
       return result;
     } catch (error) {
       console.error('❌ Available Periods Error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get Countries List
+   * @returns {Promise<Object>}
+   */
+  async getCountries() {
+    try {
+      console.log('🔄 Fetching Countries');
+
+      const result = await this.fetchAPI('/api/countries');
+
+      return result;
+    } catch (error) {
+      console.error('❌ Countries Error:', error);
       throw error;
     }
   },
