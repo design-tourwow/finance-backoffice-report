@@ -1280,10 +1280,16 @@
 }
 
 /* Wholesale item styles - match country dropdown */
+.wholesale-item {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
 .wholesale-item .dropdown-item-label {
   font-size: 16px;
   font-weight: 500;
   color: #1f2937;
+  text-align: left;
 }
 
 .wholesale-item .dropdown-item-count {
