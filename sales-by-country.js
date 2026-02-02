@@ -16,6 +16,8 @@
   let currentTimeGranularity = 'yearly';
   let availablePeriods = null;
   let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
+  let availableCountries = []; // List of countries from API
+  let selectedCountries = []; // Array for multi-select: [{ id, name }]
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -771,6 +773,33 @@
             </div>
           </div>
           <div class="selected-period-badge" id="selectedPeriodBadge" style="display: none;"></div>
+
+          <!-- Separator -->
+          <div class="filter-separator"></div>
+
+          <!-- Country Filter -->
+          <span class="time-granularity-label">ประเทศ</span>
+          <div class="time-dropdown-wrapper">
+            <button class="time-btn" id="countryFilterBtn">
+              <span class="time-btn-text">เลือกประเทศ</span>
+              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="time-dropdown-menu country-dropdown-menu" id="countryFilterDropdown">
+              <div class="dropdown-search-wrapper">
+                <input type="text" class="dropdown-search-input" id="countrySearchInput" placeholder="ค้นหาประเทศ..." />
+              </div>
+              <div class="dropdown-items-container" id="countryItemsContainer">
+                <!-- Countries will be populated here -->
+              </div>
+              <div class="dropdown-actions">
+                <button type="button" class="dropdown-clear-btn" id="countryFilterClearBtn">ล้าง</button>
+                <button type="button" class="dropdown-confirm-btn" id="countryFilterConfirmBtn">ยืนยัน</button>
+              </div>
+            </div>
+          </div>
+          <div class="selected-period-badge" id="selectedCountryBadge" style="display: none;"></div>
         </div>
 
         <!-- Compact KPI Cards -->
@@ -965,6 +994,9 @@
 
     // Initialize time granularity buttons
     initTimeGranularityButtons(data);
+
+    // Initialize country filter
+    initCountryFilter();
 
     // Initialize bar chart
     renderCountryAreaChart(data, 'bar');
@@ -1308,19 +1340,29 @@
       item.addEventListener('click', function(e) {
         e.stopPropagation();
 
-        // Don't toggle if clicking directly on checkbox (it will toggle itself)
-        if (e.target.type === 'checkbox') return;
-
         const checkbox = this.querySelector('.period-checkbox');
         if (checkbox) {
-          checkbox.checked = !checkbox.checked;
+          // If clicking on checkbox or label, let default behavior handle it
+          // Otherwise toggle manually
+          if (e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
+            checkbox.checked = !checkbox.checked;
+          }
+          // Update selected state
           this.classList.toggle('selected', checkbox.checked);
         }
       });
 
-      // Handle checkbox change
+      // Handle direct checkbox click
       const checkbox = item.querySelector('.period-checkbox');
       if (checkbox) {
+        checkbox.addEventListener('click', function(e) {
+          e.stopPropagation();
+          // Checkbox toggles itself, just update parent state
+          setTimeout(() => {
+            item.classList.toggle('selected', this.checked);
+          }, 0);
+        });
+
         checkbox.addEventListener('change', function() {
           item.classList.toggle('selected', this.checked);
         });
@@ -1438,6 +1480,256 @@
     badge.style.display = 'flex';
   }
 
+  // Initialize country filter dropdown
+  async function initCountryFilter() {
+    const countryBtn = document.getElementById('countryFilterBtn');
+    const countryDropdown = document.getElementById('countryFilterDropdown');
+    const countrySearchInput = document.getElementById('countrySearchInput');
+    const countryItemsContainer = document.getElementById('countryItemsContainer');
+    const confirmBtn = document.getElementById('countryFilterConfirmBtn');
+    const clearBtn = document.getElementById('countryFilterClearBtn');
+
+    if (!countryBtn || !countryDropdown) return;
+
+    // Fetch countries from API
+    try {
+      const response = await SalesByCountryAPI.getCountries();
+      if (response && response.success && response.data) {
+        availableCountries = response.data;
+        renderCountryItems(availableCountries);
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch countries:', error);
+    }
+
+    // Toggle dropdown
+    countryBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+        if (menu !== countryDropdown) menu.classList.remove('show');
+      });
+      countryDropdown.classList.toggle('show');
+      if (countryDropdown.classList.contains('show')) {
+        countrySearchInput.focus();
+      }
+    });
+
+    // Search filter
+    countrySearchInput.addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = availableCountries.filter(c =>
+        c.name_th.toLowerCase().includes(searchTerm) ||
+        c.name_en.toLowerCase().includes(searchTerm)
+      );
+      renderCountryItems(filtered);
+    });
+
+    // Prevent dropdown close when clicking inside
+    countryDropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    // Confirm button
+    confirmBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      confirmCountrySelection();
+    });
+
+    // Clear button
+    clearBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      clearCountrySelection();
+    });
+  }
+
+  // Render country items in dropdown
+  function renderCountryItems(countries) {
+    const container = document.getElementById('countryItemsContainer');
+    if (!container) return;
+
+    container.innerHTML = countries.map(country => {
+      const isSelected = selectedCountries.some(c => c.id === country.id);
+      return `
+        <div class="time-dropdown-item country-item ${isSelected ? 'selected' : ''}" data-country-id="${country.id}" data-country-name="${country.name_th}">
+          <label class="dropdown-checkbox">
+            <input type="checkbox" class="country-checkbox" ${isSelected ? 'checked' : ''} />
+            <span class="checkbox-custom"></span>
+          </label>
+          <span class="dropdown-item-label">${country.name_th}</span>
+          <span class="dropdown-item-count">${country.name_en}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Add click handlers
+    container.querySelectorAll('.country-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const checkbox = this.querySelector('.country-checkbox');
+        if (checkbox && e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
+          checkbox.checked = !checkbox.checked;
+        }
+        this.classList.toggle('selected', checkbox?.checked);
+      });
+
+      const checkbox = item.querySelector('.country-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('click', function(e) {
+          e.stopPropagation();
+          setTimeout(() => {
+            item.classList.toggle('selected', this.checked);
+          }, 0);
+        });
+      }
+    });
+  }
+
+  // Confirm country selection
+  function confirmCountrySelection() {
+    const container = document.getElementById('countryItemsContainer');
+    if (!container) return;
+
+    selectedCountries = [];
+    container.querySelectorAll('.country-item.selected, .country-item:has(.country-checkbox:checked)').forEach(item => {
+      const id = parseInt(item.dataset.countryId);
+      const name = item.dataset.countryName;
+      selectedCountries.push({ id, name });
+    });
+
+    // Update button text
+    const btn = document.getElementById('countryFilterBtn');
+    const btnText = btn?.querySelector('.time-btn-text');
+    if (btnText) {
+      if (selectedCountries.length === 0) {
+        btnText.textContent = 'เลือกประเทศ';
+        btn.classList.remove('active');
+      } else if (selectedCountries.length === 1) {
+        btnText.textContent = selectedCountries[0].name;
+        btn.classList.add('active');
+      } else {
+        btnText.textContent = `${selectedCountries.length} ประเทศ`;
+        btn.classList.add('active');
+      }
+    }
+
+    // Close dropdown
+    document.getElementById('countryFilterDropdown')?.classList.remove('show');
+
+    // Update badge
+    updateSelectedCountryBadge();
+
+    // Reload data with filter
+    applyAllFilters();
+  }
+
+  // Clear country selection
+  function clearCountrySelection() {
+    const container = document.getElementById('countryItemsContainer');
+    if (container) {
+      container.querySelectorAll('.country-item').forEach(item => {
+        item.classList.remove('selected');
+        const checkbox = item.querySelector('.country-checkbox');
+        if (checkbox) checkbox.checked = false;
+      });
+    }
+    selectedCountries = [];
+  }
+
+  // Update selected country badge
+  function updateSelectedCountryBadge() {
+    const badge = document.getElementById('selectedCountryBadge');
+    if (!badge) return;
+
+    if (selectedCountries.length === 0) {
+      badge.style.display = 'none';
+      return;
+    }
+
+    let label = '';
+    if (selectedCountries.length === 1) {
+      label = selectedCountries[0].name;
+    } else {
+      label = `${selectedCountries.length} ประเทศ`;
+    }
+
+    badge.innerHTML = `
+      <span>${label}</span>
+      <button class="badge-clear" onclick="clearCountryFilter()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    `;
+    badge.style.display = 'flex';
+  }
+
+  // Clear country filter (called from badge)
+  window.clearCountryFilter = async function() {
+    selectedCountries = [];
+
+    // Reset button
+    const btn = document.getElementById('countryFilterBtn');
+    if (btn) {
+      btn.classList.remove('active');
+      const btnText = btn.querySelector('.time-btn-text');
+      if (btnText) btnText.textContent = 'เลือกประเทศ';
+    }
+
+    // Clear checkboxes
+    clearCountrySelection();
+
+    // Hide badge
+    const badge = document.getElementById('selectedCountryBadge');
+    if (badge) badge.style.display = 'none';
+
+    // Reload data
+    applyAllFilters();
+  };
+
+  // Apply all filters (period + country)
+  async function applyAllFilters() {
+    const filters = { ...currentFilters };
+
+    // Add period filter
+    if (selectedPeriods.length > 0) {
+      let allDateFrom = null;
+      let allDateTo = null;
+      selectedPeriods.forEach(period => {
+        const { dateFrom, dateTo } = getPeriodDateRange(period);
+        if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
+        if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
+      });
+      filters.booking_date_from = allDateFrom;
+      filters.booking_date_to = allDateTo;
+    }
+
+    // Add country filter
+    if (selectedCountries.length > 0) {
+      filters.country_id = selectedCountries.map(c => c.id).join(',');
+    }
+
+    console.log('📅 Applying filters:', filters);
+
+    try {
+      showDashboardLoading();
+      const response = await SalesByCountryAPI.getReportByCountry(filters);
+      hideDashboardLoading();
+
+      if (response && response.success && response.data) {
+        renderCountryDashboardContent(response.data);
+      } else {
+        const tableBody = document.getElementById('dashboardTableBody');
+        if (tableBody) {
+          tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to apply filters:', error);
+      hideDashboardLoading();
+    }
+  }
+
   // Calculate date range for a single period
   function getPeriodDateRange(period) {
     const year = period.year;
@@ -1466,52 +1758,7 @@
   // Apply period filter and reload data
   async function applyPeriodFilter(data) {
     if (selectedPeriods.length === 0) return;
-
-    // Calculate combined date range from all selected periods
-    let allDateFrom = null;
-    let allDateTo = null;
-
-    selectedPeriods.forEach(period => {
-      const { dateFrom, dateTo } = getPeriodDateRange(period);
-      if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
-      if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
-    });
-
-    console.log('📅 Applying period filter:', { selectedPeriods, allDateFrom, allDateTo });
-
-    // Update filters and reload data
-    const periodFilters = {
-      ...currentFilters,
-      booking_date_from: allDateFrom,
-      booking_date_to: allDateTo
-    };
-
-    try {
-      // Show loading overlay on dashboard
-      showDashboardLoading();
-
-      const response = await SalesByCountryAPI.getReportByCountry(periodFilters);
-
-      // Hide loading overlay
-      hideDashboardLoading();
-
-      if (response && response.success && response.data) {
-        // Re-render dashboard with filtered data
-        renderCountryDashboardContent(response.data);
-      } else {
-        const tableBody = document.getElementById('dashboardTableBody');
-        if (tableBody) {
-          tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลในช่วงเวลาที่เลือก</td></tr>';
-        }
-      }
-    } catch (error) {
-      console.error('❌ Failed to apply period filter:', error);
-      hideDashboardLoading();
-      const tableBody = document.getElementById('dashboardTableBody');
-      if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #dc2626;">เกิดข้อผิดพลาด</td></tr>';
-      }
-    }
+    applyAllFilters();
   }
 
   // Clear period filter

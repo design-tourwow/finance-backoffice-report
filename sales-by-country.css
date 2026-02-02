@@ -1059,6 +1059,59 @@ mark.search-highlight {
   background: #3d6a94;
 }
 
+/* Filter Separator */
+.filter-separator {
+  width: 1px;
+  height: 32px;
+  background: #e5e7eb;
+  margin: 0 8px;
+}
+
+/* Country Dropdown Search */
+.dropdown-search-wrapper {
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+
+.dropdown-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: 'Kanit', sans-serif;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.dropdown-search-input:focus {
+  border-color: #4a7ba7;
+  box-shadow: 0 0 0 2px rgba(74, 123, 167, 0.1);
+}
+
+.dropdown-search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Country Dropdown Menu */
+.country-dropdown-menu {
+  min-width: 280px;
+}
+
+.country-dropdown-menu .dropdown-items-container {
+  max-height: 240px;
+}
+
+.country-item .dropdown-item-count {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-left: auto;
+}
+
 /* Selected Period Badge */
 .selected-period-badge {
   display: flex;
