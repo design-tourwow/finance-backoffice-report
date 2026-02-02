@@ -1032,7 +1032,6 @@
             <span class="checkbox-custom"></span>
           </label>
           <span class="dropdown-item-label">${wholesale.name}</span>
-          <span class="dropdown-item-count">${formatNumber(wholesale.total)} bookings</span>
         </div>
       `;
     }).join('');
@@ -1602,7 +1601,7 @@
   function renderTableRows(wholesales, totalValue, countries) {
     return wholesales.map((item, index) => {
       const percent = totalValue > 0 ? ((item.total / totalValue) * 100).toFixed(1) : '0.0';
-      const formattedTotal = currentViewMode === 'travelers' ? formatNumber(item.total) + ' คน' : formatNumber(item.total);
+      const formattedTotal = formatNumber(item.total);
 
       return `
         <tr data-wholesale="${item.name}" data-index="${index}">
