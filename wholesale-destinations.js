@@ -112,7 +112,7 @@
     if (section) {
       section.innerHTML = `
         <div class="dashboard-table-empty">
-          <img src="assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom: 16px; opacity: 0.8;" />
+          <img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom: 16px; opacity: 0.8;" />
           <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #374151;">ไม่พบข้อมูล</h3>
           <p style="margin: 0; font-size: 15px; color: #6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
         </div>
@@ -1428,7 +1428,7 @@
 
     const emptyHTML = `
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
-        <img src="assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="160" height="160" style="margin-bottom: 16px; opacity: 0.8;" />
+        <img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="160" height="160" style="margin-bottom: 16px; opacity: 0.8;" />
         <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #374151;">ไม่พบข้อมูล</h3>
         <p style="margin: 0; font-size: 15px; color: #6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
       </div>
