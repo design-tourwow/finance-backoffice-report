@@ -946,6 +946,22 @@ mark.search-highlight {
   color: #9ca3af;
 }
 
+/* Period Type Selector (Master Dropdown) */
+.period-type-btn {
+  background: #f0f7ff;
+  border-color: #4a7ba7;
+  color: #4a7ba7;
+}
+
+.period-type-btn:hover {
+  background: #e3f2fd;
+}
+
+.period-type-btn.active {
+  background: #4a7ba7;
+  color: white;
+}
+
 /* Selected Period Badge */
 .selected-period-badge {
   display: flex;

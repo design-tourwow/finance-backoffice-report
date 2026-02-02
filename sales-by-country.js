@@ -718,28 +718,51 @@
         <!-- Time Granularity Control with Dropdowns -->
         <div class="time-granularity-control">
           <span class="time-granularity-label">เลือกช่วงเวลา</span>
-          <div class="time-granularity-buttons">
-            <div class="time-dropdown-wrapper">
+
+          <!-- Period Type Selector (Master Dropdown) -->
+          <div class="time-dropdown-wrapper">
+            <button class="time-btn period-type-btn" id="periodTypeBtn">
+              <span class="time-btn-text">มุมมอง</span>
+              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div class="time-dropdown-menu" id="periodTypeDropdown">
+              <div class="time-dropdown-item" data-period-type="yearly">
+                <span class="dropdown-item-label">รายปี</span>
+              </div>
+              <div class="time-dropdown-item" data-period-type="quarterly">
+                <span class="dropdown-item-label">รายไตรมาส</span>
+              </div>
+              <div class="time-dropdown-item" data-period-type="monthly">
+                <span class="dropdown-item-label">รายเดือน</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Period Value Dropdowns (shown based on selected type) -->
+          <div class="time-granularity-buttons" id="periodValueButtons">
+            <div class="time-dropdown-wrapper" data-type="yearly" style="display: none;">
               <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
-                <span class="time-btn-text">รายปี</span>
+                <span class="time-btn-text">เลือกปี</span>
                 <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
               <div class="time-dropdown-menu" id="yearlyDropdown"></div>
             </div>
-            <div class="time-dropdown-wrapper">
+            <div class="time-dropdown-wrapper" data-type="quarterly" style="display: none;">
               <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
-                <span class="time-btn-text">รายไตรมาส</span>
+                <span class="time-btn-text">เลือกไตรมาส</span>
                 <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </button>
               <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
             </div>
-            <div class="time-dropdown-wrapper">
+            <div class="time-dropdown-wrapper" data-type="monthly" style="display: none;">
               <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
-                <span class="time-btn-text">รายเดือน</span>
+                <span class="time-btn-text">เลือกเดือน</span>
                 <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
@@ -1064,8 +1087,11 @@
     // Populate dropdowns
     populateTimeDropdowns();
 
-    // Initialize dropdown click handlers
-    const dropdownWrappers = document.querySelectorAll('.time-dropdown-wrapper');
+    // Initialize period type selector (master dropdown)
+    initPeriodTypeSelector();
+
+    // Initialize dropdown click handlers for period value dropdowns
+    const dropdownWrappers = document.querySelectorAll('#periodValueButtons .time-dropdown-wrapper');
     dropdownWrappers.forEach(wrapper => {
       const btn = wrapper.querySelector('.time-btn');
       const dropdown = wrapper.querySelector('.time-dropdown-menu');
@@ -1093,6 +1119,104 @@
     // No default selection - show all data
     // User must click dropdown to filter by period
     selectedPeriod = { type: null, year: null, quarter: null, month: null };
+  }
+
+  // Initialize period type selector (master dropdown)
+  function initPeriodTypeSelector() {
+    const periodTypeBtn = document.getElementById('periodTypeBtn');
+    const periodTypeDropdown = document.getElementById('periodTypeDropdown');
+
+    if (!periodTypeBtn || !periodTypeDropdown) return;
+
+    // Toggle dropdown on button click
+    periodTypeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+
+      // Close other dropdowns
+      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+        if (menu !== periodTypeDropdown) menu.classList.remove('show');
+      });
+
+      // Toggle this dropdown
+      periodTypeDropdown.classList.toggle('show');
+    });
+
+    // Handle period type selection
+    periodTypeDropdown.querySelectorAll('.time-dropdown-item').forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+
+        const periodType = this.dataset.periodType;
+        const periodTypeLabels = {
+          'yearly': 'รายปี',
+          'quarterly': 'รายไตรมาส',
+          'monthly': 'รายเดือน'
+        };
+
+        // Update button text
+        const btnText = periodTypeBtn.querySelector('.time-btn-text');
+        if (btnText) {
+          btnText.textContent = periodTypeLabels[periodType];
+        }
+
+        // Mark as active
+        periodTypeBtn.classList.add('active');
+
+        // Show only the corresponding period value dropdown
+        const periodValueButtons = document.getElementById('periodValueButtons');
+        if (periodValueButtons) {
+          // Hide all period value dropdowns first
+          periodValueButtons.querySelectorAll('.time-dropdown-wrapper').forEach(wrapper => {
+            wrapper.style.display = 'none';
+          });
+
+          // Show the selected type dropdown
+          const targetWrapper = periodValueButtons.querySelector(`[data-type="${periodType}"]`);
+          if (targetWrapper) {
+            targetWrapper.style.display = 'block';
+
+            // Reset the period value button text
+            const targetBtn = targetWrapper.querySelector('.time-btn');
+            const targetBtnText = targetBtn?.querySelector('.time-btn-text');
+            if (targetBtnText) {
+              const defaultTexts = {
+                'yearly': 'เลือกปี',
+                'quarterly': 'เลือกไตรมาส',
+                'monthly': 'เลือกเดือน'
+              };
+              targetBtnText.textContent = defaultTexts[periodType];
+            }
+            if (targetBtn) {
+              targetBtn.classList.remove('active');
+            }
+          }
+        }
+
+        // Close dropdown
+        periodTypeDropdown.classList.remove('show');
+
+        // Update selected item state
+        periodTypeDropdown.querySelectorAll('.time-dropdown-item').forEach(i => {
+          i.classList.remove('selected');
+        });
+        this.classList.add('selected');
+
+        // Clear any existing period filter when changing type
+        if (selectedPeriod.year) {
+          // Reset period selection but keep the type
+          selectedPeriod = { type: periodType, year: null, quarter: null, month: null };
+          currentTimeGranularity = periodType;
+
+          // Hide the badge
+          const badge = document.getElementById('selectedPeriodBadge');
+          if (badge) badge.style.display = 'none';
+        } else {
+          // Just set the type
+          selectedPeriod.type = periodType;
+          currentTimeGranularity = periodType;
+        }
+      });
+    });
   }
 
   // Populate time dropdowns with data from database
@@ -1278,15 +1402,43 @@
   window.clearPeriodFilter = async function() {
     selectedPeriod = { type: null, year: null, quarter: null, month: null };
 
-    // Reset button texts and remove active state
-    document.querySelectorAll('.time-btn').forEach((btn, index) => {
-      btn.classList.remove('active');
-      const text = btn.querySelector('.time-btn-text');
-      if (text) {
-        const labels = ['รายปี', 'รายไตรมาส', 'รายเดือน'];
-        text.textContent = labels[index];
-      }
-    });
+    // Reset period type selector
+    const periodTypeBtn = document.getElementById('periodTypeBtn');
+    if (periodTypeBtn) {
+      periodTypeBtn.classList.remove('active');
+      const btnText = periodTypeBtn.querySelector('.time-btn-text');
+      if (btnText) btnText.textContent = 'มุมมอง';
+    }
+
+    // Clear selected state in period type dropdown
+    const periodTypeDropdown = document.getElementById('periodTypeDropdown');
+    if (periodTypeDropdown) {
+      periodTypeDropdown.querySelectorAll('.time-dropdown-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+    }
+
+    // Hide all period value dropdowns
+    const periodValueButtons = document.getElementById('periodValueButtons');
+    if (periodValueButtons) {
+      periodValueButtons.querySelectorAll('.time-dropdown-wrapper').forEach(wrapper => {
+        wrapper.style.display = 'none';
+        const btn = wrapper.querySelector('.time-btn');
+        if (btn) {
+          btn.classList.remove('active');
+          const text = btn.querySelector('.time-btn-text');
+          if (text) {
+            const type = wrapper.dataset.type;
+            const defaultTexts = {
+              'yearly': 'เลือกปี',
+              'quarterly': 'เลือกไตรมาส',
+              'monthly': 'เลือกเดือน'
+            };
+            text.textContent = defaultTexts[type] || '';
+          }
+        }
+      });
+    }
 
     // Hide badge
     const badge = document.getElementById('selectedPeriodBadge');
