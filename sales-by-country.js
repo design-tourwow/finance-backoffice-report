@@ -877,14 +877,14 @@
                 <div class="glass-chart-subtitle" id="chartSubtitle">ทุกประเทศ (เรียงตามจำนวน)</div>
               </div>
               <div class="chart-type-toggle">
-                <button class="chart-type-btn active" data-type="bar" title="Bar Chart">
+                <button class="chart-type-btn" data-type="bar" title="Bar Chart">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="20" x2="18" y2="10"/>
                     <line x1="12" y1="20" x2="12" y2="4"/>
                     <line x1="6" y1="20" x2="6" y2="14"/>
                   </svg>
                 </button>
-                <button class="chart-type-btn" data-type="pie" title="Pie Chart">
+                <button class="chart-type-btn active" data-type="pie" title="Pie Chart">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
                     <path d="M22 12A10 10 0 0 0 12 2v10z"/>
@@ -999,7 +999,7 @@
     initCountryFilter();
 
     // Initialize bar chart
-    renderCountryAreaChart(data, 'bar');
+    renderCountryAreaChart(data, 'pie');
 
     // Initialize chart type toggle
     initChartTypeToggle(data);
@@ -1015,7 +1015,7 @@
   }
 
   // Current chart type
-  let currentChartType = 'bar';
+  let currentChartType = 'pie';
 
   // Initialize chart type toggle
   function initChartTypeToggle(data) {
