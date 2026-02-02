@@ -204,7 +204,7 @@
       console.log('📍 Creating country dropdown...');
       countryDropdownInstance = SearchableDropdownComponent.initMultiSelect({
         wrapperId: 'countryDropdownWrapper',
-        placeholder: 'เลือกประเทศ',
+        placeholder: 'ประเทศทั้งหมด',
         options: [],
         onChange: (values, labels) => {
           document.getElementById('filterCountry').value = values.join(',');
@@ -781,7 +781,7 @@
           <span class="time-granularity-label">ประเทศ</span>
           <div class="time-dropdown-wrapper">
             <button class="time-btn" id="countryFilterBtn">
-              <span class="time-btn-text">เลือกประเทศ</span>
+              <span class="time-btn-text">ประเทศทั้งหมด</span>
               <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
@@ -1676,7 +1676,7 @@
     const btnText = btn?.querySelector('.time-btn-text');
     if (btnText) {
       if (selectedCountries.length === 0) {
-        btnText.textContent = 'เลือกประเทศ';
+        btnText.textContent = 'ประเทศทั้งหมด';
         btn?.classList.remove('active');
       } else if (selectedCountries.length === 1) {
         btnText.textContent = selectedCountries[0].name;
@@ -1960,7 +1960,7 @@
     if (btn) {
       btn.classList.remove('active');
       const btnText = btn.querySelector('.time-btn-text');
-      if (btnText) btnText.textContent = 'เลือกประเทศ';
+      if (btnText) btnText.textContent = 'ประเทศทั้งหมด';
     }
 
     // Clear checkboxes

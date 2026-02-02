@@ -1204,19 +1204,36 @@
 }
 
 /* Country Dropdown Menu */
-.country-dropdown-menu,
-.wholesale-dropdown-menu {
+.country-dropdown-menu {
   min-width: 280px;
+}
+
+/* Wholesale Dropdown Menu - wider for longer names */
+.wholesale-dropdown-menu {
+  min-width: 380px;
 }
 
 .country-dropdown-menu .dropdown-items-container,
 .wholesale-dropdown-menu .dropdown-items-container {
-  max-height: 240px;
+  max-height: 300px;
 }
 
-.country-item .dropdown-item-count,
-.wholesale-item .dropdown-item-label {
+.country-item .dropdown-item-count {
   font-size: 14px;
   color: #9ca3af;
   margin-left: auto;
+}
+
+/* Wholesale item styles - match country dropdown */
+.wholesale-item .dropdown-item-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.wholesale-item .dropdown-item-count {
+  font-size: 14px;
+  color: #9ca3af;
+  margin-left: auto;
+  white-space: nowrap;
 }

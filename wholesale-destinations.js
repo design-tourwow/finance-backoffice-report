@@ -240,7 +240,7 @@
           <span class="time-granularity-label">Wholesale</span>
           <div class="time-dropdown-wrapper">
             <button class="time-btn" id="wholesaleFilterBtn">
-              <span class="time-btn-text">เลือก Wholesale</span>
+              <span class="time-btn-text">Wholesale ทั้งหมด</span>
               <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
@@ -1062,7 +1062,7 @@
     const btnText = btn?.querySelector('.time-btn-text');
     if (btnText) {
       if (selectedWholesales.length === 0) {
-        btnText.textContent = 'เลือก Wholesale';
+        btnText.textContent = 'Wholesale ทั้งหมด';
         btn?.classList.remove('active');
       } else if (selectedWholesales.length === 1) {
         btnText.textContent = selectedWholesales[0].name;
@@ -1905,7 +1905,7 @@
     if (btn) {
       btn.classList.remove('active');
       const btnText = btn.querySelector('.time-btn-text');
-      if (btnText) btnText.textContent = 'เลือก Wholesale';
+      if (btnText) btnText.textContent = 'Wholesale ทั้งหมด';
     }
 
     // Clear dropdown selection
