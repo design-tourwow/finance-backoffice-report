@@ -176,6 +176,26 @@
 
     const dashboardHTML = `
       <div class="wholesale-dashboard">
+        <!-- View Mode Tabs -->
+        <div class="view-mode-tabs">
+          <button class="view-mode-tab active" data-view="sales">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>ดูตามยอดขาย</span>
+          </button>
+          <button class="view-mode-tab" data-view="travelers">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>ดูตามจำนวนผู้เดินทาง</span>
+          </button>
+        </div>
+
         <!-- Time Granularity Control -->
         <div class="time-granularity-control">
           <span class="time-granularity-label">เลือกช่วงเวลา</span>
@@ -426,6 +446,7 @@
     tabContent.innerHTML = dashboardHTML;
 
     // Initialize components
+    initViewModeTabs();
     initTimeGranularityButtons(data);
     initWholesaleFilter();
     renderTopWholesalesChart(wholesales.slice(0, 10));
@@ -433,6 +454,31 @@
     initSearch(wholesales, summary.total_bookings, allCountries);
     initExport(wholesales, summary.total_bookings, allCountries);
     initTableSorting(wholesales, summary.total_bookings, allCountries);
+  }
+
+  // Current view mode: 'sales' or 'travelers'
+  let currentViewMode = 'sales';
+
+  // Initialize view mode tabs
+  function initViewModeTabs() {
+    const tabs = document.querySelectorAll('.view-mode-tab');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const viewMode = this.dataset.view;
+
+        // Update active state
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update current view mode
+        currentViewMode = viewMode;
+
+        // Reload data with new view mode
+        console.log('📊 View mode changed to:', viewMode);
+        applyAllFilters();
+      });
+    });
   }
 
   // Initialize time granularity dropdown buttons
