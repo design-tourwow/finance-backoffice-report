@@ -20,8 +20,8 @@ const WholesaleDestinationsAPI = {
   buildQueryString(filters = {}) {
     const params = new URLSearchParams();
 
-    if (filters.travel_date_from) params.append('travel_date_from', filters.travel_date_from);
-    if (filters.travel_date_to) params.append('travel_date_to', filters.travel_date_to);
+    if (filters.booking_date_from) params.append('booking_date_from', filters.booking_date_from);
+    if (filters.booking_date_to) params.append('booking_date_to', filters.booking_date_to);
     if (filters.wholesale_id) params.append('supplier_id', filters.wholesale_id);
     if (filters.country_id) params.append('country_id', filters.country_id);
     if (filters.view_mode) params.append('view_mode', filters.view_mode);

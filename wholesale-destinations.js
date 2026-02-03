@@ -892,8 +892,8 @@
     try {
       // Fetch data with period filter to get available wholesales
       const response = await WholesaleDestinationsAPI.getWholesaleDestinations({
-        travel_date_from: allDateFrom,
-        travel_date_to: allDateTo
+        booking_date_from: allDateFrom,
+        booking_date_to: allDateTo
       });
 
       if (response && response.success && response.data && response.data.wholesales) {
@@ -1392,8 +1392,8 @@
         if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
         if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
       });
-      filters.travel_date_from = allDateFrom;
-      filters.travel_date_to = allDateTo;
+      filters.booking_date_from = allDateFrom;
+      filters.booking_date_to = allDateTo;
     }
 
     // Add wholesale filter

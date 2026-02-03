@@ -1410,8 +1410,8 @@
     try {
       // Fetch data with period filter to get available countries
       const response = await SalesByCountryAPI.getReportByCountry({
-        travel_date_from: allDateFrom,
-        travel_date_to: allDateTo
+        booking_date_from: allDateFrom,
+        booking_date_to: allDateTo
       });
 
       if (response && response.success && response.data) {
@@ -1980,8 +1980,8 @@
         if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
         if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
       });
-      filters.travel_date_from = allDateFrom;
-      filters.travel_date_to = allDateTo;
+      filters.booking_date_from = allDateFrom;
+      filters.booking_date_to = allDateTo;
     }
 
     // Add country filter
