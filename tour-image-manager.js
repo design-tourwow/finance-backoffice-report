@@ -1932,20 +1932,39 @@ function initShowAllButtons() {
     }
   }
 
+  // Get filtered programs based on banner1 checkbox state
+  function getFilteredPrograms(img) {
+    const banner1Checkbox = document.getElementById('banner1FilterCheckbox');
+    const filterBanner1 = banner1Checkbox && banner1Checkbox.checked;
+    const allPrograms = img.pre_product_files || [];
+    return filterBanner1
+      ? allPrograms.filter(p => p.slug === 'banner' && p.ordinal === 1)
+      : allPrograms;
+  }
+
+  function isBanner1FilterActive() {
+    const banner1Checkbox = document.getElementById('banner1FilterCheckbox');
+    return banner1Checkbox && banner1Checkbox.checked;
+  }
+
   // Export to CSV
   function exportToCSV(images) {
-    const headers = ['ลำดับ', 'ชื่อรูป', 'จำนวนรวมใช้ซ้ำ', 'Banner ลำดับที่ 1', 'Banner ลำดับที่ 2 ขึ้นไป', 'รายละเอียดทัวร์', 'ประเทศ', 'วันที่อัปเดต', 'โปรแกรมทัวร์'];
-    
+    const filterActive = isBanner1FilterActive();
+    const headers = filterActive
+      ? ['ลำดับ', 'ชื่อรูป', 'จำนวน Banner ลำดับที่ 1', 'ประเทศ', 'วันที่อัปเดต', 'โปรแกรมทัวร์']
+      : ['ลำดับ', 'ชื่อรูป', 'จำนวนรวมใช้ซ้ำ', 'Banner ลำดับที่ 1', 'Banner ลำดับที่ 2 ขึ้นไป', 'รายละเอียดทัวร์', 'ประเทศ', 'วันที่อัปเดต', 'โปรแกรมทัวร์'];
+
     const rows = images.map((img, index) => {
-      // Get programs list
-      const programs = (img.pre_product_files || [])
+      // Get programs list (filtered by checkbox)
+      const filteredPrograms = getFilteredPrograms(img);
+      const programs = filteredPrograms
         .map(file => {
           const tourCode = file.pre_product?.product_tour_code || '-';
           const wholesale = file.pre_product?.supplier?.name_en || '-';
           return `${tourCode} (${wholesale})`;
         })
         .join('; ');
-      
+
       // Count countries
       const countryCount = {};
       const imageCountries = img.countries || [];
@@ -1957,7 +1976,18 @@ function initShowAllButtons() {
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], ['th', 'en']))
         .map(([name, count]) => `${name} (${count})`)
         .join(', ');
-      
+
+      if (filterActive) {
+        return [
+          index + 1,
+          img.name || '-',
+          filteredPrograms.length,
+          countries || '-',
+          formatDateThai(img.last_file_created_at) || '-',
+          programs || '-'
+        ];
+      }
+
       return [
         index + 1,
         img.name || '-',
@@ -2151,20 +2181,26 @@ function initShowAllButtons() {
           </div>
           
           <div class="summary">
-            <div class="summary-title">สรุปข้อมูล</div>
+            <div class="summary-title">สรุปข้อมูล${isBanner1FilterActive() ? ' (กรอง: เฉพาะ Banner ลำดับที่ 1)' : ''}</div>
             <p><strong>จำนวนรูปภาพทั้งหมด:</strong> ${images.length} รูป</p>
-            <p><strong>จำนวนการใช้งานรวม:</strong> ${images.reduce((sum, img) => sum + (img.file_count || 0), 0)} ครั้ง</p>
+            <p><strong>จำนวนการใช้งานรวม:</strong> ${isBanner1FilterActive()
+              ? images.reduce((sum, img) => sum + getFilteredPrograms(img).length, 0)
+              : images.reduce((sum, img) => sum + (img.file_count || 0), 0)} ครั้ง</p>
           </div>
-          
+
           <table>
             <thead>
               <tr>
                 <th style="width: 50px;">ลำดับ</th>
                 <th style="width: 200px;">ชื่อรูป</th>
+                ${isBanner1FilterActive() ? `
+                <th style="width: 80px;">Banner 1</th>
+                ` : `
                 <th style="width: 80px;">รวมใช้ซ้ำ</th>
                 <th style="width: 80px;">Banner 1</th>
                 <th style="width: 80px;">Banner 2+</th>
                 <th style="width: 80px;">รายละเอียด</th>
+                `}
                 <th style="width: 150px;">ประเทศ</th>
                 <th style="width: 100px;">วันที่อัปเดต</th>
               </tr>
@@ -2172,6 +2208,7 @@ function initShowAllButtons() {
             <tbody>
     `;
     
+    const pdfFilterActive = isBanner1FilterActive();
     images.forEach((img, index) => {
       // Count countries
       const countryCount = {};
@@ -2184,15 +2221,21 @@ function initShowAllButtons() {
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], ['th', 'en']))
         .map(([name, count]) => `${name} (${count})`)
         .join(', ');
-      
+
+      const filteredPrograms = getFilteredPrograms(img);
+
       html += `
         <tr>
           <td class="number-col">${index + 1}</td>
           <td>${img.name || '-'}</td>
+          ${pdfFilterActive ? `
+          <td class="count-col">${filteredPrograms.length}</td>
+          ` : `
           <td class="count-col">${img.file_count || 0}</td>
           <td class="number-col">${img.first_banner_count || 0}</td>
           <td class="number-col">${img.after_first_banner_count || 0}</td>
           <td class="number-col">${img.day_detail_count || 0}</td>
+          `}
           <td>${countries || '-'}</td>
           <td class="date-col">${formatDateThai(img.last_file_created_at) || '-'}</td>
         </tr>
