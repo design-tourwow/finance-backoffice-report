@@ -28,6 +28,13 @@
           requireAuth: true
         }
       ]
+    },
+    {
+      id: 'por',
+      label: 'ปอ',
+      url: 'https://fe-2-project.vercel.app/',
+      requireAuth: false,
+      external: true
     }
   ];
 
@@ -82,7 +89,8 @@
         // Regular menu item
         const activeClass = isActive(item.url) ? ' active' : '';
         const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
-        return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>`;
+        const targetAttr = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
+        return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}${targetAttr}>${item.label}</a>`;
       }
     }).join('');
 
@@ -131,9 +139,10 @@
         // Regular menu item
         const activeClass = isActive(item.url) ? ' active' : '';
         const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
+        const targetAttr = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
         return `
           <li class="navbar-item">
-            <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>
+            <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}${targetAttr}>${item.label}</a>
           </li>
         `;
       }
