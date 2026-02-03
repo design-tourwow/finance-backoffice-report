@@ -29,6 +29,7 @@
     initSorting();
     initImageNameAutocomplete();
     initTourCodeAutocomplete();
+    initBanner1Filter();
     checkTokenAndLoadData();
   });
 
@@ -1386,6 +1387,18 @@ function initShowAllButtons() {
     }
   }
 
+  // Banner 1 filter checkbox
+  function initBanner1Filter() {
+    const checkbox = document.getElementById('banner1FilterCheckbox');
+    if (checkbox) {
+      checkbox.addEventListener('change', function () {
+        if (window.currentImages) {
+          renderResults(window.currentImages);
+        }
+      });
+    }
+  }
+
   // Render results to table
   function renderResults(images) {
     const resultsTable = document.getElementById('resultsTable');
@@ -1540,8 +1553,13 @@ function initShowAllButtons() {
     
     const countries = sortedCountries || '-';
     
-    // Get programs from pre_product_files
-    const programs = image.pre_product_files || [];
+    // Get programs from pre_product_files (filter by banner1 checkbox if checked)
+    const banner1Checkbox = document.getElementById('banner1FilterCheckbox');
+    const filterBanner1 = banner1Checkbox && banner1Checkbox.checked;
+    const allPrograms = image.pre_product_files || [];
+    const programs = filterBanner1
+      ? allPrograms.filter(p => p.slug === 'banner' && p.ordinal === 1)
+      : allPrograms;
     
     const updateDate = lastUpdated;
     

@@ -1809,6 +1809,45 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.banner1-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.8125rem;
+  color: #374151;
+  white-space: nowrap;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.banner1-filter-checkbox:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.banner1-filter-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.banner1-filter-checkbox input[type="checkbox"]:checked + .banner1-filter-text {
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.banner1-filter-checkbox:has(input:checked) {
+  border-color: #3b82f6;
+  background: #eff6ff;
 }
 
 
