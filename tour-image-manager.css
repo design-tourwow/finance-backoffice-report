@@ -1829,25 +1829,25 @@ body {
 }
 
 .banner1-filter-checkbox:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: #4a7ba7;
+  background: #f0f7ff;
 }
 
 .banner1-filter-checkbox input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #3b82f6;
+  accent-color: #4a7ba7;
   cursor: pointer;
 }
 
 .banner1-filter-checkbox input[type="checkbox"]:checked + .banner1-filter-text {
-  color: #1e40af;
+  color: #3a6287;
   font-weight: 500;
 }
 
 .banner1-filter-checkbox:has(input:checked) {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: #4a7ba7;
+  background: #e8f0f7;
 }
 
 
