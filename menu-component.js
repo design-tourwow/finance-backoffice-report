@@ -1,8 +1,9 @@
-// Handle external link click - pass token via query parameter
+// Handle external link click - pass token via /authentoken path
 function handleExternalLink(e, url) {
   e.preventDefault();
   var token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
-  var targetUrl = token ? url + (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token) : url;
+  var baseUrl = url.replace(/\/+$/, '');
+  var targetUrl = token ? baseUrl + '/authentoken?token=' + encodeURIComponent(token) : url;
   window.open(targetUrl, '_blank');
 }
 
