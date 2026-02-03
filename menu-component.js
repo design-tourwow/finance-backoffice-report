@@ -1,3 +1,11 @@
+// Handle external link click - pass token via query parameter
+function handleExternalLink(e, url) {
+  e.preventDefault();
+  var token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+  var targetUrl = token ? url + (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token) : url;
+  window.open(targetUrl, '_blank');
+}
+
 // Menu Component - Centralized Menu Management
 (function() {
   'use strict';
@@ -89,8 +97,10 @@
         // Regular menu item
         const activeClass = isActive(item.url) ? ' active' : '';
         const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
-        const targetAttr = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
-        return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}${targetAttr}>${item.label}</a>`;
+        if (item.external) {
+          return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent} onclick="handleExternalLink(event, '${item.url}')">${item.label}</a>`;
+        }
+        return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>`;
       }
     }).join('');
 
@@ -139,10 +149,16 @@
         // Regular menu item
         const activeClass = isActive(item.url) ? ' active' : '';
         const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
-        const targetAttr = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
+        if (item.external) {
+          return `
+            <li class="navbar-item">
+              <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent} onclick="handleExternalLink(event, '${item.url}')">${item.label}</a>
+            </li>
+          `;
+        }
         return `
           <li class="navbar-item">
-            <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}${targetAttr}>${item.label}</a>
+            <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>
           </li>
         `;
       }
