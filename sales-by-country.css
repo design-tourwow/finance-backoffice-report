@@ -1099,6 +1099,11 @@ mark.search-highlight {
   color: #9ca3af;
 }
 
+/* Year Dropdown Menu */
+#yearlyDropdown {
+  min-width: 280px;
+}
+
 /* Country Dropdown Menu */
 .country-dropdown-menu {
   min-width: 280px;

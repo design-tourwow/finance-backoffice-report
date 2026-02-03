@@ -1271,12 +1271,12 @@
     const yearlyDropdown = document.getElementById('yearlyDropdown');
     if (yearlyDropdown) {
       const items = years.map(year => `
-        <div class="time-dropdown-item" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label}">
+        <div class="time-dropdown-item" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label} (${year.year_ce})">
           <label class="dropdown-checkbox">
             <input type="checkbox" class="period-checkbox" />
             <span class="checkbox-custom"></span>
           </label>
-          <span class="dropdown-item-label">พ.ศ. ${year.label}</span>
+          <span class="dropdown-item-label">พ.ศ. ${year.label} (${year.year_ce})</span>
           <span class="dropdown-item-count">${formatNumber(year.total_orders)} orders</span>
         </div>
       `).join('');
@@ -1288,7 +1288,7 @@
     if (quarterlyDropdown) {
       let quarterlyItems = '';
       years.forEach(year => {
-        quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+        quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label} (${year.year_ce})</div>`;
         year.quarters.forEach(q => {
           quarterlyItems += `
             <div class="time-dropdown-item" data-type="quarterly" data-year="${year.year_ce}" data-quarter="${q.quarter}" data-label="${q.label} ${year.label}">
@@ -1309,7 +1309,7 @@
     if (monthlyDropdown) {
       let monthlyItems = '';
       years.forEach(year => {
-        monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+        monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label} (${year.year_ce})</div>`;
         year.months.forEach(m => {
           monthlyItems += `
             <div class="time-dropdown-item" data-type="monthly" data-year="${year.year_ce}" data-month="${m.month}" data-label="${m.label_short} ${year.label}">
@@ -1492,12 +1492,12 @@
       const items = years.map(year => {
         const isSelected = selectedPeriods.some(p => p.type === 'yearly' && p.year === year.year_ce);
         return `
-          <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label}">
+          <div class="time-dropdown-item ${isSelected ? 'selected' : ''}" data-type="yearly" data-year="${year.year_ce}" data-label="พ.ศ. ${year.label} (${year.year_ce})">
             <label class="dropdown-checkbox">
               <input type="checkbox" class="period-checkbox" ${isSelected ? 'checked' : ''} />
               <span class="checkbox-custom"></span>
             </label>
-            <span class="dropdown-item-label">พ.ศ. ${year.label}</span>
+            <span class="dropdown-item-label">พ.ศ. ${year.label} (${year.year_ce})</span>
             <span class="dropdown-item-count">${formatNumber(year.total_orders)} orders</span>
           </div>
         `;
@@ -1512,7 +1512,7 @@
       let quarterlyItems = '';
       years.forEach(year => {
         if (year.quarters && year.quarters.length > 0) {
-          quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          quarterlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label} (${year.year_ce})</div>`;
           year.quarters.forEach(q => {
             const isSelected = selectedPeriods.some(p => p.type === 'quarterly' && p.year === year.year_ce && p.quarter === q.quarter);
             quarterlyItems += `
@@ -1537,7 +1537,7 @@
       let monthlyItems = '';
       years.forEach(year => {
         if (year.months && year.months.length > 0) {
-          monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label}</div>`;
+          monthlyItems += `<div class="dropdown-year-header">พ.ศ. ${year.label} (${year.year_ce})</div>`;
           year.months.forEach(m => {
             const isSelected = selectedPeriods.some(p => p.type === 'monthly' && p.year === year.year_ce && p.month === m.month);
             monthlyItems += `
