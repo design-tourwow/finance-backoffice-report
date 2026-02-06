@@ -816,7 +816,7 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">ยอดนิยม #1</div>
+              <div class="kpi-label">ประเทศยอดนิยม</div>
               <div class="kpi-value" id="kpiTopCountry">${topCountry?.country_name || '-'}</div>
               <div class="kpi-subtext">${topTravelersPercent.toFixed(1)}% ของทั้งหมด</div>
             </div>
