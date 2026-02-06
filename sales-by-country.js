@@ -18,7 +18,7 @@
   let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
   let availableCountries = []; // List of countries from API
   let selectedCountries = []; // Array for multi-select: [{ id, name }]
-  let currentViewMode = 'travelers'; // 'sales', 'travelers', 'orders', 'net_commission'
+  let currentViewMode = 'sales'; // 'sales', 'travelers', 'orders', 'net_commission'
   
   // Date picker instances
   let travelDatePickerInstance = null;
