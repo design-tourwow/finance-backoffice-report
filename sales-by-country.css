@@ -2,6 +2,61 @@
    Order Report Styles
    ======================================== */
 
+/* View Mode Tabs */
+.view-mode-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  padding: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.view-mode-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Kanit', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  border-right: 1px solid #e5e7eb;
+}
+
+.view-mode-tab:last-child {
+  border-right: none;
+}
+
+.view-mode-tab:hover {
+  color: #4a7ba7;
+  background: rgba(74, 123, 167, 0.05);
+}
+
+.view-mode-tab.active {
+  background: #4a7ba7;
+  color: white;
+}
+
+.view-mode-tab svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.view-mode-tab.active svg {
+  stroke: white;
+}
+
 /* Filter Section - Compact Version */
 .filter-section {
   padding: 16px 20px !important;

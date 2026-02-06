@@ -18,6 +18,7 @@
   let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
   let availableCountries = []; // List of countries from API
   let selectedCountries = []; // Array for multi-select: [{ id, name }]
+  let currentViewMode = 'travelers'; // 'sales', 'travelers', 'orders', 'net_commission'
   
   // Date picker instances
   let travelDatePickerInstance = null;
@@ -689,24 +690,50 @@
     currentTabData = data;
     console.log('📊 Country Dashboard Data:', data);
 
-    // Calculate KPI metrics
-    const totalTravelers = data.reduce((sum, item) => sum + (item.total_customers || 0), 0);
-    const totalOrders = data.reduce((sum, item) => sum + (item.total_orders || 0), 0);
-    const totalRevenue = data.reduce((sum, item) => sum + (item.total_net_amount || 0), 0);
-    const topCountry = data.reduce((max, item) =>
-      (item.total_customers > (max?.total_customers || 0)) ? item : max, null);
-    const activeCountries = data.filter(item => item.total_orders > 0).length;
-
-    // Calculate metrics (use travelers for percentage)
-    const topTravelersPercent = topCountry ? ((topCountry.total_customers / totalTravelers) * 100) : 0;
-    const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
-    const avgPerTraveler = totalTravelers > 0 ? (totalRevenue / totalTravelers) : 0;
+    // Calculate KPI metrics based on current view mode
+    const kpiConfig = getKPIConfig(data);
 
     // Clear section content completely (remove loading state and any existing dashboard)
     tabContent.innerHTML = '';
 
     const dashboardHTML = `
       <div class="country-dashboard">
+        <!-- View Mode Tabs -->
+        <div class="view-mode-tabs">
+          <button class="view-mode-tab ${currentViewMode === 'sales' ? 'active' : ''}" data-view="sales">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>ดูตามยอดขาย</span>
+          </button>
+          <button class="view-mode-tab ${currentViewMode === 'travelers' ? 'active' : ''}" data-view="travelers">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>ดูตามจำนวนผู้เดินทาง</span>
+          </button>
+          <button class="view-mode-tab ${currentViewMode === 'orders' ? 'active' : ''}" data-view="orders">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>ดูตามจำนวนออเดอร์</span>
+          </button>
+          <button class="view-mode-tab ${currentViewMode === 'net_commission' ? 'active' : ''}" data-view="net_commission">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            <span>ดูตามค่าคอมสุทธิ</span>
+          </button>
+        </div>
+
         <!-- Time Granularity Control with Dropdowns -->
         <div class="time-granularity-control">
           <span class="time-granularity-label">เลือกช่วงเวลา</span>
@@ -803,9 +830,9 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">จำนวนผู้เดินทาง</div>
-              <div class="kpi-value" id="kpiTotalTravelers">${formatNumber(totalTravelers)}</div>
-              <div class="kpi-subtext">จาก ${formatNumber(totalOrders)} ออเดอร์</div>
+              <div class="kpi-label">${kpiConfig.kpi1.label}</div>
+              <div class="kpi-value" id="kpiTotalTravelers">${kpiConfig.kpi1.value}</div>
+              <div class="kpi-subtext">${kpiConfig.kpi1.subtext}</div>
             </div>
           </div>
 
@@ -816,9 +843,9 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">ประเทศยอดนิยม</div>
-              <div class="kpi-value" id="kpiTopCountry">${topCountry?.country_name || '-'}</div>
-              <div class="kpi-subtext">${topTravelersPercent.toFixed(1)}% ของทั้งหมด</div>
+              <div class="kpi-label">${kpiConfig.kpi2.label}</div>
+              <div class="kpi-value" id="kpiTopCountry">${kpiConfig.kpi2.value}</div>
+              <div class="kpi-subtext">${kpiConfig.kpi2.subtext}</div>
             </div>
           </div>
 
@@ -830,9 +857,9 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">ยอดรวม</div>
-              <div class="kpi-value" id="kpiTotalRevenue">${formatCurrencyShort(totalRevenue)}</div>
-              <div class="kpi-subtext">เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์</div>
+              <div class="kpi-label">${kpiConfig.kpi3.label}</div>
+              <div class="kpi-value" id="kpiTotalRevenue">${kpiConfig.kpi3.value}</div>
+              <div class="kpi-subtext">${kpiConfig.kpi3.subtext}</div>
             </div>
           </div>
 
@@ -843,9 +870,9 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label">ยอดเฉลี่ย/คน</div>
-              <div class="kpi-value" id="kpiAvgPerPerson">${formatCurrencyShort(avgPerTraveler)}</div>
-              <div class="kpi-subtext">ต่อผู้เดินทาง 1 คน</div>
+              <div class="kpi-label">${kpiConfig.kpi4.label}</div>
+              <div class="kpi-value" id="kpiAvgPerPerson">${kpiConfig.kpi4.value}</div>
+              <div class="kpi-subtext">${kpiConfig.kpi4.subtext}</div>
             </div>
           </div>
         </div>
@@ -862,7 +889,7 @@
                     <line x1="12" y1="20" x2="12" y2="4"/>
                     <line x1="6" y1="20" x2="6" y2="14"/>
                   </svg>
-                  จำนวนผู้เดินทางตามประเทศ
+                  <span id="chartTitleText">${getChartTitle()}</span>
                 </div>
                 <div class="glass-chart-subtitle" id="chartSubtitle">ทุกประเทศ (เรียงตามจำนวน)</div>
               </div>
@@ -962,6 +989,10 @@
                     เฉลี่ย/Order
                     <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
                   </th>
+                  <th style="text-align: right;" data-sort="net_commission" data-type="number">
+                    ค่าคอมสุทธิ
+                    <span class="sort-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>
+                  </th>
                 </tr>
               </thead>
               <tbody id="dashboardTableBody">
@@ -1002,10 +1033,35 @@
 
     // Initialize table sorting
     initTableSorting(data);
+
+    // Initialize view mode tabs
+    initViewModeTabs();
   }
 
   // Current chart type
   let currentChartType = 'pie';
+
+  // Initialize view mode tabs
+  function initViewModeTabs() {
+    const tabs = document.querySelectorAll('.view-mode-tab');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const viewMode = this.dataset.view;
+
+        // Update active state
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update current view mode
+        currentViewMode = viewMode;
+
+        // Reload data with new view mode
+        console.log('📊 View mode changed to:', viewMode);
+        applyAllFilters();
+      });
+    });
+  }
 
   // Initialize chart type toggle
   function initChartTypeToggle(data) {
@@ -1052,13 +1108,14 @@
     return '฿' + formatNumber(num);
   }
 
-  // Render market share list (based on travelers count)
+  // Render market share list (based on current view mode field)
   function renderMarketShareList(data) {
-    const totalTravelers = data.reduce((sum, item) => sum + (item.total_customers || 0), 0);
-    const sorted = [...data].sort((a, b) => (b.total_customers || 0) - (a.total_customers || 0)).slice(0, 5);
+    const field = getViewModeField(currentViewMode);
+    const totalValue = data.reduce((sum, item) => sum + (item[field] || 0), 0);
+    const sorted = [...data].sort((a, b) => (b[field] || 0) - (a[field] || 0)).slice(0, 5);
 
     return sorted.map((item, index) => {
-      const percent = totalTravelers > 0 ? ((item.total_customers / totalTravelers) * 100) : 0;
+      const percent = totalValue > 0 ? ((item[field] / totalValue) * 100) : 0;
       const rankClass = index < 3 ? `top-${index + 1}` : 'other';
 
       return `
@@ -1086,6 +1143,7 @@
         <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatNumber(item.total_customers)}</td>
         <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatCurrency(item.total_net_amount)}</td>
         <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatCurrency(item.avg_net_amount)}</td>
+        <td style="text-align: right; font-variant-numeric: tabular-nums;">${formatCurrency(item.net_commission || 0)}</td>
       </tr>
     `).join('');
   }
@@ -1989,6 +2047,9 @@
       filters.country_id = selectedCountries.map(c => c.id).join(',');
     }
 
+    // Add view mode
+    filters.view_mode = currentViewMode;
+
     console.log('📅 Applying filters:', filters);
 
     try {
@@ -2001,7 +2062,7 @@
       } else {
         const tableBody = document.getElementById('dashboardTableBody');
         if (tableBody) {
-          tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+          tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
         }
       }
     } catch (error) {
@@ -2116,43 +2177,32 @@
     if (data.length === 0) {
       const tableBody = document.getElementById('dashboardTableBody');
       if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลในช่วงเวลาที่เลือก</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #6b7280;">ไม่พบข้อมูลในช่วงเวลาที่เลือก</td></tr>';
       }
       return;
     }
 
-    // Calculate KPI metrics
-    const totalTravelers = data.reduce((sum, item) => sum + (item.total_customers || 0), 0);
-    const totalOrders = data.reduce((sum, item) => sum + (item.total_orders || 0), 0);
-    const totalRevenue = data.reduce((sum, item) => sum + (item.total_net_amount || 0), 0);
-    const topCountry = data.reduce((max, item) =>
-      (item.total_customers > (max?.total_customers || 0)) ? item : max, null);
-    const activeCountries = data.filter(item => item.total_orders > 0).length;
-    const topTravelersPercent = topCountry ? ((topCountry.total_customers / totalTravelers) * 100) : 0;
-    const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+    // Calculate KPI metrics based on current view mode
+    const kpiConfig = getKPIConfig(data);
 
-    // Calculate avgPerTraveler for KPI card 4
-    const avgPerTraveler = totalTravelers > 0 ? (totalRevenue / totalTravelers) : 0;
+    // Update KPI values and labels
+    const kpiCards = document.querySelectorAll('.dashboard-kpi-card');
+    const kpiKeys = ['kpi1', 'kpi2', 'kpi3', 'kpi4'];
+    kpiCards.forEach((card, index) => {
+      if (index < 4) {
+        const config = kpiConfig[kpiKeys[index]];
+        const label = card.querySelector('.kpi-label');
+        const value = card.querySelector('.kpi-value');
+        const subtext = card.querySelector('.kpi-subtext');
+        if (label) label.textContent = config.label;
+        if (value) value.textContent = config.value;
+        if (subtext) subtext.textContent = config.subtext;
+      }
+    });
 
-    // Update KPI values
-    const kpiTravelers = document.getElementById('kpiTotalTravelers');
-    const kpiTopCountry = document.getElementById('kpiTopCountry');
-    const kpiRevenue = document.getElementById('kpiTotalRevenue');
-    const kpiAvgPerPerson = document.getElementById('kpiAvgPerPerson');
-
-    if (kpiTravelers) kpiTravelers.textContent = formatNumber(totalTravelers);
-    if (kpiTopCountry) kpiTopCountry.textContent = topCountry?.country_name || '-';
-    if (kpiRevenue) kpiRevenue.textContent = formatCurrencyShort(totalRevenue);
-    if (kpiAvgPerPerson) kpiAvgPerPerson.textContent = formatCurrencyShort(avgPerTraveler);
-
-    // Update subtexts
-    const subtexts = document.querySelectorAll('.kpi-subtext');
-    if (subtexts.length >= 4) {
-      subtexts[0].textContent = `จาก ${formatNumber(totalOrders)} ออเดอร์`;
-      subtexts[1].textContent = `${topTravelersPercent.toFixed(1)}% ของทั้งหมด`;
-      subtexts[2].textContent = `เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์`;
-      subtexts[3].textContent = 'ต่อผู้เดินทาง 1 คน';
-    }
+    // Update chart title
+    const chartTitleText = document.getElementById('chartTitleText');
+    if (chartTitleText) chartTitleText.textContent = getChartTitle();
 
     // Update market share list
     const marketShareList = document.getElementById('marketShareList');
@@ -2188,13 +2238,19 @@
       countryDashboardChart.destroy();
     }
 
-    // Sort data by customers for visualization (show ALL data, synced with table)
-    const sortedData = [...data].sort((a, b) => b.total_customers - a.total_customers);
+    // Sort data by current view mode field for visualization (show ALL data, synced with table)
+    const field = getViewModeField(currentViewMode);
+    const isCurrency = (currentViewMode === 'sales' || currentViewMode === 'net_commission');
+    const sortedData = [...data].sort((a, b) => (b[field] || 0) - (a[field] || 0));
 
-    // Use country names as labels (with customer count for pie chart legend)
-    const labels = sortedData.map(item => `${item.country_name || 'ไม่ระบุ'} (${formatNumber(item.total_customers)})`);
+    // Use country names as labels (with value for pie chart legend)
+    const labels = sortedData.map(item => {
+      const val = item[field] || 0;
+      const formatted = isCurrency ? formatCurrencyShort(val) : formatNumber(val);
+      return `${item.country_name || 'ไม่ระบุ'} (${formatted})`;
+    });
     const labelsShort = sortedData.map(item => item.country_name || 'ไม่ระบุ'); // Short labels for inside pie
-    const chartData = sortedData.map(item => item.total_customers);
+    const chartData = sortedData.map(item => item[field] || 0);
 
     // Generate colors for pie chart (cycle through if more than 10)
     const baseColors = [
@@ -2273,6 +2329,9 @@
                 label: function(context) {
                   const total = context.dataset.data.reduce((a, b) => a + b, 0);
                   const percent = ((context.raw / total) * 100).toFixed(1);
+                  if (currentViewMode === 'sales') return `ยอดขาย: ${formatCurrency(context.raw)} (${percent}%)`;
+                  if (currentViewMode === 'orders') return `จำนวนออเดอร์: ${formatNumber(context.raw)} (${percent}%)`;
+                  if (currentViewMode === 'net_commission') return `ค่าคอมสุทธิ: ${formatCurrency(context.raw)} (${percent}%)`;
                   return `จำนวนผู้เดินทาง: ${formatNumber(context.raw)} คน (${percent}%)`;
                 }
               }
@@ -2310,7 +2369,7 @@
         data: {
           labels: labels,
           datasets: [{
-            label: 'จำนวนผู้เดินทาง',
+            label: getChartTitle(),
             data: chartData,
             backgroundColor: '#4a7ba7',
             borderColor: '#3d6a8f',
@@ -2331,7 +2390,7 @@
               color: '#374151',
               font: { family: 'Kanit', size: 14, weight: '600' },
               formatter: function(value) {
-                return formatNumber(value);
+                return isCurrency ? formatCurrencyShort(value) : formatNumber(value);
               }
             },
             tooltip: {
@@ -2345,6 +2404,9 @@
               bodyFont: { family: 'Kanit', size: 15 },
               callbacks: {
                 label: function(context) {
+                  if (currentViewMode === 'sales') return `ยอดขาย: ${formatCurrency(context.raw)}`;
+                  if (currentViewMode === 'orders') return `จำนวนออเดอร์: ${formatNumber(context.raw)}`;
+                  if (currentViewMode === 'net_commission') return `ค่าคอมสุทธิ: ${formatCurrency(context.raw)}`;
                   return `จำนวนผู้เดินทาง: ${formatNumber(context.raw)} คน`;
                 }
               }
@@ -2365,7 +2427,7 @@
               ticks: {
                 color: '#6b7280',
                 font: { family: 'Kanit', size: 13 },
-                callback: function(value) { return formatNumber(value); }
+                callback: function(value) { return isCurrency ? formatCurrencyShort(value) : formatNumber(value); }
               },
               beginAtZero: true,
               suggestedMax: Math.max(...chartData) * 1.15
@@ -2466,10 +2528,10 @@
         return;
       }
 
-      const headers = ['ลำดับ', 'ประเทศ', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม', 'ค่าเฉลี่ย/Order'];
+      const headers = ['ลำดับ', 'ประเทศ', 'จำนวน Orders', 'จำนวนลูกค้า', 'ยอดรวม', 'ค่าเฉลี่ย/Order', 'ค่าคอมสุทธิ'];
       const rows = visibleRows.map(row => {
         const cells = row.querySelectorAll('td');
-        return Array.from(cells).slice(0, 6).map(cell => {
+        return Array.from(cells).slice(0, 7).map(cell => {
           let text = cell.textContent.trim();
           text = text.replace(/[฿,]/g, '');
           return text;
@@ -3815,6 +3877,84 @@
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(num);
+  }
+
+  // Format value by view mode
+  function formatValueByMode(num, viewMode) {
+    if (viewMode === 'travelers') return formatNumber(num) + ' คน';
+    if (viewMode === 'orders') return formatNumber(num);
+    return formatCurrency(num); // sales or net_commission
+  }
+
+  // Get data field name for current view mode
+  function getViewModeField(viewMode) {
+    switch (viewMode) {
+      case 'sales': return 'total_net_amount';
+      case 'travelers': return 'total_customers';
+      case 'orders': return 'total_orders';
+      case 'net_commission': return 'net_commission';
+      default: return 'total_customers';
+    }
+  }
+
+  // Get KPI card configuration based on current view mode
+  function getKPIConfig(data) {
+    const totalTravelers = data.reduce((sum, item) => sum + (item.total_customers || 0), 0);
+    const totalOrders = data.reduce((sum, item) => sum + (item.total_orders || 0), 0);
+    const totalRevenue = data.reduce((sum, item) => sum + (item.total_net_amount || 0), 0);
+    const totalNetCommission = data.reduce((sum, item) => sum + (item.net_commission || 0), 0);
+
+    const field = getViewModeField(currentViewMode);
+    const topCountry = data.reduce((max, item) =>
+      ((item[field] || 0) > (max?.[field] || 0)) ? item : max, null);
+    const totalValue = data.reduce((sum, item) => sum + (item[field] || 0), 0);
+    const topPercent = topCountry && totalValue > 0 ? ((topCountry[field] / totalValue) * 100) : 0;
+
+    const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+    const avgPerTraveler = totalTravelers > 0 ? (totalRevenue / totalTravelers) : 0;
+    const avgCommPerOrder = totalOrders > 0 ? (totalNetCommission / totalOrders) : 0;
+
+    switch (currentViewMode) {
+      case 'sales':
+        return {
+          kpi1: { label: 'ยอดขายรวม', value: formatCurrencyShort(totalRevenue), subtext: `จาก ${formatNumber(totalOrders)} ออเดอร์` },
+          kpi2: { label: 'ประเทศยอดนิยม', value: topCountry?.country_name || '-', subtext: `${topPercent.toFixed(1)}% ของทั้งหมด` },
+          kpi3: { label: 'จำนวนออเดอร์', value: formatNumber(totalOrders), subtext: `${formatNumber(totalTravelers)} ผู้เดินทาง` },
+          kpi4: { label: 'ยอดเฉลี่ย/ออเดอร์', value: formatCurrencyShort(avgPerOrder), subtext: 'ต่อ 1 ออเดอร์' }
+        };
+      case 'orders':
+        return {
+          kpi1: { label: 'จำนวนออเดอร์', value: formatNumber(totalOrders), subtext: `${formatNumber(totalTravelers)} ผู้เดินทาง` },
+          kpi2: { label: 'ประเทศยอดนิยม', value: topCountry?.country_name || '-', subtext: `${topPercent.toFixed(1)}% ของทั้งหมด` },
+          kpi3: { label: 'ยอดรวม', value: formatCurrencyShort(totalRevenue), subtext: `เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์` },
+          kpi4: { label: 'จำนวนผู้เดินทาง', value: formatNumber(totalTravelers), subtext: `จาก ${data.length} ประเทศ` }
+        };
+      case 'net_commission':
+        return {
+          kpi1: { label: 'ค่าคอมสุทธิรวม', value: formatCurrencyShort(totalNetCommission), subtext: `จาก ${formatNumber(totalOrders)} ออเดอร์` },
+          kpi2: { label: 'ประเทศยอดนิยม', value: topCountry?.country_name || '-', subtext: `${topPercent.toFixed(1)}% ของทั้งหมด` },
+          kpi3: { label: 'จำนวนออเดอร์', value: formatNumber(totalOrders), subtext: `${formatNumber(totalTravelers)} ผู้เดินทาง` },
+          kpi4: { label: 'ค่าคอมเฉลี่ย/ออเดอร์', value: formatCurrencyShort(avgCommPerOrder), subtext: 'ต่อ 1 ออเดอร์' }
+        };
+      default: // travelers
+        return {
+          kpi1: { label: 'จำนวนผู้เดินทาง', value: formatNumber(totalTravelers), subtext: `จาก ${formatNumber(totalOrders)} ออเดอร์` },
+          kpi2: { label: 'ประเทศยอดนิยม', value: topCountry?.country_name || '-', subtext: `${topPercent.toFixed(1)}% ของทั้งหมด` },
+          kpi3: { label: 'ยอดรวม', value: formatCurrencyShort(totalRevenue), subtext: `เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์` },
+          kpi4: { label: 'ยอดเฉลี่ย/คน', value: formatCurrencyShort(avgPerTraveler), subtext: 'ต่อผู้เดินทาง 1 คน' }
+        };
+    }
+  }
+
+  // Get chart title based on current view mode
+  function getChartTitle() {
+    switch (currentViewMode) {
+      case 'sales': return 'ยอดขายตามประเทศ';
+      case 'travelers': return 'จำนวนผู้เดินทางตามประเทศ';
+      case 'orders': return 'จำนวนออเดอร์ตามประเทศ';
+      case 'net_commission': return 'ค่าคอมสุทธิตามประเทศ';
+      default: return 'จำนวนผู้เดินทางตามประเทศ';
+    }
   }
 
   // Export current tab to CSV

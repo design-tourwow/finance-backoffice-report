@@ -27,6 +27,7 @@ const SalesByCountryAPI = {
     if (filters.booking_date_to) params.append('booking_date_to', filters.booking_date_to);
     if (filters.country_id) params.append('country_id', filters.country_id);
     if (filters.supplier_id) params.append('supplier_id', filters.supplier_id);
+    if (filters.view_mode) params.append('view_mode', filters.view_mode);
     if (dateFormat) params.append('date_format', dateFormat);
     
     const queryString = params.toString();
