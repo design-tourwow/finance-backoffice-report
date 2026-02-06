@@ -694,11 +694,11 @@
     const totalOrders = data.reduce((sum, item) => sum + (item.total_orders || 0), 0);
     const totalRevenue = data.reduce((sum, item) => sum + (item.total_net_amount || 0), 0);
     const topCountry = data.reduce((max, item) =>
-      (item.total_orders > (max?.total_orders || 0)) ? item : max, null);
+      (item.total_customers > (max?.total_customers || 0)) ? item : max, null);
     const activeCountries = data.filter(item => item.total_orders > 0).length;
 
-    // Calculate metrics
-    const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
+    // Calculate metrics (use travelers for percentage)
+    const topTravelersPercent = topCountry ? ((topCountry.total_customers / totalTravelers) * 100) : 0;
     const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
     const avgPerTraveler = totalTravelers > 0 ? (totalRevenue / totalTravelers) : 0;
 
@@ -818,7 +818,7 @@
             <div class="kpi-content">
               <div class="kpi-label">ยอดนิยม #1</div>
               <div class="kpi-value" id="kpiTopCountry">${topCountry?.country_name || '-'}</div>
-              <div class="kpi-subtext">${topOrdersPercent.toFixed(1)}% ของทั้งหมด</div>
+              <div class="kpi-subtext">${topTravelersPercent.toFixed(1)}% ของทั้งหมด</div>
             </div>
           </div>
 
@@ -898,7 +898,7 @@
                     <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
                     <path d="M22 12A10 10 0 0 0 12 2v10z"/>
                   </svg>
-                  สัดส่วนยอดขาย
+                  สัดส่วนผู้เดินทาง
                 </div>
                 <div class="glass-chart-subtitle">Top ${Math.min(5, data.length)} ประเทศ</div>
               </div>
@@ -1052,13 +1052,13 @@
     return '฿' + formatNumber(num);
   }
 
-  // Render market share list
+  // Render market share list (based on travelers count)
   function renderMarketShareList(data) {
-    const totalOrders = data.reduce((sum, item) => sum + (item.total_orders || 0), 0);
-    const sorted = [...data].sort((a, b) => b.total_orders - a.total_orders).slice(0, 5);
+    const totalTravelers = data.reduce((sum, item) => sum + (item.total_customers || 0), 0);
+    const sorted = [...data].sort((a, b) => (b.total_customers || 0) - (a.total_customers || 0)).slice(0, 5);
 
     return sorted.map((item, index) => {
-      const percent = ((item.total_orders / totalOrders) * 100);
+      const percent = totalTravelers > 0 ? ((item.total_customers / totalTravelers) * 100) : 0;
       const rankClass = index < 3 ? `top-${index + 1}` : 'other';
 
       return `
@@ -2126,9 +2126,9 @@
     const totalOrders = data.reduce((sum, item) => sum + (item.total_orders || 0), 0);
     const totalRevenue = data.reduce((sum, item) => sum + (item.total_net_amount || 0), 0);
     const topCountry = data.reduce((max, item) =>
-      (item.total_orders > (max?.total_orders || 0)) ? item : max, null);
+      (item.total_customers > (max?.total_customers || 0)) ? item : max, null);
     const activeCountries = data.filter(item => item.total_orders > 0).length;
-    const topOrdersPercent = topCountry ? ((topCountry.total_orders / totalOrders) * 100) : 0;
+    const topTravelersPercent = topCountry ? ((topCountry.total_customers / totalTravelers) * 100) : 0;
     const avgPerOrder = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
     // Calculate avgPerTraveler for KPI card 4
@@ -2149,7 +2149,7 @@
     const subtexts = document.querySelectorAll('.kpi-subtext');
     if (subtexts.length >= 4) {
       subtexts[0].textContent = `จาก ${formatNumber(totalOrders)} ออเดอร์`;
-      subtexts[1].textContent = `${topOrdersPercent.toFixed(1)}% ของทั้งหมด`;
+      subtexts[1].textContent = `${topTravelersPercent.toFixed(1)}% ของทั้งหมด`;
       subtexts[2].textContent = `เฉลี่ย ${formatCurrencyShort(avgPerOrder)}/ออเดอร์`;
       subtexts[3].textContent = 'ต่อผู้เดินทาง 1 คน';
     }
