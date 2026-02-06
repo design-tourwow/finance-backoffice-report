@@ -2045,8 +2045,8 @@
     const badge = document.getElementById('selectedPeriodBadge');
     if (badge) badge.style.display = 'none';
 
-    // Reset country dropdown to show all
-    renderCountryItems(availableCountries);
+    // Reset wholesale dropdown to show all
+    renderWholesaleItems(availableWholesales);
 
     // Apply filters
     applyAllFilters();
