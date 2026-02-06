@@ -226,6 +226,11 @@ Backend ต้องสร้าง **7 Report Endpoints** เพื่อคำ
 - `booking_date_to` - วันจองสิ้นสุด (YYYY-MM-DD)
 - `country_id` - รหัสประเทศ
 - `supplier_id` - รหัส Supplier
+- `view_mode` - **โหมดการแสดงผล (จำเป็น)** ค่าที่เป็นไปได้:
+  - `sales` - ยอดขายรวม (SUM ของ net_amount)
+  - `travelers` - จำนวนผู้เดินทาง (COUNT travelers)
+  - `orders` - จำนวนออเดอร์ (COUNT orders)
+  - `net_commission` - **ค่าคอมสุทธิ** (ดูรายละเอียดการคำนวณด้านล่าง)
 
 **ส่งกลับ:**
 ```json
@@ -245,7 +250,8 @@ Backend ต้องสร้าง **7 Report Endpoints** เพื่อคำ
       }
     ],
     "summary": {
-      "total_bookings": 425,
+      "total_value": 425,
+      "view_mode": "net_commission",
       "top_wholesale": { "name": "...", "count": 275 },
       "top_country": { "name": "ญี่ปุ่น", "count": 250 },
       "total_partners": 15
@@ -258,10 +264,89 @@ Backend ต้องสร้าง **7 Report Endpoints** เพื่อคำ
 }
 ```
 
+> **หมายเหตุ:** ค่าใน `countries`, `total`, `summary.total_value`, และ `country_totals` จะเปลี่ยนตาม `view_mode` ที่ส่งมา (จำนวน orders / ยอดขาย / จำนวนผู้เดินทาง / ค่าคอมสุทธิ)
+
 **วิธีทำ:**
-- Group by Supplier แล้วนับ orders แยกตามประเทศ
+- Group by Supplier แล้วแยกตามประเทศ
 - เรียงลำดับ wholesales ตาม total มากไปน้อย
 - คำนวณ summary และ country_totals
+- **ค่าที่คำนวณจะแตกต่างกันตาม `view_mode`** (ดูตารางด้านล่าง)
+
+---
+
+### การคำนวณตาม view_mode
+
+| view_mode | ค่าที่คำนวณ | สูตร |
+|---|---|---|
+| `sales` | ยอดขายรวม | `SUM(o.net_amount)` |
+| `travelers` | จำนวนผู้เดินทาง | `SUM(o.pax)` หรือ COUNT travelers |
+| `orders` | จำนวนออเดอร์ | `COUNT(DISTINCT o.id)` |
+| `net_commission` | **ค่าคอมสุทธิ** | `SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0))` |
+
+---
+
+### เงื่อนไขสำคัญสำหรับ view_mode = `net_commission`
+
+เมื่อ `view_mode=net_commission` **ต้องใช้เงื่อนไขเพิ่มเติม** ดังนี้:
+
+**1. สูตรคำนวณ:**
+```
+ค่าคอมสุทธิ = supplier_commission - discount
+```
+
+**2. ต้อง INNER JOIN กับตาราง installments:**
+- JOIN กับ `customer_order_installments` โดย `o.id = i.order_id`
+- กรองเฉพาะ **งวดแรก** (`i.ordinal = 1`)
+- กรองเฉพาะงวดที่ **จ่ายเงินแล้ว** (`LOWER(i.status) = 'paid'`)
+
+**3. กรอง Order ที่ไม่ยกเลิก:**
+- `o.order_status != 'Canceled'`
+
+**4. กรองปีตามเวลาไทย (GMT+7):**
+- ใช้ `CONVERT_TZ(o.created_at, '+00:00', '+07:00')` สำหรับการกรองปี
+
+**SQL ที่ถูกต้อง (ตรวจสอบแล้วกับ Report ปอ):**
+```sql
+-- คำนวณค่าคอมสุทธิรวม (ตรวจสอบกับ Report แล้ว ค่าตรง)
+SELECT
+    COALESCE(SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0)), 0) AS total_net_commission
+FROM
+    tw_tourwow_db_views.v_Xqc7k7_orders AS o
+INNER JOIN
+    tw_tourwow_db_views.v_Xqc7k7_customer_order_installments AS i
+    ON o.id = i.order_id
+WHERE
+    o.order_status != 'Canceled'
+    AND i.ordinal = 1
+    AND LOWER(i.status) = 'paid'
+    AND YEAR(CONVERT_TZ(o.created_at, '+00:00', '+07:00')) = 2025;
+```
+
+**SQL สำหรับ Group by Wholesale + Country (สำหรับ endpoint นี้):**
+```sql
+SELECT
+    o.supplier_id,
+    s.name AS supplier_name,
+    country.name AS country_name,
+    COALESCE(SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0)), 0) AS net_commission
+FROM
+    tw_tourwow_db_views.v_Xqc7k7_orders AS o
+INNER JOIN
+    tw_tourwow_db_views.v_Xqc7k7_customer_order_installments AS i
+    ON o.id = i.order_id
+LEFT JOIN suppliers s ON o.supplier_id = s.id
+LEFT JOIN countries country ON o.country_id = country.id
+WHERE
+    o.order_status != 'Canceled'
+    AND i.ordinal = 1
+    AND LOWER(i.status) = 'paid'
+    AND YEAR(CONVERT_TZ(o.created_at, '+00:00', '+07:00')) = 2025
+    -- เพิ่ม filters จาก query params ตามปกติ
+GROUP BY o.supplier_id, s.name, country.name
+ORDER BY net_commission DESC;
+```
+
+> **สาเหตุที่ต้องใช้เงื่อนไขพิเศษ:** เนื่องจากค่าคอมสุทธิต้องนับเฉพาะ Orders ที่ลูกค้าจ่ายเงินงวดแรกแล้วเท่านั้น ถ้าไม่ JOIN กับ installments ค่าจะไม่ตรง เพราะจะรวม Orders ที่ยังไม่ได้จ่ายเงินเข้ามาด้วย
 
 ---
 
@@ -367,12 +452,14 @@ curl -X GET "https://staging-finance-backoffice-report-api.vercel.app/api/report
 
 ## ✅ Checklist
 
-- [ ] สร้าง 7 Endpoints ตามที่ระบุ
+- [ ] สร้าง 8 Endpoints ตามที่ระบุ (รวม wholesale-by-country + view_mode)
 - [ ] ใช้ `success: true` ใน Response (ไม่ใช่ `status`)
 - [ ] ตั้งค่า CORS ให้ถูกต้อง (4 origins)
 - [ ] เพิ่ม `x-api-key` ใน allowed headers
 - [ ] จำกัด 100 records (ยกเว้น countries/suppliers)
 - [ ] ดึงประเทศจาก `product_snapshot`
+- [ ] รองรับ `view_mode` parameter สำหรับ wholesale-by-country (sales/travelers/orders/net_commission)
+- [ ] net_commission: ใช้สูตร `supplier_commission - discount` + INNER JOIN installments (ordinal=1, status=paid)
 - [ ] จัดการกรณีข้อมูลไม่ครบ (null/undefined)
 - [ ] ทดสอบทุก endpoint
 - [ ] Deploy ขึ้น staging

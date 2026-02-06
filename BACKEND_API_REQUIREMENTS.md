@@ -238,7 +238,94 @@ Frontend ต้องการ Backend สร้าง Report Endpoints เพ�
 
 ---
 
-### 8. **GET /api/suppliers** (มีอยู่แล้ว - ตรวจสอบ Response Format)
+### 8. **GET /api/reports/wholesale-by-country**
+รายงาน Wholesale แยกตามประเทศปลายทาง (รองรับหลาย view mode)
+
+**Query Parameters:**
+- `travel_date_from` (optional): วันเดินทางเริ่มต้น (YYYY-MM-DD)
+- `travel_date_to` (optional): วันเดินทางสิ้นสุด (YYYY-MM-DD)
+- `booking_date_from` (optional): วันจองเริ่มต้น (YYYY-MM-DD)
+- `booking_date_to` (optional): วันจองสิ้นสุด (YYYY-MM-DD)
+- `country_id` (optional): รหัสประเทศ
+- `supplier_id` (optional): รหัส Supplier
+- `view_mode` **(required)**: โหมดการแสดงผล — `sales` | `travelers` | `orders` | `net_commission`
+
+**Response Format:**
+```json
+{
+  "success": true,
+  "data": {
+    "wholesales": [
+      {
+        "id": 46,
+        "name": "บริษัท โปร บุ๊คกิ้ง เซนเตอร์ จำกัด",
+        "countries": {
+          "ญี่ปุ่น": 150,
+          "เวียดนาม": 80,
+          "จีน": 45
+        },
+        "total": 275
+      }
+    ],
+    "summary": {
+      "total_value": 425,
+      "view_mode": "net_commission",
+      "top_wholesale": { "name": "...", "count": 275 },
+      "top_country": { "name": "ญี่ปุ่น", "count": 250 },
+      "total_partners": 15
+    },
+    "country_totals": {
+      "ญี่ปุ่น": 250,
+      "เวียดนาม": 80
+    }
+  }
+}
+```
+
+**คำอธิบาย:**
+- ค่าใน `countries`, `total`, `summary.total_value`, `country_totals` เปลี่ยนตาม `view_mode`
+- เรียงลำดับ wholesales ตาม `total` จากมากไปน้อย
+
+**การคำนวณตาม view_mode:**
+
+| view_mode | สูตร |
+|---|---|
+| `sales` | `SUM(o.net_amount)` |
+| `travelers` | `SUM(o.pax)` หรือ COUNT travelers |
+| `orders` | `COUNT(DISTINCT o.id)` |
+| `net_commission` | `SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0))` |
+
+**เงื่อนไขพิเศษสำหรับ `view_mode=net_commission`:**
+1. ต้อง INNER JOIN กับ `customer_order_installments` (กรอง `ordinal=1`, `status='paid'`)
+2. กรอง `order_status != 'Canceled'`
+3. กรองปีตามเวลาไทย GMT+7: `CONVERT_TZ(o.created_at, '+00:00', '+07:00')`
+
+**SQL ที่ถูกต้อง (ตรวจสอบแล้วกับ Report):**
+```sql
+SELECT
+    o.supplier_id,
+    s.name AS supplier_name,
+    country.name AS country_name,
+    COALESCE(SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0)), 0) AS net_commission
+FROM
+    tw_tourwow_db_views.v_Xqc7k7_orders AS o
+INNER JOIN
+    tw_tourwow_db_views.v_Xqc7k7_customer_order_installments AS i
+    ON o.id = i.order_id
+LEFT JOIN suppliers s ON o.supplier_id = s.id
+LEFT JOIN countries country ON o.country_id = country.id
+WHERE
+    o.order_status != 'Canceled'
+    AND i.ordinal = 1
+    AND LOWER(i.status) = 'paid'
+    AND YEAR(CONVERT_TZ(o.created_at, '+00:00', '+07:00')) = 2025
+GROUP BY o.supplier_id, s.name, country.name
+ORDER BY net_commission DESC;
+```
+
+---
+
+### 9. **GET /api/suppliers** (มีอยู่แล้ว - ตรวจสอบ Response Format)
 รายการ Suppliers ทั้งหมดสำหรับ Filter Dropdown
 
 **Response Format ที่ต้องการ:**
@@ -369,13 +456,15 @@ curl -X GET "https://staging-finance-backoffice-report-api.vercel.app/api/report
 
 ## ✅ Checklist สำหรับ Backend Team
 
-- [ ] สร้าง 7 Report Endpoints ตามที่ระบุ
+- [ ] สร้าง 8 Report Endpoints ตามที่ระบุ (รวม wholesale-by-country)
 - [ ] ตรวจสอบ Response Format ใช้ `success` แทน `status`
 - [ ] เพิ่ม CORS configuration สำหรับ 4 origins
 - [ ] เพิ่ม `x-api-key` ใน allowed headers
 - [ ] จำกัด records สูงสุด 100 รายการ (ยกเว้น countries/suppliers)
 - [ ] ดึงข้อมูลประเทศจาก `product_snapshot` field
 - [ ] จัดการกรณีข้อมูลไม่ครบ (null/undefined)
+- [ ] รองรับ `view_mode` parameter สำหรับ wholesale-by-country (sales/travelers/orders/net_commission)
+- [ ] ใช้ INNER JOIN installments + กรอง ordinal=1, status=paid สำหรับ net_commission
 - [ ] เพิ่ม Database Indexing สำหรับ performance
 - [ ] Test ทุก endpoint ด้วย test tokens
 - [ ] Deploy ขึ้น staging environment

@@ -258,6 +258,103 @@ ORDER BY name_th ASC;
 
 ---
 
+## 8. Wholesale by Country (`/api/reports/wholesale-by-country`)
+
+> **สำคัญ:** Endpoint นี้รองรับ `view_mode` parameter ที่เปลี่ยนวิธีคำนวณค่า
+
+### view_mode = `orders` (นับจำนวน orders)
+```sql
+SELECT
+    o.supplier_id,
+    s.name AS supplier_name,
+    COALESCE(country.name, 'ไม่ระบุ') AS country_name,
+    COUNT(DISTINCT o.id) AS value
+FROM orders o
+LEFT JOIN suppliers s ON o.supplier_id = s.id
+LEFT JOIN countries country ON o.country_id = country.id
+WHERE 1=1
+    AND (o.booking_date >= :booking_date_from OR :booking_date_from IS NULL)
+    AND (o.booking_date <= :booking_date_to OR :booking_date_to IS NULL)
+    AND (o.supplier_id = :supplier_id OR :supplier_id IS NULL)
+    AND (o.country_id = :country_id OR :country_id IS NULL)
+GROUP BY o.supplier_id, s.name, country.name
+ORDER BY value DESC;
+```
+
+### view_mode = `sales` (ยอดขายรวม)
+```sql
+SELECT
+    o.supplier_id,
+    s.name AS supplier_name,
+    COALESCE(country.name, 'ไม่ระบุ') AS country_name,
+    COALESCE(SUM(o.net_amount), 0) AS value
+FROM orders o
+LEFT JOIN suppliers s ON o.supplier_id = s.id
+LEFT JOIN countries country ON o.country_id = country.id
+WHERE 1=1
+    AND (o.booking_date >= :booking_date_from OR :booking_date_from IS NULL)
+    AND (o.booking_date <= :booking_date_to OR :booking_date_to IS NULL)
+    AND (o.supplier_id = :supplier_id OR :supplier_id IS NULL)
+    AND (o.country_id = :country_id OR :country_id IS NULL)
+GROUP BY o.supplier_id, s.name, country.name
+ORDER BY value DESC;
+```
+
+### view_mode = `net_commission` (ค่าคอมสุทธิ) — ต้องใช้เงื่อนไขพิเศษ
+
+> **สำคัญ:** view_mode นี้ต้อง INNER JOIN กับตาราง installments และมีเงื่อนไข filter เพิ่มเติม
+> SQL นี้ตรวจสอบแล้วกับ Report ปอ — ค่าตรงกัน
+
+```sql
+-- ตรวจสอบค่ารวมทั้งหมด (ใช้เทียบกับ Report)
+SELECT
+    COALESCE(SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0)), 0) AS total_net_commission
+FROM
+    tw_tourwow_db_views.v_Xqc7k7_orders AS o
+INNER JOIN
+    tw_tourwow_db_views.v_Xqc7k7_customer_order_installments AS i
+    ON o.id = i.order_id
+WHERE
+    o.order_status != 'Canceled'
+    AND i.ordinal = 1
+    AND LOWER(i.status) = 'paid'
+    AND YEAR(CONVERT_TZ(o.created_at, '+00:00', '+07:00')) = 2025;
+```
+
+```sql
+-- Group by Wholesale + Country (สำหรับ endpoint)
+SELECT
+    o.supplier_id,
+    s.name AS supplier_name,
+    COALESCE(country.name, 'ไม่ระบุ') AS country_name,
+    COALESCE(SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0)), 0) AS value
+FROM
+    tw_tourwow_db_views.v_Xqc7k7_orders AS o
+INNER JOIN
+    tw_tourwow_db_views.v_Xqc7k7_customer_order_installments AS i
+    ON o.id = i.order_id
+LEFT JOIN suppliers s ON o.supplier_id = s.id
+LEFT JOIN countries country ON o.country_id = country.id
+WHERE
+    o.order_status != 'Canceled'
+    AND i.ordinal = 1
+    AND LOWER(i.status) = 'paid'
+    AND YEAR(CONVERT_TZ(o.created_at, '+00:00', '+07:00')) = 2025
+    -- เพิ่ม filters จาก query params
+    AND (o.supplier_id = :supplier_id OR :supplier_id IS NULL)
+    AND (o.country_id = :country_id OR :country_id IS NULL)
+GROUP BY o.supplier_id, s.name, country.name
+ORDER BY value DESC;
+```
+
+**เงื่อนไขสำคัญสำหรับ net_commission:**
+1. **สูตร:** `supplier_commission - discount` (ใช้ COALESCE เพื่อจัดการ NULL)
+2. **INNER JOIN installments:** กรองเฉพาะ order ที่จ่ายเงินงวดแรกแล้ว (`ordinal = 1`, `status = 'paid'`)
+3. **กรอง order ยกเลิก:** `order_status != 'Canceled'`
+4. **Timezone:** ใช้ `CONVERT_TZ(created_at, '+00:00', '+07:00')` สำหรับกรองปี
+
+---
+
 ## 📊 Recommended Database Indexes
 
 ```sql
