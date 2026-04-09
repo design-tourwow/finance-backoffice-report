@@ -144,7 +144,6 @@
                 <input id="crp-paid-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันชำระงวด 1" />
                 <div id="crp-paid-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
               </div>
-              <span class="crp-paid-note" id="crp-paid-to-note"></span>
             </div>
           </div>
 
@@ -199,12 +198,9 @@
       inputId: 'crp-paid-input',
       dropdownId: 'crp-paid-dropdown',
       wrapperId: 'crp-paid-picker',
-      onChange: function (start, end) {
-        if (end) updatePaidNote(DatePickerComponent.formatDateToAPI(end));
-      }
+      onChange: function (start, end) {}
     });
     paidDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(to));
-    updatePaidNote(to);
 
     // Set state defaults
     selectedJobPosition  = jobPos;
@@ -292,11 +288,6 @@
 
     // Search button
     document.getElementById('crp-btn-search').addEventListener('click', loadReport);
-  }
-
-  function updatePaidNote(toDate) {
-    const note = document.getElementById('crp-paid-to-note');
-    if (note && toDate) note.textContent = `(สิ้นสุดจริง ${formatDate(addDays(toDate, 3))})`;
   }
 
   function labelOfJobPosition(pos) {
