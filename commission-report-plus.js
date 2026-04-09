@@ -156,13 +156,13 @@
       // Non-admin: show their own name, disabled
       const me = sellers.find(s => String(s.id) === String(defaultSellerId));
       const name = me ? me.nick_name : (currentUser ? currentUser.nick_name : '-');
-      wrap.innerHTML = `<input type="text" class="crp-date-input" value="${escHtml(name)}" disabled style="width:90px" />`;
+      wrap.innerHTML = `<input type="text" class="time-btn" value="${escHtml(name)}" disabled style="opacity:0.6;cursor:not-allowed" />`;
       return;
     }
 
     // Admin: plain select with all sellers
     const select = document.createElement('select');
-    select.className = 'crp-select';
+    select.className = 'time-btn crp-select';
     select.id = 'crp-seller-select';
 
     const allOpt = document.createElement('option');
@@ -228,47 +228,50 @@
     section.innerHTML = `
       <div class="crp-wrapper">
 
-        <!-- Filter Section: 2 rows -->
-        <div class="crp-filter-section">
+        <!-- Filter Bar (same classes as existing report pages) -->
+        <div class="time-granularity-control crp-filter-wrap">
 
           <!-- แถว 1: Date Filters -->
-          <div class="crp-filter-row1">
-            <span class="crp-filter-label">วันที่สร้าง Order</span>
+          <div class="crp-filter-row">
+            <span class="time-granularity-label">วันที่สร้าง Order</span>
             <div class="crp-date-group">
-              <input type="date" class="crp-date-input" id="crp-created-from" />
-              <span>–</span>
-              <input type="date" class="crp-date-input" id="crp-created-to" />
+              <input type="date" class="time-btn crp-date-input" id="crp-created-from" />
+              <span class="time-granularity-label" style="font-size:14px">–</span>
+              <input type="date" class="time-btn crp-date-input" id="crp-created-to" />
             </div>
 
-            <div class="crp-filter-separator"></div>
+            <div class="filter-separator"></div>
 
-            <span class="crp-filter-label">วันชำระงวด 1</span>
+            <span class="time-granularity-label">วันชำระงวด 1</span>
             <div class="crp-date-group">
-              <input type="date" class="crp-date-input" id="crp-paid-from" />
-              <span>–</span>
-              <input type="date" class="crp-date-input" id="crp-paid-to" />
+              <input type="date" class="time-btn crp-date-input" id="crp-paid-from" />
+              <span class="time-granularity-label" style="font-size:14px">–</span>
+              <input type="date" class="time-btn crp-date-input" id="crp-paid-to" />
               <span class="crp-paid-note" id="crp-paid-to-note"></span>
             </div>
           </div>
 
+          <!-- Divider between rows -->
+          <div class="crp-row-divider"></div>
+
           <!-- แถว 2: Dropdowns + Search -->
-          <div class="crp-filter-row2">
-            <span class="crp-filter-label">ตำแหน่ง</span>
-            <select class="crp-select" id="crp-job-position">
+          <div class="crp-filter-row">
+            <span class="time-granularity-label">ตำแหน่ง</span>
+            <select class="time-btn crp-select" id="crp-job-position">
               <option value="ts">เซลล์</option>
               <option value="crm">CRM</option>
               <option value="admin">Admin</option>
             </select>
 
-            <div class="crp-filter-separator"></div>
+            <div class="filter-separator"></div>
 
-            <span class="crp-filter-label">เซลล์ผู้จอง</span>
+            <span class="time-granularity-label">เซลล์ผู้จอง</span>
             <div id="crp-seller-wrap"></div>
 
-            <div class="crp-filter-separator"></div>
+            <div class="filter-separator"></div>
 
-            <span class="crp-filter-label">สถานะ Order</span>
-            <select class="crp-select" id="crp-order-status">
+            <span class="time-granularity-label">สถานะ Order</span>
+            <select class="time-btn crp-select" id="crp-order-status">
               <option value="all">ทั้งหมด</option>
               <option value="not_canceled">ไม่ยกเลิก</option>
               <option value="canceled">ยกเลิก</option>
