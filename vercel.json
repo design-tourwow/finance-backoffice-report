@@ -19,6 +19,10 @@
     {
       "source": "/wholesale-destinations",
       "destination": "/wholesale-destinations.html"
+    },
+    {
+      "source": "/commission-report-plus",
+      "destination": "/commission-report-plus.html"
     }
   ],
   "headers": [
