@@ -156,52 +156,33 @@
       // Non-admin: show their own name, disabled
       const me = sellers.find(s => String(s.id) === String(defaultSellerId));
       const name = me ? me.nick_name : (currentUser ? currentUser.nick_name : '-');
-      wrap.innerHTML = `<input type="text" class="crp-input" value="${name}" disabled />`;
+      wrap.innerHTML = `<input type="text" class="crp-date-input" value="${escHtml(name)}" disabled style="width:90px" />`;
       return;
     }
 
-    // Admin: searchable dropdown
-    const options = sellers.map(s => ({
-      value: String(s.id),
-      label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id)
-    }));
-    options.unshift({ value: '', label: 'ทั้งหมด' });
+    // Admin: plain select with all sellers
+    const select = document.createElement('select');
+    select.className = 'crp-select';
+    select.id = 'crp-seller-select';
 
-    wrap.innerHTML = `<div id="crp-seller-dropdown" style="width:100%"></div>`;
+    const allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = 'ทั้งหมด';
+    select.appendChild(allOpt);
 
-    if (typeof SearchableDropdown !== 'undefined') {
-      new SearchableDropdown('crp-seller-dropdown', {
-        options: options,
-        placeholder: 'ค้นหาเซลล์...',
-        defaultValue: defaultSellerId || '',
-        onChange: function (val) {
-          // handled on search
-        }
-      });
-    } else {
-      // Fallback: plain select
-      const select = document.createElement('select');
-      select.className = 'crp-select';
-      select.id = 'crp-seller-select';
-      options.forEach(o => {
-        const opt = document.createElement('option');
-        opt.value = o.value;
-        opt.textContent = o.label;
-        select.appendChild(opt);
-      });
-      select.value = defaultSellerId || '';
-      wrap.appendChild(select);
-    }
+    sellers.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = String(s.id);
+      opt.textContent = s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id);
+      select.appendChild(opt);
+    });
+
+    select.value = defaultSellerId || '';
+    wrap.appendChild(select);
   }
 
   function getSelectedSellerId() {
-    if (!isAdmin()) {
-      return currentUser ? String(currentUser.id || '') : '';
-    }
-    // Try SearchableDropdown value
-    const dd = document.querySelector('#crp-seller-dropdown .searchable-dropdown-selected');
-    if (dd) return dd.getAttribute('data-value') || '';
-    // Fallback select
+    if (!isAdmin()) return currentUser ? String(currentUser.id || '') : '';
     const sel = document.getElementById('crp-seller-select');
     return sel ? sel.value : '';
   }
@@ -246,70 +227,63 @@
 
     section.innerHTML = `
       <div class="crp-wrapper">
-        <!-- Filters -->
-        <div class="crp-filters">
-          <p class="crp-filters-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-            ตัวกรอง
-          </p>
-          <div class="crp-filters-grid">
 
-            <!-- วันที่สร้าง Order -->
-            <div class="crp-filter-group">
-              <label>วันที่สร้าง Order</label>
-              <div class="crp-filter-row">
-                <input type="date" class="crp-input" id="crp-created-from" />
-                <span>ถึง</span>
-                <input type="date" class="crp-input" id="crp-created-to" />
-              </div>
-            </div>
+        <!-- Filter Bar (same style as time-granularity-control) -->
+        <div class="crp-filter-bar">
 
-            <!-- วันที่ชำระเงินงวดแรก -->
-            <div class="crp-filter-group">
-              <label>วันที่ชำระเงินงวดแรก</label>
-              <div class="crp-filter-row">
-                <input type="date" class="crp-input" id="crp-paid-from" />
-                <span>ถึง</span>
-                <input type="date" class="crp-input" id="crp-paid-to" />
-              </div>
-              <span class="crp-note" id="crp-paid-to-note">วันสิ้นสุด +3 วันอัตโนมัติ</span>
-            </div>
-
-            <!-- ตำแหน่ง -->
-            <div class="crp-filter-group">
-              <label>ตำแหน่ง</label>
-              <select class="crp-select" id="crp-job-position">
-                <option value="ts">เซลล์</option>
-                <option value="crm">CRM</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <!-- เซลล์ผู้จอง -->
-            <div class="crp-filter-group">
-              <label>เซลล์ผู้จอง</label>
-              <div id="crp-seller-wrap" style="width:100%"></div>
-            </div>
-
-            <!-- สถานะ Order -->
-            <div class="crp-filter-group">
-              <label>สถานะ Order</label>
-              <select class="crp-select" id="crp-order-status">
-                <option value="all">ทั้งหมด</option>
-                <option value="not_canceled">ไม่ยกเลิก</option>
-                <option value="canceled">ยกเลิก</option>
-              </select>
-            </div>
-
-            <!-- Search Button -->
-            <div class="crp-filter-actions">
-              <button class="crp-btn-search" id="crp-btn-search">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                ค้นหา
-              </button>
-            </div>
-
+          <!-- วันที่สร้าง Order -->
+          <span class="crp-filter-label">วันที่สร้าง</span>
+          <div class="crp-date-group">
+            <input type="date" class="crp-date-input" id="crp-created-from" />
+            <span>–</span>
+            <input type="date" class="crp-date-input" id="crp-created-to" />
           </div>
+
+          <div class="crp-filter-separator"></div>
+
+          <!-- วันที่ชำระเงินงวดแรก -->
+          <span class="crp-filter-label">ชำระงวด 1</span>
+          <div class="crp-date-group">
+            <input type="date" class="crp-date-input" id="crp-paid-from" />
+            <span>–</span>
+            <input type="date" class="crp-date-input" id="crp-paid-to" />
+            <span class="crp-paid-note" id="crp-paid-to-note"></span>
+          </div>
+
+          <div class="crp-filter-separator"></div>
+
+          <!-- ตำแหน่ง -->
+          <span class="crp-filter-label">ตำแหน่ง</span>
+          <select class="crp-select" id="crp-job-position">
+            <option value="ts">เซลล์</option>
+            <option value="crm">CRM</option>
+            <option value="admin">Admin</option>
+          </select>
+
+          <div class="crp-filter-separator"></div>
+
+          <!-- เซลล์ผู้จอง -->
+          <span class="crp-filter-label">เซลล์</span>
+          <div id="crp-seller-wrap"></div>
+
+          <div class="crp-filter-separator"></div>
+
+          <!-- สถานะ Order -->
+          <span class="crp-filter-label">สถานะ</span>
+          <select class="crp-select" id="crp-order-status">
+            <option value="all">ทั้งหมด</option>
+            <option value="not_canceled">ไม่ยกเลิก</option>
+            <option value="canceled">ยกเลิก</option>
+          </select>
+
+          <div class="crp-filter-separator"></div>
+
+          <!-- Search -->
+          <button class="crp-btn-search" id="crp-btn-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            ค้นหา
+          </button>
+
         </div>
 
         <!-- Results Container -->
