@@ -7,6 +7,10 @@
   let currentData = null;
   let sellers = [];
 
+  // Date picker instances
+  let createdDatePickerInstance = null;
+  let paidDatePickerInstance = null;
+
   // Selected values from FilterSortDropdown instances
   let selectedJobPosition = 'admin';
   let selectedSellerId = '';
@@ -121,21 +125,25 @@
           <!-- แถว 1: Date Filters -->
           <div class="crp-filter-row">
             <span class="time-granularity-label">วันที่สร้าง Order</span>
-            <div class="crp-date-group">
-              <input type="date" class="time-btn crp-date-input" id="crp-created-from" />
-              <span class="time-granularity-label crp-dash">–</span>
-              <input type="date" class="time-btn crp-date-input" id="crp-created-to" />
+            <div class="date-picker-wrapper" id="crp-created-picker">
+              <div class="date-icon" aria-hidden="true">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/></svg>
+              </div>
+              <input id="crp-created-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันที่สร้าง Order" />
+              <div id="crp-created-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
             </div>
 
             <div class="filter-separator"></div>
 
             <span class="time-granularity-label">วันชำระงวด 1</span>
-            <div class="crp-date-group">
-              <input type="date" class="time-btn crp-date-input" id="crp-paid-from" />
-              <span class="time-granularity-label crp-dash">–</span>
-              <input type="date" class="time-btn crp-date-input" id="crp-paid-to" />
-              <span class="crp-paid-note" id="crp-paid-to-note"></span>
+            <div class="date-picker-wrapper" id="crp-paid-picker">
+              <div class="date-icon" aria-hidden="true">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/></svg>
+              </div>
+              <input id="crp-paid-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันชำระงวด 1" />
+              <div id="crp-paid-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
             </div>
+            <span class="crp-paid-note" id="crp-paid-to-note"></span>
           </div>
 
           <div class="crp-row-divider"></div>
@@ -176,16 +184,25 @@
     const from = firstDayOfMonth();
     const to   = today();
 
-    // Set date defaults
-    document.getElementById('crp-created-from').value = from;
-    document.getElementById('crp-created-to').value   = to;
-    document.getElementById('crp-paid-from').value    = from;
-    document.getElementById('crp-paid-to').value      = to;
-    updatePaidNote(to);
-
-    document.getElementById('crp-paid-to').addEventListener('change', function () {
-      updatePaidNote(this.value);
+    // Init date pickers with current-month defaults
+    createdDatePickerInstance = DatePickerComponent.initDateRangePicker({
+      inputId: 'crp-created-input',
+      dropdownId: 'crp-created-dropdown',
+      wrapperId: 'crp-created-picker',
+      onChange: function (start, end) {}
     });
+    createdDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(to));
+
+    paidDatePickerInstance = DatePickerComponent.initDateRangePicker({
+      inputId: 'crp-paid-input',
+      dropdownId: 'crp-paid-dropdown',
+      wrapperId: 'crp-paid-picker',
+      onChange: function (start, end) {
+        if (end) updatePaidNote(DatePickerComponent.formatDateToAPI(end));
+      }
+    });
+    paidDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(to));
+    updatePaidNote(to);
 
     // Set state defaults
     selectedJobPosition  = jobPos;
@@ -319,11 +336,15 @@
   }
 
   function buildFilters() {
+    const createdStart = createdDatePickerInstance ? createdDatePickerInstance.getStartDate() : null;
+    const createdEnd   = createdDatePickerInstance ? createdDatePickerInstance.getEndDate()   : null;
+    const paidStart    = paidDatePickerInstance    ? paidDatePickerInstance.getStartDate()    : null;
+    const paidEnd      = paidDatePickerInstance    ? paidDatePickerInstance.getEndDate()      : null;
     return {
-      created_at_from: document.getElementById('crp-created-from').value || '',
-      created_at_to:   document.getElementById('crp-created-to').value   || '',
-      paid_at_from:    document.getElementById('crp-paid-from').value    || '',
-      paid_at_to:      document.getElementById('crp-paid-to').value      || '',
+      created_at_from: DatePickerComponent.formatDateToAPI(createdStart) || '',
+      created_at_to:   DatePickerComponent.formatDateToAPI(createdEnd)   || '',
+      paid_at_from:    DatePickerComponent.formatDateToAPI(paidStart)    || '',
+      paid_at_to:      DatePickerComponent.formatDateToAPI(paidEnd)      || '',
       job_position:    selectedJobPosition,
       seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
       order_status:    selectedOrderStatus,
