@@ -72,6 +72,14 @@
   background: #e5e7eb;
 }
 
+.crp-date-half {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
 /* Select: same look as time-btn */
 .crp-select {
   appearance: none;

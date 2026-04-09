@@ -124,26 +124,28 @@
 
           <!-- แถว 1: Date Filters -->
           <div class="crp-filter-row">
-            <span class="time-granularity-label">วันที่สร้าง Order</span>
-            <div class="date-picker-wrapper" id="crp-created-picker">
-              <div class="date-icon" aria-hidden="true">
-                <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/></svg>
+            <div class="crp-date-half">
+              <span class="time-granularity-label">วันที่สร้าง Order</span>
+              <div class="date-picker-wrapper" id="crp-created-picker">
+                <div class="date-icon" aria-hidden="true">
+                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/></svg>
+                </div>
+                <input id="crp-created-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันที่สร้าง Order" />
+                <div id="crp-created-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
               </div>
-              <input id="crp-created-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันที่สร้าง Order" />
-              <div id="crp-created-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
             </div>
 
-            <div class="filter-separator"></div>
-
-            <span class="time-granularity-label">วันชำระงวด 1</span>
-            <div class="date-picker-wrapper" id="crp-paid-picker">
-              <div class="date-icon" aria-hidden="true">
-                <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/></svg>
+            <div class="crp-date-half">
+              <span class="time-granularity-label">วันชำระงวด 1</span>
+              <div class="date-picker-wrapper" id="crp-paid-picker">
+                <div class="date-icon" aria-hidden="true">
+                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Zm3-7h.01v.01H8V13Zm4 0h.01v.01H12V13Zm4 0h.01v.01H16V13Zm-8 4h.01v.01H8V17Zm4 0h.01v.01H12V17Zm4 0h.01v.01H16V17Z"/></svg>
+                </div>
+                <input id="crp-paid-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันชำระงวด 1" />
+                <div id="crp-paid-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
               </div>
-              <input id="crp-paid-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันชำระงวด 1" />
-              <div id="crp-paid-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
+              <span class="crp-paid-note" id="crp-paid-to-note"></span>
             </div>
-            <span class="crp-paid-note" id="crp-paid-to-note"></span>
           </div>
 
           <div class="crp-row-divider"></div>
