@@ -3,10 +3,14 @@
   'use strict';
 
   // ---- State ----
-  let currentUser = null; // decoded from JWT: { id, nick_name, job_position, ... }
-  let currentFilters = {};
+  let currentUser = null;
   let currentData = null;
   let sellers = [];
+
+  // Selected values from FilterSortDropdown instances
+  let selectedJobPosition = 'admin';
+  let selectedSellerId = '';
+  let selectedOrderStatus = 'not_canceled';
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -15,20 +19,10 @@
   // ---- Init ----
   async function init() {
     if (!validateToken()) return;
-
-    // Decode user info from JWT
     currentUser = getUserFromToken();
-
-    // Render dashboard shell
     renderShell();
-
-    // Load sellers list (for admin dropdown)
     await loadSellers();
-
-    // Set default filters
-    setDefaultFilters();
-
-    // Initial search
+    initFilters();
     await loadReport();
   }
 
@@ -45,11 +39,8 @@
   }
 
   function showAuthModal() {
-    if (typeof MenuComponent !== 'undefined' && MenuComponent.showAuthModal) {
-      MenuComponent.showAuthModal();
-    } else {
-      alert('กรุณาเข้าสู่ระบบใหม่');
-    }
+    if (typeof MenuComponent !== 'undefined' && MenuComponent.showAuthModal) MenuComponent.showAuthModal();
+    else alert('กรุณาเข้าสู่ระบบใหม่');
   }
 
   function getUserFromToken() {
@@ -57,27 +48,22 @@
       const token = (typeof TokenUtils !== 'undefined') ? TokenUtils.getToken() : (sessionStorage.getItem('authToken') || localStorage.getItem('authToken'));
       if (!token) return null;
       const payload = (typeof TokenUtils !== 'undefined') ? TokenUtils.decodeToken(token) : JSON.parse(atob(token.split('.')[1]));
-      if (!payload) return null;
-      const member = payload.agency_member || {};
+      const member = (payload && payload.agency_member) || {};
       return {
         id:           member.id || null,
         nick_name:    member.nick_name || '',
         job_position: member.job_position || 'admin',
       };
-    } catch (e) {
-      console.error('[CRP] Failed to decode token:', e);
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
-  // ---- Helpers ----
   function isAdmin() {
     return !currentUser || currentUser.job_position === 'admin';
   }
 
+  // ---- Helpers ----
   function formatNumber(val, decimals = 2) {
-    const num = parseFloat(val) || 0;
-    return num.toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    return (parseFloat(val) || 0).toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   }
 
   function formatDate(dateStr) {
@@ -107,93 +93,212 @@
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
+  function escHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   // ---- Sellers ----
   async function loadSellers() {
     try {
       const res = await CommissionReportPlusAPI.getSellers();
-      if (res && res.success && res.data) {
-        sellers = res.data;
-      }
+      if (res && res.success && res.data) sellers = res.data;
     } catch (e) {
       console.error('[CRP] Failed to load sellers:', e);
     }
   }
 
-  // ---- Default Filters ----
-  function setDefaultFilters() {
-    const jobPos = currentUser ? currentUser.job_position : 'admin';
-    const sellerId = currentUser ? String(currentUser.id || '') : '';
+  // ---- Render Shell ----
+  function renderShell() {
+    const section = document.getElementById('reportContentSection');
+    if (!section) return;
 
-    // date defaults: current month
+    section.innerHTML = `
+      <div class="crp-wrapper">
+
+        <!-- Filter Bar -->
+        <div class="time-granularity-control crp-filter-wrap">
+
+          <!-- แถว 1: Date Filters -->
+          <div class="crp-filter-row">
+            <span class="time-granularity-label">วันที่สร้าง Order</span>
+            <div class="crp-date-group">
+              <input type="date" class="time-btn crp-date-input" id="crp-created-from" />
+              <span class="time-granularity-label crp-dash">–</span>
+              <input type="date" class="time-btn crp-date-input" id="crp-created-to" />
+            </div>
+
+            <div class="filter-separator"></div>
+
+            <span class="time-granularity-label">วันชำระงวด 1</span>
+            <div class="crp-date-group">
+              <input type="date" class="time-btn crp-date-input" id="crp-paid-from" />
+              <span class="time-granularity-label crp-dash">–</span>
+              <input type="date" class="time-btn crp-date-input" id="crp-paid-to" />
+              <span class="crp-paid-note" id="crp-paid-to-note"></span>
+            </div>
+          </div>
+
+          <div class="crp-row-divider"></div>
+
+          <!-- แถว 2: Dropdowns + Search -->
+          <div class="crp-filter-row">
+            <span class="time-granularity-label">ตำแหน่ง</span>
+            <div id="crp-dd-position"></div>
+
+            <div class="filter-separator"></div>
+
+            <span class="time-granularity-label">เซลล์ผู้จอง</span>
+            <div id="crp-dd-seller"></div>
+
+            <div class="filter-separator"></div>
+
+            <span class="time-granularity-label">สถานะ Order</span>
+            <div id="crp-dd-status"></div>
+
+            <button class="crp-btn-search" id="crp-btn-search">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              ค้นหา
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Results -->
+        <div id="crp-results"></div>
+      </div>
+    `;
+  }
+
+  // ---- Init Filters ----
+  function initFilters() {
+    const jobPos  = currentUser ? currentUser.job_position : 'admin';
+    const sellerId = currentUser ? String(currentUser.id || '') : '';
     const from = firstDayOfMonth();
     const to   = today();
 
-    document.getElementById('crp-created-from').value   = from;
-    document.getElementById('crp-created-to').value     = to;
-    document.getElementById('crp-paid-from').value       = from;
-    document.getElementById('crp-paid-to').value         = to;
-    document.getElementById('crp-paid-to-note').textContent = `(สิ้นสุดจริง: ${formatDate(addDays(to, 3))})`;
+    // Set date defaults
+    document.getElementById('crp-created-from').value = from;
+    document.getElementById('crp-created-to').value   = to;
+    document.getElementById('crp-paid-from').value    = from;
+    document.getElementById('crp-paid-to').value      = to;
+    updatePaidNote(to);
 
-    // job_position
-    const jpSelect = document.getElementById('crp-job-position');
-    jpSelect.value = jobPos;
-    if (!isAdmin()) jpSelect.disabled = true;
-
-    // order_status default
-    const osSelect = document.getElementById('crp-order-status');
-    osSelect.value = isAdmin() ? 'all' : 'not_canceled';
-    if (!isAdmin()) osSelect.disabled = true;
-
-    // seller
-    renderSellerDropdown(sellerId, jobPos);
-  }
-
-  function renderSellerDropdown(defaultSellerId, jobPos) {
-    const wrap = document.getElementById('crp-seller-wrap');
-    if (!wrap) return;
-
-    if (!isAdmin()) {
-      // Non-admin: show their own name, disabled
-      const me = sellers.find(s => String(s.id) === String(defaultSellerId));
-      const name = me ? me.nick_name : (currentUser ? currentUser.nick_name : '-');
-      wrap.innerHTML = `<input type="text" class="time-btn" value="${escHtml(name)}" disabled style="opacity:0.6;cursor:not-allowed" />`;
-      return;
-    }
-
-    // Admin: plain select with all sellers
-    const select = document.createElement('select');
-    select.className = 'time-btn crp-select';
-    select.id = 'crp-seller-select';
-
-    const allOpt = document.createElement('option');
-    allOpt.value = '';
-    allOpt.textContent = 'ทั้งหมด';
-    select.appendChild(allOpt);
-
-    sellers.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = String(s.id);
-      opt.textContent = s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id);
-      select.appendChild(opt);
+    document.getElementById('crp-paid-to').addEventListener('change', function () {
+      updatePaidNote(this.value);
     });
 
-    select.value = defaultSellerId || '';
-    wrap.appendChild(select);
+    // Set state defaults
+    selectedJobPosition  = jobPos;
+    selectedSellerId     = isAdmin() ? '' : sellerId;
+    selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
+
+    // ---- ตำแหน่ง dropdown ----
+    const jobPositionOptions = [
+      { value: 'ts',    label: 'เซลล์', icon: getPersonIcon() },
+      { value: 'crm',   label: 'CRM',   icon: getPersonIcon() },
+      { value: 'admin', label: 'Admin', icon: getPersonIcon() },
+    ].map(o => ({ ...o, active: o.value === jobPos }));
+
+    if (isAdmin()) {
+      FilterSortDropdownComponent.initDropdown({
+        containerId: 'crp-dd-position',
+        defaultLabel: labelOfJobPosition(jobPos),
+        defaultIcon: getPersonIcon(),
+        options: jobPositionOptions,
+        onChange: function (val, label) {
+          selectedJobPosition = val;
+        }
+      });
+    } else {
+      document.getElementById('crp-dd-position').innerHTML =
+        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
+           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${labelOfJobPosition(jobPos)}</span></div>
+         </button>`;
+    }
+
+    // ---- เซลล์ผู้จอง dropdown ----
+    if (isAdmin()) {
+      const sellerOptions = [
+        { value: '', label: 'ทั้งหมด', icon: getPersonIcon(), active: true },
+        ...sellers.map(s => ({
+          value: String(s.id),
+          label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
+          icon: getPersonIcon(),
+          active: false
+        }))
+      ];
+
+      FilterSortDropdownComponent.initDropdown({
+        containerId: 'crp-dd-seller',
+        defaultLabel: 'ทั้งหมด',
+        defaultIcon: getPersonIcon(),
+        options: sellerOptions,
+        onChange: function (val, label) {
+          selectedSellerId = val;
+        }
+      });
+    } else {
+      const me = sellers.find(s => String(s.id) === sellerId);
+      const name = me ? me.nick_name : (currentUser ? currentUser.nick_name : '-');
+      document.getElementById('crp-dd-seller').innerHTML =
+        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
+           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
+         </button>`;
+    }
+
+    // ---- สถานะ Order dropdown ----
+    const defaultStatus = isAdmin() ? 'all' : 'not_canceled';
+    const statusOptions = [
+      { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all') },
+      { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled') },
+      { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled') },
+    ].map(o => ({ ...o, active: o.value === defaultStatus }));
+
+    if (isAdmin()) {
+      FilterSortDropdownComponent.initDropdown({
+        containerId: 'crp-dd-status',
+        defaultLabel: 'ทั้งหมด',
+        defaultIcon: getStatusIcon('all'),
+        options: statusOptions,
+        onChange: function (val, label) {
+          selectedOrderStatus = val;
+        }
+      });
+    } else {
+      document.getElementById('crp-dd-status').innerHTML =
+        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
+           <div class="filter-sort-btn-content">${getStatusIcon('not_canceled')}<span class="filter-sort-btn-text">ไม่ยกเลิก</span></div>
+         </button>`;
+    }
+
+    // Search button
+    document.getElementById('crp-btn-search').addEventListener('click', loadReport);
   }
 
-  function getSelectedSellerId() {
-    if (!isAdmin()) return currentUser ? String(currentUser.id || '') : '';
-    const sel = document.getElementById('crp-seller-select');
-    return sel ? sel.value : '';
+  function updatePaidNote(toDate) {
+    const note = document.getElementById('crp-paid-to-note');
+    if (note && toDate) note.textContent = `(สิ้นสุดจริง ${formatDate(addDays(toDate, 3))})`;
+  }
+
+  function labelOfJobPosition(pos) {
+    return { ts: 'เซลล์', crm: 'CRM', admin: 'Admin' }[pos] || pos;
+  }
+
+  function getPersonIcon() {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+  }
+
+  function getStatusIcon(status) {
+    if (status === 'canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+    if (status === 'not_canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
   }
 
   // ---- Load Report ----
   async function loadReport() {
     showLoading();
-
     const filters = buildFilters();
-    currentFilters = filters;
-
+    currentData = null;
     try {
       const res = await CommissionReportPlusAPI.getReport(filters);
       if (res && res.success && res.data) {
@@ -214,209 +319,125 @@
       created_at_to:   document.getElementById('crp-created-to').value   || '',
       paid_at_from:    document.getElementById('crp-paid-from').value    || '',
       paid_at_to:      document.getElementById('crp-paid-to').value      || '',
-      job_position:    document.getElementById('crp-job-position').value  || 'admin',
-      seller_id:       isAdmin() ? getSelectedSellerId() : (currentUser ? String(currentUser.id || '') : ''),
-      order_status:    document.getElementById('crp-order-status').value  || 'all',
+      job_position:    selectedJobPosition,
+      seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
+      order_status:    selectedOrderStatus,
     };
-  }
-
-  // ---- Render Shell ----
-  function renderShell() {
-    const section = document.getElementById('reportContentSection');
-    if (!section) return;
-
-    section.innerHTML = `
-      <div class="crp-wrapper">
-
-        <!-- Filter Bar (same classes as existing report pages) -->
-        <div class="time-granularity-control crp-filter-wrap">
-
-          <!-- แถว 1: Date Filters -->
-          <div class="crp-filter-row">
-            <span class="time-granularity-label">วันที่สร้าง Order</span>
-            <div class="crp-date-group">
-              <input type="date" class="time-btn crp-date-input" id="crp-created-from" />
-              <span class="time-granularity-label" style="font-size:14px">–</span>
-              <input type="date" class="time-btn crp-date-input" id="crp-created-to" />
-            </div>
-
-            <div class="filter-separator"></div>
-
-            <span class="time-granularity-label">วันชำระงวด 1</span>
-            <div class="crp-date-group">
-              <input type="date" class="time-btn crp-date-input" id="crp-paid-from" />
-              <span class="time-granularity-label" style="font-size:14px">–</span>
-              <input type="date" class="time-btn crp-date-input" id="crp-paid-to" />
-              <span class="crp-paid-note" id="crp-paid-to-note"></span>
-            </div>
-          </div>
-
-          <!-- Divider between rows -->
-          <div class="crp-row-divider"></div>
-
-          <!-- แถว 2: Dropdowns + Search -->
-          <div class="crp-filter-row">
-            <span class="time-granularity-label">ตำแหน่ง</span>
-            <select class="time-btn crp-select" id="crp-job-position">
-              <option value="ts">เซลล์</option>
-              <option value="crm">CRM</option>
-              <option value="admin">Admin</option>
-            </select>
-
-            <div class="filter-separator"></div>
-
-            <span class="time-granularity-label">เซลล์ผู้จอง</span>
-            <div id="crp-seller-wrap"></div>
-
-            <div class="filter-separator"></div>
-
-            <span class="time-granularity-label">สถานะ Order</span>
-            <select class="time-btn crp-select" id="crp-order-status">
-              <option value="all">ทั้งหมด</option>
-              <option value="not_canceled">ไม่ยกเลิก</option>
-              <option value="canceled">ยกเลิก</option>
-            </select>
-
-            <button class="crp-btn-search" id="crp-btn-search">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              ค้นหา
-            </button>
-          </div>
-
-        </div>
-
-        <!-- Results Container -->
-        <div id="crp-results"></div>
-      </div>
-    `;
-
-    // Event listeners
-    document.getElementById('crp-btn-search').addEventListener('click', loadReport);
-
-    // Update paid-to note when date changes
-    document.getElementById('crp-paid-to').addEventListener('change', function () {
-      const note = document.getElementById('crp-paid-to-note');
-      if (note && this.value) {
-        note.textContent = `(สิ้นสุดจริง: ${formatDate(addDays(this.value, 3))})`;
-      }
-    });
   }
 
   // ---- Loading ----
   function showLoading() {
     const results = document.getElementById('crp-results');
-    if (results) {
-      results.innerHTML = `<div class="crp-loading"><div class="spinner"></div><p>กำลังโหลดข้อมูล...</p></div>`;
-    }
+    if (results) results.innerHTML = `<div class="crp-loading"><div class="spinner"></div><p>กำลังโหลดข้อมูล...</p></div>`;
   }
 
   // ---- Empty State ----
   function showEmpty() {
     const results = document.getElementById('crp-results');
-    if (results) {
-      results.innerHTML = `
-        <div class="crp-empty">
-          <img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="180" height="180" />
-          <h3>ไม่พบข้อมูล</h3>
-          <p>ลองปรับเงื่อนไขการค้นหาใหม่</p>
-        </div>
-      `;
-    }
+    if (results) results.innerHTML = `
+      <div class="crp-empty">
+        <img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="180" height="180" />
+        <h3>ไม่พบข้อมูล</h3>
+        <p>ลองปรับเงื่อนไขการค้นหาใหม่</p>
+      </div>`;
   }
 
   // ---- Render Results ----
   function renderResults(data) {
     const results = document.getElementById('crp-results');
     if (!results) return;
-
     const { orders = [], summary = {} } = data;
-
     if (!orders.length) { showEmpty(); return; }
 
-    results.innerHTML = `
-      ${renderSummary(summary)}
-      ${renderTableHeader(orders.length)}
-      ${renderTable(orders)}
-    `;
+    results.innerHTML = renderSummary(summary) + renderTableSection(orders);
 
-    // Export button
-    document.getElementById('crp-btn-export').addEventListener('click', function () {
-      exportCSV(orders);
-    });
+    document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
   }
 
-  // ---- Summary ----
+  // ---- Summary Cards ----
   function renderSummary(summary) {
-    const netCommission = (parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0));
+    const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     return `
       <div class="crp-summary">
         <div class="crp-summary-card highlight">
-          <div class="label">ยอดจองรวม (net_amount)</div>
-          <div class="value">฿${formatNumber(summary.total_net_amount)}</div>
-          <div class="sub">${formatNumber(summary.total_orders, 0)} Orders</div>
+          <div class="summary-card-icon" style="background:rgba(255,255,255,0.2)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="summary-card-content">
+            <div class="summary-card-label" style="color:rgba(255,255,255,0.8)">ยอดจองรวม</div>
+            <div class="summary-card-value" style="color:white;font-size:24px">฿${formatNumber(summary.total_net_amount)}</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:2px">${formatNumber(summary.total_orders, 0)} Orders</div>
+          </div>
         </div>
         <div class="crp-summary-card">
-          <div class="label">คอมรวม</div>
-          <div class="value">฿${formatNumber(summary.total_commission)}</div>
+          <div class="summary-card-icon" style="background:#f0f9ff">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a7ba7" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div class="summary-card-content">
+            <div class="summary-card-label">คอมรวม</div>
+            <div class="summary-card-value">฿${formatNumber(summary.total_commission)}</div>
+          </div>
         </div>
         <div class="crp-summary-card">
-          <div class="label">คอมหลังหักส่วนลด</div>
-          <div class="value ${netCommission >= 0 ? 'crp-positive' : 'crp-negative'}">฿${formatNumber(netCommission)}</div>
+          <div class="summary-card-icon" style="background:${netCommission >= 0 ? '#f0fdf4' : '#fef2f2'}">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${netCommission >= 0 ? '#16a34a' : '#dc2626'}" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <div class="summary-card-content">
+            <div class="summary-card-label">คอม (หักส่วนลด)</div>
+            <div class="summary-card-value ${netCommission >= 0 ? 'crp-positive' : 'crp-negative'}">฿${formatNumber(netCommission)}</div>
+          </div>
         </div>
         <div class="crp-summary-card">
-          <div class="label">ส่วนลดรวม</div>
-          <div class="value">฿${formatNumber(summary.total_discount)}</div>
+          <div class="summary-card-icon" style="background:#fff7ed">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div class="summary-card-content">
+            <div class="summary-card-label">ส่วนลดรวม</div>
+            <div class="summary-card-value">฿${formatNumber(summary.total_discount)}</div>
+          </div>
         </div>
-      </div>
-    `;
-  }
-
-  // ---- Table Header ----
-  function renderTableHeader(count) {
-    return `
-      <div class="crp-table-header">
-        <span class="crp-table-count">แสดง ${formatNumber(count, 0)} รายการ</span>
-        <button class="crp-btn-export" id="crp-btn-export">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          ดาวน์โหลด Excel
-        </button>
-      </div>
-    `;
+      </div>`;
   }
 
   // ---- Table ----
-  function renderTable(orders) {
+  function renderTableSection(orders) {
     const rows = orders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return `
         <tr>
-          <td class="mono"><span class="order-code">${o.order_code || '-'}</span></td>
+          <td><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
-          <td><span class="period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
-          <td><span class="seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
+          <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
+          <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="right">฿${formatNumber(o.net_amount)}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
           <td class="right">฿${formatNumber(o.supplier_commission)}</td>
           <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">฿${formatNumber(netCom)}</td>
           <td class="right">฿${formatNumber(o.discount)}</td>
-        </tr>
-      `;
+        </tr>`;
     }).join('');
 
     return `
+      <div class="crp-table-header">
+        <span class="crp-table-count">แสดง ${formatNumber(orders.length, 0)} รายการ</span>
+        <button class="crp-btn-export" id="crp-btn-export">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          ดาวน์โหลด Excel
+        </button>
+      </div>
       <div class="crp-table-wrapper">
         <table class="crp-table">
           <thead>
-            <tr>
+            <tr class="group-row">
               <th colspan="4" class="group-header">Order</th>
               <th class="group-header">เซลล์</th>
               <th colspan="3" class="group-header">ยอดจอง</th>
-              <th colspan="2" class="group-header">คอมรวม</th>
+              <th colspan="2" class="group-header">คอมมิชชั่น</th>
               <th class="group-header">ส่วนลด</th>
             </tr>
-            <tr>
+            <tr class="col-row">
               <th>รหัส Order</th>
               <th>จองวันที่</th>
               <th>ลูกค้า</th>
@@ -430,56 +451,31 @@
               <th class="right">ส่วนลดรวม</th>
             </tr>
           </thead>
-          <tbody>
-            ${rows}
-          </tbody>
+          <tbody>${rows}</tbody>
         </table>
-      </div>
-    `;
+      </div>`;
   }
 
   // ---- Export CSV ----
   function exportCSV(orders) {
-    const headers = [
-      'รหัส Order', 'จองวันที่', 'ลูกค้า', 'เดินทาง', 'เซลล์',
-      'ยอดจอง', 'ห้อง', 'วันชำระงวด 1',
-      'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม'
-    ];
-
+    const headers = ['รหัส Order','จองวันที่','ลูกค้า','เดินทาง','เซลล์','ยอดจอง','ห้อง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
     const rows = orders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return [
-        o.order_code || '',
-        formatDate(o.created_at),
-        o.customer_name || '',
-        o.product_period_snapshot || '',
-        o.seller_nick_name || '',
-        parseFloat(o.net_amount || 0).toFixed(2),
-        o.room_quantity || 0,
-        formatDate(o.first_paid_at),
-        parseFloat(o.supplier_commission || 0).toFixed(2),
-        netCom.toFixed(2),
-        parseFloat(o.discount || 0).toFixed(2),
+        o.order_code || '', formatDate(o.created_at), o.customer_name || '',
+        o.product_period_snapshot || '', o.seller_nick_name || '',
+        parseFloat(o.net_amount || 0).toFixed(2), o.room_quantity || 0,
+        formatDate(o.first_paid_at), parseFloat(o.supplier_commission || 0).toFixed(2),
+        netCom.toFixed(2), parseFloat(o.discount || 0).toFixed(2),
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
     });
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Commission Report.csv';
-    link.click();
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Commission Report.csv'; a.click();
     URL.revokeObjectURL(url);
-  }
-
-  // ---- Escape HTML ----
-  function escHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
   }
 
 })();
