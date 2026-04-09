@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Commission Report Plus - Tourwow" />
+    <title>Commission Report Plus - Tourwow</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="tour-image-manager.css" />
+    <link rel="stylesheet" href="searchable-dropdown-component.css" />
+    <link rel="stylesheet" href="commission-report-plus.css" />
+
+    <!-- Configuration -->
+    <script>
+      (function() {
+        const hostname = window.location.hostname
+        if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://staging-finance-backoffice-report-api.vercel.app'
+          window.ENVIRONMENT = 'staging'
+        } else if (hostname === 'finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://finance-backoffice-report-api.vercel.app'
+          window.ENVIRONMENT = 'production'
+        } else {
+          const sessionEnv = sessionStorage.getItem('env') || 'staging'
+          window.ENVIRONMENT = sessionEnv
+          window.API_BASE_URL = sessionEnv === 'staging'
+            ? 'https://staging-finance-backoffice-report-api.vercel.app'
+            : 'https://finance-backoffice-report-api.vercel.app'
+        }
+      })()
+    </script>
+    <script src="token-utils.js?v=20250128"></script>
+    <script src="tour-image-manager-api.js"></script>
+    <script src="commission-report-plus-api.js"></script>
+    <script src="searchable-dropdown-component.js"></script>
+    <script src="menu-component.js"></script>
+
+    <!-- Load sidebar state -->
+    <script>
+      (function() {
+        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+          document.documentElement.classList.add('sidebar-collapsed-init')
+        }
+      })()
+    </script>
+    <style>
+      .sidebar-collapsed-init .app-wrapper { margin-left: 0 !important; }
+      .sidebar-collapsed-init .sidebar { width: 0 !important; overflow: hidden !important; border-right: none !important; }
+      .sidebar-collapsed-init .main-content { margin-left: 0 !important; }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+    <div class="app-wrapper">
+      <button class="mobile-menu-toggle" aria-label="เปิด/ปิดเมนู" aria-expanded="false">
+        <span class="hamburger-icon"><span></span><span></span><span></span></span>
+      </button>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar" role="navigation" aria-label="เมนูหลัก">
+        <div class="logo">
+          <img src="https://financebackoffice-staging2.tourwow.com/assets/images/tourwow-logo.png" alt="Tourwow Logo" />
+        </div>
+        <nav class="nav-menu"><!-- Menu will be rendered by menu-component.js --></nav>
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="ซ่อนเมนู" title="ซ่อนเมนู">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>ซ่อนเมนู</span>
+        </button>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content" id="main-content" role="main">
+        <nav class="top-bar" role="banner">
+          <div class="top-bar-container">
+            <ul class="navbar-list"><!-- Menu will be rendered by menu-component.js --></ul>
+          </div>
+        </nav>
+
+        <div class="content-area">
+          <nav class="breadcrumb" aria-label="breadcrumb">
+            <ol>
+              <li><a href="#">หน้าแรก</a></li>
+              <li><a href="#">Report</a></li>
+              <li aria-current="page">Commission Report Plus</li>
+            </ol>
+          </nav>
+
+          <header class="page-header">
+            <svg class="page-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 8h4M6 11h8M6 14h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <h1>Commission Report Plus</h1>
+          </header>
+
+          <section class="report-content-section" id="reportContentSection">
+            <!-- Dashboard will be rendered here by JavaScript -->
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="commission-report-plus.js"></script>
+  </body>
+</html>

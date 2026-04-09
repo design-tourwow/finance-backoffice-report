@@ -31,6 +31,15 @@ const server = http.createServer((req, res) => {
     else if (urlWithoutQuery === '/tour-image-manager') {
         filePath = './tour-image-manager.html';
     }
+    else if (urlWithoutQuery === '/sales-by-country') {
+        filePath = './sales-by-country.html';
+    }
+    else if (urlWithoutQuery === '/wholesale-destinations') {
+        filePath = './wholesale-destinations.html';
+    }
+    else if (urlWithoutQuery === '/commission-report-plus') {
+        filePath = './commission-report-plus.html';
+    }
     
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
