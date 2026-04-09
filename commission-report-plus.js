@@ -219,7 +219,7 @@
     // ---- เซลล์ผู้จอง dropdown ----
     if (isAdmin()) {
       const sellerOptions = [
-        { value: '', label: 'ทั้งหมด', icon: getPersonIcon(), active: true },
+        { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
         ...sellers.map(s => ({
           value: String(s.id),
           label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
@@ -231,7 +231,7 @@
       FilterSortDropdownComponent.initDropdown({
         containerId: 'crp-dd-seller',
         defaultLabel: 'ทั้งหมด',
-        defaultIcon: getPersonIcon(),
+        defaultIcon: getAllIcon(),
         options: sellerOptions,
         onChange: function (val, label) {
           selectedSellerId = val;
@@ -284,6 +284,11 @@
     return { ts: 'เซลล์', crm: 'CRM', admin: 'Admin' }[pos] || pos;
   }
 
+  // Icon helpers — same Lucide set used across all report pages
+  function getAllIcon() {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`;
+  }
+
   function getPersonIcon() {
     return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
   }
@@ -291,7 +296,7 @@
   function getStatusIcon(status) {
     if (status === 'canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
     if (status === 'not_canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
-    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+    return getAllIcon();
   }
 
   // ---- Load Report ----
