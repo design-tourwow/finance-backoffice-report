@@ -50,70 +50,83 @@
   to { transform: rotate(360deg); }
 }
 
-/* ========= Filter Bar (same style as time-granularity-control) ========= */
-.crp-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 12px 16px;
+/* ========= Filter Section ========= */
+.crp-filter-section {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
   position: sticky;
   top: 0;
   z-index: 50;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   font-family: 'Kanit', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* แถว 1: date filters */
+.crp-filter-row1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* แถว 2: dropdowns + search */
+.crp-filter-row2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .crp-filter-label {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .crp-filter-separator {
   width: 1px;
-  height: 28px;
+  height: 26px;
   background: #e5e7eb;
-  margin: 0 4px;
+  margin: 0 2px;
   flex-shrink: 0;
 }
 
-/* Date inputs styled like time-btn */
 .crp-date-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .crp-date-group span {
   font-size: 13px;
-  color: #6b7280;
+  color: #9ca3af;
   white-space: nowrap;
 }
 
 .crp-date-input {
   font-family: 'Kanit', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
   color: #1f2937;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 7px 10px;
+  padding: 6px 8px;
   background: white;
   cursor: pointer;
-  transition: all 0.2s ease;
-  height: 36px;
+  transition: border-color 0.15s;
+  height: 34px;
 }
 
 .crp-date-input:focus {
   outline: none;
   border-color: #4a7ba7;
-  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
+  box-shadow: 0 0 0 2px rgba(74, 123, 167, 0.12);
 }
 
 .crp-date-input:disabled {
@@ -122,26 +135,31 @@
   cursor: not-allowed;
 }
 
-/* Select styled like time-btn */
+.crp-paid-note {
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+/* Select */
 .crp-select {
   font-family: 'Kanit', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
   color: #1f2937;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 7px 28px 7px 10px;
-  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 8px center;
+  padding: 6px 26px 6px 10px;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 7px center;
   appearance: none;
   cursor: pointer;
-  transition: all 0.2s ease;
-  height: 36px;
+  transition: border-color 0.15s;
+  height: 34px;
 }
 
 .crp-select:focus {
   outline: none;
   border-color: #4a7ba7;
-  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
+  box-shadow: 0 0 0 2px rgba(74, 123, 167, 0.12);
 }
 
 .crp-select:disabled {
@@ -155,28 +173,22 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 18px;
+  padding: 6px 18px;
   background: #4a7ba7;
   color: white;
   border: none;
   border-radius: 6px;
   font-family: 'Kanit', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s;
-  height: 36px;
+  height: 34px;
   white-space: nowrap;
+  margin-left: auto;
 }
 
 .crp-btn-search:hover { background: #3b6490; }
-
-/* Paid-to note */
-.crp-paid-note {
-  font-size: 11px;
-  color: #9ca3af;
-  white-space: nowrap;
-}
 
 /* ========= Summary ========= */
 .crp-summary {

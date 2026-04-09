@@ -228,61 +228,57 @@
     section.innerHTML = `
       <div class="crp-wrapper">
 
-        <!-- Filter Bar (same style as time-granularity-control) -->
-        <div class="crp-filter-bar">
+        <!-- Filter Section: 2 rows -->
+        <div class="crp-filter-section">
 
-          <!-- วันที่สร้าง Order -->
-          <span class="crp-filter-label">วันที่สร้าง</span>
-          <div class="crp-date-group">
-            <input type="date" class="crp-date-input" id="crp-created-from" />
-            <span>–</span>
-            <input type="date" class="crp-date-input" id="crp-created-to" />
+          <!-- แถว 1: Date Filters -->
+          <div class="crp-filter-row1">
+            <span class="crp-filter-label">วันที่สร้าง Order</span>
+            <div class="crp-date-group">
+              <input type="date" class="crp-date-input" id="crp-created-from" />
+              <span>–</span>
+              <input type="date" class="crp-date-input" id="crp-created-to" />
+            </div>
+
+            <div class="crp-filter-separator"></div>
+
+            <span class="crp-filter-label">วันชำระงวด 1</span>
+            <div class="crp-date-group">
+              <input type="date" class="crp-date-input" id="crp-paid-from" />
+              <span>–</span>
+              <input type="date" class="crp-date-input" id="crp-paid-to" />
+              <span class="crp-paid-note" id="crp-paid-to-note"></span>
+            </div>
           </div>
 
-          <div class="crp-filter-separator"></div>
+          <!-- แถว 2: Dropdowns + Search -->
+          <div class="crp-filter-row2">
+            <span class="crp-filter-label">ตำแหน่ง</span>
+            <select class="crp-select" id="crp-job-position">
+              <option value="ts">เซลล์</option>
+              <option value="crm">CRM</option>
+              <option value="admin">Admin</option>
+            </select>
 
-          <!-- วันที่ชำระเงินงวดแรก -->
-          <span class="crp-filter-label">ชำระงวด 1</span>
-          <div class="crp-date-group">
-            <input type="date" class="crp-date-input" id="crp-paid-from" />
-            <span>–</span>
-            <input type="date" class="crp-date-input" id="crp-paid-to" />
-            <span class="crp-paid-note" id="crp-paid-to-note"></span>
+            <div class="crp-filter-separator"></div>
+
+            <span class="crp-filter-label">เซลล์ผู้จอง</span>
+            <div id="crp-seller-wrap"></div>
+
+            <div class="crp-filter-separator"></div>
+
+            <span class="crp-filter-label">สถานะ Order</span>
+            <select class="crp-select" id="crp-order-status">
+              <option value="all">ทั้งหมด</option>
+              <option value="not_canceled">ไม่ยกเลิก</option>
+              <option value="canceled">ยกเลิก</option>
+            </select>
+
+            <button class="crp-btn-search" id="crp-btn-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              ค้นหา
+            </button>
           </div>
-
-          <div class="crp-filter-separator"></div>
-
-          <!-- ตำแหน่ง -->
-          <span class="crp-filter-label">ตำแหน่ง</span>
-          <select class="crp-select" id="crp-job-position">
-            <option value="ts">เซลล์</option>
-            <option value="crm">CRM</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          <div class="crp-filter-separator"></div>
-
-          <!-- เซลล์ผู้จอง -->
-          <span class="crp-filter-label">เซลล์</span>
-          <div id="crp-seller-wrap"></div>
-
-          <div class="crp-filter-separator"></div>
-
-          <!-- สถานะ Order -->
-          <span class="crp-filter-label">สถานะ</span>
-          <select class="crp-select" id="crp-order-status">
-            <option value="all">ทั้งหมด</option>
-            <option value="not_canceled">ไม่ยกเลิก</option>
-            <option value="canceled">ยกเลิก</option>
-          </select>
-
-          <div class="crp-filter-separator"></div>
-
-          <!-- Search -->
-          <button class="crp-btn-search" id="crp-btn-search">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            ค้นหา
-          </button>
 
         </div>
 
