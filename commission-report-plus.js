@@ -937,45 +937,156 @@
 </html>`;
   }
 
-  // ---- Export PDF (browser print from current table view) ----
-  function exportPDF(orders, summary = {}) {
-    const tableSection = document.querySelector('.dashboard-table-wrapper.crp-table-scroll');
-    const tableCount = document.getElementById('crp-table-count');
-    if (!tableSection) return;
+  function getPdfFileName() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `commission-report-plus-${yyyy}${mm}${dd}.pdf`;
+  }
 
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1280,height=900');
-    if (!printWindow) {
-      alert('เบราว์เซอร์บล็อกหน้าต่างสำหรับพิมพ์ PDF กรุณาอนุญาต pop-up แล้วลองใหม่');
+  function getVisibleTableRows() {
+    return Array.from(document.querySelectorAll('.crp-table tbody tr'))
+      .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.innerText.replace(/\s+/g, ' ').trim()))
+      .filter(row => row.length === 11);
+  }
+
+  function createPdfSourceNode(countText) {
+    const summaryEl = document.querySelector('.dashboard-kpi-cards');
+    const tableHeaderEl = document.querySelector('.dashboard-table-header');
+    const tableWrapperEl = document.querySelector('.dashboard-table-wrapper.crp-table-scroll');
+    if (!summaryEl || !tableHeaderEl || !tableWrapperEl) return null;
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-10000px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '1580px';
+    wrapper.style.background = '#ffffff';
+    wrapper.style.padding = '24px';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.fontFamily = "'Kanit', sans-serif";
+    wrapper.className = 'crp-pdf-source';
+
+    const title = document.createElement('div');
+    title.style.display = 'flex';
+    title.style.justifyContent = 'space-between';
+    title.style.alignItems = 'flex-start';
+    title.style.marginBottom = '16px';
+    title.innerHTML = `
+      <div>
+        <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1.2;">Commission Report Plus</div>
+        <div style="font-size:14px;color:#64748b;margin-top:4px;">พิมพ์เมื่อ ${escHtml(new Date().toLocaleString('th-TH'))}</div>
+      </div>
+      <div style="font-size:14px;color:#334155;background:#f8fafc;border:1px solid #dbe2ea;border-radius:999px;padding:10px 14px;">${escHtml(countText || '')}</div>
+    `;
+
+    const filters = document.createElement('div');
+    filters.style.display = 'grid';
+    filters.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
+    filters.style.gap = '10px';
+    filters.style.marginBottom = '16px';
+    filters.innerHTML = buildPrintFilters().map(item => `
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff;">
+        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">${escHtml(item.label)}</div>
+        <div style="font-size:13px;color:#0f172a;font-weight:500;">${escHtml(item.value || '-')}</div>
+      </div>
+    `).join('');
+
+    const summaryClone = summaryEl.cloneNode(true);
+    const tableHeaderClone = tableHeaderEl.cloneNode(true);
+    const tableWrapperClone = tableWrapperEl.cloneNode(true);
+    const actions = tableHeaderClone.querySelector('.dashboard-table-actions');
+    if (actions) actions.remove();
+    tableWrapperClone.style.maxHeight = 'none';
+    tableWrapperClone.style.overflow = 'visible';
+
+    const stickyHeaders = tableWrapperClone.querySelectorAll('.crp-table thead tr.group-row th, .crp-table thead tr.col-row th');
+    stickyHeaders.forEach(th => {
+      th.style.position = 'static';
+      th.style.top = 'auto';
+    });
+
+    wrapper.appendChild(title);
+    wrapper.appendChild(summaryClone);
+    wrapper.appendChild(filters);
+    wrapper.appendChild(tableHeaderClone);
+    wrapper.appendChild(tableWrapperClone);
+    document.body.appendChild(wrapper);
+    return wrapper;
+  }
+
+  // ---- Export PDF (generate file from current table view) ----
+  async function exportPDF(orders, summary = {}) {
+    const tableCount = document.getElementById('crp-table-count');
+    const btn = document.getElementById('crp-btn-pdf');
+    const originalText = btn ? btn.innerHTML : '';
+    const rows = getVisibleTableRows();
+    if (!rows.length) {
+      alert('ไม่พบข้อมูลสำหรับสร้าง PDF');
       return;
     }
 
-    const html = buildPrintDocumentHtml(
-      tableSection.outerHTML,
-      summary,
-      tableCount ? tableCount.textContent : `แสดง ${formatNumber(orders.length, 0)} รายการ`
-    );
+    if (!window.jspdf || !window.jspdf.jsPDF || !window.html2canvas) {
+      alert('ไม่สามารถโหลดเครื่องมือสร้าง PDF ได้ กรุณาลองใหม่อีกครั้ง');
+      return;
+    }
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'กำลังสร้าง PDF...';
+    }
 
-    let didTriggerPrint = false;
-    const triggerPrint = function () {
-      if (didTriggerPrint || printWindow.closed) return;
-      didTriggerPrint = true;
-      printWindow.focus();
-      printWindow.print();
-    };
+    try {
+      const jsPDF = window.jspdf.jsPDF;
+      const countText = tableCount ? tableCount.textContent : `แสดง ${formatNumber(rows.length, 0)} รายการ`;
+      const sourceNode = createPdfSourceNode(countText);
+      if (!sourceNode) throw new Error('PDF source node not found');
 
-    printWindow.addEventListener('load', function () {
-      setTimeout(triggerPrint, 150);
-    }, { once: true });
+      const canvas = await window.html2canvas(sourceNode, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+      sourceNode.remove();
 
-    printWindow.addEventListener('afterprint', function () {
-      printWindow.close();
-    }, { once: true });
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 8;
+      const usableWidth = pageWidth - (margin * 2);
+      const usableHeight = pageHeight - (margin * 2);
+      const imgWidth = usableWidth;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      let heightLeft = imgHeight;
+      let position = margin;
 
-    setTimeout(triggerPrint, 700);
+      const imgData = canvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= usableHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + margin;
+        doc.addPage();
+        doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= usableHeight;
+      }
+
+      doc.save(getPdfFileName());
+    } catch (error) {
+      console.error('[CRP] Failed to export PDF:', error);
+      alert('สร้าง PDF ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
   }
 
 })();

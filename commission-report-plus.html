@@ -41,6 +41,8 @@
     <script src="filter-sort-dropdown-component.js"></script>
     <script src="date-picker-component.js"></script>
     <script src="menu-component.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
     <!-- Load sidebar state -->
     <script>
@@ -54,6 +56,35 @@
       .sidebar-collapsed-init .app-wrapper { margin-left: 0 !important; }
       .sidebar-collapsed-init .sidebar { width: 0 !important; overflow: hidden !important; border-right: none !important; }
       .sidebar-collapsed-init .main-content { margin-left: 0 !important; }
+    </style>
+    <style>
+      @media print {
+        @page { size: A4 landscape; margin: 10mm; }
+
+        /* Hide everything except the table */
+        .sidebar, .top-bar, .mobile-menu-toggle,
+        .breadcrumb, .page-header,
+        .time-granularity-control,
+        #crp-summary,
+        .dashboard-table-actions,
+        .skip-link { display: none !important; }
+
+        /* Reset layout */
+        .app-wrapper, .main-content { display: block !important; margin: 0 !important; padding: 0 !important; }
+        .content-area { padding: 0 !important; background: white !important; }
+        .report-content-section { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
+        .crp-wrapper { gap: 0 !important; }
+
+        /* Table full width, no scroll clip */
+        .crp-table-scroll { overflow: visible !important; max-height: none !important; }
+        .dashboard-table { width: 100% !important; font-size: 10pt !important; }
+        .dashboard-table thead th { padding: 5px 6px !important; font-size: 10pt !important; }
+        .dashboard-table tbody td { padding: 4px 6px !important; }
+
+        /* Keep sticky off for print */
+        .crp-table thead tr.group-row th,
+        .crp-table thead tr.col-row th { position: static !important; }
+      }
     </style>
   </head>
   <body>
