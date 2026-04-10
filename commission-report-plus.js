@@ -537,6 +537,15 @@
 
     results.innerHTML = renderSummary(summary) + renderTableSection(orders);
 
+    // Sticky header: set col-row top = group-row height
+    const groupRow = results.querySelector('.crp-table thead tr.group-row');
+    if (groupRow) {
+      const h = groupRow.offsetHeight;
+      results.querySelectorAll('.crp-table thead tr.col-row th').forEach(th => {
+        th.style.top = h + 'px';
+      });
+    }
+
     document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
 
     // Table search
@@ -565,7 +574,7 @@
             <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">฿${formatNumber(netCom)}</td>
             <td class="right group-start">฿${formatNumber(o.discount)}</td>
           </tr>`;
-      }).join('') || `<tr><td colspan="11" style="text-align:center;padding:32px;color:#9ca3af;">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
+      }).join('') || `<tr><td colspan="11"><div class="dashboard-table-empty"><img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom:16px;opacity:0.8;"/><h3 style="margin:0 0 8px 0;font-size:18px;color:#374151;">ไม่พบข้อมูล</h3><p style="margin:0;font-size:15px;color:#6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p></div></td></tr>`;
     });
   }
 
@@ -657,7 +666,7 @@
           </button>
         </div>
       </div>
-      <div class="dashboard-table-wrapper" style="overflow-x: auto;">
+      <div class="dashboard-table-wrapper crp-table-scroll">
         <table class="dashboard-table crp-table">
           <thead>
             <tr class="group-row">
