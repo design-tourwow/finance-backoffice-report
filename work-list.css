@@ -1,13 +1,13 @@
 .work-list-shell {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .work-list-control.time-granularity-control {
   position: static;
-  margin-bottom: 0;
-  justify-content: space-between;
+  margin-bottom: 4px;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
@@ -18,22 +18,14 @@
   flex-wrap: wrap;
 }
 
-.work-list-control-right {
-  display: flex;
-  align-items: center;
-}
-
 .work-list-segment {
   display: inline-flex;
   gap: 8px;
 }
 
-.work-list-total-card {
-  min-width: 220px;
-}
-
-.work-list-total-card .kpi-subtext {
-  margin-top: 2px;
+.work-list-kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 0;
 }
 
 .work-list-table-wrap {
@@ -48,6 +40,7 @@
 .work-list-table td:first-child {
   width: 72px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .work-list-table th:nth-child(2),
@@ -68,33 +61,6 @@
   width: 190px;
 }
 
-.work-list-seq {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.work-list-date {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 100px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 500;
-}
-
 .work-list-task-name {
   font-size: 14px;
   font-weight: 600;
@@ -106,7 +72,7 @@
 .work-list-owner {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .work-list-order-title {
@@ -123,10 +89,29 @@
   line-height: 1.6;
 }
 
+.work-list-order-code {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
 .work-list-owner-line strong {
   color: #334155;
   font-weight: 600;
   margin-right: 6px;
+}
+
+.work-list-owner-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.work-list-owner-badge-muted {
+  background: #f3f4f6;
+  color: #4b5563;
 }
 
 .work-list-links {
@@ -153,7 +138,7 @@
   }
 
   .work-list-control-left,
-  .work-list-control-right {
+  .work-list-kpis {
     width: 100%;
   }
 
@@ -166,7 +151,7 @@
     justify-content: center;
   }
 
-  .work-list-total-card {
-    width: 100%;
+  .work-list-kpis {
+    grid-template-columns: 1fr;
   }
 }

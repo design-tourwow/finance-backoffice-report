@@ -60,21 +60,6 @@
               <button class="time-btn work-list-tab" type="button" data-role-group="finance">เฉพาะ Finance</button>
             </div>
           </div>
-          <div class="work-list-control-right">
-            <div class="dashboard-kpi-card kpi-active work-list-total-card">
-              <div class="kpi-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 11l3 3L22 4"></path>
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                </svg>
-              </div>
-              <div class="kpi-content">
-                <div class="kpi-label">จำนวนงาน</div>
-                <div class="kpi-value" id="workListTotal">0</div>
-                <div class="kpi-subtext">สถานะ to_do เรียงจากเก่าสุดไปใหม่สุด</div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div id="workListResults"></div>
@@ -137,6 +122,41 @@
     if (totalEl) totalEl.textContent = String(total || 0);
   }
 
+  function renderSummary(total) {
+    return `
+      <div class="dashboard-kpi-cards work-list-kpis">
+        <div class="dashboard-kpi-card kpi-active">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">จำนวนงาน</div>
+            <div class="kpi-value" id="workListTotal">${total}</div>
+            <div class="kpi-subtext">สถานะ to_do</div>
+          </div>
+        </div>
+        <div class="dashboard-kpi-card kpi-travelers">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M12 4h9"></path>
+              <path d="M4 9h16"></path>
+              <path d="M4 15h16"></path>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">การเรียงลำดับ</div>
+            <div class="kpi-value">Date ASC</div>
+            <div class="kpi-subtext">เก่าสุดไปใหม่สุด</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function buildOrderSaleUrl(orderCode) {
     return `https://financebackoffice.tourwow.com/order/list?search=${encodeURIComponent(orderCode)}`;
   }
@@ -147,6 +167,7 @@
 
   function renderTable(tasks) {
     return `
+      ${renderSummary(tasks.length)}
       <div class="dashboard-table-container">
         <div class="dashboard-table-header">
           <div class="dashboard-table-title">
@@ -173,16 +194,14 @@
             <tbody>
               ${tasks.map(task => `
                 <tr>
-                  <td><span class="work-list-seq">${task.seq}</span></td>
-                  <td><span class="work-list-date">${escHtml(task.task_date)}</span></td>
+                  <td>${task.seq}</td>
+                  <td>${escHtml(task.task_date)}</td>
                   <td>
-                    <div class="work-list-main">
-                      <div class="work-list-task-name">${escHtml(task.task_type_name)}</div>
-                    </div>
+                    <div class="work-list-task-name">${escHtml(task.task_type_name)}</div>
                   </td>
                   <td>
                     <div class="work-list-order-main">
-                      <div class="work-list-order-title">${escHtml(task.order_code)} ลูกค้า : ${escHtml(task.customer_name)} โทร. ${escHtml(task.customer_phone_number)}</div>
+                      <div class="work-list-order-title"><span class="work-list-order-code">${escHtml(task.order_code)}</span> ลูกค้า : ${escHtml(task.customer_name)} โทร. ${escHtml(task.customer_phone_number)}</div>
                       <div class="work-list-order-meta">${escHtml(task.travel_period_text)} ผู้เดินทาง ${escHtml(task.traveler_count)}</div>
                       <div class="work-list-links">
                         <a class="work-list-link" href="${buildOrderSaleUrl(task.order_code)}" target="_blank" rel="noopener noreferrer">ข้อมูล Order(sale)</a>
@@ -190,11 +209,11 @@
                       </div>
                     </div>
                   </td>
-                  <td><span class="work-list-date">${escHtml(task.order_created_at)}</span></td>
+                  <td>${escHtml(task.order_created_at)}</td>
                   <td>
                     <div class="work-list-owner">
-                      <div class="work-list-owner-line"><strong>เซลล์</strong>${escHtml(task.seller_nick_name)}</div>
-                      <div class="work-list-owner-line"><strong>crm</strong>${escHtml(task.crm_nick_name)}</div>
+                      <div class="work-list-owner-line"><strong>เซลล์</strong><span class="work-list-owner-badge">${escHtml(task.seller_nick_name)}</span></div>
+                      <div class="work-list-owner-line"><strong>crm</strong><span class="work-list-owner-badge work-list-owner-badge-muted">${escHtml(task.crm_nick_name)}</span></div>
                     </div>
                   </td>
                 </tr>
