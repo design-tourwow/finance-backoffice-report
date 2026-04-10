@@ -547,6 +547,7 @@
     }
 
     document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
+    document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
 
     // Table search
     document.getElementById('crp-table-search').addEventListener('input', function () {
@@ -664,6 +665,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export CSV
           </button>
+          <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Download PDF
+          </button>
         </div>
       </div>
       <div class="dashboard-table-wrapper crp-table-scroll">
@@ -715,6 +720,262 @@
     const a = document.createElement('a');
     a.href = url; a.download = 'Commission Report.csv'; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function getSelectedSellerLabel() {
+    if (!isAdmin()) return currentUser ? currentUser.nick_name || '-' : '-';
+    const seller = sellers.find(s => String(s.id) === String(selectedSellerId));
+    if (!selectedSellerId) return 'ทั้งหมด';
+    return seller ? (seller.nick_name || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || String(seller.id)) : 'ทั้งหมด';
+  }
+
+  function getSelectedStatusLabel() {
+    return {
+      all: 'ทั้งหมด',
+      not_canceled: 'ไม่ยกเลิก',
+      canceled: 'ยกเลิก',
+    }[selectedOrderStatus] || selectedOrderStatus;
+  }
+
+  function buildPrintFilters() {
+    const filters = buildFilters();
+    return [
+      { label: 'วันที่สร้าง Order', value: [formatDate(filters.created_at_from), formatDate(filters.created_at_to)].join(' - ') },
+      { label: 'วันชำระงวด 1', value: [formatDate(filters.paid_at_from), formatDate(filters.paid_at_to)].join(' - ') },
+      { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
+      { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
+      { label: 'สถานะ Order', value: getSelectedStatusLabel() },
+    ];
+  }
+
+  function getPrintDocumentHtml(tableHtml, summary, countText) {
+    const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
+    const filtersHtml = buildPrintFilters().map(item => `
+      <div class="crp-print-filter">
+        <span class="crp-print-filter-label">${escHtml(item.label)}</span>
+        <span class="crp-print-filter-value">${escHtml(item.value || '-')}</span>
+      </div>
+    `).join('');
+
+    return `<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Commission Report Plus</title>
+    <style>
+      @page { size: A4 landscape; margin: 10mm; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: #111827;
+        font-family: 'Kanit', 'Sarabun', sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .crp-print-shell {
+        padding: 8px 0 0;
+      }
+      .crp-print-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      .crp-print-title {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+        color: #0f172a;
+      }
+      .crp-print-subtitle {
+        margin: 4px 0 0;
+        color: #475569;
+        font-size: 12px;
+      }
+      .crp-print-count {
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #f8fafc;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .crp-print-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .crp-print-card {
+        border: 1px solid #dbe2ea;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #f8fafc;
+      }
+      .crp-print-card-label {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        margin-bottom: 4px;
+      }
+      .crp-print-card-value {
+        display: block;
+        color: #0f172a;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .crp-print-filters {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .crp-print-filter {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: #fff;
+      }
+      .crp-print-filter-label {
+        display: block;
+        color: #64748b;
+        font-size: 10px;
+        margin-bottom: 2px;
+      }
+      .crp-print-filter-value {
+        display: block;
+        color: #0f172a;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .crp-print-table .dashboard-table-wrapper,
+      .crp-print-table .crp-table-scroll {
+        overflow: visible !important;
+        max-height: none !important;
+      }
+      .crp-print-table table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10px;
+      }
+      .crp-print-table thead th,
+      .crp-print-table tbody td {
+        border: 1px solid #dbe2ea;
+        padding: 5px 6px;
+        vertical-align: middle;
+      }
+      .crp-print-table thead tr.group-row th {
+        background: #e0e7ef !important;
+        color: #1e3a5f;
+        text-align: center;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      .crp-print-table thead tr.col-row th {
+        background: #f8fafc !important;
+        color: #0f172a;
+        font-weight: 600;
+      }
+      .crp-print-table .right { text-align: right; font-variant-numeric: tabular-nums; }
+      .crp-print-table .center { text-align: center; }
+      .crp-print-table .group-start { border-left-width: 2px !important; }
+      .crp-print-table .crp-order-code { color: #1d4ed8; font-weight: 600; }
+      .crp-print-table .crp-seller-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: #eff6ff !important;
+        color: #1d4ed8;
+        font-weight: 500;
+      }
+      .crp-print-table .crp-period-text {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        max-width: none;
+      }
+      .crp-print-table .crp-positive { color: #15803d; font-weight: 600; }
+      .crp-print-table .crp-negative { color: #b91c1c; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="crp-print-shell">
+      <div class="crp-print-header">
+        <div>
+          <h1 class="crp-print-title">Commission Report Plus</h1>
+          <p class="crp-print-subtitle">พิมพ์เมื่อ ${escHtml(new Date().toLocaleString('th-TH'))}</p>
+        </div>
+        <div class="crp-print-count">${escHtml(countText || '')}</div>
+      </div>
+
+      <div class="crp-print-summary">
+        <div class="crp-print-card">
+          <span class="crp-print-card-label">ยอดจองรวม</span>
+          <span class="crp-print-card-value">฿${formatNumber(summary.total_net_amount)}</span>
+        </div>
+        <div class="crp-print-card">
+          <span class="crp-print-card-label">คอมรวม</span>
+          <span class="crp-print-card-value">฿${formatNumber(summary.total_commission)}</span>
+        </div>
+        <div class="crp-print-card">
+          <span class="crp-print-card-label">คอม (หักส่วนลด)</span>
+          <span class="crp-print-card-value">฿${formatNumber(netCommission)}</span>
+        </div>
+        <div class="crp-print-card">
+          <span class="crp-print-card-label">ส่วนลดรวม</span>
+          <span class="crp-print-card-value">฿${formatNumber(summary.total_discount)}</span>
+        </div>
+      </div>
+
+      <div class="crp-print-filters">${filtersHtml}</div>
+      <div class="crp-print-table">${tableHtml}</div>
+    </div>
+  </body>
+</html>`;
+  }
+
+  // ---- Export PDF (browser print from current table view) ----
+  function exportPDF(orders, summary = {}) {
+    const tableSection = document.querySelector('.dashboard-table-wrapper.crp-table-scroll');
+    const tableCount = document.getElementById('crp-table-count');
+    if (!tableSection) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(buildPrintDocumentHtml(tableSection.outerHTML, summary, tableCount ? tableCount.textContent : `แสดง ${formatNumber(orders.length, 0)} รายการ`));
+    doc.close();
+
+    const cleanup = function () {
+      setTimeout(() => {
+        iframe.remove();
+      }, 500);
+    };
+
+    let didTriggerPrint = false;
+    const triggerPrint = function () {
+      if (didTriggerPrint) return;
+      didTriggerPrint = true;
+      iframe.contentWindow.focus();
+      iframe.contentWindow.onafterprint = cleanup;
+      iframe.contentWindow.print();
+      setTimeout(cleanup, 1500);
+    };
+
+    iframe.onload = triggerPrint;
+    setTimeout(triggerPrint, 250);
   }
 
 })();
