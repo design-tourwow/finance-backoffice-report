@@ -347,17 +347,21 @@
   // ---- Loading ----
   function showLoading() {
     const results = document.getElementById('crp-results');
-    if (results) results.innerHTML = `<div class="crp-loading"><div class="spinner"></div><p>กำลังโหลดข้อมูล...</p></div>`;
+    if (results) results.innerHTML = `
+      <div class="dashboard-table-loading">
+        <div class="spinner"></div>
+        <span>กำลังโหลดข้อมูล...</span>
+      </div>`;
   }
 
   // ---- Empty State ----
   function showEmpty() {
     const results = document.getElementById('crp-results');
     if (results) results.innerHTML = `
-      <div class="crp-empty">
-        <img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="180" height="180" />
-        <h3>ไม่พบข้อมูล</h3>
-        <p>ลองปรับเงื่อนไขการค้นหาใหม่</p>
+      <div class="dashboard-table-empty">
+        <img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom: 16px; opacity: 0.8;" />
+        <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #374151;">ไม่พบข้อมูล</h3>
+        <p style="margin: 0; font-size: 15px; color: #6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p>
       </div>`;
   }
 
@@ -440,14 +444,19 @@
     }).join('');
 
     return `
-      <div class="crp-table-header">
-        <span class="crp-table-count">แสดง ${formatNumber(orders.length, 0)} รายการ</span>
-        <button class="crp-btn-export" id="crp-btn-export">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          ดาวน์โหลด Excel
-        </button>
+      <div class="dashboard-table-header">
+        <div class="dashboard-table-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+          แสดง ${formatNumber(orders.length, 0)} รายการ
+        </div>
+        <div class="dashboard-table-actions">
+          <button class="dashboard-export-btn" id="crp-btn-export">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
       </div>
-      <div class="crp-table-wrapper">
+      <div class="dashboard-table-wrapper" style="overflow-x: auto;">
         <table class="crp-table">
           <thead>
             <tr class="group-row">
