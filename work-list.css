@@ -4,74 +4,36 @@
   gap: 20px;
 }
 
-.work-list-toolbar {
+.work-list-control.time-granularity-control {
+  position: static;
+  margin-bottom: 0;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.work-list-control-left {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.work-list-toolbar-copy h2 {
-  margin: 0 0 4px;
-  font-size: 20px;
-  color: #0f172a;
+.work-list-control-right {
+  display: flex;
+  align-items: center;
 }
 
-.work-list-toolbar-copy p {
-  margin: 0;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.work-list-tabs {
+.work-list-segment {
   display: inline-flex;
   gap: 8px;
-  padding: 6px;
-  border-radius: 999px;
-  background: #e2e8f0;
 }
 
-.work-list-tab {
-  border: none;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-family: 'Kanit', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: #334155;
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.15s ease;
+.work-list-total-card {
+  min-width: 220px;
 }
 
-.work-list-tab.active {
-  background: #0f172a;
-  color: #ffffff;
-}
-
-.work-list-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: 12px;
-  border: 1px solid #dbe2ea;
-  background: #ffffff;
-  padding: 12px 16px;
-}
-
-.work-list-summary-label {
-  color: #64748b;
-  font-size: 13px;
-}
-
-.work-list-summary-value {
-  color: #0f172a;
-  font-size: 24px;
-  font-weight: 700;
+.work-list-total-card .kpi-subtext {
+  margin-top: 2px;
 }
 
 .work-list-table-wrap {
@@ -79,12 +41,12 @@
 }
 
 .work-list-table {
-  min-width: 1180px;
+  min-width: 1160px;
 }
 
 .work-list-table th:first-child,
 .work-list-table td:first-child {
-  width: 70px;
+  width: 72px;
   text-align: center;
 }
 
@@ -92,8 +54,8 @@
 .work-list-table td:nth-child(2),
 .work-list-table th:nth-child(5),
 .work-list-table td:nth-child(5) {
+  width: 130px;
   white-space: nowrap;
-  width: 140px;
 }
 
 .work-list-table th:nth-child(3),
@@ -103,44 +65,71 @@
 
 .work-list-table th:nth-child(6),
 .work-list-table td:nth-child(6) {
-  width: 180px;
+  width: 190px;
 }
 
 .work-list-seq {
-  width: 36px;
-  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
   background: #eff6ff;
   color: #1d4ed8;
+  font-size: 14px;
   font-weight: 700;
 }
 
-.work-list-main,
-.work-list-sub,
-.work-list-links,
+.work-list-date {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.work-list-task-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.6;
+}
+
+.work-list-order-main,
 .work-list-owner {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.work-list-main-title {
-  font-size: 15px;
+.work-list-order-title {
+  font-size: 14px;
   font-weight: 600;
   color: #0f172a;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-.work-list-subtext {
+.work-list-order-meta,
+.work-list-owner-line {
   font-size: 13px;
   color: #64748b;
   line-height: 1.6;
 }
 
-.work-list-links-row {
+.work-list-owner-line strong {
+  color: #334155;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.work-list-links {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -158,39 +147,26 @@
   text-decoration: underline;
 }
 
-.work-list-date {
-  display: inline-flex;
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.work-list-owner-line {
-  font-size: 13px;
-  color: #334155;
-}
-
-.work-list-owner-label {
-  color: #64748b;
-  margin-right: 6px;
-}
-
 @media (max-width: 768px) {
-  .work-list-toolbar {
-    flex-direction: column;
+  .work-list-control.time-granularity-control {
     align-items: stretch;
   }
 
-  .work-list-tabs {
+  .work-list-control-left,
+  .work-list-control-right {
     width: 100%;
+  }
+
+  .work-list-segment {
+    width: 100%;
+  }
+
+  .work-list-segment .time-btn {
+    flex: 1;
     justify-content: center;
   }
 
-  .work-list-summary {
-    justify-content: center;
+  .work-list-total-card {
+    width: 100%;
   }
 }
