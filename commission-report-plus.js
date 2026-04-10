@@ -52,7 +52,7 @@
       const token = (typeof TokenUtils !== 'undefined') ? TokenUtils.getToken() : (sessionStorage.getItem('authToken') || localStorage.getItem('authToken'));
       if (!token) return null;
       const payload = (typeof TokenUtils !== 'undefined') ? TokenUtils.decodeToken(token) : JSON.parse(atob(token.split('.')[1]));
-      const member = (payload && payload.agency_member) || {};
+      const member = (payload && payload.user && payload.user.agency_member) || {};
       return {
         id:           member.id || null,
         nick_name:    member.nick_name || '',
