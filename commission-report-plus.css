@@ -80,6 +80,76 @@
   border-color: #4a7ba7;
 }
 
+/* Searchable Seller Dropdown */
+.crp-search-dd { position: relative; }
+
+.crp-search-dd-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.crp-search-dd-menu.open { display: flex; }
+
+.crp-search-dd-input-wrap {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.crp-search-dd-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: 'Kanit', sans-serif;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.crp-search-dd-input:focus { border-color: #4a7ba7; }
+
+.crp-search-dd-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.crp-search-dd-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: 'Kanit', sans-serif;
+  font-size: 13px;
+  color: #374151;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.crp-search-dd-option:hover { background: #f3f4f6; }
+.crp-search-dd-option.active { background: #eff6ff; color: #1d4ed8; }
+
+.crp-search-dd-empty {
+  padding: 16px;
+  text-align: center;
+  font-family: 'Kanit', sans-serif;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
 /* Search Button */
 .crp-btn-search {
   display: flex;

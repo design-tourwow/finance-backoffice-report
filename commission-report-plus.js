@@ -270,12 +270,12 @@
         }))
       ];
 
-      FilterSortDropdownComponent.initDropdown({
+      initSearchableSellerDropdown({
         containerId: 'crp-dd-seller',
         defaultLabel: 'ทั้งหมด',
         defaultIcon: getAllIcon(),
         options: sellerOptions,
-        onChange: function (val, label) {
+        onChange: function (val) {
           selectedSellerId = val;
         }
       });
@@ -350,6 +350,111 @@
 
   function labelOfJobPosition(pos) {
     return { ts: 'เซลล์', crm: 'CRM', admin: 'Admin' }[pos] || pos;
+  }
+
+  // ---- Searchable Seller Dropdown ----
+  function initSearchableSellerDropdown({ containerId, defaultLabel, defaultIcon, options, onChange }) {
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+
+    const btnId    = `${containerId}Btn`;
+    const menuId   = `${containerId}Menu`;
+    const inputId  = `${containerId}Search`;
+    const listId   = `${containerId}List`;
+
+    container.innerHTML = `
+      <div class="crp-search-dd">
+        <button type="button" class="filter-sort-btn" id="${btnId}">
+          <div class="filter-sort-btn-content">
+            ${defaultIcon}
+            <span class="filter-sort-btn-text">${defaultLabel}</span>
+          </div>
+          <svg class="filter-sort-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="crp-search-dd-menu" id="${menuId}">
+          <div class="crp-search-dd-input-wrap">
+            <input type="text" class="crp-search-dd-input" id="${inputId}" placeholder="ค้นหาเซลล์..." autocomplete="off" />
+          </div>
+          <div class="crp-search-dd-list" id="${listId}"></div>
+        </div>
+      </div>
+    `;
+
+    const btn        = document.getElementById(btnId);
+    const menu       = document.getElementById(menuId);
+    const searchInput = document.getElementById(inputId);
+    const listEl     = document.getElementById(listId);
+    const btnContent = btn.querySelector('.filter-sort-btn-content');
+    let currentValue = (options.find(o => o.active) || {}).value || '';
+
+    function renderList(query) {
+      const q = (query || '').toLowerCase();
+      const filtered = q ? options.filter(o => o.label.toLowerCase().includes(q)) : options;
+
+      if (!filtered.length) {
+        listEl.innerHTML = `<div class="crp-search-dd-empty">ไม่พบข้อมูล</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(o => `
+        <button type="button" class="crp-search-dd-option ${o.value === currentValue ? 'active' : ''}"
+          data-value="${escHtml(o.value)}" data-label="${escHtml(o.label)}">
+          ${o.icon || ''}
+          <span>${escHtml(o.label)}</span>
+        </button>
+      `).join('');
+
+      listEl.querySelectorAll('.crp-search-dd-option').forEach(opt => {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const val   = this.getAttribute('data-value');
+          const label = this.getAttribute('data-label');
+          const icon  = (options.find(o => o.value === val) || {}).icon || '';
+
+          currentValue = val;
+          btnContent.innerHTML = `${icon}<span class="filter-sort-btn-text">${label}</span>`;
+          menu.classList.remove('open');
+          btn.classList.remove('open');
+          searchInput.value = '';
+          renderList('');
+          if (onChange) onChange(val, label);
+        });
+      });
+    }
+
+    renderList('');
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const isOpen = menu.classList.contains('open');
+      // Close other dropdowns
+      document.querySelectorAll('.filter-sort-menu.open, .crp-search-dd-menu.open').forEach(m => {
+        if (m !== menu) m.classList.remove('open');
+      });
+      document.querySelectorAll('.filter-sort-btn.open').forEach(b => {
+        if (b !== btn) b.classList.remove('open');
+      });
+      menu.classList.toggle('open', !isOpen);
+      btn.classList.toggle('open', !isOpen);
+      if (!isOpen) setTimeout(() => searchInput.focus(), 30);
+    });
+
+    searchInput.addEventListener('input', function (e) { e.stopPropagation(); renderList(this.value); });
+    searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    document.addEventListener('click', function (e) {
+      if (!container.contains(e.target)) {
+        menu.classList.remove('open');
+        btn.classList.remove('open');
+      }
+    });
+
+    return { setValue: function (val) {
+      const opt = options.find(o => o.value === val);
+      if (opt) { currentValue = val; btnContent.innerHTML = `${opt.icon||''}<span class="filter-sort-btn-text">${opt.label}</span>`; renderList(''); }
+    }};
   }
 
   // Icon helpers — same Lucide set used across all report pages
