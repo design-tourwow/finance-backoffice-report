@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Work List - Tourwow" />
+    <title>Work List - Tourwow</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="tour-image-manager.css" />
+    <link rel="stylesheet" href="sales-by-country.css" />
+    <link rel="stylesheet" href="work-list.css" />
+
+    <script>
+      (function() {
+        const hostname = window.location.hostname;
+        if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://staging-finance-backoffice-report-api.vercel.app';
+          window.ENVIRONMENT = 'staging';
+        } else if (hostname === 'finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://finance-backoffice-report-api.vercel.app';
+          window.ENVIRONMENT = 'production';
+        } else {
+          const sessionEnv = sessionStorage.getItem('env') || 'staging';
+          window.ENVIRONMENT = sessionEnv;
+          window.API_BASE_URL = sessionEnv === 'staging'
+            ? 'https://staging-finance-backoffice-report-api.vercel.app'
+            : 'https://finance-backoffice-report-api.vercel.app';
+        }
+      })();
+    </script>
+    <script src="token-utils.js?v=20250128"></script>
+    <script src="tour-image-manager-api.js"></script>
+    <script src="work-list-api.js"></script>
+    <script src="menu-component.js"></script>
+
+    <style>
+      .sidebar-collapsed-init .app-wrapper { margin-left: 0 !important; }
+      .sidebar-collapsed-init .sidebar { width: 0 !important; overflow: hidden !important; border-right: none !important; }
+      .sidebar-collapsed-init .main-content { margin-left: 0 !important; }
+    </style>
+    <script>
+      (function() {
+        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+          document.documentElement.classList.add('sidebar-collapsed-init');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+    <div class="app-wrapper">
+      <button class="mobile-menu-toggle" aria-label="เปิด/ปิดเมนู" aria-expanded="false">
+        <span class="hamburger-icon"><span></span><span></span><span></span></span>
+      </button>
+
+      <aside class="sidebar" id="sidebar" role="navigation" aria-label="เมนูหลัก">
+        <div class="logo">
+          <img src="https://financebackoffice-staging2.tourwow.com/assets/images/tourwow-logo.png" alt="Tourwow Logo" />
+        </div>
+        <nav class="nav-menu"></nav>
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="ซ่อนเมนู" title="ซ่อนเมนู">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>ซ่อนเมนู</span>
+        </button>
+      </aside>
+
+      <main class="main-content" id="main-content" role="main">
+        <nav class="top-bar" role="banner">
+          <div class="top-bar-container">
+            <ul class="navbar-list"></ul>
+          </div>
+        </nav>
+
+        <div class="content-area">
+          <nav class="breadcrumb" aria-label="breadcrumb">
+            <ol>
+              <li><a href="#">หน้าแรก</a></li>
+              <li><a href="#">Report</a></li>
+              <li aria-current="page">Work List</li>
+            </ol>
+          </nav>
+
+          <header class="page-header">
+            <svg class="page-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1>Work List</h1>
+          </header>
+
+          <section class="report-content-section" id="workListSection"></section>
+        </div>
+      </main>
+    </div>
+
+    <script src="work-list.js"></script>
+  </body>
+</html>

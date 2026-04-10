@@ -36,6 +36,12 @@ function handleExternalLink(e, url) {
           label: 'Wholesale Destinations',
           url: '/wholesale-destinations',
           requireAuth: true
+        },
+        {
+          id: 'work-list',
+          label: 'Work List',
+          url: '/work-list',
+          requireAuth: true
         }
       ]
     },

@@ -1016,6 +1016,44 @@
     return wrapper;
   }
 
+  function appendCanvasSlicesToPdf(doc, canvas) {
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 8;
+    const usableWidth = pageWidth - (margin * 2);
+    const usableHeight = pageHeight - (margin * 2);
+    const pageHeightPx = Math.floor(canvas.width * (usableHeight / usableWidth));
+
+    let offsetY = 0;
+    let pageIndex = 0;
+
+    while (offsetY < canvas.height) {
+      const sliceHeight = Math.min(pageHeightPx, canvas.height - offsetY);
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = sliceHeight;
+      const ctx = sliceCanvas.getContext('2d');
+      if (!ctx) throw new Error('Cannot create PDF canvas context');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+      ctx.drawImage(
+        canvas,
+        0, offsetY, canvas.width, sliceHeight,
+        0, 0, sliceCanvas.width, sliceCanvas.height
+      );
+
+      if (pageIndex > 0) doc.addPage();
+
+      const imgData = sliceCanvas.toDataURL('image/png');
+      const renderHeight = sliceHeight * usableWidth / canvas.width;
+      doc.addImage(imgData, 'PNG', margin, margin, usableWidth, renderHeight, undefined, 'FAST');
+
+      offsetY += sliceHeight;
+      pageIndex += 1;
+    }
+  }
+
   // ---- Export PDF (generate file from current table view) ----
   async function exportPDF(orders, summary = {}) {
     const tableCount = document.getElementById('crp-table-count');
@@ -1056,26 +1094,7 @@
         unit: 'mm',
         format: 'a4'
       });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 8;
-      const usableWidth = pageWidth - (margin * 2);
-      const usableHeight = pageHeight - (margin * 2);
-      const imgWidth = usableWidth;
-      const imgHeight = canvas.height * imgWidth / canvas.width;
-      let heightLeft = imgHeight;
-      let position = margin;
-
-      const imgData = canvas.toDataURL('image/png');
-      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= usableHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + margin;
-        doc.addPage();
-        doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= usableHeight;
-      }
+      appendCanvasSlicesToPdf(doc, canvas);
 
       doc.save(getPdfFileName());
     } catch (error) {

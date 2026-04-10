@@ -1,0 +1,196 @@
+.work-list-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.work-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.work-list-toolbar-copy h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.work-list-toolbar-copy p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.work-list-tabs {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.work-list-tab {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-family: 'Kanit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.work-list-tab.active {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.work-list-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1px solid #dbe2ea;
+  background: #ffffff;
+  padding: 12px 16px;
+}
+
+.work-list-summary-label {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.work-list-summary-value {
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.work-list-table-wrap {
+  overflow-x: auto;
+}
+
+.work-list-table {
+  min-width: 1180px;
+}
+
+.work-list-table th:first-child,
+.work-list-table td:first-child {
+  width: 70px;
+  text-align: center;
+}
+
+.work-list-table th:nth-child(2),
+.work-list-table td:nth-child(2),
+.work-list-table th:nth-child(5),
+.work-list-table td:nth-child(5) {
+  white-space: nowrap;
+  width: 140px;
+}
+
+.work-list-table th:nth-child(3),
+.work-list-table td:nth-child(3) {
+  width: 220px;
+}
+
+.work-list-table th:nth-child(6),
+.work-list-table td:nth-child(6) {
+  width: 180px;
+}
+
+.work-list-seq {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.work-list-main,
+.work-list-sub,
+.work-list-links,
+.work-list-owner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.work-list-main-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.5;
+}
+
+.work-list-subtext {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.work-list-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.work-list-link {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.work-list-link:hover {
+  text-decoration: underline;
+}
+
+.work-list-date {
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.work-list-owner-line {
+  font-size: 13px;
+  color: #334155;
+}
+
+.work-list-owner-label {
+  color: #64748b;
+  margin-right: 6px;
+}
+
+@media (max-width: 768px) {
+  .work-list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .work-list-tabs {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .work-list-summary {
+    justify-content: center;
+  }
+}

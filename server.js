@@ -40,6 +40,9 @@ const server = http.createServer((req, res) => {
     else if (urlWithoutQuery === '/commission-report-plus') {
         filePath = './commission-report-plus.html';
     }
+    else if (urlWithoutQuery === '/work-list') {
+        filePath = './work-list.html';
+    }
     
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';

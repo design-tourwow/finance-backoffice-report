@@ -23,6 +23,10 @@
     {
       "source": "/commission-report-plus",
       "destination": "/commission-report-plus.html"
+    },
+    {
+      "source": "/work-list",
+      "destination": "/work-list.html"
     }
   ],
   "headers": [
