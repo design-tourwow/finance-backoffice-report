@@ -952,54 +952,68 @@
   }
 
   function createPdfSourceNode(countText) {
-    const summaryEl = document.querySelector('.dashboard-kpi-cards');
-    const tableHeaderEl = document.querySelector('.dashboard-table-header');
     const tableWrapperEl = document.querySelector('.dashboard-table-wrapper.crp-table-scroll');
-    if (!summaryEl || !tableHeaderEl || !tableWrapperEl) return null;
+    if (!tableWrapperEl) return null;
 
     const wrapper = document.createElement('div');
     wrapper.style.position = 'fixed';
     wrapper.style.left = '-10000px';
     wrapper.style.top = '0';
-    wrapper.style.width = '1580px';
+    wrapper.style.width = '1520px';
     wrapper.style.background = '#ffffff';
-    wrapper.style.padding = '24px';
+    wrapper.style.padding = '22px 24px 18px';
     wrapper.style.zIndex = '-1';
     wrapper.style.fontFamily = "'Kanit', sans-serif";
     wrapper.className = 'crp-pdf-source';
 
+    const netCommission = parseFloat(currentData?.summary?.total_commission || 0) - parseFloat(currentData?.summary?.total_discount || 0);
+
     const title = document.createElement('div');
     title.style.display = 'flex';
     title.style.justifyContent = 'space-between';
-    title.style.alignItems = 'flex-start';
-    title.style.marginBottom = '16px';
+    title.style.alignItems = 'center';
+    title.style.marginBottom = '10px';
+    title.style.paddingBottom = '8px';
+    title.style.borderBottom = '2px solid #335f8a';
     title.innerHTML = `
       <div>
-        <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1.2;">Commission Report Plus</div>
-        <div style="font-size:14px;color:#64748b;margin-top:4px;">พิมพ์เมื่อ ${escHtml(new Date().toLocaleString('th-TH'))}</div>
+        <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Commission Report +</div>
       </div>
-      <div style="font-size:14px;color:#334155;background:#f8fafc;border:1px solid #dbe2ea;border-radius:999px;padding:10px 14px;">${escHtml(countText || '')}</div>
+      <div style="font-size:14px;color:#1f2937;font-weight:600;">พิมพ์วันที่: ${escHtml(new Date().toLocaleString('th-TH'))}</div>
     `;
 
-    const filters = document.createElement('div');
-    filters.style.display = 'grid';
-    filters.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
-    filters.style.gap = '10px';
-    filters.style.marginBottom = '16px';
-    filters.innerHTML = buildPrintFilters().map(item => `
-      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff;">
-        <div style="font-size:11px;color:#64748b;margin-bottom:4px;">${escHtml(item.label)}</div>
-        <div style="font-size:13px;color:#0f172a;font-weight:500;">${escHtml(item.value || '-')}</div>
-      </div>
+    const summaryLine = document.createElement('div');
+    summaryLine.style.display = 'flex';
+    summaryLine.style.flexWrap = 'wrap';
+    summaryLine.style.gap = '18px';
+    summaryLine.style.alignItems = 'center';
+    summaryLine.style.marginBottom = '10px';
+    summaryLine.style.color = '#243b53';
+    summaryLine.style.fontSize = '13px';
+    summaryLine.style.fontWeight = '600';
+    summaryLine.innerHTML = `
+      <span>ยอดจองรวม: ${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))} บาท</span>
+      <span>คอมรวม: ${escHtml(formatNumber(currentData?.summary?.total_commission || 0))} บาท</span>
+      <span>ส่วนลด: ${escHtml(formatNumber(currentData?.summary?.total_discount || 0))} บาท</span>
+      <span>คอมสุทธิ: ${escHtml(formatNumber(netCommission || 0))} บาท</span>
+    `;
+
+    const filterLine = document.createElement('div');
+    filterLine.style.display = 'flex';
+    filterLine.style.flexWrap = 'wrap';
+    filterLine.style.gap = '12px';
+    filterLine.style.marginBottom = '12px';
+    filterLine.style.fontSize = '11px';
+    filterLine.style.color = '#5b6b7c';
+    filterLine.innerHTML = buildPrintFilters().map(item => `
+      <span><strong style="color:#334e68;">${escHtml(item.label)}:</strong> ${escHtml(item.value || '-')}</span>
     `).join('');
 
-    const summaryClone = summaryEl.cloneNode(true);
-    const tableHeaderClone = tableHeaderEl.cloneNode(true);
     const tableWrapperClone = tableWrapperEl.cloneNode(true);
-    const actions = tableHeaderClone.querySelector('.dashboard-table-actions');
-    if (actions) actions.remove();
     tableWrapperClone.style.maxHeight = 'none';
     tableWrapperClone.style.overflow = 'visible';
+    tableWrapperClone.style.border = '1px solid #b7c8d8';
+    tableWrapperClone.style.borderRadius = '0';
 
     const stickyHeaders = tableWrapperClone.querySelectorAll('.crp-table thead tr.group-row th, .crp-table thead tr.col-row th');
     stickyHeaders.forEach(th => {
@@ -1007,10 +1021,60 @@
       th.style.top = 'auto';
     });
 
+    const table = tableWrapperClone.querySelector('table');
+    if (table) {
+      table.style.width = '100%';
+      table.style.fontSize = '11px';
+    }
+
+    tableWrapperClone.querySelectorAll('.crp-table thead tr.group-row th').forEach(th => {
+      th.style.background = '#4f79a4';
+      th.style.color = '#ffffff';
+      th.style.fontSize = '10px';
+      th.style.padding = '6px 5px';
+      th.style.borderColor = '#b7c8d8';
+    });
+
+    tableWrapperClone.querySelectorAll('.crp-table thead tr.col-row th').forEach(th => {
+      th.style.background = '#d7e4f1';
+      th.style.color = '#243b53';
+      th.style.fontSize = '10px';
+      th.style.padding = '6px 5px';
+      th.style.borderColor = '#b7c8d8';
+    });
+
+    tableWrapperClone.querySelectorAll('.crp-table tbody td').forEach(td => {
+      td.style.fontSize = '10px';
+      td.style.padding = '5px 5px';
+      td.style.borderColor = '#d4dee8';
+      td.style.color = '#243b53';
+    });
+
+    tableWrapperClone.querySelectorAll('.crp-table tbody tr:nth-child(even)').forEach(tr => {
+      tr.style.background = '#f7fafc';
+    });
+
+    const tbody = tableWrapperClone.querySelector('.crp-table tbody');
+    if (tbody) {
+      const footer = document.createElement('tr');
+      footer.style.background = '#d7e4f1';
+      footer.style.fontWeight = '700';
+      footer.innerHTML = `
+        <td colspan="4" style="text-align:center;color:#243b53;border-top:2px solid #9fb6cc;">รวม ${escHtml(countText || '')}</td>
+        <td style="border-top:2px solid #9fb6cc;"></td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
+        <td style="border-top:2px solid #9fb6cc;"></td>
+        <td style="border-top:2px solid #9fb6cc;"></td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
+        <td style="text-align:right;color:#16a34a;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(netCommission || 0))}</td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
+      `;
+      tbody.appendChild(footer);
+    }
+
     wrapper.appendChild(title);
-    wrapper.appendChild(summaryClone);
-    wrapper.appendChild(filters);
-    wrapper.appendChild(tableHeaderClone);
+    wrapper.appendChild(summaryLine);
+    wrapper.appendChild(filterLine);
     wrapper.appendChild(tableWrapperClone);
     document.body.appendChild(wrapper);
     return wrapper;
@@ -1048,6 +1112,10 @@
       const imgData = sliceCanvas.toDataURL('image/png');
       const renderHeight = sliceHeight * usableWidth / canvas.width;
       doc.addImage(imgData, 'PNG', margin, margin, usableWidth, renderHeight, undefined, 'FAST');
+
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+      doc.text(`หน้า ${pageIndex + 1}`, pageWidth - margin, pageHeight - 4, { align: 'right' });
 
       offsetY += sliceHeight;
       pageIndex += 1;
