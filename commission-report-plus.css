@@ -57,27 +57,29 @@
 
 .crp-ez-btn {
   padding: 7px 14px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
-  background: white;
+  background: #f9fafb;
   font-family: 'Kanit', sans-serif;
   font-size: 13px;
   cursor: pointer;
-  color: #374151;
+  color: #6b7280;
   transition: all 0.15s;
   white-space: nowrap;
   height: 36px;
 }
 
 .crp-ez-btn:hover {
-  border-color: #4a7ba7;
-  color: #4a7ba7;
+  border-color: #d1d5db;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .crp-ez-btn.crp-ez-active {
-  background: #4a7ba7;
-  color: white;
-  border-color: #4a7ba7;
+  background: #e0e7ef;
+  color: #4a7ba7;
+  border-color: #c8d6e4;
+  font-weight: 500;
 }
 
 /* Searchable Seller Dropdown */
