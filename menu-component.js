@@ -26,6 +26,12 @@ function handleExternalLink(e, url) {
       requireAuth: true,
       submenu: [
         {
+          id: 'work-list',
+          label: 'Work List',
+          url: '/work-list',
+          requireAuth: true
+        },
+        {
           id: 'sales-by-country',
           label: 'Sales by Country',
           url: '/sales-by-country',
@@ -37,11 +43,6 @@ function handleExternalLink(e, url) {
           url: '/wholesale-destinations',
           requireAuth: true
         },
-        {
-          id: 'work-list',
-          label: 'Work List',
-          url: '/work-list',
-          requireAuth: true
         }
       ]
     },

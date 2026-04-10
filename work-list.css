@@ -8,19 +8,39 @@
   position: static;
   margin-bottom: 4px;
   justify-content: flex-start;
-  flex-wrap: wrap;
 }
 
-.work-list-control-left {
+.work-list-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.work-list-control-group {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 
+.work-list-filter-group {
+  justify-content: flex-end;
+}
+
 .work-list-segment {
   display: inline-flex;
   gap: 8px;
+}
+
+.work-list-filter {
+  min-width: 220px;
+}
+
+.work-list-filter .filter-sort-btn {
+  min-width: 220px;
 }
 
 .work-list-kpis {
@@ -137,9 +157,15 @@
     align-items: stretch;
   }
 
-  .work-list-control-left,
+  .work-list-control-row,
+  .work-list-control-group,
   .work-list-kpis {
     width: 100%;
+  }
+
+  .work-list-control-row,
+  .work-list-control-group {
+    align-items: stretch;
   }
 
   .work-list-segment {
@@ -153,5 +179,11 @@
 
   .work-list-kpis {
     grid-template-columns: 1fr;
+  }
+
+  .work-list-filter,
+  .work-list-filter .filter-sort-btn {
+    width: 100%;
+    min-width: 0;
   }
 }

@@ -965,6 +965,7 @@
     wrapper.style.zIndex = '-1';
     wrapper.style.fontFamily = "'Kanit', sans-serif";
     wrapper.className = 'crp-pdf-source';
+    wrapper.dataset.countText = countText || '';
 
     const netCommission = parseFloat(currentData?.summary?.total_commission || 0) - parseFloat(currentData?.summary?.total_discount || 0);
 
@@ -1080,46 +1081,185 @@
     return wrapper;
   }
 
+  function createPageShell(pageNumber, totalPages) {
+    const page = document.createElement('div');
+    page.style.width = '1520px';
+    page.style.minHeight = '1040px';
+    page.style.background = '#ffffff';
+    page.style.padding = '22px 24px 18px';
+    page.style.boxSizing = 'border-box';
+    page.style.display = 'flex';
+    page.style.flexDirection = 'column';
+    page.style.gap = '10px';
+
+    const footer = document.createElement('div');
+    footer.className = 'crp-pdf-page-footer';
+    footer.style.marginTop = 'auto';
+    footer.style.textAlign = 'right';
+    footer.style.fontSize = '12px';
+    footer.style.fontWeight = '600';
+    footer.style.color = '#334155';
+    footer.textContent = `หน้า ${pageNumber}/${totalPages}`;
+
+    return { page, footer };
+  }
+
+  function clonePdfHeader(sourceNode) {
+    const title = sourceNode.children[0].cloneNode(true);
+    const summary = sourceNode.children[1].cloneNode(true);
+    const filters = sourceNode.children[2].cloneNode(true);
+    return { title, summary, filters };
+  }
+
+  function clonePdfTableShell(sourceTableWrapper) {
+    const tableWrapper = sourceTableWrapper.cloneNode(false);
+    tableWrapper.style.maxHeight = 'none';
+    tableWrapper.style.overflow = 'visible';
+    const sourceTable = sourceTableWrapper.querySelector('table');
+    const sourceThead = sourceTable.querySelector('thead');
+    const table = sourceTable.cloneNode(false);
+    const thead = sourceThead.cloneNode(true);
+    const tbody = document.createElement('tbody');
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    tableWrapper.appendChild(table);
+    return { tableWrapper, table, tbody };
+  }
+
+  function buildPaginatedPdfPages(sourceNode) {
+    const countText = sourceNode.dataset.countText || '';
+    const sourceTableWrapper = sourceNode.querySelector('.dashboard-table-wrapper.crp-table-scroll');
+    const sourceRows = Array.from(sourceNode.querySelectorAll('.crp-table tbody tr'));
+    if (!sourceTableWrapper || !sourceRows.length) return [sourceNode];
+
+    const footerRow = sourceRows[sourceRows.length - 1] && sourceRows[sourceRows.length - 1].querySelector('td[colspan="4"]')
+      ? sourceRows[sourceRows.length - 1]
+      : null;
+    const bodyRows = footerRow ? sourceRows.slice(0, -1) : sourceRows.slice();
+    if (!bodyRows.length) return [sourceNode];
+
+    function createMeasurePage(includeFullHeader) {
+      const page = document.createElement('div');
+      page.style.position = 'fixed';
+      page.style.left = '-20000px';
+      page.style.top = '0';
+      page.style.width = '1520px';
+      page.style.minHeight = '1040px';
+      page.style.background = '#ffffff';
+      page.style.padding = '22px 24px 18px';
+      page.style.boxSizing = 'border-box';
+      page.style.display = 'flex';
+      page.style.flexDirection = 'column';
+      page.style.gap = '10px';
+      document.body.appendChild(page);
+
+      const clones = clonePdfHeader(sourceNode);
+      if (includeFullHeader) {
+        page.appendChild(clones.title);
+        page.appendChild(clones.summary);
+        page.appendChild(clones.filters);
+      } else {
+        const miniHeader = clones.title.cloneNode(true);
+        const rightNode = miniHeader.children[1];
+        if (rightNode) rightNode.textContent = countText;
+        miniHeader.style.marginBottom = '4px';
+        page.appendChild(miniHeader);
+      }
+
+      const parts = clonePdfTableShell(sourceTableWrapper);
+      page.appendChild(parts.tableWrapper);
+      const footer = document.createElement('div');
+      footer.style.marginTop = 'auto';
+      footer.style.height = '26px';
+      page.appendChild(footer);
+      return { page, parts };
+    }
+
+    function measureMaxBodyHeight(includeFullHeader) {
+      const measured = createMeasurePage(includeFullHeader);
+      const availableHeight = 1040 - 22 - 18 - 26 - 24
+        - Array.from(measured.page.children)
+          .filter(node => node !== measured.parts.tableWrapper)
+          .reduce((sum, node) => sum + node.offsetHeight, 0);
+      const theadHeight = measured.parts.table.querySelector('thead').offsetHeight;
+      const maxBodyHeight = Math.max(availableHeight - theadHeight, 120);
+      document.body.removeChild(measured.page);
+      return maxBodyHeight;
+    }
+
+    const firstPageMaxBodyHeight = measureMaxBodyHeight(true);
+    const nextPageMaxBodyHeight = measureMaxBodyHeight(false);
+
+    const rowHeights = [];
+    const rowMeasure = createMeasurePage(true);
+    bodyRows.forEach(row => {
+      const clone = row.cloneNode(true);
+      rowMeasure.parts.tbody.appendChild(clone);
+      rowHeights.push(clone.offsetHeight);
+      rowMeasure.parts.tbody.removeChild(clone);
+    });
+    document.body.removeChild(rowMeasure.page);
+
+    const pagesRows = [];
+    let currentPageRows = [];
+    let currentHeight = 0;
+    let currentLimit = firstPageMaxBodyHeight;
+
+    rowHeights.forEach((rowHeight, index) => {
+      if (currentPageRows.length && currentHeight + rowHeight > currentLimit) {
+        pagesRows.push(currentPageRows);
+        currentPageRows = [];
+        currentHeight = 0;
+        currentLimit = nextPageMaxBodyHeight;
+      }
+
+      currentPageRows.push(index);
+      currentHeight += rowHeight;
+    });
+
+    if (currentPageRows.length) pagesRows.push(currentPageRows);
+
+    const builtPages = [];
+    const totalPages = pagesRows.length;
+
+    pagesRows.forEach((rowIndexes, pageIdx) => {
+      const { page, footer } = createPageShell(pageIdx + 1, totalPages);
+      const clones = clonePdfHeader(sourceNode);
+      if (pageIdx === 0) {
+        page.appendChild(clones.title);
+        page.appendChild(clones.summary);
+        page.appendChild(clones.filters);
+      } else {
+        const miniHeader = clones.title.cloneNode(true);
+        const rightNode = miniHeader.children[1];
+        if (rightNode) rightNode.textContent = countText;
+        miniHeader.style.marginBottom = '4px';
+        page.appendChild(miniHeader);
+      }
+
+      const parts = clonePdfTableShell(sourceTableWrapper);
+      rowIndexes.forEach(idx => {
+        parts.tbody.appendChild(bodyRows[idx].cloneNode(true));
+      });
+      if (pageIdx === totalPages - 1 && footerRow) {
+        parts.tbody.appendChild(footerRow.cloneNode(true));
+      }
+      page.appendChild(parts.tableWrapper);
+      page.appendChild(footer);
+      builtPages.push(page);
+    });
+
+    return builtPages;
+  }
+
   function appendCanvasSlicesToPdf(doc, canvas) {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 8;
     const usableWidth = pageWidth - (margin * 2);
-    const usableHeight = pageHeight - (margin * 2);
-    const pageHeightPx = Math.floor(canvas.width * (usableHeight / usableWidth));
-
-    let offsetY = 0;
-    let pageIndex = 0;
-
-    while (offsetY < canvas.height) {
-      const sliceHeight = Math.min(pageHeightPx, canvas.height - offsetY);
-      const sliceCanvas = document.createElement('canvas');
-      sliceCanvas.width = canvas.width;
-      sliceCanvas.height = sliceHeight;
-      const ctx = sliceCanvas.getContext('2d');
-      if (!ctx) throw new Error('Cannot create PDF canvas context');
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-      ctx.drawImage(
-        canvas,
-        0, offsetY, canvas.width, sliceHeight,
-        0, 0, sliceCanvas.width, sliceCanvas.height
-      );
-
-      if (pageIndex > 0) doc.addPage();
-
-      const imgData = sliceCanvas.toDataURL('image/png');
-      const renderHeight = sliceHeight * usableWidth / canvas.width;
-      doc.addImage(imgData, 'PNG', margin, margin, usableWidth, renderHeight, undefined, 'FAST');
-
-      doc.setFontSize(9);
-      doc.setTextColor(51, 65, 85);
-      doc.text(`หน้า ${pageIndex + 1}`, pageWidth - margin, pageHeight - 4, { align: 'right' });
-
-      offsetY += sliceHeight;
-      pageIndex += 1;
-    }
+    const renderHeight = canvas.height * usableWidth / canvas.width;
+    const imgData = canvas.toDataURL('image/png');
+    doc.addImage(imgData, 'PNG', margin, margin, usableWidth, renderHeight, undefined, 'FAST');
   }
 
   // ---- Export PDF (generate file from current table view) ----
@@ -1148,21 +1288,30 @@
       const countText = tableCount ? tableCount.textContent : `แสดง ${formatNumber(rows.length, 0)} รายการ`;
       const sourceNode = createPdfSourceNode(countText);
       if (!sourceNode) throw new Error('PDF source node not found');
-
-      const canvas = await window.html2canvas(sourceNode, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      });
+      const pages = buildPaginatedPdfPages(sourceNode);
       sourceNode.remove();
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
 
       const doc = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
-      appendCanvasSlicesToPdf(doc, canvas);
+
+      for (let i = 0; i < pages.length; i += 1) {
+        if (i > 0) doc.addPage();
+        document.body.appendChild(pages[i]);
+        const canvas = await window.html2canvas(pages[i], {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        appendCanvasSlicesToPdf(doc, canvas);
+        pages[i].remove();
+      }
 
       doc.save(getPdfFileName());
     } catch (error) {

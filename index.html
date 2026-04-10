@@ -34,6 +34,27 @@
           // Remove token from URL for security
           window.history.replaceState({}, document.title, window.location.pathname);
         }
+
+        try {
+          const storedToken = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+          if (!storedToken) return;
+          const parts = storedToken.split('.');
+          if (parts.length !== 3) return;
+          const payload = JSON.parse(atob(parts[1]));
+          const member = (payload && payload.user && payload.user.agency_member) || {};
+          const candidateNames = [
+            member.nick_name,
+            member.first_name,
+            member.last_name,
+            member.name
+          ].filter(Boolean).map(value => String(value).trim().toLowerCase());
+
+          if (candidateNames.includes('gap')) {
+            window.location.replace('/work-list');
+          }
+        } catch (error) {
+          console.warn('[Index] Failed to resolve default route:', error);
+        }
       })();
     </script>
     
