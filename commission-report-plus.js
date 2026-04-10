@@ -538,6 +538,35 @@
     results.innerHTML = renderSummary(summary) + renderTableSection(orders);
 
     document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
+
+    // Table search
+    document.getElementById('crp-table-search').addEventListener('input', function () {
+      const q = this.value.toLowerCase().trim();
+      const filtered = q
+        ? orders.filter(o =>
+            (o.order_code || '').toLowerCase().includes(q) ||
+            (o.customer_name || '').toLowerCase().includes(q)
+          )
+        : orders;
+      document.getElementById('crp-table-count').textContent = `แสดง ${formatNumber(filtered.length, 0)} รายการ`;
+      document.querySelector('.crp-table tbody').innerHTML = filtered.map(o => {
+        const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
+        return `
+          <tr>
+            <td><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
+            <td>${formatDate(o.created_at)}</td>
+            <td>${escHtml(o.customer_name || '-')}</td>
+            <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
+            <td class="group-start"><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
+            <td class="right group-start">฿${formatNumber(o.net_amount)}</td>
+            <td class="center">${o.room_quantity || 0}</td>
+            <td class="center">${formatDate(o.first_paid_at)}</td>
+            <td class="right group-start">฿${formatNumber(o.supplier_commission)}</td>
+            <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">฿${formatNumber(netCom)}</td>
+            <td class="right group-start">฿${formatNumber(o.discount)}</td>
+          </tr>`;
+      }).join('') || `<tr><td colspan="11" style="text-align:center;padding:32px;color:#9ca3af;">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
+    });
   }
 
   // ---- Summary Cards ----
@@ -612,9 +641,16 @@
       <div class="dashboard-table-header">
         <div class="dashboard-table-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-          แสดง ${formatNumber(orders.length, 0)} รายการ
+          <span id="crp-table-count">แสดง ${formatNumber(orders.length, 0)} รายการ</span>
         </div>
         <div class="dashboard-table-actions">
+          <div class="dashboard-search-wrapper">
+            <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+            <input type="text" class="dashboard-search-input" id="crp-table-search" placeholder="ค้นหารหัส Order หรือชื่อลูกค้า...">
+          </div>
           <button class="dashboard-export-btn" id="crp-btn-export">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export CSV
