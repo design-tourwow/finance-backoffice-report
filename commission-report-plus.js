@@ -376,43 +376,44 @@
   // ---- Summary Cards ----
   function renderSummary(summary) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
+    const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
     return `
-      <div class="crp-summary">
-        <div class="crp-summary-card highlight">
-          <div class="summary-card-icon" style="background:rgba(255,255,255,0.2)">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <div class="dashboard-kpi-cards">
+        <div class="dashboard-kpi-card kpi-travelers">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
-          <div class="summary-card-content">
-            <div class="summary-card-label" style="color:rgba(255,255,255,0.8)">ยอดจองรวม</div>
-            <div class="summary-card-value" style="color:white;font-size:24px">฿${formatNumber(summary.total_net_amount)}</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:2px">${formatNumber(summary.total_orders, 0)} Orders</div>
-          </div>
-        </div>
-        <div class="crp-summary-card">
-          <div class="summary-card-icon" style="background:#f0f9ff">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a7ba7" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          </div>
-          <div class="summary-card-content">
-            <div class="summary-card-label">คอมรวม</div>
-            <div class="summary-card-value">฿${formatNumber(summary.total_commission)}</div>
+          <div class="kpi-content">
+            <div class="kpi-label">ยอดจองรวม</div>
+            <div class="kpi-value">฿${formatNumber(summary.total_net_amount)}</div>
+            <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
           </div>
         </div>
-        <div class="crp-summary-card">
-          <div class="summary-card-icon" style="background:${netCommission >= 0 ? '#f0fdf4' : '#fef2f2'}">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${netCommission >= 0 ? '#16a34a' : '#dc2626'}" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <div class="dashboard-kpi-card kpi-top-country">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           </div>
-          <div class="summary-card-content">
-            <div class="summary-card-label">คอม (หักส่วนลด)</div>
-            <div class="summary-card-value ${netCommission >= 0 ? 'crp-positive' : 'crp-negative'}">฿${formatNumber(netCommission)}</div>
+          <div class="kpi-content">
+            <div class="kpi-label">คอมรวม</div>
+            <div class="kpi-value">฿${formatNumber(summary.total_commission)}</div>
           </div>
         </div>
-        <div class="crp-summary-card">
-          <div class="summary-card-icon" style="background:#fff7ed">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <div class="dashboard-kpi-card kpi-growth">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
           </div>
-          <div class="summary-card-content">
-            <div class="summary-card-label">ส่วนลดรวม</div>
-            <div class="summary-card-value">฿${formatNumber(summary.total_discount)}</div>
+          <div class="kpi-content">
+            <div class="kpi-label">คอม (หักส่วนลด)</div>
+            <div class="kpi-value" style="color:${netColor}">฿${formatNumber(netCommission)}</div>
+          </div>
+        </div>
+        <div class="dashboard-kpi-card kpi-active">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">ส่วนลดรวม</div>
+            <div class="kpi-value">฿${formatNumber(summary.total_discount)}</div>
           </div>
         </div>
       </div>`;

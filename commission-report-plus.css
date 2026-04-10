@@ -123,52 +123,6 @@
 
 .crp-btn-search:hover { background: #3b6490; }
 
-/* ========= Summary ========= */
-.crp-summary {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.crp-summary-card {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 16px 20px;
-  flex: 1;
-  min-width: 150px;
-  font-family: 'Kanit', sans-serif;
-}
-
-.crp-summary-card.highlight {
-  background: linear-gradient(135deg, #4a7ba7 0%, #3b6490 100%);
-  border-color: transparent;
-}
-
-.crp-summary-card .label {
-  font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.crp-summary-card.highlight .label { color: rgba(255,255,255,0.8); }
-
-.crp-summary-card .value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.crp-summary-card.highlight .value { color: white; }
-
-.crp-summary-card .sub {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-top: 2px;
-}
-
 /* ========= Table ========= */
 .crp-table-header {
   display: flex;
