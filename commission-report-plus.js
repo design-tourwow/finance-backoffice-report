@@ -224,7 +224,14 @@
       inputId: 'crp-paid-input',
       dropdownId: 'crp-paid-dropdown',
       wrapperId: 'crp-paid-picker',
-      onChange: function (start, end) {}
+      onChange: function (start, end) {
+        // Auto-adjust end date +3 days so picker shows the actual query range
+        if (start && end) {
+          const endStr = DatePickerComponent.formatDateToAPI(end);
+          const adjustedEnd = DatePickerComponent.parseAPIDate(addDays(endStr, 3));
+          paidDatePickerInstance.setDates(start, adjustedEnd);
+        }
+      }
     });
     const paidTo = addDays(lastDayOfCurrentMonth(), 3);
     paidDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(paidTo));
