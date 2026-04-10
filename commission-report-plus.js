@@ -943,39 +943,39 @@
     const tableCount = document.getElementById('crp-table-count');
     if (!tableSection) return;
 
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1280,height=900');
+    if (!printWindow) {
+      alert('เบราว์เซอร์บล็อกหน้าต่างสำหรับพิมพ์ PDF กรุณาอนุญาต pop-up แล้วลองใหม่');
+      return;
+    }
 
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(buildPrintDocumentHtml(tableSection.outerHTML, summary, tableCount ? tableCount.textContent : `แสดง ${formatNumber(orders.length, 0)} รายการ`));
-    doc.close();
+    const html = buildPrintDocumentHtml(
+      tableSection.outerHTML,
+      summary,
+      tableCount ? tableCount.textContent : `แสดง ${formatNumber(orders.length, 0)} รายการ`
+    );
 
-    const cleanup = function () {
-      setTimeout(() => {
-        iframe.remove();
-      }, 500);
-    };
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
 
     let didTriggerPrint = false;
     const triggerPrint = function () {
-      if (didTriggerPrint) return;
+      if (didTriggerPrint || printWindow.closed) return;
       didTriggerPrint = true;
-      iframe.contentWindow.focus();
-      iframe.contentWindow.onafterprint = cleanup;
-      iframe.contentWindow.print();
-      setTimeout(cleanup, 1500);
+      printWindow.focus();
+      printWindow.print();
     };
 
-    iframe.onload = triggerPrint;
-    setTimeout(triggerPrint, 250);
+    printWindow.addEventListener('load', function () {
+      setTimeout(triggerPrint, 150);
+    }, { once: true });
+
+    printWindow.addEventListener('afterprint', function () {
+      printWindow.close();
+    }, { once: true });
+
+    setTimeout(triggerPrint, 700);
   }
 
 })();
