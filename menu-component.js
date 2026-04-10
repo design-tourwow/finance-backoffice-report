@@ -58,20 +58,22 @@ function handleExternalLink(e, url) {
     }
   ];
 
-  // Decode job_position from JWT (path: payload.user.agency_member.job_position)
-  function getUserJobPosition() {
+  // Decode roles_slug from JWT (path: payload.user.agency_member.roles_slug)
+  // roles_slug = "admin" → เห็นทุกเมนู
+  // job_position (ts/crm/admin) ใช้แยก role ใน commission report เท่านั้น
+  function getUserRolesSlug() {
     try {
       const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
       if (!token) return null;
       const parts = token.split('.');
       if (parts.length !== 3) return null;
       const payload = JSON.parse(atob(parts[1]));
-      return (payload && payload.user && payload.user.agency_member && payload.user.agency_member.job_position) || null;
+      return (payload && payload.user && payload.user.agency_member && payload.user.agency_member.roles_slug) || null;
     } catch (e) { return null; }
   }
 
   function isAdminUser() {
-    return getUserJobPosition() === 'admin';
+    return getUserRolesSlug() === 'admin';
   }
 
   function getVisibleMenuItems() {
