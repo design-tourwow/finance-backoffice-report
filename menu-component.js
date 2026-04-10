@@ -12,27 +12,18 @@ function handleExternalLink(e, url) {
   'use strict';
 
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
-  // adminOnly: true = เห็นเฉพาะ admin | adminOnly: false/undefined = เห็นทุก role
+  // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   const MENU_ITEMS = [
-    {
-      id: 'commission-report-plus',
-      label: 'Commission Report +',
-      url: '/commission-report-plus',
-      requireAuth: true,
-      adminOnly: false
-    },
     {
       id: 'tour-image-manager',
       label: 'Tour Image Manager',
       url: '/tour-image-manager',
-      requireAuth: true,
-      adminOnly: true
+      requireAuth: true
     },
     {
       id: 'report',
       label: 'Report',
       requireAuth: true,
-      adminOnly: true,
       submenu: [
         {
           id: 'sales-by-country',
@@ -53,31 +44,12 @@ function handleExternalLink(e, url) {
       label: 'ปอ',
       url: 'https://fe-2-project.vercel.app/',
       requireAuth: false,
-      external: true,
-      adminOnly: true
+      external: true
     }
   ];
 
-  // Decode roles_slug from JWT (path: payload.user.agency_member.roles_slug)
-  // roles_slug = "admin" → เห็นทุกเมนู
-  // job_position (ts/crm/admin) ใช้แยก role ใน commission report เท่านั้น
-  function getUserRolesSlug() {
-    try {
-      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
-      if (!token) return null;
-      const parts = token.split('.');
-      if (parts.length !== 3) return null;
-      const payload = JSON.parse(atob(parts[1]));
-      return (payload && payload.user && payload.user.agency_member && payload.user.agency_member.roles_slug) || null;
-    } catch (e) { return null; }
-  }
-
-  function isAdminUser() {
-    return getUserRolesSlug() === 'admin';
-  }
-
   function getVisibleMenuItems() {
-    return MENU_ITEMS.filter(item => !item.adminOnly || isAdminUser());
+    return MENU_ITEMS;
   }
 
   // Get current page path
