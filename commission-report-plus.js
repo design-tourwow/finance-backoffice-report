@@ -97,6 +97,24 @@
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
+  function lastDayOfCurrentMonth() {
+    const d = new Date();
+    const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    return `${last.getFullYear()}-${String(last.getMonth()+1).padStart(2,'0')}-${String(last.getDate()).padStart(2,'0')}`;
+  }
+
+  function firstDayOfLastMonth() {
+    const d = new Date();
+    const first = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    return `${first.getFullYear()}-${String(first.getMonth()+1).padStart(2,'0')}-01`;
+  }
+
+  function lastDayOfLastMonth() {
+    const d = new Date();
+    const last = new Date(d.getFullYear(), d.getMonth(), 0);
+    return `${last.getFullYear()}-${String(last.getMonth()+1).padStart(2,'0')}-${String(last.getDate()).padStart(2,'0')}`;
+  }
+
   function escHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -122,7 +140,7 @@
         <!-- Filter Bar -->
         <div class="time-granularity-control crp-filter-wrap">
 
-          <!-- แถว 1: Date Filters -->
+          <!-- แถว 1: Date Filters + Ez Search -->
           <div class="crp-filter-row">
             <div class="crp-date-half">
               <span class="time-granularity-label">วันที่สร้าง Order</span>
@@ -143,6 +161,14 @@
                 </div>
                 <input id="crp-paid-input" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันชำระงวด 1" />
                 <div id="crp-paid-dropdown" class="calendar-dropdown" style="display:none;" role="dialog"></div>
+              </div>
+            </div>
+
+            <div class="crp-ez-search">
+              <span class="time-granularity-label">ค้นหาเร็ว</span>
+              <div class="crp-ez-btns">
+                <button class="crp-ez-btn crp-ez-active" id="crp-ez-current">เดือนนี้</button>
+                <button class="crp-ez-btn" id="crp-ez-last">เดือนที่แล้ว</button>
               </div>
             </div>
           </div>
@@ -200,7 +226,8 @@
       wrapperId: 'crp-paid-picker',
       onChange: function (start, end) {}
     });
-    paidDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(to));
+    const paidTo = addDays(lastDayOfCurrentMonth(), 3);
+    paidDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(paidTo));
 
     // Set state defaults
     selectedJobPosition  = jobPos;
@@ -286,8 +313,39 @@
          </button>`;
     }
 
+    // Ez Search buttons
+    initEzSearch();
+
     // Search button
     document.getElementById('crp-btn-search').addEventListener('click', loadReport);
+  }
+
+  function initEzSearch() {
+    const btnCurrent = document.getElementById('crp-ez-current');
+    const btnLast    = document.getElementById('crp-ez-last');
+
+    function setActive(active) {
+      btnCurrent.classList.toggle('crp-ez-active', active === 'current');
+      btnLast.classList.toggle('crp-ez-active', active === 'last');
+    }
+
+    btnCurrent.addEventListener('click', function () {
+      setActive('current');
+      const from   = firstDayOfMonth();
+      const to     = today();
+      const paidTo = addDays(lastDayOfCurrentMonth(), 3);
+      createdDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(to));
+      paidDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(paidTo));
+    });
+
+    btnLast.addEventListener('click', function () {
+      setActive('last');
+      const from   = firstDayOfLastMonth();
+      const to     = lastDayOfLastMonth();
+      const paidTo = addDays(to, 3);
+      createdDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(to));
+      paidDatePickerInstance.setDates(DatePickerComponent.parseAPIDate(from), DatePickerComponent.parseAPIDate(paidTo));
+    });
   }
 
   function labelOfJobPosition(pos) {
@@ -381,18 +439,7 @@
   function renderSummary(summary) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
-    return `
-      <div class="dashboard-kpi-cards">
-        <div class="dashboard-kpi-card kpi-travelers">
-          <div class="kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">ยอดจองรวม</div>
-            <div class="kpi-value">฿${formatNumber(summary.total_net_amount)}</div>
-            <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
-          </div>
-        </div>
+    const adminCards = isAdmin() ? `
         <div class="dashboard-kpi-card kpi-top-country">
           <div class="kpi-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
@@ -419,7 +466,20 @@
             <div class="kpi-label">ส่วนลดรวม</div>
             <div class="kpi-value">฿${formatNumber(summary.total_discount)}</div>
           </div>
+        </div>` : '';
+    return `
+      <div class="dashboard-kpi-cards">
+        <div class="dashboard-kpi-card kpi-travelers">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">ยอดจองรวม</div>
+            <div class="kpi-value">฿${formatNumber(summary.total_net_amount)}</div>
+            <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
+          </div>
         </div>
+        ${adminCards}
       </div>`;
   }
 
@@ -473,7 +533,7 @@
               <th>เดินทาง</th>
               <th class="group-start">เซลล์</th>
               <th class="right group-start">ยอดจอง</th>
-              <th class="center">ห้อง</th>
+              <th class="center">ผู้เดินทาง</th>
               <th class="center">วันชำระงวด 1</th>
               <th class="right group-start">คอมรวม</th>
               <th class="right">คอม (หักส่วนลด)</th>
@@ -487,7 +547,7 @@
 
   // ---- Export CSV ----
   function exportCSV(orders) {
-    const headers = ['รหัส Order','จองวันที่','ลูกค้า','เดินทาง','เซลล์','ยอดจอง','ห้อง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
+    const headers = ['รหัส Order','จองวันที่','ลูกค้า','เดินทาง','เซลล์','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
     const rows = orders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return [
