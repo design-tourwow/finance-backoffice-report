@@ -428,13 +428,13 @@
           <td>${formatDate(o.created_at)}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
-          <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
-          <td class="right">฿${formatNumber(o.net_amount)}</td>
+          <td class="group-start"><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
+          <td class="right group-start">฿${formatNumber(o.net_amount)}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
-          <td class="right">฿${formatNumber(o.supplier_commission)}</td>
+          <td class="right group-start">฿${formatNumber(o.supplier_commission)}</td>
           <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">฿${formatNumber(netCom)}</td>
-          <td class="right">฿${formatNumber(o.discount)}</td>
+          <td class="right group-start">฿${formatNumber(o.discount)}</td>
         </tr>`;
     }).join('');
 
@@ -461,13 +461,13 @@
               <th>จองวันที่</th>
               <th>ลูกค้า</th>
               <th>เดินทาง</th>
-              <th>เซลล์</th>
-              <th class="right">ยอดจอง</th>
+              <th class="group-start">เซลล์</th>
+              <th class="right group-start">ยอดจอง</th>
               <th class="center">ห้อง</th>
               <th class="center">วันชำระงวด 1</th>
-              <th class="right">คอมรวม</th>
+              <th class="right group-start">คอมรวม</th>
               <th class="right">คอม (หักส่วนลด)</th>
-              <th class="right">ส่วนลดรวม</th>
+              <th class="right group-start">ส่วนลดรวม</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>

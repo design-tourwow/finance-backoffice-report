@@ -262,6 +262,15 @@
 .crp-table tbody td.right { text-align: right; font-variant-numeric: tabular-nums; }
 .crp-table tbody td.center { text-align: center; }
 
+/* Group dividers */
+.crp-table thead tr.group-row th + th {
+  border-left: 2px solid #b6c9db;
+}
+.crp-table thead tr.col-row th.group-start,
+.crp-table tbody td.group-start {
+  border-left: 2px solid #e5e7eb;
+}
+
 .crp-order-code {
   font-weight: 600;
   color: #1d4ed8;
