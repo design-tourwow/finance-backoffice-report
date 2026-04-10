@@ -173,58 +173,29 @@
 
 .crp-btn-search:hover { background: #3b6490; }
 
-/* ========= Table ========= */
-.crp-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: 'Kanit', sans-serif;
-  font-size: 13px;
-}
-
+/* ========= Table — base from dashboard-table, group-specific only ========= */
 .crp-table thead tr.group-row th {
   background: #e0e7ef;
   color: #1e3a5f;
   text-align: center;
   font-size: 12px;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 16px;
   border-bottom: 1px solid #c8d6e4;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.crp-table thead tr.col-row {
-  background: #f3f4f6;
-}
-
 .crp-table thead tr.col-row th {
-  padding: 9px 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #e5e7eb;
   white-space: nowrap;
 }
 
 .crp-table thead th.right { text-align: right; }
 .crp-table thead th.center { text-align: center; }
 
-.crp-table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background 0.1s;
-}
-
-.crp-table tbody tr:hover { background: #f8fafc; }
-.crp-table tbody tr:last-child { border-bottom: none; }
-
-.crp-table tbody td {
-  padding: 9px 12px;
-  color: #374151;
-  vertical-align: middle;
-}
-
 .crp-table tbody td.right { text-align: right; font-variant-numeric: tabular-nums; }
 .crp-table tbody td.center { text-align: center; }
+.crp-table tbody td { vertical-align: middle; }
 
 /* Group dividers */
 .crp-table thead tr.group-row th + th {

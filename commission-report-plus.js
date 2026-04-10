@@ -658,7 +658,7 @@
         </div>
       </div>
       <div class="dashboard-table-wrapper" style="overflow-x: auto;">
-        <table class="crp-table">
+        <table class="dashboard-table crp-table">
           <thead>
             <tr class="group-row">
               <th colspan="4" class="group-header">Order</th>
