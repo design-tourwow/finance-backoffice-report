@@ -12,17 +12,27 @@ function handleExternalLink(e, url) {
   'use strict';
 
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
+  // adminOnly: true = เห็นเฉพาะ admin | adminOnly: false/undefined = เห็นทุก role
   const MENU_ITEMS = [
+    {
+      id: 'commission-report-plus',
+      label: 'Commission Report +',
+      url: '/commission-report-plus',
+      requireAuth: true,
+      adminOnly: false
+    },
     {
       id: 'tour-image-manager',
       label: 'Tour Image Manager',
       url: '/tour-image-manager',
-      requireAuth: true
+      requireAuth: true,
+      adminOnly: true
     },
     {
       id: 'report',
       label: 'Report',
       requireAuth: true,
+      adminOnly: true,
       submenu: [
         {
           id: 'sales-by-country',
@@ -43,9 +53,30 @@ function handleExternalLink(e, url) {
       label: 'ปอ',
       url: 'https://fe-2-project.vercel.app/',
       requireAuth: false,
-      external: true
+      external: true,
+      adminOnly: true
     }
   ];
+
+  // Decode job_position from JWT (path: payload.user.agency_member.job_position)
+  function getUserJobPosition() {
+    try {
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+      if (!token) return null;
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const payload = JSON.parse(atob(parts[1]));
+      return (payload && payload.user && payload.user.agency_member && payload.user.agency_member.job_position) || null;
+    } catch (e) { return null; }
+  }
+
+  function isAdminUser() {
+    return getUserJobPosition() === 'admin';
+  }
+
+  function getVisibleMenuItems() {
+    return MENU_ITEMS.filter(item => !item.adminOnly || isAdminUser());
+  }
 
   // Get current page path
   function getCurrentPath() {
@@ -69,7 +100,7 @@ function handleExternalLink(e, url) {
     const navMenu = document.querySelector('.nav-menu');
     if (!navMenu) return;
 
-    const menuHTML = MENU_ITEMS.map(item => {
+    const menuHTML = getVisibleMenuItems().map(item => {
       if (item.submenu) {
         // Menu with submenu
         const isExpanded = isSubmenuActive(item.submenu);
@@ -121,7 +152,7 @@ function handleExternalLink(e, url) {
     const navbarList = document.querySelector('.navbar-list');
     if (!navbarList) return;
 
-    const menuHTML = MENU_ITEMS.map(item => {
+    const menuHTML = getVisibleMenuItems().map(item => {
       if (item.submenu) {
         // Menu with dropdown
         const isDropdownActive = isSubmenuActive(item.submenu);
