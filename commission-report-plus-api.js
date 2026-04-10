@@ -41,5 +41,24 @@ const CommissionReportPlusAPI = {
 
   async getSellers() {
     return this.fetchAPI('/api/reports/commission-plus/sellers')
+  },
+
+  async downloadPDF(payload) {
+    const token = this.getToken()
+    const response = await fetch(`${this.baseURL}/api/reports/commission-plus/pdf`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(`HTTP ${response.status}: ${text}`)
+    }
+
+    return response.blob()
   }
 }

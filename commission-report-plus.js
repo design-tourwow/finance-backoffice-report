@@ -937,45 +937,52 @@
 </html>`;
   }
 
-  // ---- Export PDF (browser print from current table view) ----
-  function exportPDF(orders, summary = {}) {
+  function getPdfFileName() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `commission-report-plus-${yyyy}${mm}${dd}.pdf`;
+  }
+
+  // ---- Export PDF (direct file download) ----
+  async function exportPDF(orders, summary = {}) {
     const tableSection = document.querySelector('.dashboard-table-wrapper.crp-table-scroll');
     const tableCount = document.getElementById('crp-table-count');
     if (!tableSection) return;
 
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1280,height=900');
-    if (!printWindow) {
-      alert('เบราว์เซอร์บล็อกหน้าต่างสำหรับพิมพ์ PDF กรุณาอนุญาต pop-up แล้วลองใหม่');
-      return;
+    const btn = document.getElementById('crp-btn-pdf');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'กำลังสร้าง PDF...';
     }
 
-    const html = buildPrintDocumentHtml(
-      tableSection.outerHTML,
-      summary,
-      tableCount ? tableCount.textContent : `แสดง ${formatNumber(orders.length, 0)} รายการ`
-    );
-
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-
-    let didTriggerPrint = false;
-    const triggerPrint = function () {
-      if (didTriggerPrint || printWindow.closed) return;
-      didTriggerPrint = true;
-      printWindow.focus();
-      printWindow.print();
-    };
-
-    printWindow.addEventListener('load', function () {
-      setTimeout(triggerPrint, 150);
-    }, { once: true });
-
-    printWindow.addEventListener('afterprint', function () {
-      printWindow.close();
-    }, { once: true });
-
-    setTimeout(triggerPrint, 700);
+    try {
+      const html = buildPrintDocumentHtml(
+        tableSection.outerHTML,
+        summary,
+        tableCount ? tableCount.textContent : `แสดง ${formatNumber(orders.length, 0)} รายการ`
+      );
+      const fileName = getPdfFileName();
+      const blob = await CommissionReportPlusAPI.downloadPDF({ html, fileName });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('[CRP] Failed to export PDF:', error);
+      alert('สร้าง PDF ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
   }
 
 })();
