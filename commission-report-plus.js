@@ -549,6 +549,40 @@
     document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
     document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
 
+    // Auto-fit table font to viewport
+    const tableScroll = document.querySelector('.crp-table-scroll');
+    const crpTable = document.querySelector('.crp-table');
+
+    function fitTableToViewport() {
+      if (!tableScroll || !crpTable || tableScroll.classList.contains('crp-zoom-mode')) return;
+      crpTable.style.fontSize = '';
+      const containerW = tableScroll.clientWidth;
+      const tableW = crpTable.scrollWidth;
+      if (tableW > containerW) {
+        const newSize = Math.max(12 * (containerW / tableW), 8);
+        crpTable.style.fontSize = newSize + 'px';
+      }
+    }
+
+    fitTableToViewport();
+
+    if (window._crpResizeObserver) window._crpResizeObserver.disconnect();
+    window._crpResizeObserver = new ResizeObserver(fitTableToViewport);
+    window._crpResizeObserver.observe(tableScroll);
+
+    // Zoom toggle
+    document.getElementById('crp-btn-zoom').addEventListener('click', function () {
+      const isZoom = tableScroll.classList.toggle('crp-zoom-mode');
+      this.classList.toggle('crp-zoom-active', isZoom);
+      if (isZoom) {
+        crpTable.style.fontSize = '';
+        this.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg> ย่อ`;
+      } else {
+        fitTableToViewport();
+        this.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg> ขยาย`;
+      }
+    });
+
     // Table search
     document.getElementById('crp-table-search').addEventListener('input', function () {
       const q = this.value.toLowerCase().trim();
@@ -668,6 +702,10 @@
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             Download PDF
+          </button>
+          <button class="crp-zoom-btn" id="crp-btn-zoom">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            ขยาย
           </button>
         </div>
       </div>
