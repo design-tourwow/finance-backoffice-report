@@ -42,7 +42,6 @@ function handleExternalLink(e, url) {
           label: 'Wholesale Destinations',
           url: '/wholesale-destinations',
           requireAuth: true
-        },
         }
       ]
     },
