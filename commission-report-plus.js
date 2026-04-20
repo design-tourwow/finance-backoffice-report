@@ -549,6 +549,23 @@
     document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
     document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
 
+    // Auto-fit font size when table overflows container width
+    const tableScroll = document.querySelector('.crp-table-scroll');
+    const crpTable = document.querySelector('.crp-table');
+    function fitTableToViewport() {
+      if (!tableScroll || !crpTable) return;
+      crpTable.style.fontSize = '';
+      const containerW = tableScroll.clientWidth;
+      const tableW = crpTable.scrollWidth;
+      if (tableW > containerW) {
+        crpTable.style.fontSize = Math.max(12 * (containerW / tableW), 8) + 'px';
+      }
+    }
+    fitTableToViewport();
+    if (window._crpResizeObserver) window._crpResizeObserver.disconnect();
+    window._crpResizeObserver = new ResizeObserver(fitTableToViewport);
+    window._crpResizeObserver.observe(tableScroll);
+
     // Table search
     document.getElementById('crp-table-search').addEventListener('input', function () {
       const q = this.value.toLowerCase().trim();
