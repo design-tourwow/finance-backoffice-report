@@ -595,6 +595,16 @@
   function renderSummary(summary) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
+    const discountCard = `
+        <div class="dashboard-kpi-card kpi-active">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">ส่วนลดรวม</div>
+            <div class="kpi-value">฿${formatNumber(summary.total_discount)}</div>
+          </div>
+        </div>`;
     const adminCards = isAdmin() ? `
         <div class="dashboard-kpi-card kpi-top-country">
           <div class="kpi-icon">
@@ -614,15 +624,7 @@
             <div class="kpi-value" style="color:${netColor}">฿${formatNumber(netCommission)}</div>
           </div>
         </div>
-        <div class="dashboard-kpi-card kpi-active">
-          <div class="kpi-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">ส่วนลดรวม</div>
-            <div class="kpi-value">฿${formatNumber(summary.total_discount)}</div>
-          </div>
-        </div>` : '';
+        ${discountCard}` : discountCard;
     return `
       <div class="dashboard-kpi-cards">
         <div class="dashboard-kpi-card kpi-travelers">
