@@ -42,6 +42,12 @@ function handleExternalLink(e, url) {
           label: 'Wholesale Destinations',
           url: '/wholesale-destinations',
           requireAuth: true
+        },
+        {
+          id: 'commission-report-plus',
+          label: 'Commission Report Plus',
+          url: '/commission-report-plus',
+          requireAuth: true
         }
       ]
     },
