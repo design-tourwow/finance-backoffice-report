@@ -152,6 +152,17 @@
   color: #9ca3af;
 }
 
+/* PDF Button */
+.crp-btn-pdf {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: white !important;
+}
+
+.crp-btn-pdf:hover {
+  background: #b91c1c !important;
+}
+
 /* Search Button */
 .crp-btn-search {
   display: flex;
@@ -181,8 +192,18 @@
   max-height: 65vh;
 }
 
-/* Single-line rows */
+/* Compact font + padding for 11 columns */
+.crp-table {
+  font-size: 12px;
+}
+
+.crp-table thead th {
+  padding: 8px 8px;
+  font-size: 12px;
+}
+
 .crp-table tbody td {
+  padding: 7px 8px;
   white-space: nowrap;
 }
 
@@ -191,9 +212,9 @@
   background: #e0e7ef;
   color: #1e3a5f;
   text-align: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 6px 16px;
+  padding: 6px 8px;
   border-bottom: 1px solid #c8d6e4;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -245,10 +266,6 @@
 
 .crp-period-text {
   color: #6b7280;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   display: block;
 }
 
