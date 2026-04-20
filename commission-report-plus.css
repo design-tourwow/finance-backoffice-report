@@ -187,14 +187,17 @@
 /* ========= Table Scroll + Sticky Header ========= */
 
 .crp-table-scroll {
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: auto;
   max-height: 65vh;
+  width: 100%;
 }
 
 /* Compact font + padding for 11 columns */
 .crp-table {
   font-size: 12px;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .crp-table thead th {
@@ -204,7 +207,8 @@
 
 .crp-table tbody td {
   padding: 7px 8px;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* ========= Table — base from dashboard-table, group-specific only ========= */
@@ -231,7 +235,8 @@
 }
 
 .crp-table thead tr.col-row th {
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .crp-table thead th.right { text-align: right; }
