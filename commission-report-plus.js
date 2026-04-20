@@ -549,22 +549,17 @@
     document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
     document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
 
-    // Auto-fit font size when table overflows container width
+    // Scroll hint: gradient fades when scrolled to end
     const tableScroll = document.querySelector('.crp-table-scroll');
-    const crpTable = document.querySelector('.crp-table');
-    function fitTableToViewport() {
-      if (!tableScroll || !crpTable) return;
-      crpTable.style.fontSize = '';
-      const containerW = tableScroll.clientWidth;
-      const tableW = crpTable.scrollWidth;
-      if (tableW > containerW) {
-        crpTable.style.fontSize = Math.max(12 * (containerW / tableW), 8) + 'px';
-      }
+    const hintWrapper = document.querySelector('.crp-scroll-hint-wrapper');
+    function updateScrollHint() {
+      if (!hintWrapper || !tableScroll) return;
+      const atEnd = tableScroll.scrollLeft + tableScroll.clientWidth >= tableScroll.scrollWidth - 2;
+      const noScroll = tableScroll.scrollWidth <= tableScroll.clientWidth;
+      hintWrapper.classList.toggle('crp-hint-hidden', atEnd || noScroll);
     }
-    fitTableToViewport();
-    if (window._crpResizeObserver) window._crpResizeObserver.disconnect();
-    window._crpResizeObserver = new ResizeObserver(fitTableToViewport);
-    window._crpResizeObserver.observe(tableScroll);
+    tableScroll.addEventListener('scroll', updateScrollHint);
+    updateScrollHint();
 
     // Table search
     document.getElementById('crp-table-search').addEventListener('input', function () {
@@ -688,6 +683,7 @@
           </button>
         </div>
       </div>
+      <div class="crp-scroll-hint-wrapper">
       <div class="dashboard-table-wrapper crp-table-scroll">
         <table class="dashboard-table crp-table">
           <thead>
@@ -714,6 +710,7 @@
           </thead>
           <tbody>${rows}</tbody>
         </table>
+      </div>
       </div>`;
   }
 

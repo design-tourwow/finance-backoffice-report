@@ -186,8 +186,29 @@
 
 /* ========= Table Scroll + Sticky Header ========= */
 
+.crp-scroll-hint-wrapper {
+  position: relative;
+}
+
+.crp-scroll-hint-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 64px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.92));
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 3;
+}
+
+.crp-scroll-hint-wrapper.crp-hint-hidden::after {
+  opacity: 0;
+}
+
 .crp-table-scroll {
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   max-height: 65vh;
   width: 100%;
