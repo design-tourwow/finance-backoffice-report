@@ -331,7 +331,6 @@
       options: travelerOptions,
       onChange: function (val) {
         selectedTravelerFilter = val;
-        if (currentData) renderResults(currentData);
       }
     });
 
