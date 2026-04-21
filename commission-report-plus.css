@@ -305,45 +305,127 @@
 
 /* ========= Seller Summary ========= */
 .crp-seller-summary {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  padding: 20px 24px;
   margin-bottom: 16px;
 }
 
 .crp-summary-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #1e3a5f;
-  margin-bottom: 16px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
 }
 
 .crp-summary-groups {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .crp-summary-group {
   flex: 1;
-  min-width: 280px;
+  min-width: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+/* Telesales — blue accent */
+.crp-summary-group--ts .crp-summary-group-header {
+  background: linear-gradient(135deg, #1e3a5f 0%, #4a7ba7 100%);
+}
+
+/* CRM — teal accent */
+.crp-summary-group--crm .crp-summary-group-header {
+  background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+}
+
+.crp-summary-group-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .crp-summary-group-title {
   font-size: 13px;
   font-weight: 600;
-  color: #4a7ba7;
+  color: white;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #e0e7ef;
+  letter-spacing: 0.06em;
+}
+
+.crp-summary-group-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
 }
 
 .crp-summary-table {
   width: 100%;
   font-size: 12px;
+  background: white;
+  border-collapse: collapse;
+}
+
+.crp-summary-table thead tr {
+  background: #f8fafc;
+}
+
+.crp-summary-table thead th {
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+}
+
+.crp-summary-table thead th.right { text-align: right; }
+
+.crp-summary-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+}
+
+.crp-summary-table tbody tr:last-child { border-bottom: none; }
+.crp-summary-table tbody tr:hover { background: #f8fafc; }
+
+.crp-summary-table tbody td {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+.crp-summary-table tbody td.right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.crp-summary-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  margin-right: 6px;
+  flex-shrink: 0;
+  color: #9ca3af;
+  background: #f1f5f9;
+}
+
+.crp-summary-rank--1 { background: #fef3c7; color: #92400e; }
+.crp-summary-rank--2 { background: #f1f5f9; color: #475569; }
+.crp-summary-rank--3 { background: #fef2f2; color: #991b1b; }
+
+.crp-summary-seller-cell {
+  display: flex;
+  align-items: center;
 }
 
 
