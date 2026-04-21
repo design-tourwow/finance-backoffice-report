@@ -706,7 +706,7 @@
           <tr>
             <td>
               <div class="crp-summary-seller-cell">
-                ${trophyIcon}${rank > 3 ? `<span class="crp-summary-rank">${rank}</span>` : ''}
+                ${trophyIcon}${rank > 3 ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" style="flex-shrink:0;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="13" r="5"/><path d="M9 2h6l1 5H8L9 2z" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 7c0 0-1 1-1 3" stroke-linecap="round"/><path d="M16 7c0 0 1 1 1 3" stroke-linecap="round"/></svg><span class="crp-summary-rank">${rank}</span>` : ''}
                 <span class="crp-seller-badge">${escHtml(name)}</span>
               </div>
             </td>
