@@ -405,7 +405,14 @@
   text-align: left;
   border-bottom: 1px solid #f1f5f9;
   white-space: nowrap;
-  background: #fafafa;
+}
+
+.crp-summary-group--ts .crp-summary-table thead th {
+  background: #f5f9ff;
+}
+
+.crp-summary-group--crm .crp-summary-table thead th {
+  background: #f4fdf8;
 }
 
 .crp-summary-table thead th.right { text-align: right; }
