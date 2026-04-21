@@ -1,38 +1,9 @@
 // request-discount-api.js — API service for Request Discount report
 // Exposes window.RequestDiscountAPI (IIFE)
-// Depends on: token-utils.js (window.TokenUtils), window.FE2_API_BASE_URL
+// Depends on: window.FE2Http (fe2-http.js)
 
 (function () {
   'use strict';
-
-  var API_BASE_URL = window.FE2_API_BASE_URL || 'https://be-2-report.vercel.app';
-
-  function buildHeaders() {
-    var token = TokenUtils.getToken();
-    var headers = { 'Content-Type': 'application/json' };
-    if (token) {
-      headers['Authorization'] = 'Bearer ' + token;
-    }
-    return headers;
-  }
-
-  async function request(endpoint) {
-    var response = await fetch(API_BASE_URL + endpoint, {
-      method: 'GET',
-      headers: buildHeaders()
-    });
-
-    if (response.status === 401) {
-      TokenUtils.redirectToLogin('Token หมดอายุหรือไม่ถูกต้อง\nกรุณาเข้าสู่ระบบใหม่อีกครั้ง');
-      throw new Error('Unauthorized');
-    }
-
-    if (!response.ok) {
-      throw new Error('HTTP error ' + response.status + ': ' + response.statusText);
-    }
-
-    return response.json();
-  }
 
   /**
    * Fetch order discount report data.
@@ -52,47 +23,20 @@
   async function fetchReport(params) {
     params = params || {};
 
-    var qs = new URLSearchParams();
+    var query = {
+      year: params.filterMode !== 'all' ? params.year : null,
+      quarter: params.filterMode === 'quarterly' ? params.quarter : null,
+      month: params.filterMode === 'monthly' ? params.month : null,
+      country_id: params.country_id && params.country_id > 0 ? params.country_id : null,
+      job_position: params.job_position,
+      team_number: params.team_number,
+      user_id: params.user_id
+    };
 
-    if (params.filterMode !== 'all' && params.year) {
-      qs.append('year', String(params.year));
-    }
+    var response = await window.FE2Http.get('/api/reports/order-has-discount', { params: query });
 
-    if (params.filterMode === 'quarterly' && params.quarter) {
-      qs.append('quarter', String(params.quarter));
-    } else if (params.filterMode === 'monthly' && params.month) {
-      qs.append('month', String(params.month));
-    }
-
-    if (params.country_id && params.country_id > 0) {
-      qs.append('country_id', String(params.country_id));
-    }
-
-    if (params.job_position) {
-      qs.append('job_position', params.job_position);
-    }
-
-    if (params.team_number) {
-      qs.append('team_number', String(params.team_number));
-    }
-
-    if (params.user_id) {
-      qs.append('user_id', String(params.user_id));
-    }
-
-    var qsStr = qs.toString();
-    var url = '/api/reports/order-has-discount' + (qsStr ? '?' + qsStr : '');
-
-    console.log('[RequestDiscountAPI] GET', API_BASE_URL + url);
-
-    var response = await request(url);
-
-    if (Array.isArray(response)) {
-      return response;
-    }
-    if (response && typeof response === 'object' && Array.isArray(response.data)) {
-      return response.data;
-    }
+    if (Array.isArray(response)) return response;
+    if (response && typeof response === 'object' && Array.isArray(response.data)) return response.data;
 
     console.warn('[RequestDiscountAPI] Unexpected response format:', response);
     return [];
