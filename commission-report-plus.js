@@ -693,11 +693,15 @@
       const rows = sorted.map(([name, s], i) => {
         const rank = i + 1;
         const rankClass = rank <= 3 ? ` crp-summary-rank--${rank}` : '';
+        const trophyColors = { 1: '#f59e0b', 2: '#94a3b8', 3: '#cd7c55' };
+        const trophyIcon = rank <= 3
+          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="${trophyColors[rank]}" stroke="${trophyColors[rank]}" stroke-width="1.5" style="flex-shrink:0;margin-right:4px"><path d="M6 9H3V4h3M18 9h3V4h-3M12 17v3m-4 1h8M8 9c0 4 8 4 8 0V4H8v5z" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+          : '';
         return `
           <tr>
             <td>
               <div class="crp-summary-seller-cell">
-                <span class="crp-summary-rank${rankClass}">${rank}</span>
+                ${trophyIcon}<span class="crp-summary-rank${rankClass}">${rank}</span>
                 <span class="crp-seller-badge">${escHtml(name)}</span>
               </div>
             </td>
