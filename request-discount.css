@@ -1,11 +1,12 @@
 /* Request Discount Page Styles */
-/* Desktop-first, plain CSS3. Depends on tour-image-manager.css for shell. */
+/* Desktop-first, plain CSS3. Depends on tour-image-manager.css for shell and
+   fe2-ui.css for shared loading spinner / error banner. */
 
 /* -----------------------------------------------------------------------
-   Filter Panel
+   Shared FE2 Filter Panel + Table styling (scoped overrides)
    ----------------------------------------------------------------------- */
 
-.rd-filter-panel {
+.fe2-filter-panel {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,.10);
@@ -13,33 +14,33 @@
   margin-bottom: 20px;
 }
 
-.rd-filter-panel h2 {
+.fe2-filter-title {
   font-size: 1rem;
   font-weight: 600;
   color: #111827;
   margin: 0 0 16px 0;
 }
 
-.rd-filter-grid {
+.fe2-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
   align-items: end;
 }
 
-.rd-filter-group {
+.fe2-filter-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.rd-filter-group label {
+.fe2-filter-group label {
   font-size: .75rem;
   font-weight: 500;
   color: #374151;
 }
 
-.rd-filter-group select {
+.fe2-filter-group select {
   width: 100%;
   padding: 7px 10px;
   border: 1px solid #d1d5db;
@@ -53,60 +54,90 @@
   appearance: auto;
 }
 
-.rd-filter-group select:focus {
+.fe2-filter-group select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59,130,246,.15);
 }
 
-/* -----------------------------------------------------------------------
-   Error / Loading States
-   ----------------------------------------------------------------------- */
+.fe2-filter-actions { display: none; }   /* apply-button not used — onChange drives refresh */
 
-.rd-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 20px;
-  color: #991b1b;
-  font-size: .875rem;
+.fe2-table-wrap {
+  overflow-x: auto;
 }
 
-.rd-error svg {
-  flex-shrink: 0;
-  color: #f87171;
+.fe2-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
 }
 
-.rd-loading {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.10);
-  padding: 48px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 20px;
+.fe2-table thead th,
+.fe2-th {
+  background: #f9fafb;
+  padding: 10px 16px;
+  font-size: .72rem;
+  font-weight: 600;
   color: #6b7280;
-  font-size: .875rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
 }
 
-.rd-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: rd-spin .7s linear infinite;
-  flex-shrink: 0;
+.fe2-th.fe2-cell-right   { text-align: right; }
+.fe2-th.fe2-cell-center  { text-align: center; }
+
+.fe2-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-transform: inherit;
+  letter-spacing: inherit;
 }
 
-@keyframes rd-spin {
-  to { transform: rotate(360deg); }
+.fe2-th.fe2-cell-right  .fe2-sort-btn { float: right; }
+.fe2-th.fe2-cell-center .fe2-sort-btn { margin: 0 auto; }
+
+.fe2-sort-btn:hover { color: #374151; }
+
+.fe2-sort-icon {
+  width: 12px;
+  height: 12px;
+  opacity: .45;
+}
+.fe2-sort-icon--active { opacity: 1; }
+
+.fe2-th--sort-active { color: #2563eb; }
+
+.fe2-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background .1s;
+}
+
+.fe2-table tbody tr:hover { background: #f9fafb; }
+
+.fe2-td {
+  padding: 12px 16px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.fe2-td.fe2-cell-right  { text-align: right; }
+.fe2-td.fe2-cell-center { text-align: center; }
+
+.fe2-empty-row {
+  text-align: center;
+  padding: 32px;
+  color: #9ca3af;
 }
 
 /* -----------------------------------------------------------------------
@@ -234,17 +265,13 @@
   transition: background .15s;
 }
 
-.rd-export-btn:hover {
-  background: #15803d;
-}
+.rd-export-btn:hover { background: #15803d; }
 
 /* -----------------------------------------------------------------------
-   Tables
+   Top-Sales Summary Table (page-unique — not sortable, not FE2Table)
    ----------------------------------------------------------------------- */
 
-.rd-table-wrap {
-  overflow-x: auto;
-}
+.rd-table-wrap { overflow-x: auto; }
 
 .rd-table {
   width: 100%;
@@ -268,37 +295,12 @@
 .rd-table thead th.right  { text-align: right; }
 .rd-table thead th.center { text-align: center; }
 
-.rd-table thead th.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.rd-table thead th.sortable:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.rd-sort-icon {
-  display: inline-block;
-  margin-left: 4px;
-  opacity: .45;
-  font-style: normal;
-}
-
-th.sort-asc  .rd-sort-icon,
-th.sort-desc .rd-sort-icon {
-  opacity: 1;
-  color: #3b82f6;
-}
-
 .rd-table tbody tr {
   border-bottom: 1px solid #f3f4f6;
   transition: background .1s;
 }
 
-.rd-table tbody tr:hover {
-  background: #f9fafb;
-}
+.rd-table tbody tr:hover { background: #f9fafb; }
 
 .rd-table tbody td {
   padding: 12px 16px;
@@ -386,7 +388,7 @@ th.sort-desc .rd-sort-icon {
 }
 
 /* -----------------------------------------------------------------------
-   Table Footer
+   Table Footer + Pagination
    ----------------------------------------------------------------------- */
 
 .rd-table-footer {
@@ -407,10 +409,6 @@ th.sort-desc .rd-sort-icon {
   gap: 20px;
   flex-wrap: wrap;
 }
-
-/* -----------------------------------------------------------------------
-   Pagination
-   ----------------------------------------------------------------------- */
 
 .rd-pagination {
   display: flex;
@@ -441,9 +439,7 @@ th.sort-desc .rd-sort-icon {
   transition: background .1s;
 }
 
-.rd-page-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-}
+.rd-page-btn:hover:not(:disabled) { background: #f3f4f6; }
 
 .rd-page-btn:disabled {
   opacity: .4;
@@ -493,10 +489,10 @@ th.sort-desc .rd-sort-icon {
 }
 
 @media (max-width: 768px) {
-  .rd-filter-grid       { grid-template-columns: repeat(2, 1fr); }
-  .rd-card-header-row   { flex-direction: column; }
-  .rd-table-footer      { flex-direction: column; align-items: flex-start; }
-  .rd-pagination        { flex-direction: column; align-items: flex-start; }
+  .fe2-filter-grid    { grid-template-columns: repeat(2, 1fr); }
+  .rd-card-header-row { flex-direction: column; }
+  .rd-table-footer    { flex-direction: column; align-items: flex-start; }
+  .rd-pagination      { flex-direction: column; align-items: flex-start; }
 }
 
 @media (max-width: 480px) {

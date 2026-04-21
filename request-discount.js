@@ -1,6 +1,7 @@
 // request-discount.js — Request Discount Report Page
-// Depends on: token-utils.js, fe2-auth-guard.js, fe2-utils.js, fe2-filter-service.js,
-//             request-discount-api.js, Chart.js (CDN)
+// Depends on: token-utils.js, fe2-auth-guard.js, fe2-utils.js, fe2-http.js,
+//             fe2-filter-service.js, fe2-ui.js, fe2-chart.js, fe2-table.js,
+//             fe2-csv.js, fe2-filter-panel.js, request-discount-api.js, Chart.js.
 
 (function () {
   'use strict';
@@ -9,8 +10,12 @@
   // State
   // ---------------------------------------------------------------------------
 
-  var allOrdersData = [];      // raw API response, sorted by created_at desc
-  var displayData   = [];      // after checkbox filters (showDiscountOnly / showUnpaidOnly)
+  // allOrdersData: raw API response sorted by created_at desc.
+  //   Refetched ONLY when API-side filters change (period / country / team /
+  //   job / user). Checkbox toggles filter it in-memory — no new API call.
+  // displayData: subset of allOrdersData after checkbox filters.
+  var allOrdersData = [];
+  var displayData   = [];
 
   var filterState = {
     filterMode    : 'quarterly',
@@ -26,22 +31,21 @@
   var showDiscountOnly = true;
   var showUnpaidOnly   = false;
 
-  var sortKey = null;
-  var sortDir = 'asc';
+  var sortKey = 'created_at';
+  var sortDir = 'desc';
 
   var currentPage  = 1;
   var ITEMS_PER_PAGE = 50;
 
   // Reference data
-  var allCountries     = [];
-  var allTeams         = [];
-  var allJobPositions  = [];
-  var allUsers         = [];
-  var filteredUsers    = [];
+  var allCountries    = [];
+  var allTeams        = [];
+  var allJobPositions = [];
+  var allUsers        = [];
 
   // Chart instances
-  var chartAmount     = null;
-  var chartPercent    = null;
+  var chartAmount  = null;
+  var chartPercent = null;
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -58,7 +62,7 @@
   }
 
   function escapeHtml(str) {
-    return String(str || '')
+    return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -73,8 +77,14 @@
     return 'default';
   }
 
+  function el(id) { return document.getElementById(id); }
+  function setHTML(id, html) {
+    var node = el(id);
+    if (node) node.innerHTML = html;
+  }
+
   // ---------------------------------------------------------------------------
-  // In-memory filter (checkboxes only — no new API call)
+  // In-memory checkbox filter (Story 6.3) — NO API call on toggle
   // ---------------------------------------------------------------------------
 
   function applyCheckboxFilters() {
@@ -87,7 +97,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Sales summary (computed from allOrdersData, matching React useMemo)
+  // Sales summary (computed from allOrdersData, not displayData)
   // ---------------------------------------------------------------------------
 
   function buildSalesSummary() {
@@ -97,16 +107,16 @@
       var name = order.sales_crm.seller_name;
       if (!map[name]) {
         map[name] = {
-          seller_name       : name,
+          seller_name         : name,
           orders_with_discount: 0,
-          total_orders      : 0,
-          total_discount    : 0,
-          total_discount_pct: 0,
-          total_net_amount  : 0,
-          no_discount       : 0,
-          discount_1_15     : 0,
-          discount_15_20    : 0,
-          discount_over_20  : 0
+          total_orders        : 0,
+          total_discount      : 0,
+          total_discount_pct  : 0,
+          total_net_amount    : 0,
+          no_discount         : 0,
+          discount_1_15       : 0,
+          discount_15_20      : 0,
+          discount_over_20    : 0
         };
       }
 
@@ -116,14 +126,14 @@
 
       m.total_orders++;
       if (has) m.orders_with_discount++;
-      m.total_discount    += order.financial_metrics.discount;
+      m.total_discount     += order.financial_metrics.discount;
       m.total_discount_pct += pct;
-      m.total_net_amount  += order.financial_metrics.net_amount;
+      m.total_net_amount   += order.financial_metrics.net_amount;
 
-      if (pct === 0)               m.no_discount++;
-      else if (pct <= 15)          m.discount_1_15++;
-      else if (pct <= 20)          m.discount_15_20++;
-      else                         m.discount_over_20++;
+      if      (pct === 0)  m.no_discount++;
+      else if (pct <= 15)  m.discount_1_15++;
+      else if (pct <= 20)  m.discount_15_20++;
+      else                 m.discount_over_20++;
     });
 
     return Object.values(map).map(function (m) {
@@ -147,16 +157,17 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Overall metrics (computed from displayData)
+  // Overall metrics (computed from allOrdersData, not displayData — per spec)
   // ---------------------------------------------------------------------------
 
-  function buildMetrics() {
+  function buildMetrics(source) {
+    var rows = source || allOrdersData;
     var totals = { orders: 0, discount: 0, netAmount: 0, commission: 0, discountPctSum: 0 };
-    displayData.forEach(function (o) {
+    rows.forEach(function (o) {
       totals.orders++;
-      totals.discount      += o.financial_metrics.discount;
-      totals.netAmount     += o.financial_metrics.net_amount;
-      totals.commission    += o.financial_metrics.supplier_commission;
+      totals.discount       += o.financial_metrics.discount;
+      totals.netAmount      += o.financial_metrics.net_amount;
+      totals.commission     += o.financial_metrics.supplier_commission;
       totals.discountPctSum += o.financial_metrics.discount_percent;
     });
     totals.avgDiscountPct = totals.orders > 0 ? totals.discountPctSum / totals.orders : 0;
@@ -164,267 +175,78 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Sort displayData
+  // Sort displayData (FE2Table provides head UI only; sorting is our concern)
   // ---------------------------------------------------------------------------
 
   function sortedData() {
     if (!sortKey) return displayData.slice();
+    var dir = sortDir === 'asc' ? 1 : -1;
     return displayData.slice().sort(function (a, b) {
       var va = resolveSort(a, sortKey);
       var vb = resolveSort(b, sortKey);
-      if (va < vb) return sortDir === 'asc' ? -1 : 1;
-      if (va > vb) return sortDir === 'asc' ?  1 : -1;
+      if (va < vb) return -1 * dir;
+      if (va > vb) return  1 * dir;
       return 0;
     });
   }
 
   function resolveSort(order, key) {
     switch (key) {
-      case 'order_code':  return order.order_info.order_code;
-      case 'created_at':  return new Date(order.order_info.created_at).getTime();
-      case 'customer':    return order.customer_info.customer_name;
-      case 'seller':      return order.sales_crm.seller_name;
-      case 'crm':         return order.sales_crm.crm_name;
-      case 'net_amount':  return order.financial_metrics.net_amount;
-      case 'commission':  return order.financial_metrics.supplier_commission;
-      case 'discount':    return order.financial_metrics.discount;
+      case 'order_code':   return order.order_info.order_code;
+      case 'created_at':   return new Date(order.order_info.created_at).getTime();
+      case 'customer':     return order.customer_info.customer_name;
+      case 'seller':       return order.sales_crm.seller_name;
+      case 'crm':          return order.sales_crm.crm_name;
+      case 'net_amount':   return order.financial_metrics.net_amount;
+      case 'commission':   return order.financial_metrics.supplier_commission;
+      case 'discount':     return order.financial_metrics.discount;
       case 'discount_pct': return order.financial_metrics.discount_percent;
       default: return 0;
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Render helpers
-  // ---------------------------------------------------------------------------
-
-  function el(id) { return document.getElementById(id); }
-
-  function setHTML(id, html) {
-    var node = el(id);
-    if (node) node.innerHTML = html;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Render: filter panel
+  // Filter panel (FE2FilterPanel)
   // ---------------------------------------------------------------------------
 
   function renderFilterPanel() {
-    var quarterOpts = FE2Utils.getQuarterOptions().map(function (o) {
-      var val = o.year + '-' + o.quarter;
-      var sel = (filterState.year === o.year && filterState.quarter === o.quarter) ? ' selected' : '';
-      return '<option value="' + val + '"' + sel + '>' + escapeHtml(o.label) + '</option>';
-    }).join('');
+    var container = el('rd-filter-container');
+    if (!container) return;
 
-    var monthOpts = FE2Utils.getMonthOptions().map(function (o) {
-      var sel = filterState.month === o.value ? ' selected' : '';
-      return '<option value="' + o.value + '"' + sel + '>' + escapeHtml(o.label) + '</option>';
-    }).join('');
-
-    var yearOpts = FE2Utils.getYearOptions().map(function (y) {
-      var sel = filterState.year === y ? ' selected' : '';
-      return '<option value="' + y + '"' + sel + '>' + y + '</option>';
-    }).join('');
-
-    var countryOpts = '<option value="">ทุกประเทศ</option>' +
-      FE2Utils.sortCountriesByThai(allCountries).map(function (c) {
-        var sel = filterState.country_id === c.id ? ' selected' : '';
-        return '<option value="' + c.id + '"' + sel + '>' + escapeHtml(c.name_th) + '</option>';
-      }).join('');
-
-    var jobOpts = '<option value="">ทุกตำแหน่ง</option>' +
-      FE2Utils.filterAndDisplayJobPositions(allJobPositions).map(function (p) {
-        var sel = filterState.job_position === p.job_position ? ' selected' : '';
-        return '<option value="' + escapeHtml(p.job_position) + '"' + sel + '>' + escapeHtml(p.display_name) + '</option>';
-      }).join('');
-
-    var teamOpts = '<option value="">ทุกทีม</option>' +
-      allTeams.map(function (t) {
-        var sel = filterState.team_number === t.team_number ? ' selected' : '';
-        return '<option value="' + t.team_number + '"' + sel + '>Team ' + t.team_number + '</option>';
-      }).join('');
-
-    var userOpts = '<option value="">ทุกคน</option>' +
-      filteredUsers.map(function (u) {
-        var name = u.nickname || ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
-        var sel  = filterState.user_id === u.ID ? ' selected' : '';
-        return '<option value="' + u.ID + '"' + sel + '>' + escapeHtml(name) + '</option>';
-      }).join('');
-
-    var periodEl = '';
-    if (filterState.filterMode === 'quarterly') {
-      periodEl = '<div class="rd-filter-group">' +
-        '<label>ไตรมาส</label>' +
-        '<select id="rd-quarter-sel">' + quarterOpts + '</select>' +
-        '</div>';
-    } else if (filterState.filterMode === 'monthly') {
-      periodEl = '<div class="rd-filter-group">' +
-          '<label>เดือน</label>' +
-          '<select id="rd-month-sel">' + monthOpts + '</select>' +
-        '</div>' +
-        '<div class="rd-filter-group">' +
-          '<label>ปี</label>' +
-          '<select id="rd-year-sel">' + yearOpts + '</select>' +
-        '</div>';
-    } else if (filterState.filterMode === 'yearly') {
-      periodEl = '<div class="rd-filter-group">' +
-        '<label>ปี</label>' +
-        '<select id="rd-year-sel">' + yearOpts + '</select>' +
-        '</div>';
-    }
-
-    var modeOpts = ['all', 'quarterly', 'monthly', 'yearly'].map(function (m) {
-      var labels = { all: 'ทั้งหมด', quarterly: 'รายไตรมาส', monthly: 'รายเดือน', yearly: 'รายปี' };
-      var sel = filterState.filterMode === m ? ' selected' : '';
-      return '<option value="' + m + '"' + sel + '>' + labels[m] + '</option>';
-    }).join('');
-
-    var html = '<div class="rd-filter-panel">' +
-      '<h2>ตัวกรอง</h2>' +
-      '<div class="rd-filter-grid">' +
-        '<div class="rd-filter-group">' +
-          '<label>รูปแบบรายงาน</label>' +
-          '<select id="rd-mode-sel">' + modeOpts + '</select>' +
-        '</div>' +
-        periodEl +
-        '<div class="rd-filter-group">' +
-          '<label>ประเทศ</label>' +
-          '<select id="rd-country-sel">' + countryOpts + '</select>' +
-        '</div>' +
-        '<div class="rd-filter-group">' +
-          '<label>ตำแหน่งงาน</label>' +
-          '<select id="rd-job-sel">' + jobOpts + '</select>' +
-        '</div>' +
-        '<div class="rd-filter-group">' +
-          '<label>ทีม</label>' +
-          '<select id="rd-team-sel">' + teamOpts + '</select>' +
-        '</div>' +
-        '<div class="rd-filter-group">' +
-          '<label>ผู้ใช้</label>' +
-          '<select id="rd-user-sel">' + userOpts + '</select>' +
-        '</div>' +
-      '</div>' +
-      '</div>';
-
-    setHTML('rd-filter-container', html);
-    bindFilterEvents();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Bind filter events
-  // ---------------------------------------------------------------------------
-
-  function bindFilterEvents() {
-    var modeSel    = el('rd-mode-sel');
-    var countrySel = el('rd-country-sel');
-    var jobSel     = el('rd-job-sel');
-    var teamSel    = el('rd-team-sel');
-    var userSel    = el('rd-user-sel');
-    var quarterSel = el('rd-quarter-sel');
-    var monthSel   = el('rd-month-sel');
-    var yearSel    = el('rd-year-sel');
-
-    if (modeSel) modeSel.addEventListener('change', function () {
-      filterState.filterMode = this.value;
-      if (this.value === 'quarterly') {
-        filterState.quarter = FE2Utils.getCurrentQuarter();
-        filterState.year    = FE2Utils.getCurrentYear();
-      } else if (this.value === 'monthly') {
-        filterState.month = new Date().getMonth() + 1;
+    FE2FilterPanel.render({
+      containerEl: container,
+      state: {
+        mode        : filterState.filterMode,
+        year        : filterState.year,
+        quarter     : filterState.quarter,
+        month       : filterState.month,
+        country_id  : filterState.country_id,
+        team_number : filterState.team_number,
+        job_position: filterState.job_position,
+        user_id     : filterState.user_id
+      },
+      options: {
+        countries   : allCountries,
+        teams       : allTeams,
+        jobPositions: allJobPositions,
+        users       : allUsers
+      },
+      onChange: function (next) {
+        filterState.filterMode   = next.mode;
+        filterState.year         = next.year;
+        filterState.quarter      = next.quarter;
+        filterState.month        = next.month;
+        filterState.country_id   = next.country_id;
+        filterState.team_number  = next.team_number;
+        filterState.job_position = next.job_position;
+        filterState.user_id      = next.user_id;
+        loadData();
       }
-      loadData();
     });
-
-    if (quarterSel) quarterSel.addEventListener('change', function () {
-      var parts = this.value.split('-');
-      filterState.year    = parseInt(parts[0], 10);
-      filterState.quarter = parseInt(parts[1], 10);
-      loadData();
-    });
-
-    if (monthSel) monthSel.addEventListener('change', function () {
-      filterState.month = parseInt(this.value, 10);
-      loadData();
-    });
-
-    if (yearSel) yearSel.addEventListener('change', function () {
-      filterState.year = parseInt(this.value, 10);
-      loadData();
-    });
-
-    if (countrySel) countrySel.addEventListener('change', function () {
-      filterState.country_id = this.value ? parseInt(this.value, 10) : null;
-      loadData();
-    });
-
-    if (jobSel) jobSel.addEventListener('change', function () {
-      filterState.job_position = this.value || null;
-      filterState.user_id = null;
-      updateFilteredUsers();
-      renderFilterPanel();
-      loadData();
-    });
-
-    if (teamSel) teamSel.addEventListener('change', function () {
-      filterState.team_number = this.value ? parseInt(this.value, 10) : null;
-      filterState.user_id = null;
-      updateFilteredUsers();
-      renderFilterPanel();
-      loadData();
-    });
-
-    if (userSel) userSel.addEventListener('change', function () {
-      filterState.user_id = this.value ? parseInt(this.value, 10) : null;
-      loadData();
-    });
-  }
-
-  function updateFilteredUsers() {
-    filteredUsers = allUsers.filter(function (u) {
-      if (filterState.team_number && u.team_number !== filterState.team_number) return false;
-      if (filterState.job_position && u.job_position &&
-          u.job_position.toLowerCase() !== filterState.job_position.toLowerCase()) return false;
-      return true;
-    });
-
-    if (filterState.user_id && !filteredUsers.find(function (u) { return u.ID === filterState.user_id; })) {
-      filterState.user_id = null;
-    }
   }
 
   // ---------------------------------------------------------------------------
-  // Render: loading / error
-  // ---------------------------------------------------------------------------
-
-  function showLoading() {
-    setHTML('rd-content', '');
-    setHTML('rd-error-container', '');
-    setHTML('rd-loading-container',
-      '<div class="rd-loading">' +
-        '<div class="rd-spinner"></div>' +
-        '<span>กำลังโหลดข้อมูล Order Discount...</span>' +
-      '</div>');
-  }
-
-  function hideLoading() {
-    setHTML('rd-loading-container', '');
-  }
-
-  function showError(msg) {
-    setHTML('rd-error-container',
-      '<div class="rd-error">' +
-        '<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">' +
-          '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>' +
-        '</svg>' +
-        '<span>' + escapeHtml(msg) + '</span>' +
-      '</div>');
-  }
-
-  function clearError() {
-    setHTML('rd-error-container', '');
-  }
-
-  // ---------------------------------------------------------------------------
-  // Render: KPI cards
+  // KPI cards
   // ---------------------------------------------------------------------------
 
   function renderKPI(metrics) {
@@ -453,19 +275,19 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Render: Top Sales summary table
+  // Top-sales summary table
   // ---------------------------------------------------------------------------
 
   function renderSalesSummary(summary) {
     if (summary.length === 0) return '';
 
     var rows = summary.map(function (s, i) {
-      var rowClass = i === 0 ? 'rd-rank-1' : i === 1 ? 'rd-rank-2' : i === 2 ? 'rd-rank-3' : '';
+      var rowClass  = i === 0 ? 'rd-rank-1' : i === 1 ? 'rd-rank-2' : i === 2 ? 'rd-rank-3' : '';
       var badgeClass = i < 3 ? 'rd-rank-badge top' : 'rd-rank-badge';
-      var flame = i === 0 ? ' <span style="color:#dc2626">&#128162;</span>' : '';
+      var flame     = i === 0 ? ' <span style="color:#dc2626">&#128162;</span>' : '';
       var discRatio = s.total_orders > 0 ? Math.round((s.order_count / s.total_orders) * 100) : 0;
-
       var bd = s.discount_breakdown || {};
+
       return '<tr class="' + rowClass + '">' +
         '<td><span class="' + badgeClass + '">' + (i + 1) + '</span></td>' +
         '<td><span style="font-weight:600;color:#111827">' + escapeHtml(s.seller_name) + '</span>' + flame + '</td>' +
@@ -510,7 +332,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Render: Charts
+  // Charts (FE2Chart)
   // ---------------------------------------------------------------------------
 
   function renderChartsHTML() {
@@ -526,39 +348,25 @@
     '</div>';
   }
 
+  function truncate(name) {
+    return name.length > 15 ? name.substring(0, 15) + '...' : name;
+  }
+
   function drawCharts(summary) {
-    if (typeof Chart === 'undefined') {
-      console.warn('[RequestDiscount] Chart.js not loaded');
-      return;
-    }
-
-    // Destroy existing
-    if (chartAmount) { chartAmount.destroy(); chartAmount = null; }
-    if (chartPercent) { chartPercent.destroy(); chartPercent = null; }
-
-    // Amount chart — top 8 by total_discount
     var amountData = summary.slice(0, 8);
-    var amountLabels = amountData.map(function (s) {
-      return s.seller_name.length > 15 ? s.seller_name.substring(0, 15) + '...' : s.seller_name;
-    });
-
     var ctxA = el('rd-chart-amount');
     if (ctxA) {
-      chartAmount = new Chart(ctxA, {
-        type: 'bar',
-        data: {
-          labels: amountLabels,
-          datasets: [{
-            label: 'ส่วนลด (฿)',
-            data : amountData.map(function (s) { return s.total_discount; }),
-            backgroundColor: '#EF4444'
-          }]
-        },
+      chartAmount = FE2Chart.createBarChart({
+        canvasEl: ctxA,
+        previous: chartAmount,
+        labels  : amountData.map(function (s) { return truncate(s.seller_name); }),
+        datasets: [{
+          label: 'ส่วนลด (฿)',
+          data : amountData.map(function (s) { return s.total_discount; }),
+          backgroundColor: '#EF4444'
+        }],
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'top' },
             tooltip: {
               callbacks: {
                 label: function (ctx) {
@@ -571,41 +379,34 @@
                 }
               }
             }
-          },
-          scales: {
-            x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 11 } } },
-            y: { beginAtZero: true }
           }
         }
       });
     }
 
-    // Percentage chart — top 10 by avg_discount_percent
     var pctData = summary.slice().sort(function (a, b) {
       return b.avg_discount_percent - a.avg_discount_percent;
     }).slice(0, 10);
 
-    var pctLabels = pctData.map(function (s) {
-      return s.seller_name.length > 15 ? s.seller_name.substring(0, 15) + '...' : s.seller_name;
-    });
-
     var ctxP = el('rd-chart-percent');
     if (ctxP) {
-      chartPercent = new Chart(ctxP, {
-        type: 'bar',
-        data: {
-          labels: pctLabels,
-          datasets: [{
-            label: 'ส่วนลด (%)',
-            data : pctData.map(function (s) { return s.avg_discount_percent; }),
-            backgroundColor: '#FF8042'
-          }]
-        },
+      chartPercent = FE2Chart.createBarChart({
+        canvasEl: ctxP,
+        previous: chartPercent,
+        labels  : pctData.map(function (s) { return truncate(s.seller_name); }),
+        datasets: [{
+          label: 'ส่วนลด (%)',
+          data : pctData.map(function (s) { return s.avg_discount_percent; }),
+          backgroundColor: '#FF8042'
+        }],
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { callback: function (v) { return v + '%'; } }
+            }
+          },
           plugins: {
-            legend: { position: 'top' },
             tooltip: {
               callbacks: {
                 label: function (ctx) {
@@ -618,10 +419,6 @@
                 }
               }
             }
-          },
-          scales: {
-            x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 11 } } },
-            y: { beginAtZero: true }
           }
         }
       });
@@ -629,8 +426,57 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Render: Orders detail table
+  // Orders detail table (FE2Table)
   // ---------------------------------------------------------------------------
+
+  var ORDER_COLUMNS = [
+    { key: 'order_code',   label: 'Order Code',   align: 'left',
+      format: function (_, o) {
+        return '<span style="font-weight:600;color:#2563eb">' + escapeHtml(o.order_info.order_code) + '</span>';
+      } },
+    { key: 'created_at',   label: 'วันที่สร้าง',   align: 'left',
+      format: function (_, o) {
+        return '<span style="color:#6b7280">' + escapeHtml(formatDate(o.order_info.created_at)) + '</span>';
+      } },
+    { key: 'customer',     label: 'ลูกค้า',        align: 'left',
+      format: function (_, o) {
+        return '<span style="font-weight:500">' + escapeHtml(o.customer_info.customer_name) + '</span>';
+      } },
+    { key: 'seller',       label: 'เซลล์',         align: 'left',
+      format: function (_, o) { return escapeHtml(o.sales_crm.seller_name); } },
+    { key: 'crm',          label: 'CRM',          align: 'left',
+      format: function (_, o) {
+        return '<span style="color:#6b7280">' + escapeHtml(o.sales_crm.crm_name) + '</span>';
+      } },
+    { key: 'net_amount',   label: 'ยอดสุทธิ',      align: 'right',
+      format: function (_, o) {
+        return '<span style="font-weight:500">฿' + fmt(o.financial_metrics.net_amount) + '</span>';
+      } },
+    { key: 'commission',   label: 'คอมมิชชั่น',    align: 'right',
+      format: function (_, o) {
+        return '<span style="color:#2563eb">฿' + fmt(o.financial_metrics.supplier_commission) + '</span>';
+      } },
+    { key: 'discount',     label: 'ส่วนลด',        align: 'right',
+      format: function (_, o) {
+        return '<span style="font-weight:600;color:#dc2626">฿' + fmt(o.financial_metrics.discount) + '</span>';
+      } },
+    { key: 'discount_pct', label: '% ส่วนลด',      align: 'right',
+      format: function (_, o) {
+        return '<span style="font-weight:600;color:#ea580c">' + Math.round(o.financial_metrics.discount_percent) + '%</span>';
+      } },
+    { key: 'installments', label: 'การชำระเงิน',   align: 'center', sortable: false,
+      format: function (_, o) {
+        var sc = paymentStatusClass(o.payment_details.status_list);
+        return '<span class="rd-status-badge ' + sc + '">' +
+                 o.payment_details.paid_installments + '/' + o.payment_details.total_installments +
+               '</span>' +
+               '<div style="font-size:.7rem;color:#6b7280;margin-top:2px">งวด</div>';
+      } },
+    { key: 'status',       label: 'สถานะ',         align: 'center', sortable: false,
+      format: function (_, o) {
+        return '<span style="font-size:.75rem">' + escapeHtml(o.payment_details.status_list) + '</span>';
+      } }
+  ];
 
   function renderOrdersTable(metrics) {
     var sorted = sortedData();
@@ -640,55 +486,17 @@
     var page   = sorted.slice(start, end);
 
     var subtitleMap = {
-      'both'   : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ ฿1 และยังไม่ชำระเงิน',
-      'disc'   : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ ฿1',
-      'unpaid' : 'แสดงเฉพาะ Order ที่ยังไม่ชำระเงิน',
-      'all'    : 'แสดง Order ทั้งหมด'
+      'both'  : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ ฿1 และยังไม่ชำระเงิน',
+      'disc'  : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ ฿1',
+      'unpaid': 'แสดงเฉพาะ Order ที่ยังไม่ชำระเงิน',
+      'all'   : 'แสดง Order ทั้งหมด'
     };
     var subtitleKey = showDiscountOnly && showUnpaidOnly ? 'both'
                     : showDiscountOnly ? 'disc'
                     : showUnpaidOnly   ? 'unpaid'
                     : 'all';
 
-    function sortTh(label, key, align) {
-      var cls = 'sortable' + (align ? ' ' + align : '');
-      var icon = '&#8597;';
-      if (sortKey === key) {
-        cls += ' sort-' + sortDir;
-        icon = sortDir === 'asc' ? '&#8593;' : '&#8595;';
-      }
-      return '<th class="' + cls + '" data-sort="' + key + '">' +
-        label + '<i class="rd-sort-icon">' + icon + '</i>' +
-      '</th>';
-    }
-
-    var rows = page.length === 0
-      ? '<tr><td colspan="11" style="text-align:center;padding:32px;color:#9ca3af">ไม่พบข้อมูล</td></tr>'
-      : page.map(function (o) {
-          var sc = paymentStatusClass(o.payment_details.status_list);
-          return '<tr>' +
-            '<td><span style="font-weight:600;color:#2563eb">' + escapeHtml(o.order_info.order_code) + '</span></td>' +
-            '<td style="color:#6b7280">' + formatDate(o.order_info.created_at) + '</td>' +
-            '<td style="font-weight:500">' + escapeHtml(o.customer_info.customer_name) + '</td>' +
-            '<td>' + escapeHtml(o.sales_crm.seller_name) + '</td>' +
-            '<td style="color:#6b7280">' + escapeHtml(o.sales_crm.crm_name) + '</td>' +
-            '<td class="right" style="font-weight:500">฿' + fmt(o.financial_metrics.net_amount) + '</td>' +
-            '<td class="right" style="color:#2563eb">฿' + fmt(o.financial_metrics.supplier_commission) + '</td>' +
-            '<td class="right" style="font-weight:600;color:#dc2626">฿' + fmt(o.financial_metrics.discount) + '</td>' +
-            '<td class="right" style="font-weight:600;color:#ea580c">' + Math.round(o.financial_metrics.discount_percent) + '%</td>' +
-            '<td class="center">' +
-              '<span class="rd-status-badge ' + sc + '">' +
-                o.payment_details.paid_installments + '/' + o.payment_details.total_installments +
-              '</span>' +
-              '<div style="font-size:.7rem;color:#6b7280;margin-top:2px">งวด</div>' +
-            '</td>' +
-            '<td class="center" style="font-size:.75rem;max-width:100px;white-space:normal">' +
-              escapeHtml(o.payment_details.status_list) +
-            '</td>' +
-          '</tr>';
-        }).join('');
-
-    var tableHTML =
+    var html =
       '<div class="rd-card">' +
         '<div class="rd-card-header">' +
           '<div class="rd-card-header-row">' +
@@ -712,25 +520,7 @@
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="rd-table-wrap">' +
-          '<table class="rd-table">' +
-            '<thead><tr>' +
-              sortTh('Order Code', 'order_code', '') +
-              sortTh('วันที่สร้าง', 'created_at', '') +
-              sortTh('ลูกค้า', 'customer', '') +
-              sortTh('เซลล์', 'seller', '') +
-              sortTh('CRM', 'crm', '') +
-              sortTh('ยอดสุทธิ', 'net_amount', 'right') +
-              sortTh('คอมมิชชั่น', 'commission', 'right') +
-              sortTh('ส่วนลด', 'discount', 'right') +
-              sortTh('% ส่วนลด', 'discount_pct', 'right') +
-              '<th class="center">การชำระเงิน</th>' +
-              '<th class="center">สถานะ</th>' +
-            '</tr></thead>' +
-            '<tbody>' + rows + '</tbody>' +
-          '</table>' +
-        '</div>' +
-        // Footer
+        '<div id="rd-orders-table"></div>' +
         '<div class="rd-table-footer">' +
           '<span>แสดง ' + (total === 0 ? 0 : start + 1) + '-' + end + ' จาก ' + total + ' รายการ</span>' +
           '<div class="rd-table-footer-amounts">' +
@@ -742,7 +532,29 @@
         renderPagination(total) +
       '</div>';
 
-    return tableHTML;
+    return { html: html, rows: page };
+  }
+
+  function mountOrdersTable(rows) {
+    var container = el('rd-orders-table');
+    if (!container) return;
+    FE2Table.render({
+      containerEl: container,
+      columns    : ORDER_COLUMNS,
+      rows       : rows,
+      sortKey    : sortKey,
+      sortDir    : sortDir,
+      onSort     : function (key) {
+        if (sortKey === key) {
+          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortKey = key;
+          sortDir = 'asc';
+        }
+        currentPage = 1;
+        renderContent();
+      }
+    });
   }
 
   function renderPagination(total) {
@@ -750,12 +562,9 @@
     if (totalPages <= 1) return '';
 
     var pageBtns = '';
-
-    // Prev
     pageBtns += '<button class="rd-page-btn" data-page="' + (currentPage - 1) + '"' +
       (currentPage === 1 ? ' disabled' : '') + '>ก่อนหน้า</button>';
 
-    // Page numbers (max 5 visible)
     var startP, endP;
     if (totalPages <= 5) {
       startP = 1; endP = totalPages;
@@ -772,7 +581,6 @@
         '" data-page="' + p + '">' + p + '</button>';
     }
 
-    // Next
     pageBtns += '<button class="rd-page-btn" data-page="' + (currentPage + 1) + '"' +
       (currentPage === totalPages ? ' disabled' : '') + '>ถัดไป</button>';
 
@@ -783,11 +591,11 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Render full content (called after data load or checkbox change)
+  // Render full content
   // ---------------------------------------------------------------------------
 
   function renderContent() {
-    if (allOrdersData.length === 0 && displayData.length === 0) {
+    if (allOrdersData.length === 0) {
       setHTML('rd-content',
         '<div class="rd-card"><div class="rd-empty">' +
           '<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
@@ -797,43 +605,30 @@
       return;
     }
 
-    var summary = buildSalesSummary();
-    var metrics = buildMetrics();
+    // Chart + KPI + sales summary derive from allOrdersData; table from displayData.
+    var summary      = buildSalesSummary();
+    var kpiMetrics   = buildMetrics(allOrdersData);
+    var tableMetrics = buildMetrics(displayData);
+    var tablePacket  = renderOrdersTable(tableMetrics);
 
     var html =
-      renderKPI(metrics) +
+      renderKPI(kpiMetrics) +
       renderSalesSummary(summary) +
       renderChartsHTML() +
-      renderOrdersTable(metrics);
+      tablePacket.html;
 
     setHTML('rd-content', html);
 
     drawCharts(summary);
+    mountOrdersTable(tablePacket.rows);
     bindContentEvents();
   }
 
   // ---------------------------------------------------------------------------
-  // Bind table/checkbox/sort/pagination events
+  // Bind content events (pagination / checkboxes / export)
   // ---------------------------------------------------------------------------
 
   function bindContentEvents() {
-    // Sort headers
-    var ths = document.querySelectorAll('#rd-content th.sortable');
-    ths.forEach(function (th) {
-      th.addEventListener('click', function () {
-        var key = this.getAttribute('data-sort');
-        if (sortKey === key) {
-          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-        } else {
-          sortKey = key;
-          sortDir = 'asc';
-        }
-        currentPage = 1;
-        renderContent();
-      });
-    });
-
-    // Pagination
     var pageBtns = document.querySelectorAll('#rd-content .rd-page-btn');
     pageBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -845,7 +640,7 @@
       });
     });
 
-    // Checkboxes (in-memory filter — NO new API call)
+    // Checkbox toggles — in-memory filter, NO API call (Story 6.3)
     var chkDiscount = el('rd-chk-discount');
     var chkUnpaid   = el('rd-chk-unpaid');
 
@@ -861,13 +656,12 @@
       renderContent();
     });
 
-    // Export CSV
     var exportBtn = el('rd-export-btn');
     if (exportBtn) exportBtn.addEventListener('click', exportCSV);
   }
 
   // ---------------------------------------------------------------------------
-  // Export CSV
+  // Export CSV (FE2CSV)
   // ---------------------------------------------------------------------------
 
   function exportCSV() {
@@ -877,49 +671,45 @@
       'การชำระเงิน (งวด)', 'สถานะการชำระ'
     ];
 
-    var metrics = buildMetrics();
+    var metrics = buildMetrics(displayData);
     var sorted  = sortedData();
 
-    var rows = [headers.join(',')].concat(sorted.map(function (o) {
+    var rows = sorted.map(function (o) {
       return [
-        '"' + o.order_info.order_code + '"',
-        '"' + formatDate(o.order_info.created_at) + '"',
-        '"' + o.customer_info.customer_name + '"',
-        '"' + o.sales_crm.seller_name + '"',
-        '"' + o.sales_crm.crm_name + '"',
+        o.order_info.order_code,
+        formatDate(o.order_info.created_at),
+        o.customer_info.customer_name,
+        o.sales_crm.seller_name,
+        o.sales_crm.crm_name,
         fmt(o.financial_metrics.net_amount),
         fmt(o.financial_metrics.supplier_commission),
         fmt(o.financial_metrics.discount),
         Math.round(o.financial_metrics.discount_percent),
-        '"' + o.payment_details.paid_installments + '/' + o.payment_details.total_installments + '"',
-        '"' + o.payment_details.status_list + '"'
-      ].join(',');
-    }));
+        o.payment_details.paid_installments + '/' + o.payment_details.total_installments,
+        o.payment_details.status_list
+      ];
+    });
 
-    rows.push('');
-    rows.push('สรุปรวม');
+    rows.push([]);
+    rows.push(['สรุปรวม']);
     rows.push([
       'รวมทั้งหมด', '', '', '', '',
       fmt(metrics.netAmount),
       fmt(metrics.commission),
       fmt(metrics.discount),
       Math.round(metrics.avgDiscountPct),
-      '"' + metrics.orders + ' Orders"',
+      metrics.orders + ' Orders',
       ''
-    ].join(','));
+    ]);
 
-    var csv  = '﻿' + rows.join('\n');
-    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    var link = document.createElement('a');
-    var now  = new Date();
-    var dateStr = now.toISOString().split('T')[0];
-    var timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    link.setAttribute('href', URL.createObjectURL(blob));
-    link.setAttribute('download', 'order-discount-report-' + dateStr + '-' + timeStr + '.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    var now = new Date();
+    var ymd = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+
+    FE2CSV.export({
+      filename: 'request-discount-' + ymd,
+      headers : headers,
+      rows    : rows
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -927,45 +717,44 @@
   // ---------------------------------------------------------------------------
 
   async function loadData() {
-    showLoading();
-    clearError();
+    var loadingEl = el('rd-loading-container');
+    var errorEl   = el('rd-error-container');
+
+    FE2UI.hideError(errorEl);
+    FE2UI.showLoading(loadingEl, 'กำลังโหลดข้อมูล Order Discount...');
+    setHTML('rd-content', '');
 
     try {
       var raw = await RequestDiscountAPI.fetch(filterState);
 
-      if (raw && Array.isArray(raw)) {
-        allOrdersData = raw.sort(function (a, b) {
-          return new Date(b.order_info.created_at).getTime() -
-                 new Date(a.order_info.created_at).getTime();
-        });
-      } else {
-        allOrdersData = [];
-      }
+      allOrdersData = (raw && Array.isArray(raw))
+        ? raw.sort(function (a, b) {
+            return new Date(b.order_info.created_at).getTime() -
+                   new Date(a.order_info.created_at).getTime();
+          })
+        : [];
 
       applyCheckboxFilters();
-
     } catch (err) {
       console.error('[RequestDiscount] loadData failed:', err);
-      showError('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (err.message || 'กรุณาลองใหม่อีกครั้ง'));
+      FE2UI.showError(errorEl,
+        'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (err.message || 'กรุณาลองใหม่อีกครั้ง'),
+        { retryFn: loadData });
       allOrdersData = [];
       displayData   = [];
     }
 
-    hideLoading();
-
-    // Re-render filter panel to reflect current state (preserves user's selections)
-    renderFilterPanel();
+    FE2UI.hideLoading(loadingEl);
     renderContent();
   }
 
   // ---------------------------------------------------------------------------
-  // Page scaffold
+  // Scaffold + init
   // ---------------------------------------------------------------------------
 
   function renderScaffold() {
     var container = el('page-content');
     if (!container) return;
-
     container.innerHTML =
       '<div id="rd-filter-container"></div>' +
       '<div id="rd-error-container"></div>' +
@@ -973,14 +762,9 @@
       '<div id="rd-content"></div>';
   }
 
-  // ---------------------------------------------------------------------------
-  // Initialise
-  // ---------------------------------------------------------------------------
-
   async function init() {
     renderScaffold();
 
-    // Load filter reference data in parallel
     try {
       var results = await Promise.all([
         FE2FilterService.getCountries(),
@@ -992,7 +776,6 @@
       allTeams        = results[1] || [];
       allJobPositions = results[2] || [];
       allUsers        = results[3] || [];
-      filteredUsers   = allUsers.slice();
     } catch (e) {
       console.warn('[RequestDiscount] init filter data error:', e);
     }
