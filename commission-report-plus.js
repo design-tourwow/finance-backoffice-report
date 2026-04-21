@@ -621,7 +621,7 @@
             <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom)}</td>
             <td class="right group-start">${formatNumber(o.discount)}</td>
           </tr>`;
-      }).join('') || `<tr><td colspan="11"><div class="dashboard-table-empty"><img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom:16px;opacity:0.8;"/><h3 style="margin:0 0 8px 0;font-size:18px;color:#374151;">ไม่พบข้อมูล</h3><p style="margin:0;font-size:15px;color:#6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p></div></td></tr>`;
+      }).join('') || `<tr><td colspan="12"><div class="dashboard-table-empty"><img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom:16px;opacity:0.8;"/><h3 style="margin:0 0 8px 0;font-size:18px;color:#374151;">ไม่พบข้อมูล</h3><p style="margin:0;font-size:15px;color:#6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p></div></td></tr>`;
     });
   }
 
@@ -1075,7 +1075,7 @@
   function getVisibleTableRows() {
     return Array.from(document.querySelectorAll('.crp-table tbody tr'))
       .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.innerText.replace(/\s+/g, ' ').trim()))
-      .filter(row => row.length === 11);
+      .filter(row => row.length === 12);
   }
 
   function createPdfSourceNode(countText) {
