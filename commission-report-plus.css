@@ -359,8 +359,23 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  border-bottom: 1px solid #f3f4f6;
-  background: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.crp-summary-group--ts .crp-summary-group-header {
+  background: #eff6ff;
+}
+
+.crp-summary-group--crm .crp-summary-group-header {
+  background: #ecfdf5;
+}
+
+.crp-summary-group--ts .crp-summary-group-title {
+  color: #1d4ed8;
+}
+
+.crp-summary-group--crm .crp-summary-group-title {
+  color: #065f46;
 }
 
 .crp-summary-group-title {
