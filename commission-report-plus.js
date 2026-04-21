@@ -15,6 +15,7 @@
   let selectedJobPosition = 'admin';
   let selectedSellerId = '';
   let selectedOrderStatus = 'not_canceled';
+  let selectedTravelerFilter = 'all';
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -190,6 +191,11 @@
             <span class="time-granularity-label">สถานะ Order</span>
             <div id="crp-dd-status"></div>
 
+            <div class="filter-separator"></div>
+
+            <span class="time-granularity-label">จำนวนผู้เดินทาง</span>
+            <div id="crp-dd-travelers"></div>
+
             <button class="crp-btn-search" id="crp-btn-search">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               ค้นหา
@@ -312,6 +318,22 @@
            <div class="filter-sort-btn-content">${getStatusIcon('not_canceled')}<span class="filter-sort-btn-text">ไม่ยกเลิก</span></div>
          </button>`;
     }
+
+    // ---- จำนวนผู้เดินทาง dropdown ----
+    const travelerOptions = [
+      { value: 'all',          label: 'ทั้งหมด',   icon: getAllIcon(),              active: true },
+      { value: 'exclude_zero', label: 'ยกเว้น 0',  icon: getPersonIcon(),           active: false },
+    ];
+    FilterSortDropdownComponent.initDropdown({
+      containerId: 'crp-dd-travelers',
+      defaultLabel: 'ทั้งหมด',
+      defaultIcon: getAllIcon(),
+      options: travelerOptions,
+      onChange: function (val) {
+        selectedTravelerFilter = val;
+        if (currentData) renderResults(currentData);
+      }
+    });
 
     // Ez Search buttons
     initEzSearch();
@@ -532,7 +554,10 @@
   function renderResults(data) {
     const results = document.getElementById('crp-results');
     if (!results) return;
-    const { orders = [], summary = {} } = data;
+    const { orders: rawOrders = [], summary = {} } = data;
+    const orders = selectedTravelerFilter === 'exclude_zero'
+      ? rawOrders.filter(o => parseInt(o.room_quantity || 0) >= 1)
+      : rawOrders;
     if (!orders.length) { showEmpty(); return; }
 
     results.innerHTML = renderSummary(summary) + renderTableSection(orders);
