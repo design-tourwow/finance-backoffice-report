@@ -559,7 +559,7 @@
       : rawOrders;
     if (!orders.length) { showEmpty(); return; }
 
-    results.innerHTML = renderSummary(summary) + renderTableSection(orders);
+    results.innerHTML = renderSummary(summary) + renderSellerSummary(orders) + renderTableSection(orders);
 
     // Sticky header: set col-row top = group-row height
     const groupRow = results.querySelector('.crp-table thead tr.group-row');
@@ -663,6 +663,61 @@
           </div>
         </div>
         ${adminCards}
+      </div>`;
+  }
+
+  // ---- Seller Summary (Admin only) ----
+  function renderSellerSummary(orders) {
+    if (!isAdmin()) return '';
+
+    function buildGroupTable(title, groupOrders) {
+      const sellerMap = {};
+      groupOrders.forEach(o => {
+        const name = o.seller_nick_name || '-';
+        if (!sellerMap[name]) sellerMap[name] = { orders: 0, net_amount: 0, discount: 0, net_commission: 0 };
+        sellerMap[name].orders++;
+        sellerMap[name].net_amount    += parseFloat(o.net_amount || 0);
+        sellerMap[name].discount      += parseFloat(o.discount || 0);
+        sellerMap[name].net_commission += parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
+      });
+      const rows = Object.entries(sellerMap)
+        .sort((a, b) => b[1].net_amount - a[1].net_amount)
+        .map(([name, s]) => `
+          <tr>
+            <td><span class="crp-seller-badge">${escHtml(name)}</span></td>
+            <td class="right">${formatNumber(s.orders, 0)}</td>
+            <td class="right">${formatNumber(s.net_amount)}</td>
+            <td class="right">${formatNumber(s.discount)}</td>
+            <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission)}</td>
+          </tr>`).join('');
+      return `
+        <div class="crp-summary-group">
+          <div class="crp-summary-group-title">${escHtml(title)}</div>
+          <table class="dashboard-table crp-table crp-summary-table">
+            <thead>
+              <tr class="col-row">
+                <th>เซลล์</th>
+                <th class="right">ออเดอร์</th>
+                <th class="right">ยอดจอง</th>
+                <th class="right">ส่วนลด</th>
+                <th class="right">คอมสุทธิ</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af">ไม่มีข้อมูล</td></tr>'}</tbody>
+          </table>
+        </div>`;
+    }
+
+    const tsOrders  = orders.filter(o => parseInt(o.is_old_customer) === 0);
+    const crmOrders = orders.filter(o => parseInt(o.is_old_customer) === 1);
+
+    return `
+      <div class="crp-seller-summary">
+        <div class="crp-summary-title">สรุป</div>
+        <div class="crp-summary-groups">
+          ${buildGroupTable('Telesales', tsOrders)}
+          ${buildGroupTable('CRM', crmOrders)}
+        </div>
       </div>`;
   }
 
