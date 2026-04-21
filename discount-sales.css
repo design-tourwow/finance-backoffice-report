@@ -1,7 +1,10 @@
-/* discount-sales.css — Page-specific styles for Discount Sales report */
+/* discount-sales.css — Page-specific styles for Discount Sales report.
+   Global fe2-* widget styles (loading, error, filter-panel, table) live alongside;
+   only the .fe2-filter-panel and .fe2-table layouts unique to this page are styled here.
+*/
 
-/* ─── Filter Panel ─────────────────────────────────────────────────── */
-.ds-filter-panel {
+/* ─── Filter Panel (fe2-filter-panel widget) ───────────────────────── */
+.fe2-filter-panel {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,.1);
@@ -9,33 +12,33 @@
   margin-bottom: 24px;
 }
 
-.ds-filter-panel h2 {
+.fe2-filter-title {
   font-size: 1.1rem;
   font-weight: 600;
   color: #111827;
   margin: 0 0 16px;
 }
 
-.ds-filter-grid {
+.fe2-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
   align-items: end;
 }
 
-.ds-filter-group {
+.fe2-filter-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.ds-filter-group label {
+.fe2-filter-group label {
   font-size: 0.8125rem;
   font-weight: 500;
   color: #374151;
 }
 
-.ds-filter-group select {
+.fe2-filter-group select {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid #d1d5db;
@@ -48,17 +51,17 @@
   transition: border-color .15s;
 }
 
-.ds-filter-group select:focus {
+.fe2-filter-group select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59,130,246,.2);
 }
 
-.ds-filter-actions {
+.fe2-filter-actions {
   display: flex;
   align-items: flex-end;
 }
 
-.ds-btn-apply {
+.fe2-btn-apply {
   padding: 9px 20px;
   background: #2563eb;
   color: #fff;
@@ -72,57 +75,8 @@
   transition: background .15s;
 }
 
-.ds-btn-apply:hover {
+.fe2-btn-apply:hover {
   background: #1d4ed8;
-}
-
-/* ─── Error / Loading ──────────────────────────────────────────────── */
-.ds-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  color: #991b1b;
-  font-size: 0.875rem;
-}
-
-.ds-error svg {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  color: #ef4444;
-  margin-top: 1px;
-}
-
-.ds-loading {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.1);
-  padding: 48px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.ds-spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: ds-spin .7s linear infinite;
-}
-
-@keyframes ds-spin {
-  to { transform: rotate(360deg); }
 }
 
 /* ─── Empty State ──────────────────────────────────────────────────── */
@@ -238,7 +192,7 @@
   height: 320px;
 }
 
-/* ─── Data Table ───────────────────────────────────────────────────── */
+/* ─── Data Table (fe2-table widget) ────────────────────────────────── */
 .ds-table-card {
   background: #fff;
   border-radius: 8px;
@@ -280,21 +234,21 @@
 
 .ds-btn-export:hover { background: #15803d; }
 
-.ds-table-scroll {
+.fe2-table-wrap {
   overflow-x: auto;
 }
 
-.ds-table {
+.fe2-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
 
-.ds-table thead tr {
+.fe2-table thead tr {
   background: #f9fafb;
 }
 
-.ds-table th {
+.fe2-table .fe2-th {
   padding: 12px 20px;
   text-align: left;
   font-size: 0.75rem;
@@ -306,26 +260,30 @@
   white-space: nowrap;
 }
 
-.ds-table th.text-right,
-.ds-table td.text-right { text-align: right; }
-.ds-table th.text-center,
-.ds-table td.text-center { text-align: center; }
+.fe2-table .fe2-cell-right  { text-align: right; }
+.fe2-table .fe2-cell-center { text-align: center; }
+.fe2-table .fe2-cell-left   { text-align: left; }
 
-.ds-table tbody tr {
+.fe2-table tbody tr {
   border-bottom: 1px solid #f3f4f6;
   transition: background .1s;
 }
 
-.ds-table tbody tr:hover { background: #f9fafb; }
+.fe2-table tbody tr:hover { background: #f9fafb; }
 
-.ds-table td {
+.fe2-table .fe2-td {
   padding: 14px 20px;
   white-space: nowrap;
   color: #111827;
 }
 
-/* Sort button inside th */
-.ds-sort-btn {
+.fe2-table .fe2-empty-row {
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.fe2-sort-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -342,11 +300,11 @@
   white-space: nowrap;
 }
 
-.ds-sort-btn:hover { color: #374151; }
+.fe2-sort-btn:hover { color: #374151; }
 
-.ds-sort-btn.active { color: #2563eb; }
+.fe2-th--sort-active .fe2-sort-btn { color: #2563eb; }
 
-.ds-sort-icon {
+.fe2-sort-icon {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
