@@ -575,11 +575,11 @@
         const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
         return `
           <tr>
-            <td><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
+            <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
+            <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
             <td>${formatDate(o.created_at)}</td>
             <td>${escHtml(o.customer_name || '-')}</td>
             <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
-            <td class="group-start"><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
             <td class="right group-start">฿${formatNumber(o.net_amount)}</td>
             <td class="center">${o.room_quantity || 0}</td>
             <td class="center">${formatDate(o.first_paid_at)}</td>
@@ -647,11 +647,11 @@
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return `
         <tr>
-          <td><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
+          <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
+          <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
-          <td class="group-start"><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="right group-start">฿${formatNumber(o.net_amount)}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
@@ -690,18 +690,18 @@
         <table class="dashboard-table crp-table">
           <thead>
             <tr class="group-row">
-              <th colspan="4" class="group-header">Order</th>
               <th class="group-header">เซลล์</th>
+              <th colspan="4" class="group-header">Order</th>
               <th colspan="3" class="group-header">ยอดจอง</th>
               <th colspan="2" class="group-header">คอมมิชชั่น</th>
               <th class="group-header">ส่วนลด</th>
             </tr>
             <tr class="col-row">
-              <th>รหัส Order</th>
+              <th>เซลล์</th>
+              <th class="group-start">รหัส Order</th>
               <th>จองวันที่</th>
               <th>ลูกค้า</th>
               <th>เดินทาง</th>
-              <th class="group-start">เซลล์</th>
               <th class="right group-start">ยอดจอง</th>
               <th class="center">ผู้เดินทาง</th>
               <th class="center">วันชำระงวด 1</th>
@@ -718,12 +718,12 @@
 
   // ---- Export CSV ----
   function exportCSV(orders) {
-    const headers = ['รหัส Order','จองวันที่','ลูกค้า','เดินทาง','เซลล์','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
+    const headers = ['เซลล์','รหัส Order','จองวันที่','ลูกค้า','เดินทาง','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
     const rows = orders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return [
-        o.order_code || '', formatDate(o.created_at), o.customer_name || '',
-        o.product_period_snapshot || '', o.seller_nick_name || '',
+        o.seller_nick_name || '', o.order_code || '', formatDate(o.created_at), o.customer_name || '',
+        o.product_period_snapshot || '',
         parseFloat(o.net_amount || 0).toFixed(2), o.room_quantity || 0,
         formatDate(o.first_paid_at), parseFloat(o.supplier_commission || 0).toFixed(2),
         netCom.toFixed(2), parseFloat(o.discount || 0).toFixed(2),
