@@ -48,7 +48,14 @@ function handleExternalLink(e, url) {
           label: 'Commission Report Plus',
           url: '/commission-report-plus',
           requireAuth: true
-        },
+        }
+      ]
+    },
+    {
+      id: 'report-pnut',
+      label: "Report P'NUT",
+      requireAuth: true,
+      submenu: [
         {
           id: 'supplier-commission',
           label: 'Supplier Commission',
@@ -60,27 +67,27 @@ function handleExternalLink(e, url) {
           label: 'Discount Sales',
           url: '/discount-sales',
           requireAuth: true
-        },
-        {
-          id: 'order-external-summary',
-          label: 'Order External Summary',
-          url: '/order-external-summary',
-          requireAuth: true
-        },
-        {
-          id: 'request-discount',
-          label: 'Request Discount',
-          url: '/request-discount',
-          requireAuth: true
         }
       ]
     },
     {
-      id: 'por',
-      label: 'ปอ',
-      url: 'https://fe-2-project.vercel.app/',
-      requireAuth: false,
-      external: true
+      id: 'report-poh',
+      label: "Report P'OH",
+      requireAuth: true,
+      submenu: [
+        {
+          id: 'request-discount',
+          label: 'Order Discount',
+          url: '/request-discount',
+          requireAuth: true
+        },
+        {
+          id: 'order-external-summary',
+          label: 'Order แก้ย้อนหลัง',
+          url: '/order-external-summary',
+          requireAuth: true
+        }
+      ]
     }
   ];
 
