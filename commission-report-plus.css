@@ -263,6 +263,15 @@
 .crp-table tbody td.center { text-align: center; }
 .crp-table tbody td { vertical-align: middle; }
 
+.crp-table thead th,
+.crp-table tbody td {
+  border-right: 1px solid #e5e7eb;
+}
+.crp-table thead th:last-child,
+.crp-table tbody td:last-child {
+  border-right: none;
+}
+
 /* Group dividers */
 .crp-table thead tr.group-row th + th {
   border-left: 2px solid #b6c9db;
