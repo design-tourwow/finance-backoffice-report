@@ -706,7 +706,7 @@
           <tr>
             <td>
               <div class="crp-summary-seller-cell">
-                ${trophyIcon}<span class="crp-summary-rank${rankClass}">${rank}</span>
+                ${trophyIcon}${rank > 3 ? `<span class="crp-summary-rank">${rank}</span>` : ''}
                 <span class="crp-seller-badge">${escHtml(name)}</span>
               </div>
             </td>
