@@ -1,0 +1,395 @@
+/* supplier-commission.css — Page-specific styles only
+   App shell / sidebar styles live in tour-image-manager.css */
+
+/* ------------------------------------------------------------------ */
+/* Filter Panel                                                        */
+/* ------------------------------------------------------------------ */
+.sc-filter-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.sc-filter-panel h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.sc-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.sc-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sc-filter-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.sc-filter-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Kanit', sans-serif;
+  color: #111827;
+  background: #fff;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.sc-filter-group select:focus {
+  outline: none;
+  border-color: #4a7ba7;
+  box-shadow: 0 0 0 2px rgba(74, 123, 167, 0.2);
+}
+
+.sc-filter-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.sc-btn-apply {
+  padding: 8px 20px;
+  background: #4a7ba7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.sc-btn-apply:hover {
+  background: #3a6a96;
+}
+
+.sc-btn-apply:active {
+  background: #2c5a86;
+}
+
+/* ------------------------------------------------------------------ */
+/* Error Banner                                                        */
+/* ------------------------------------------------------------------ */
+.sc-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.sc-error-banner svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Loading Spinner                                                     */
+/* ------------------------------------------------------------------ */
+.sc-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.sc-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4a7ba7;
+  border-radius: 50%;
+  animation: sc-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes sc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Empty State                                                         */
+/* ------------------------------------------------------------------ */
+.sc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 60px 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #9ca3af;
+  font-size: 14px;
+  text-align: center;
+}
+
+.sc-empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 4px;
+}
+
+.sc-empty-state p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ------------------------------------------------------------------ */
+/* Chart Container                                                     */
+/* ------------------------------------------------------------------ */
+.sc-chart-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.sc-chart-card h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.sc-chart-wrapper {
+  position: relative;
+  height: 360px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Table Card                                                          */
+/* ------------------------------------------------------------------ */
+.sc-table-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.sc-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sc-table-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.sc-btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sc-btn-export:hover {
+  background: #15803d;
+}
+
+.sc-table-wrapper {
+  overflow-x: auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sortable Table                                                      */
+/* ------------------------------------------------------------------ */
+.sc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.sc-table thead tr {
+  background: #f9fafb;
+}
+
+.sc-table th {
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.sc-table th.sc-th-right {
+  text-align: right;
+}
+
+.sc-table th.sc-th-center {
+  text-align: center;
+}
+
+.sc-table th button.sc-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s;
+  font-family: 'Kanit', sans-serif;
+}
+
+.sc-table th button.sc-sort-btn:hover {
+  color: #374151;
+}
+
+.sc-table th button.sc-sort-btn.sc-sort-active {
+  color: #4a7ba7;
+}
+
+.sc-table th button.sc-sort-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.sc-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.1s;
+}
+
+.sc-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.sc-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.sc-table td {
+  padding: 12px 16px;
+  color: #111827;
+  vertical-align: middle;
+}
+
+.sc-table td.sc-td-right {
+  text-align: right;
+}
+
+.sc-table td.sc-td-center {
+  text-align: center;
+}
+
+.sc-supplier-name-th {
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.sc-supplier-name-en {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.sc-net-value {
+  color: #16a34a;
+}
+
+.sc-pax-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sc-avg-value {
+  color: #6b7280;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .sc-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sc-chart-wrapper {
+    height: 260px;
+  }
+
+  .sc-table th,
+  .sc-table td {
+    padding: 9px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sc-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -27,6 +27,22 @@
     {
       "source": "/work-list",
       "destination": "/work-list.html"
+    },
+    {
+      "source": "/supplier-commission",
+      "destination": "/supplier-commission.html"
+    },
+    {
+      "source": "/discount-sales",
+      "destination": "/discount-sales.html"
+    },
+    {
+      "source": "/order-external-summary",
+      "destination": "/order-external-summary.html"
+    },
+    {
+      "source": "/request-discount",
+      "destination": "/request-discount.html"
     }
   ],
   "headers": [

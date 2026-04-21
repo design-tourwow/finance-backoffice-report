@@ -1,0 +1,347 @@
+/* Order External Summary Page Styles */
+
+/* ── Filter Panel ─────────────────────────────────────────────────────────── */
+.oes-filter-panel {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.oes-filter-panel h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.oes-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1280px) {
+  .oes-filter-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .oes-filter-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .oes-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oes-filter-group label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.oes-filter-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+.oes-filter-group select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.oes-filter-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.oes-btn-apply {
+  padding: 9px 20px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.oes-btn-apply:hover {
+  background: #1d4ed8;
+}
+
+/* ── Summary Cards ────────────────────────────────────────────────────────── */
+.oes-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .oes-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .oes-summary-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.oes-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.oes-card-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.oes-card-icon.blue   { background: #dbeafe; }
+.oes-card-icon.green  { background: #dcfce7; }
+.oes-card-icon.purple { background: #f3e8ff; }
+.oes-card-icon.red    { background: #fee2e2; }
+
+.oes-card-icon svg.blue   { color: #2563eb; stroke: #2563eb; }
+.oes-card-icon svg.green  { color: #16a34a; stroke: #16a34a; }
+.oes-card-icon svg.purple { color: #7c3aed; stroke: #7c3aed; }
+.oes-card-icon svg.red    { color: #dc2626; stroke: #dc2626; }
+
+.oes-card-body p.label {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 4px;
+}
+
+.oes-card-body p.value {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+/* ── Table Section ────────────────────────────────────────────────────────── */
+.oes-table-section {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.oes-table-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.oes-table-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.oes-btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.oes-btn-export:hover {
+  background: #15803d;
+}
+
+.oes-table-scroll {
+  overflow-x: auto;
+}
+
+.oes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.oes-table thead tr {
+  background: #f9fafb;
+}
+
+.oes-table th {
+  padding: 12px 20px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.oes-table th.text-right {
+  text-align: right;
+}
+
+.oes-table td {
+  padding: 14px 20px;
+  white-space: nowrap;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
+}
+
+.oes-table td.text-right {
+  text-align: right;
+}
+
+.oes-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.oes-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.oes-order-code {
+  font-weight: 500;
+  color: #2563eb;
+}
+
+.oes-commission {
+  color: #7c3aed;
+}
+
+.oes-discount {
+  color: #dc2626;
+}
+
+/* ── Loading State ────────────────────────────────────────────────────────── */
+.oes-loading {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 48px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.oes-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: oes-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes oes-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Error State ──────────────────────────────────────────────────────────── */
+.oes-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.oes-error svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #ef4444;
+}
+
+.oes-error p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #991b1b;
+}
+
+/* ── Empty State ──────────────────────────────────────────────────────────── */
+.oes-empty {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.oes-empty svg {
+  width: 48px;
+  height: 48px;
+  color: #9ca3af;
+  margin: 0 auto 12px;
+}
+
+.oes-empty h3 {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.oes-empty p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}

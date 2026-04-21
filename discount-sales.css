@@ -1,0 +1,371 @@
+/* discount-sales.css — Page-specific styles for Discount Sales report */
+
+/* ─── Filter Panel ─────────────────────────────────────────────────── */
+.ds-filter-panel {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.ds-filter-panel h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.ds-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.ds-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ds-filter-group label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.ds-filter-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #111827;
+  background: #fff;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.ds-filter-group select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+}
+
+.ds-filter-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.ds-btn-apply {
+  padding: 9px 20px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+}
+
+.ds-btn-apply:hover {
+  background: #1d4ed8;
+}
+
+/* ─── Error / Loading ──────────────────────────────────────────────── */
+.ds-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #991b1b;
+  font-size: 0.875rem;
+}
+
+.ds-error svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: #ef4444;
+  margin-top: 1px;
+}
+
+.ds-loading {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  padding: 48px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.ds-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: ds-spin .7s linear infinite;
+}
+
+@keyframes ds-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Empty State ──────────────────────────────────────────────────── */
+.ds-empty {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  padding: 48px;
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.ds-empty svg {
+  width: 48px;
+  height: 48px;
+  color: #9ca3af;
+  margin: 0 auto 12px;
+}
+
+.ds-empty h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.ds-empty p {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* ─── Summary Cards ────────────────────────────────────────────────── */
+.ds-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ds-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ds-card-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ds-card-icon--blue   { background: #eff6ff; color: #2563eb; }
+.ds-card-icon--red    { background: #fef2f2; color: #dc2626; }
+.ds-card-icon--green  { background: #f0fdf4; color: #16a34a; }
+.ds-card-icon--purple { background: #faf5ff; color: #7c3aed; }
+
+.ds-card-body p:first-child {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0 0 4px;
+}
+
+.ds-card-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+/* ─── Charts ───────────────────────────────────────────────────────── */
+.ds-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .ds-charts-grid { grid-template-columns: 1fr; }
+}
+
+.ds-chart-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  padding: 24px;
+}
+
+.ds-chart-card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.ds-chart-wrapper {
+  position: relative;
+  height: 320px;
+}
+
+/* ─── Data Table ───────────────────────────────────────────────────── */
+.ds-table-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.ds-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ds-table-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.ds-btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.ds-btn-export:hover { background: #15803d; }
+
+.ds-table-scroll {
+  overflow-x: auto;
+}
+
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.ds-table thead tr {
+  background: #f9fafb;
+}
+
+.ds-table th {
+  padding: 12px 20px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.ds-table th.text-right,
+.ds-table td.text-right { text-align: right; }
+.ds-table th.text-center,
+.ds-table td.text-center { text-align: center; }
+
+.ds-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background .1s;
+}
+
+.ds-table tbody tr:hover { background: #f9fafb; }
+
+.ds-table td {
+  padding: 14px 20px;
+  white-space: nowrap;
+  color: #111827;
+}
+
+/* Sort button inside th */
+.ds-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ds-sort-btn:hover { color: #374151; }
+
+.ds-sort-btn.active { color: #2563eb; }
+
+.ds-sort-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Cell color variants */
+.ds-cell-red    { color: #dc2626; }
+.ds-cell-orange { color: #ea580c; }
+.ds-cell-green  { color: #16a34a; }
+
+/* Order count badge */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

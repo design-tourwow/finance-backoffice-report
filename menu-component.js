@@ -48,6 +48,30 @@ function handleExternalLink(e, url) {
           label: 'Commission Report Plus',
           url: '/commission-report-plus',
           requireAuth: true
+        },
+        {
+          id: 'supplier-commission',
+          label: 'Supplier Commission',
+          url: '/supplier-commission',
+          requireAuth: true
+        },
+        {
+          id: 'discount-sales',
+          label: 'Discount Sales',
+          url: '/discount-sales',
+          requireAuth: true
+        },
+        {
+          id: 'order-external-summary',
+          label: 'Order External Summary',
+          url: '/order-external-summary',
+          requireAuth: true
+        },
+        {
+          id: 'request-discount',
+          label: 'Request Discount',
+          url: '/request-discount',
+          requireAuth: true
         }
       ]
     },

@@ -43,6 +43,18 @@ const server = http.createServer((req, res) => {
     else if (urlWithoutQuery === '/work-list') {
         filePath = './work-list.html';
     }
+    else if (urlWithoutQuery === '/supplier-commission') {
+        filePath = './supplier-commission.html';
+    }
+    else if (urlWithoutQuery === '/discount-sales') {
+        filePath = './discount-sales.html';
+    }
+    else if (urlWithoutQuery === '/order-external-summary') {
+        filePath = './order-external-summary.html';
+    }
+    else if (urlWithoutQuery === '/request-discount') {
+        filePath = './request-discount.html';
+    }
     
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
