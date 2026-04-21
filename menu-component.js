@@ -15,6 +15,12 @@ function handleExternalLink(e, url) {
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   const MENU_ITEMS = [
     {
+      id: 'dashboard',
+      label: 'Dashboard',
+      url: '/dashboard',
+      requireAuth: true
+    },
+    {
       id: 'tour-image-manager',
       label: 'Tour Image Manager',
       url: '/tour-image-manager',

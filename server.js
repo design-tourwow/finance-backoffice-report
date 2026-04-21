@@ -27,6 +27,9 @@ const server = http.createServer((req, res) => {
     if (urlWithoutQuery === '/') {
         filePath = './index.html';
     }
+    else if (urlWithoutQuery === '/dashboard') {
+        filePath = './dashboard.html';
+    }
     // Route /tour-image-manager to tour-image-manager.html
     else if (urlWithoutQuery === '/tour-image-manager') {
         filePath = './tour-image-manager.html';
