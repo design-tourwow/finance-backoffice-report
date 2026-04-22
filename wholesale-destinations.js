@@ -314,7 +314,7 @@
         <div class="dashboard-kpi-cards">
           <div class="dashboard-kpi-card kpi-travelers">
             <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
                 <rect x="9" y="3" width="6" height="4" rx="1"/>
                 <path d="M9 12h6M9 16h6"/>
@@ -329,7 +329,7 @@
 
           <div class="dashboard-kpi-card kpi-top-wholesale">
             <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
             </div>
@@ -342,7 +342,7 @@
 
           <div class="dashboard-kpi-card kpi-top-country">
             <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
               </svg>
@@ -356,7 +356,7 @@
 
           <div class="dashboard-kpi-card kpi-partners">
             <div class="kpi-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
@@ -377,7 +377,7 @@
             <div class="glass-chart-header">
               <div>
                 <div class="glass-chart-title">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="20" x2="18" y2="10"/>
                     <line x1="12" y1="20" x2="12" y2="4"/>
                     <line x1="6" y1="20" x2="6" y2="14"/>
@@ -397,7 +397,7 @@
             <div class="glass-chart-header">
               <div>
                 <div class="glass-chart-title" id="topWholesalesTitle">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
                   ${{ sales: 'สัดส่วนยอดขาย', travelers: 'สัดส่วนผู้เดินทาง', orders: 'สัดส่วนออเดอร์', net_commission: 'สัดส่วนค่าคอมสุทธิ' }[currentViewMode] || 'สัดส่วนยอดขาย'}
@@ -416,7 +416,7 @@
           <div class="glass-chart-header">
             <div>
               <div class="glass-chart-title" id="stackedChartTitle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="3" width="18" height="18" rx="2"/>
                   <path d="M3 9h18M9 21V9"/>
                 </svg>
@@ -436,7 +436,7 @@
         <div class="dashboard-table-container">
           <div class="dashboard-table-header">
             <div class="dashboard-table-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
                 <rect x="8" y="2" width="8" height="4" rx="1"/>
               </svg>
@@ -451,7 +451,7 @@
                 <input type="text" class="dashboard-search-input" id="dashboardSearchInput" placeholder="ค้นหา Wholesale...">
               </div>
               <button class="dashboard-export-btn" id="dashboardExportBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
                   <line x1="12" y1="15" x2="12" y2="3"/>
@@ -1516,7 +1516,7 @@
     const topWholesalesTitle = document.getElementById('topWholesalesTitle');
     if (topWholesalesTitle) {
       topWholesalesTitle.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
         </svg>
         ${{ sales: 'สัดส่วนยอดขาย', travelers: 'สัดส่วนผู้เดินทาง', orders: 'สัดส่วนออเดอร์', net_commission: 'สัดส่วนค่าคอมสุทธิ' }[viewMode] || 'สัดส่วนยอดขาย'}
@@ -1527,7 +1527,7 @@
     const stackedChartTitle = document.getElementById('stackedChartTitle');
     if (stackedChartTitle) {
       stackedChartTitle.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
           <path d="M3 9h18M9 21V9"/>
         </svg>

@@ -20,13 +20,19 @@
 }
 
 body {
-  font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Kanit', sans-serif;
   font-size: 15px;
   line-height: 1.6;
   color: #1a1a1a;
   background: #f7f8fa;
   overflow-x: hidden;
+}
+
+/* Every form / interactive element must inherit Kanit from body. Without
+   this, browsers default button/input/select/textarea to system-ui which
+   produced a mix of fonts across the app. */
+button, input, select, textarea, option {
+  font-family: inherit;
 }
 
 /* Skip Link */
