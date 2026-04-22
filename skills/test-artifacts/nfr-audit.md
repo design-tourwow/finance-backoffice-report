@@ -12,7 +12,7 @@ and recommendations. Focused on production readiness before scaling user base.
 ## Security NFRs
 
 ### NFR1 — Token cleaned from URL after capture
-- **Current:** ✅ `fe2-auth-guard.js` calls `history.replaceState` immediately after reading `?token=`.
+- **Current:** ✅ `shared-auth-guard.js` calls `history.replaceState` immediately after reading `?token=`.
 - **Test:** E2 asserts `window.location.href` does not contain `token=` after load.
 - **Residual risk:** None material.
 - **Recommendation:** No action.
@@ -24,7 +24,7 @@ and recommendations. Focused on production readiness before scaling user base.
 - **Recommendation:** No action.
 
 ### NFR3 — Token in Authorization header, not API URL
-- **Current:** ✅ `FE2Http.get` and `*-api.js` modules inject `Authorization: Bearer <jwt>`. No code paths append token to URL.
+- **Current:** ✅ `SharedHttp.get` and `*-api.js` modules inject `Authorization: Bearer <jwt>`. No code paths append token to URL.
 - **Test:** A1 asserts header injection; no URL-based token test (would be brittle — enforced by code review).
 - **Residual risk:** Low. Code review catches URL-token regression.
 - **Recommendation:** Add a lint rule or grep-based CI check: `grep -r "?token=" *.js *-api.js` should return 0 matches in source.
@@ -106,7 +106,7 @@ and recommendations. Focused on production readiness before scaling user base.
 ### Rate Limiting / Slow Backend Handling
 - **Current:** No timeout or user-visible countdown on slow responses.
 - **Test:** E14 partially addresses via slow-mock.
-- **Recommendation:** Set `FE2Http.get` timeout to 30s with a clear user-facing "Request timed out" error.
+- **Recommendation:** Set `SharedHttp.get` timeout to 30s with a clear user-facing "Request timed out" error.
 
 ## Overall NFR Verdict
 

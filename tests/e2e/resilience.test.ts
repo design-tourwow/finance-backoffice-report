@@ -21,7 +21,7 @@ test('@p2 E14 slow API shows loading spinner', async ({ page, mockedBackend, moc
   const applyBtn = page.getByRole('button', { name: /แสดงผล|Apply/i }).first();
   if (await applyBtn.count() > 0) {
     await applyBtn.click();
-    const loading = page.locator('.fe2-loading, .sc-loading, [aria-live]').first();
+    const loading = page.locator('.shared-loading, .sc-loading, [aria-live]').first();
     await expect(loading).toBeVisible({ timeout: 1500 });
   }
 });

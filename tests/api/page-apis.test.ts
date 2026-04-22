@@ -4,20 +4,20 @@ import path from 'path';
 
 /**
  * A5 — Each *-api.js calls correct endpoint with correct params and
- * normalises response. All 4 page APIs share the FE2Http refactor from Phase C.
+ * normalises response. All 4 page APIs share the SharedHttp refactor from Phase C.
  */
 
 function loadApi(apiFile: string, mockGet: (url: string, opts: any) => Promise<any>): any {
-  const srcHttp = readFileSync(path.join(__dirname, '..', '..', 'fe2-http.js'), 'utf-8');
+  const srcHttp = readFileSync(path.join(__dirname, '..', '..', 'shared-http.js'), 'utf-8');
   const srcApi = readFileSync(path.join(__dirname, '..', '..', apiFile), 'utf-8');
   const win: any = {
-    FE2_API_BASE_URL: 'https://example.com',
+    REPORT_API_BASE_URL: 'https://example.com',
     TokenUtils: { getToken: () => 'x', redirectToLogin: () => {} },
     fetch: async () => ({ ok: true, status: 200, json: async () => ({}) }),
   };
   new Function('window', srcHttp)(win);
-  // Override FE2Http.get to capture calls
-  win.FE2Http.get = mockGet;
+  // Override SharedHttp.get to capture calls
+  win.SharedHttp.get = mockGet;
   new Function('window', srcApi)(win);
   return win;
 }

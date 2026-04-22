@@ -1,6 +1,6 @@
-// fe2-http.js — Central HTTP client with auth header injection,
+// shared-http.js — Central HTTP client with auth header injection,
 // 401 redirect handling, and error normalisation.
-// Exposes window.FE2Http (IIFE).
+// Exposes window.SharedHttp (IIFE).
 // Depends on: window.TokenUtils (token-utils.js), browser fetch.
 
 (function () {
@@ -56,7 +56,7 @@
     if (typeof path === 'string' && /^https?:\/\//i.test(path)) {
       return path;
     }
-    var base = baseUrl || window.FE2_API_BASE_URL || '';
+    var base = baseUrl || window.REPORT_API_BASE_URL || '';
     return base + path;
   }
 
@@ -100,17 +100,23 @@
   }
 
   /**
-   * Handle a 401 Unauthorized response by redirecting to login and
-   * returning a never-resolving promise so callers don't continue
-   * rendering stale state.
-   * @returns {Promise<never>}
+   * Handle a 401 Unauthorized response: fire redirect-to-login in the
+   * background AND throw an AuthError. Throwing (rather than returning
+   * a never-resolving promise) prevents awaiters from hanging forever
+   * when multiple calls 401 in parallel — callers' try/catch can then
+   * return a safe fallback (e.g. []) while the redirect navigation
+   * completes asynchronously.
+   * @throws {Error}
    */
   function handleUnauthorized() {
-    console.warn('[FE2Http] 401 Unauthorized — redirecting to login');
+    console.warn('[SharedHttp] 401 Unauthorized — redirecting to login');
     if (window.TokenUtils && typeof window.TokenUtils.redirectToLogin === 'function') {
       window.TokenUtils.redirectToLogin('Session หมดอายุ กรุณา login อีกครั้ง');
     }
-    return new Promise(function () {});
+    var err = new Error('SharedHttp unauthorized (401) — session expired');
+    err.name = 'SharedHttpAuthError';
+    err.status = 401;
+    throw err;
   }
 
   /**
@@ -125,8 +131,8 @@
     try {
       response = await fetch(url, fetchOptions);
     } catch (networkErr) {
-      var netMsg = 'FE2Http ' + method + ' ' + url + ' network error: ' + (networkErr && networkErr.message ? networkErr.message : String(networkErr));
-      console.error('[FE2Http] ' + netMsg);
+      var netMsg = 'SharedHttp ' + method + ' ' + url + ' network error: ' + (networkErr && networkErr.message ? networkErr.message : String(networkErr));
+      console.error('[SharedHttp] ' + netMsg);
       throw new Error(netMsg);
     }
 
@@ -136,8 +142,8 @@
 
     if (!response.ok) {
       var bodyText = await safeReadText(response);
-      var errMsg = 'FE2Http ' + method + ' ' + url + ' failed: ' + response.status + ' ' + response.statusText + (bodyText ? ' — ' + bodyText : '');
-      console.error('[FE2Http] ' + errMsg);
+      var errMsg = 'SharedHttp ' + method + ' ' + url + ' failed: ' + response.status + ' ' + response.statusText + (bodyText ? ' — ' + bodyText : '');
+      console.error('[SharedHttp] ' + errMsg);
       throw new Error(errMsg);
     }
 
@@ -197,7 +203,7 @@
   // Expose
   // ---------------------------------------------------------------------------
 
-  window.FE2Http = {
+  window.SharedHttp = {
     get: get,
     post: post,
     buildQuery: buildQuery,

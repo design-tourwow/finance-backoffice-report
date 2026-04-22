@@ -11,22 +11,22 @@ framework: 'Playwright'
 ### Unit (3 files — 9 tests)
 | File | Scenarios |
 |---|---|
-| `tests/unit/fe2-utils.test.ts` | U1, U2, U3, U4, U5 (×3) |
-| `tests/unit/fe2-csv.test.ts` | U8 (×2) |
+| `tests/unit/shared-utils.test.ts` | U1, U2, U3, U4, U5 (×3) |
+| `tests/unit/shared-csv.test.ts` | U8 (×2) |
 | `tests/unit/token-utils.test.ts` | U9 (×5) |
 
 ### Component (3 files — 6 tests)
 | File | Scenarios |
 |---|---|
-| `tests/component/fe2-ui.test.ts` | C1, C2 |
-| `tests/component/fe2-table.test.ts` | C3, C4 |
-| `tests/component/fe2-filter-panel.test.ts` | C5, C6 |
+| `tests/component/shared-ui.test.ts` | C1, C2 |
+| `tests/component/shared-table.test.ts` | C3, C4 |
+| `tests/component/shared-filter-panel.test.ts` | C5, C6 |
 
 ### API / HTTP (3 files — 13 assertions, 6 scenarios)
 | File | Scenarios |
 |---|---|
-| `tests/api/fe2-http.test.ts` | U6, U7, A1, A2, A3, A4 |
-| `tests/api/fe2-filter-service.test.ts` | A6 (×5) |
+| `tests/api/shared-http.test.ts` | U6, U7, A1, A2, A3, A4 |
+| `tests/api/shared-filter-service.test.ts` | A6 (×5) |
 | `tests/api/page-apis.test.ts` | A5 (×5) |
 
 ### E2E (10 files — 15 scenarios)
@@ -56,7 +56,7 @@ framework: 'Playwright'
 
 All 5 high risks addressed:
 - ✅ R1 (4 pages refactor regression) — smoke.test, reports.test, regression.test
-- ✅ R3 (401 loop) — fe2-http.test A2
+- ✅ R3 (401 loop) — shared-http.test A2
 - ✅ R9 (existing pages regress) — regression.test (5 pages)
 - ✅ R11 (prod pollution) — mockBackend fixture used by all e2e tests
 - ✅ R13 (no E2E) — 15 scenarios across 10 e2e files
@@ -96,7 +96,7 @@ npm run test:report      # open HTML report
 3. CSV export tests use `download` event — some pages may not have an Export
    button matching the regex; those auto-skip with `test.skip(true, ...)`.
 4. Filter panel test C5/C6 asserts dropdowns exist but doesn't validate exact
-   field count since `FE2FilterPanel` may conditionally hide period selector
+   field count since `SharedFilterPanel` may conditionally hide period selector
    when mode='all'.
 5. Request Discount E9 counts network requests to `/api/reports/order-has-discount`
    after page is loaded — passes if 0 new calls on checkbox toggle.

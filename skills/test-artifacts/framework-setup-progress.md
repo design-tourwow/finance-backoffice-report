@@ -29,9 +29,9 @@ status: 'complete-awaiting-npm-install'
 - Fixtures: `tests/fixtures/mock-token.ts`, `tests/fixtures/mock-backend.ts`
 - Support: `tests/support/test-base.ts` (extended `test` with fixtures + helpers)
 - Sample tests:
-  - `tests/unit/fe2-utils.test.ts` (U1, U2)
-  - `tests/api/fe2-http.test.ts` (U6, U7, A2)
-  - `tests/component/fe2-ui.test.ts` (C1, C2)
+  - `tests/unit/shared-utils.test.ts` (U1, U2)
+  - `tests/api/shared-http.test.ts` (U6, U7, A2)
+  - `tests/component/shared-ui.test.ts` (C1, C2)
   - `tests/e2e/smoke.test.ts` (E1)
   - `tests/e2e/auth.test.ts` (E2, E3)
 - `.gitignore` updated (node_modules, test-results, playwright-report)

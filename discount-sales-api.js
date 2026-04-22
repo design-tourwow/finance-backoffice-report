@@ -1,6 +1,6 @@
 // discount-sales-api.js — Discount Sales API service
 // Exposes window.DiscountSalesAPI (IIFE)
-// Depends on: window.FE2Http (fe2-http.js)
+// Depends on: window.SharedHttp (shared-http.js)
 
 (function () {
   'use strict';
@@ -31,7 +31,7 @@
       user_id: filters.user_id
     };
 
-    var data = await window.FE2Http.get('/api/reports/sales-discount', { params: query });
+    var data = await window.SharedHttp.get('/api/reports/sales-discount', { params: query });
 
     if (Array.isArray(data)) return data;
     if (data && typeof data === 'object' && Array.isArray(data.data)) return data.data;

@@ -35,14 +35,14 @@ lastSaved: '2026-04-21'
 
 | Library | Window global |
 |---|---|
-| `fe2-ui.js` | `FE2UI` |
-| `fe2-chart.js` | `FE2Chart` |
-| `fe2-table.js` | `FE2Table` |
-| `fe2-csv.js` | `FE2CSV` |
-| `fe2-filter-panel.js` | `FE2FilterPanel` |
-| `fe2-http.js` | `FE2Http` |
-| `fe2-utils.js` | `FE2Utils` |
-| `fe2-filter-service.js` | `FE2FilterService` |
+| `shared-ui.js` | `SharedUI` |
+| `shared-chart.js` | `SharedChart` |
+| `shared-table.js` | `SharedTable` |
+| `shared-csv.js` | `SharedCSV` |
+| `shared-filter-panel.js` | `SharedFilterPanel` |
+| `shared-http.js` | `SharedHttp` |
+| `shared-utils.js` | `SharedUtils` |
+| `shared-filter-service.js` | `SharedFilterService` |
 | `token-utils.js` | `TokenUtils` |
 
 **API modules under test (4):**
@@ -56,7 +56,7 @@ lastSaved: '2026-04-21'
 - **R1** — 4 pages refactor regression (~-1,300 lines removed). Covers: E1, E4, E6, E8, E12
 
 ### 🟠 High (score 6)
-- **R3** — `FE2Http` 401 redirect loop. Covers: A2
+- **R3** — `SharedHttp` 401 redirect loop. Covers: A2
 - **R9** — Existing pages regress from `menu-component.js` change. Covers: E12
 - **R11** — No staging `be-2-report` → test pollutes prod. Mitigation: mock all backend calls
 - **R13** — No E2E tests → prod-discovered bugs. Mitigation: entire suite
@@ -75,37 +75,37 @@ lastSaved: '2026-04-21'
 
 | ID | Name | Target | Priority |
 |---|---|---|---|
-| U1 | `FE2Utils.formatCurrency` — int / negative / zero / Thai locale | `fe2-utils.js` | P1 |
-| U2 | `FE2Utils.formatDateTH` — Buddhist year +543 / null / invalid | `fe2-utils.js` | P1 |
-| U3 | `FE2Utils.sortCountriesByThai` — Thai collation order | `fe2-utils.js` | P2 |
-| U4 | `FE2Utils.filterAndDisplayJobPositions` — ts/crm filter | `fe2-utils.js` | P2 |
-| U5 | `FE2Utils.get{Year,Month,Quarter}Options` — current-year-first, labels | `fe2-utils.js` | P2 |
-| U6 | `FE2Http.buildQuery` — skip undefined/null/'' + encode | `fe2-http.js` | P1 |
-| U7 | `FE2Http.getAuthHeader` — with/without token | `fe2-http.js` | P1 |
-| U8 | `FE2CSV.export` — BOM prefix + RFC 4180 escape (comma, quote, newline) | `fe2-csv.js` | P1 |
+| U1 | `SharedUtils.formatCurrency` — int / negative / zero / Thai locale | `shared-utils.js` | P1 |
+| U2 | `SharedUtils.formatDateTH` — Buddhist year +543 / null / invalid | `shared-utils.js` | P1 |
+| U3 | `SharedUtils.sortCountriesByThai` — Thai collation order | `shared-utils.js` | P2 |
+| U4 | `SharedUtils.filterAndDisplayJobPositions` — ts/crm filter | `shared-utils.js` | P2 |
+| U5 | `SharedUtils.get{Year,Month,Quarter}Options` — current-year-first, labels | `shared-utils.js` | P2 |
+| U6 | `SharedHttp.buildQuery` — skip undefined/null/'' + encode | `shared-http.js` | P1 |
+| U7 | `SharedHttp.getAuthHeader` — with/without token | `shared-http.js` | P1 |
+| U8 | `SharedCSV.export` — BOM prefix + RFC 4180 escape (comma, quote, newline) | `shared-csv.js` | P1 |
 | U9 | `TokenUtils.isTokenExpired` / `decodeToken` — valid/expired/malformed | `token-utils.js` | **P0** |
 
 ### Component Tests (6 — DOM-level, happy-dom or Playwright component)
 
 | ID | Name | Priority |
 |---|---|---|
-| C1 | `FE2UI.showLoading` injects spinner + `aria-live="polite"` | **P0** |
-| C2 | `FE2UI.showError` injects banner + `role="alert"` + optional retry button | **P0** |
-| C3 | `FE2Table.render` — columns/rows render, sortable header click fires `onSort` | P1 |
-| C4 | `FE2Table.render` — sort direction indicator toggles asc/desc | P2 |
-| C5 | `FE2FilterPanel.render` — dropdowns populated, cascade on team change | P1 |
-| C6 | `FE2FilterPanel.render` — Apply button fires `onApply(state)` | P1 |
+| C1 | `SharedUI.showLoading` injects spinner + `aria-live="polite"` | **P0** |
+| C2 | `SharedUI.showError` injects banner + `role="alert"` + optional retry button | **P0** |
+| C3 | `SharedTable.render` — columns/rows render, sortable header click fires `onSort` | P1 |
+| C4 | `SharedTable.render` — sort direction indicator toggles asc/desc | P2 |
+| C5 | `SharedFilterPanel.render` — dropdowns populated, cascade on team change | P1 |
+| C6 | `SharedFilterPanel.render` — Apply button fires `onApply(state)` | P1 |
 
 ### API / HTTP Tests (6 — mocked `fetch`)
 
 | ID | Name | Priority |
 |---|---|---|
-| A1 | `FE2Http.get` sends `Authorization: Bearer <token>` on every request | **P0** |
-| A2 | `FE2Http.get` on 401 → `TokenUtils.redirectToLogin` called + never resolves (no loop) | **P0** |
-| A3 | `FE2Http.get` on 5xx → throws `Error(...)` with status + url | **P0** |
-| A4 | `FE2Http.get` on network error → throws | P1 |
+| A1 | `SharedHttp.get` sends `Authorization: Bearer <token>` on every request | **P0** |
+| A2 | `SharedHttp.get` on 401 → `TokenUtils.redirectToLogin` called + never resolves (no loop) | **P0** |
+| A3 | `SharedHttp.get` on 5xx → throws `Error(...)` with status + url | **P0** |
+| A4 | `SharedHttp.get` on network error → throws | P1 |
 | A5 | Each `*-api.js` fetch — correct endpoint + query params + response normalize | P1 |
-| A6 | `FE2FilterService.*` → returns `[]` on error (NEVER throws) | **P0** |
+| A6 | `SharedFilterService.*` → returns `[]` on error (NEVER throws) | **P0** |
 
 ### E2E Tests (15 — Playwright, mocked backend)
 

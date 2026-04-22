@@ -1,7 +1,7 @@
 // request-discount.js — Request Discount Report Page
-// Depends on: token-utils.js, fe2-auth-guard.js, fe2-utils.js, fe2-http.js,
-//             fe2-filter-service.js, fe2-ui.js, fe2-chart.js, fe2-table.js,
-//             fe2-csv.js, fe2-filter-panel.js, request-discount-api.js, Chart.js.
+// Depends on: token-utils.js, shared-auth-guard.js, shared-utils.js, shared-http.js,
+//             shared-filter-service.js, shared-ui.js, shared-chart.js, shared-table.js,
+//             shared-csv.js, shared-filter-panel.js, request-discount-api.js, Chart.js.
 
 (function () {
   'use strict';
@@ -19,8 +19,8 @@
 
   var filterState = {
     filterMode    : 'quarterly',
-    year          : FE2Utils.getCurrentYear(),
-    quarter       : FE2Utils.getCurrentQuarter(),
+    year          : SharedUtils.getCurrentYear(),
+    quarter       : SharedUtils.getCurrentQuarter(),
     month         : new Date().getMonth() + 1,
     country_id    : null,
     job_position  : null,
@@ -51,7 +51,7 @@
   // Helpers
   // ---------------------------------------------------------------------------
 
-  var fmt = FE2Utils.formatCurrency;
+  var fmt = SharedUtils.formatCurrency;
 
   function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('th-TH', {
@@ -175,7 +175,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Sort displayData (FE2Table provides head UI only; sorting is our concern)
+  // Sort displayData (SharedTable provides head UI only; sorting is our concern)
   // ---------------------------------------------------------------------------
 
   function sortedData() {
@@ -206,14 +206,14 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Filter panel (FE2FilterPanel)
+  // Filter panel (SharedFilterPanel)
   // ---------------------------------------------------------------------------
 
   function renderFilterPanel() {
     var container = el('rd-filter-container');
     if (!container) return;
 
-    FE2FilterPanel.render({
+    SharedFilterPanel.render({
       containerEl: container,
       state: {
         mode        : filterState.filterMode,
@@ -332,7 +332,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Charts (FE2Chart)
+  // Charts (SharedChart)
   // ---------------------------------------------------------------------------
 
   function renderChartsHTML() {
@@ -356,7 +356,7 @@
     var amountData = summary.slice(0, 8);
     var ctxA = el('rd-chart-amount');
     if (ctxA) {
-      chartAmount = FE2Chart.createBarChart({
+      chartAmount = SharedChart.createBarChart({
         canvasEl: ctxA,
         previous: chartAmount,
         labels  : amountData.map(function (s) { return truncate(s.seller_name); }),
@@ -390,7 +390,7 @@
 
     var ctxP = el('rd-chart-percent');
     if (ctxP) {
-      chartPercent = FE2Chart.createBarChart({
+      chartPercent = SharedChart.createBarChart({
         canvasEl: ctxP,
         previous: chartPercent,
         labels  : pctData.map(function (s) { return truncate(s.seller_name); }),
@@ -426,7 +426,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Orders detail table (FE2Table)
+  // Orders detail table (SharedTable)
   // ---------------------------------------------------------------------------
 
   var ORDER_COLUMNS = [
@@ -538,7 +538,7 @@
   function mountOrdersTable(rows) {
     var container = el('rd-orders-table');
     if (!container) return;
-    FE2Table.render({
+    SharedTable.render({
       containerEl: container,
       columns    : ORDER_COLUMNS,
       rows       : rows,
@@ -661,7 +661,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Export CSV (FE2CSV)
+  // Export CSV (SharedCSV)
   // ---------------------------------------------------------------------------
 
   function exportCSV() {
@@ -705,7 +705,7 @@
     var now = new Date();
     var ymd = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
 
-    FE2CSV.export({
+    SharedCSV.export({
       filename: 'request-discount-' + ymd,
       headers : headers,
       rows    : rows
@@ -720,8 +720,8 @@
     var loadingEl = el('rd-loading-container');
     var errorEl   = el('rd-error-container');
 
-    FE2UI.hideError(errorEl);
-    FE2UI.showLoading(loadingEl, 'กำลังโหลดข้อมูล Order Discount...');
+    SharedUI.hideError(errorEl);
+    SharedUI.showLoading(loadingEl, 'กำลังโหลดข้อมูล Order Discount...');
     setHTML('rd-content', '');
 
     try {
@@ -737,14 +737,14 @@
       applyCheckboxFilters();
     } catch (err) {
       console.error('[RequestDiscount] loadData failed:', err);
-      FE2UI.showError(errorEl,
+      SharedUI.showError(errorEl,
         'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (err.message || 'กรุณาลองใหม่อีกครั้ง'),
         { retryFn: loadData });
       allOrdersData = [];
       displayData   = [];
     }
 
-    FE2UI.hideLoading(loadingEl);
+    SharedUI.hideLoading(loadingEl);
     renderContent();
   }
 
@@ -767,10 +767,10 @@
 
     try {
       var results = await Promise.all([
-        FE2FilterService.getCountries(),
-        FE2FilterService.getTeams(),
-        FE2FilterService.getJobPositions(),
-        FE2FilterService.getUsers()
+        SharedFilterService.getCountries(),
+        SharedFilterService.getTeams(),
+        SharedFilterService.getJobPositions(),
+        SharedFilterService.getUsers()
       ]);
       allCountries    = results[0] || [];
       allTeams        = results[1] || [];

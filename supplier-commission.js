@@ -1,7 +1,7 @@
 // supplier-commission.js
 // Supplier Commission report page — vanilla JS
-// Depends on: fe2-utils.js, fe2-filter-service.js, supplier-commission-api.js,
-//             fe2-ui.js, fe2-chart.js, fe2-table.js, fe2-csv.js, fe2-filter-panel.js,
+// Depends on: shared-utils.js, shared-filter-service.js, supplier-commission-api.js,
+//             shared-ui.js, shared-chart.js, shared-table.js, shared-csv.js, shared-filter-panel.js,
 //             Chart.js (CDN)
 
 (function () {
@@ -31,7 +31,7 @@
     user_id      : null
   };
 
-  // Dropdown option caches populated once from FE2FilterService.
+  // Dropdown option caches populated once from SharedFilterService.
   var filterOptions = {
     countries    : [],
     teams        : [],
@@ -40,8 +40,8 @@
   };
 
   document.addEventListener('DOMContentLoaded', function () {
-    filterState.year    = window.FE2Utils.getCurrentYear();
-    filterState.quarter = window.FE2Utils.getCurrentQuarter();
+    filterState.year    = window.SharedUtils.getCurrentYear();
+    filterState.quarter = window.SharedUtils.getCurrentQuarter();
 
     renderShell();
     loadFilterOptions().then(function () {
@@ -61,10 +61,10 @@
   async function loadFilterOptions() {
     try {
       var results = await Promise.all([
-        window.FE2FilterService.getCountries(),
-        window.FE2FilterService.getTeams(),
-        window.FE2FilterService.getJobPositions(),
-        window.FE2FilterService.getUsers()
+        window.SharedFilterService.getCountries(),
+        window.SharedFilterService.getTeams(),
+        window.SharedFilterService.getJobPositions(),
+        window.SharedFilterService.getUsers()
       ]);
       filterOptions.countries    = results[0] || [];
       filterOptions.teams        = results[1] || [];
@@ -78,7 +78,7 @@
   function renderFilterPanel() {
     var container = document.getElementById('sc-filter-container');
     if (!container) return;
-    window.FE2FilterPanel.render({
+    window.SharedFilterPanel.render({
       containerEl: container,
       state      : filterState,
       options    : filterOptions,
@@ -100,7 +100,7 @@
     var resultsEl = getResultsEl();
     if (!resultsEl) return;
     resultsEl.innerHTML = '';
-    window.FE2UI.showLoading(resultsEl, 'กำลังโหลดข้อมูล Supplier Commission...');
+    window.SharedUI.showLoading(resultsEl, 'กำลังโหลดข้อมูล Supplier Commission...');
 
     try {
       var data = await window.SupplierCommissionAPI.fetchReport(params);
@@ -111,8 +111,8 @@
       renderResults();
     } catch (err) {
       console.error('[SupplierCommission] applyFilters error:', err);
-      window.FE2UI.hideLoading(resultsEl);
-      window.FE2UI.showError(
+      window.SharedUI.hideLoading(resultsEl);
+      window.SharedUI.showError(
         resultsEl,
         'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (err.message || 'กรุณาลองใหม่อีกครั้ง'),
         { retryFn: applyFilters }
@@ -183,7 +183,7 @@
         (item.supplier_name_en ? ' (' + item.supplier_name_en + ')' : '');
     });
 
-    chartInstance = window.FE2Chart.createBarChart({
+    chartInstance = window.SharedChart.createBarChart({
       canvasEl: canvas,
       previous: chartInstance,
       labels  : labels,
@@ -208,7 +208,7 @@
           tooltip: {
             callbacks: {
               title: function (items) { return fullNames[items[0].dataIndex] || labels[items[0].dataIndex]; },
-              label: function (item)  { return item.dataset.label + ': ฿' + window.FE2Utils.formatCurrency(item.parsed.y); }
+              label: function (item)  { return item.dataset.label + ': ฿' + window.SharedUtils.formatCurrency(item.parsed.y); }
             }
           }
         }
@@ -241,7 +241,7 @@
       };
     }));
 
-    window.FE2Table.render({
+    window.SharedTable.render({
       containerEl: container,
       columns    : columns,
       rows       : reportData,
@@ -271,7 +271,7 @@
                   : '';
     return function (_v, row) {
       return '<span class="' + cellClass.trim() + '">฿' +
-        window.FE2Utils.formatCurrency(row.metrics[key]) + '</span>';
+        window.SharedUtils.formatCurrency(row.metrics[key]) + '</span>';
     };
   }
 
@@ -298,7 +298,7 @@
       ];
     });
     var dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    window.FE2CSV.export({
+    window.SharedCSV.export({
       filename: 'supplier-commission-' + dateStr + '.csv',
       headers : headers,
       rows    : rows

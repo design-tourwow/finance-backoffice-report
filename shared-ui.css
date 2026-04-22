@@ -1,4 +1,4 @@
-/* fe2-ui.css — Shared styles for FE2UI loading spinner + error banner.
+/* shared-ui.css — Shared styles for SharedUI loading spinner + error banner.
    Mirrors the existing .sc-loading / .sc-spinner / .sc-error-banner styles
    so the Phase B migration is visually a no-op.
 */
@@ -6,7 +6,7 @@
 /* ------------------------------------------------------------------ */
 /* Loading Spinner                                                     */
 /* ------------------------------------------------------------------ */
-.fe2-loading {
+.shared-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,28 +20,28 @@
   font-size: 15px;
 }
 
-.fe2-spinner {
+.shared-spinner {
   width: 28px;
   height: 28px;
   border: 3px solid #e5e7eb;
   border-top-color: #4a7ba7;
   border-radius: 50%;
-  animation: fe2-spin 0.75s linear infinite;
+  animation: shared-spin 0.75s linear infinite;
   flex-shrink: 0;
 }
 
-.fe2-loading-text {
+.shared-loading-text {
   font-family: inherit;
 }
 
-@keyframes fe2-spin {
+@keyframes shared-spin {
   to { transform: rotate(360deg); }
 }
 
 /* ------------------------------------------------------------------ */
 /* Error Banner                                                        */
 /* ------------------------------------------------------------------ */
-.fe2-error-banner {
+.shared-error-banner {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -54,19 +54,19 @@
   font-size: 14px;
 }
 
-.fe2-error-icon {
+.shared-error-icon {
   flex-shrink: 0;
   width: 18px;
   height: 18px;
   margin-top: 1px;
 }
 
-.fe2-error-message {
+.shared-error-message {
   flex: 1;
   line-height: 1.5;
 }
 
-.fe2-error-retry {
+.shared-error-retry {
   flex-shrink: 0;
   background: #fff;
   border: 1px solid #fca5a5;
@@ -79,11 +79,11 @@
   transition: background 0.15s;
 }
 
-.fe2-error-retry:hover {
+.shared-error-retry:hover {
   background: #fee2e2;
 }
 
-.fe2-error-retry:focus {
+.shared-error-retry:focus {
   outline: 2px solid #ef4444;
   outline-offset: 2px;
 }

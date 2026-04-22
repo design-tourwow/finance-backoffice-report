@@ -1,7 +1,7 @@
 /* Order External Summary Page Styles — shared-lib refactor */
 
-/* ── Shared Filter Panel (fe2-filter-panel) ─────────────────────────────── */
-.fe2-filter-panel {
+/* ── Shared Filter Panel (shared-filter-panel) ─────────────────────────────── */
+.shared-filter-panel {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -9,14 +9,14 @@
   margin-bottom: 24px;
 }
 
-.fe2-filter-title {
+.shared-filter-title {
   font-size: 1rem;
   font-weight: 600;
   color: #111827;
   margin: 0 0 16px;
 }
 
-.fe2-filter-grid {
+.shared-filter-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 16px;
@@ -24,24 +24,24 @@
 }
 
 @media (max-width: 1280px) {
-  .fe2-filter-grid {
+  .shared-filter-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
 @media (max-width: 900px) {
-  .fe2-filter-grid {
+  .shared-filter-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .fe2-filter-grid {
+  .shared-filter-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.fe2-filter-group label {
+.shared-filter-group label {
   display: block;
   font-size: 0.8125rem;
   font-weight: 500;
@@ -49,7 +49,7 @@
   margin-bottom: 6px;
 }
 
-.fe2-filter-group select {
+.shared-filter-group select {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #d1d5db;
@@ -68,18 +68,18 @@
   cursor: pointer;
 }
 
-.fe2-filter-group select:focus {
+.shared-filter-group select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.fe2-filter-actions {
+.shared-filter-actions {
   display: flex;
   align-items: end;
   gap: 12px;
 }
 
-.fe2-btn-apply {
+.shared-btn-apply {
   padding: 9px 20px;
   background: #2563eb;
   color: #fff;
@@ -92,12 +92,12 @@
   transition: background 0.15s;
 }
 
-.fe2-btn-apply:hover {
+.shared-btn-apply:hover {
   background: #1d4ed8;
 }
 
 /* Hide the mode selector — this page supports year + month only. */
-.fe2-filter-group:has(#fe2-mode-sel) {
+.shared-filter-group:has(#shared-mode-sel) {
   display: none;
 }
 
@@ -202,22 +202,22 @@
   background: #15803d;
 }
 
-/* ── Shared Table (fe2-table) ───────────────────────────────────────────── */
-.fe2-table-wrap {
+/* ── Shared Table (shared-table) ───────────────────────────────────────────── */
+.shared-table-wrap {
   overflow-x: auto;
 }
 
-.fe2-table {
+.shared-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
 
-.fe2-table thead tr {
+.shared-table thead tr {
   background: #f9fafb;
 }
 
-.fe2-th {
+.shared-th {
   padding: 12px 20px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -228,15 +228,15 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-.fe2-th--sort-active {
+.shared-th--sort-active {
   color: #2563eb;
 }
 
-.fe2-cell-left   { text-align: left; }
-.fe2-cell-right  { text-align: right; }
-.fe2-cell-center { text-align: center; }
+.shared-cell-left   { text-align: left; }
+.shared-cell-right  { text-align: right; }
+.shared-cell-center { text-align: center; }
 
-.fe2-sort-btn {
+.shared-sort-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -250,43 +250,43 @@
   cursor: pointer;
 }
 
-.fe2-cell-right .fe2-sort-btn {
+.shared-cell-right .shared-sort-btn {
   width: 100%;
   justify-content: flex-end;
 }
 
-.fe2-cell-center .fe2-sort-btn {
+.shared-cell-center .shared-sort-btn {
   width: 100%;
   justify-content: center;
 }
 
-.fe2-sort-icon {
+.shared-sort-icon {
   width: 12px;
   height: 12px;
   flex-shrink: 0;
   opacity: 0.6;
 }
 
-.fe2-sort-icon--active {
+.shared-sort-icon--active {
   opacity: 1;
 }
 
-.fe2-td {
+.shared-td {
   padding: 14px 20px;
   white-space: nowrap;
   border-bottom: 1px solid #f3f4f6;
   color: #111827;
 }
 
-.fe2-table tbody tr:hover {
+.shared-table tbody tr:hover {
   background: #f9fafb;
 }
 
-.fe2-table tbody tr:last-child .fe2-td {
+.shared-table tbody tr:last-child .shared-td {
   border-bottom: none;
 }
 
-.fe2-empty-row {
+.shared-empty-row {
   padding: 32px 20px;
   text-align: center;
   color: #6b7280;

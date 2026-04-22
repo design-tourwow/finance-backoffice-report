@@ -1,13 +1,13 @@
 // discount-sales.js — Discount Sales Report page
-// Depends on shared libs: fe2-utils.js, fe2-filter-service.js, fe2-ui.js,
-// fe2-chart.js, fe2-table.js, fe2-csv.js, fe2-filter-panel.js,
+// Depends on shared libs: shared-utils.js, shared-filter-service.js, shared-ui.js,
+// shared-chart.js, shared-table.js, shared-csv.js, shared-filter-panel.js,
 // discount-sales-api.js, Chart.js CDN.
 
 (function () {
   'use strict';
 
-  var utils = window.FE2Utils;
-  var svc   = window.FE2FilterService;
+  var utils = window.SharedUtils;
+  var svc   = window.SharedFilterService;
 
   // ── State ──────────────────────────────────────────────────────────────────
   var allData       = [];
@@ -55,7 +55,7 @@
   function renderFilterPanel() {
     var area = document.getElementById('ds-filter-area');
     if (!area) return;
-    window.FE2FilterPanel.render({
+    window.SharedFilterPanel.render({
       containerEl: area,
       state      : filterState,
       options    : filterOptions,
@@ -88,8 +88,8 @@
     var loadingArea = document.getElementById('ds-loading-area');
     var resultsArea = document.getElementById('ds-results-area');
 
-    window.FE2UI.hideError(errorArea);
-    window.FE2UI.showLoading(loadingArea);
+    window.SharedUI.hideError(errorArea);
+    window.SharedUI.showLoading(loadingArea);
     if (resultsArea) resultsArea.innerHTML = '';
 
     var filters = { filterMode: filterState.mode };
@@ -103,7 +103,7 @@
 
     try {
       var data = await window.DiscountSalesAPI.fetch(filters);
-      window.FE2UI.hideLoading(loadingArea);
+      window.SharedUI.hideLoading(loadingArea);
 
       if (!Array.isArray(data)) data = [];
 
@@ -116,8 +116,8 @@
 
       renderResults();
     } catch (err) {
-      window.FE2UI.hideLoading(loadingArea);
-      window.FE2UI.showError(errorArea, 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message, {
+      window.SharedUI.hideLoading(loadingArea);
+      window.SharedUI.showError(errorArea, 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message, {
         retryFn: loadReportData
       });
       console.error('[discount-sales] loadReportData error:', err);
@@ -226,7 +226,7 @@
       .sort(function (a, b) { return b.metrics.total_discount - a.metrics.total_discount; })
       .slice(0, 8);
 
-    chartAmount = window.FE2Chart.createBarChart({
+    chartAmount = window.SharedChart.createBarChart({
       canvasEl: document.getElementById('ds-chart-amount'),
       previous: chartAmount,
       labels  : amountData.map(function (d) { return truncate(d.nickname || d.sales_name, 15); }),
@@ -244,7 +244,7 @@
       .sort(function (a, b) { return b.metrics.discount_percentage - a.metrics.discount_percentage; })
       .slice(0, 10);
 
-    chartPercent = window.FE2Chart.createBarChart({
+    chartPercent = window.SharedChart.createBarChart({
       canvasEl: document.getElementById('ds-chart-percent'),
       previous: chartPercent,
       labels  : pctData.map(function (d) { return truncate(d.nickname || d.sales_name, 15); }),
@@ -294,7 +294,7 @@
   function renderTable() {
     var host = document.getElementById('ds-table-host');
     if (!host) return;
-    window.FE2Table.render({
+    window.SharedTable.render({
       containerEl: host,
       columns    : TABLE_COLUMNS,
       rows       : allData,
@@ -342,7 +342,7 @@
     rows.push(['รวมทั้งหมด', fc(t.sales), fc(t.discount), Math.round(t.avgPct), t.orders, fc(t.net)]);
 
     var dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    window.FE2CSV.export({
+    window.SharedCSV.export({
       filename: 'discount-sales-' + dateStr + '.csv',
       headers : headers,
       rows    : rows

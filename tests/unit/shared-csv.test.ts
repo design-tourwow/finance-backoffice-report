@@ -2,22 +2,22 @@ import { test, expect } from '@playwright/test';
 import { readFileSync, existsSync, unlinkSync } from 'fs';
 import path from 'path';
 
-function loadFE2CSV(): any {
-  const src = readFileSync(path.join(__dirname, '..', '..', 'fe2-csv.js'), 'utf-8');
+function loadSharedCSV(): any {
+  const src = readFileSync(path.join(__dirname, '..', '..', 'shared-csv.js'), 'utf-8');
   const win: any = {
-    FE2Utils: { formatCurrency: (v: number) => String(v) },
+    SharedUtils: { formatCurrency: (v: number) => String(v) },
     URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
     Blob: class { constructor(public parts: any[], public opts: any) {} },
     document: { createElement: () => ({ href: '', download: '', click: () => {}, remove: () => {} }), body: { appendChild: () => {} } },
   };
   const fn = new Function('window', src);
   fn(win);
-  return win.FE2CSV;
+  return win.SharedCSV;
 }
 
-test.describe('@p1 FE2CSV', () => {
+test.describe('@p1 SharedCSV', () => {
   test('U8 export — builds CSV with UTF-8 BOM + proper escape', () => {
-    const F = loadFE2CSV();
+    const F = loadSharedCSV();
     let captured: { parts: any[]; opts: any } | null = null;
     const OrigBlob = (global as any).Blob;
     (global as any).Blob = class { constructor(parts: any[], opts: any) { captured = { parts, opts }; } };
@@ -39,7 +39,7 @@ test.describe('@p1 FE2CSV', () => {
   });
 
   test('U8 export — CSV is built with BOM + correct content (captured via Blob shim)', () => {
-    const F = loadFE2CSV();
+    const F = loadSharedCSV();
     let csvString = '';
     const OrigBlob = (global as any).Blob;
     (global as any).Blob = class {

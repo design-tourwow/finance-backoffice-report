@@ -3,11 +3,11 @@ import { test, expect } from '@playwright/test';
 const harnessHtml = `
 <!DOCTYPE html>
 <html><head>
-<script src="/fe2-table.js"></script>
+<script src="/shared-table.js"></script>
 </head><body><div id="root"></div></body></html>
 `;
 
-test.describe('@p1 FE2Table', () => {
+test.describe('@p1 SharedTable', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/harness-table.html', (r) =>
       r.fulfill({ status: 200, contentType: 'text/html', body: harnessHtml })
@@ -19,7 +19,7 @@ test.describe('@p1 FE2Table', () => {
     await page.evaluate(() => {
       const root = document.getElementById('root')!;
       (window as any).__sortCalls = [];
-      (window as any).FE2Table.render({
+      (window as any).SharedTable.render({
         containerEl: root,
         columns: [
           { key: 'name', label: 'ชื่อ', sortable: false },
@@ -49,7 +49,7 @@ test.describe('@p1 FE2Table', () => {
   test('@p2 C4 render — sort direction indicator reflects sortDir', async ({ page }) => {
     await page.evaluate(() => {
       const root = document.getElementById('root')!;
-      (window as any).FE2Table.render({
+      (window as any).SharedTable.render({
         containerEl: root,
         columns: [{ key: 'x', label: 'X', sortable: true }],
         rows: [{ x: 1 }, { x: 2 }],

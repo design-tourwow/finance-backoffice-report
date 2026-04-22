@@ -11,7 +11,7 @@ import type { Page, Route } from '@playwright/test';
  */
 
 export interface MockBackendOptions {
-  // Filter-service endpoints (from fe2-filter-service.js)
+  // Filter-service endpoints (from shared-filter-service.js)
   countries?: unknown[];
   teams?: unknown[];
   jobPositions?: unknown[];
@@ -36,7 +36,7 @@ export interface MockBackendOptions {
   slowMs?: number;
 }
 
-const FE2_BASE = 'https://be-2-report.vercel.app';
+const REPORT_API_BASE = 'https://be-2-report.vercel.app';
 const FBR_BASE_STAGING = 'https://staging-finance-backoffice-report-api.vercel.app';
 const FBR_BASE_PROD = 'https://finance-backoffice-report-api.vercel.app';
 
@@ -57,30 +57,30 @@ async function respond(route: Route, body: unknown, opts: MockBackendOptions): P
 
 export async function mockBackend(page: Page, opts: MockBackendOptions = {}): Promise<void> {
   // fe-2 filter-service endpoints
-  await page.route(`${FE2_BASE}/api/countries*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/countries*`, (r) =>
     opts.failFilterService ? r.abort() : respond(r, opts.countries ?? [], opts)
   );
-  await page.route(`${FE2_BASE}/api/teams*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/teams*`, (r) =>
     opts.failFilterService ? r.abort() : respond(r, opts.teams ?? [], opts)
   );
-  await page.route(`${FE2_BASE}/api/job-positions*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/job-positions*`, (r) =>
     opts.failFilterService ? r.abort() : respond(r, opts.jobPositions ?? [], opts)
   );
-  await page.route(`${FE2_BASE}/api/users*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/users*`, (r) =>
     opts.failFilterService ? r.abort() : respond(r, opts.users ?? [], opts)
   );
 
   // fe-2 report endpoints
-  await page.route(`${FE2_BASE}/api/reports/supplier-performance*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/reports/supplier-performance*`, (r) =>
     opts.failReport ? r.abort() : respond(r, opts.supplierReport ?? [], opts)
   );
-  await page.route(`${FE2_BASE}/api/reports/sales-discount*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/reports/sales-discount*`, (r) =>
     opts.failReport ? r.abort() : respond(r, opts.discountSalesReport ?? [], opts)
   );
-  await page.route(`${FE2_BASE}/api/reports/order-external-summary*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/reports/order-external-summary*`, (r) =>
     opts.failReport ? r.abort() : respond(r, opts.orderExternalSummary ?? [], opts)
   );
-  await page.route(`${FE2_BASE}/api/reports/order-has-discount*`, (r) =>
+  await page.route(`${REPORT_API_BASE}/api/reports/order-has-discount*`, (r) =>
     opts.failReport ? r.abort() : respond(r, opts.orderHasDiscount ?? [], opts)
   );
 

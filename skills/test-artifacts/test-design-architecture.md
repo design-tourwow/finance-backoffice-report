@@ -33,7 +33,7 @@ lastSaved: '2026-04-21'
 - **Vanilla JS + HTML5 + CSS3** — no bundler, transpiler, or build tool (NFR10 hard constraint)
 - **JWT Bearer auth** — URL capture → `sessionStorage + localStorage` → header injection
 - **Two parallel backends**: `be-2-report.vercel.app` (4 ported pages) + `finance-backoffice-report-api.vercel.app` (existing pages)
-- **Shared via `window.*` globals**: `TokenUtils`, `FE2Utils`, `FE2FilterService`, `FE2UI`, `FE2Chart`, `FE2Table`, `FE2CSV`, `FE2FilterPanel`, `FE2Http`
+- **Shared via `window.*` globals**: `TokenUtils`, `SharedUtils`, `SharedFilterService`, `SharedUI`, `SharedChart`, `SharedTable`, `SharedCSV`, `SharedFilterPanel`, `SharedHttp`
 
 **Expected Scale:** Internal tool; Finance team ~10-30 users; desktop-first (Chrome/Edge/Safari latest)
 
@@ -50,7 +50,7 @@ lastSaved: '2026-04-21'
 
 **ASR1 — API failure must never blank page (NFR5)**
 - Impact: User sees blank → thinks system broken → reports bug
-- Test coverage: C1/C2 (FE2UI banners) + A3/A4 (FE2Http throws) + E4 (E2E mock 500)
+- Test coverage: C1/C2 (SharedUI banners) + A3/A4 (SharedHttp throws) + E4 (E2E mock 500)
 - Owner: Dev already addressed via 3-tier error pattern; QA verifies
 
 **ASR2 — Zero regression on 5 existing pages (NFR6)**
@@ -88,7 +88,7 @@ lastSaved: '2026-04-21'
 
 | ID | Strength |
 |---|---|
-| S1 | `window.*` global namespace → mock via `page.addInitScript(() => { window.FE2Http = stub })` |
+| S1 | `window.*` global namespace → mock via `page.addInitScript(() => { window.SharedHttp = stub })` |
 | S2 | `node server.js` static serve → no build, fast test startup |
 | S3 | MPA → deep-link tests directly; no `beforeEach(navigate)` chains |
 | S4 | Deterministic DOM from Chart.js/table/filter-panel → selector-based assertions reliable |
@@ -141,7 +141,7 @@ lastSaved: '2026-04-21'
 | Engineering / Architecture owes QA | QA owes Engineering / Architecture |
 |---|---|
 | Stable `window.*` API surfaces (no breaking renames without coordination) | Baseline snapshots for E12 regression tests |
-| Mock-friendly request patterns (no `fetch` calls outside `FE2Http`) | Mocked fixture data matching production response shapes |
+| Mock-friendly request patterns (no `fetch` calls outside `SharedHttp`) | Mocked fixture data matching production response shapes |
 | Fixed Chart.js version in CDN script (pin to 4.4.x) — R14 mitigation | Flaky test triage (<2% rate) |
 | Mock endpoint list updated when new backend dependency added | Test report per PR with P0 pass rate + coverage % |
 

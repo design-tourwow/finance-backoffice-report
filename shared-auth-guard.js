@@ -1,4 +1,4 @@
-// fe2-auth-guard.js — JWT auth guard, self-running IIFE
+// shared-auth-guard.js — JWT auth guard, self-running IIFE
 // Must load AFTER token-utils.js, BEFORE any page-specific JS.
 // Depends on: window.TokenUtils (token-utils.js)
 
@@ -13,7 +13,7 @@
     // Save to both storages so TokenUtils.getToken() finds it
     sessionStorage.setItem('authToken', urlToken);
     localStorage.setItem('authToken', urlToken);
-    console.log('[FE2AuthGuard] Token saved from URL query param');
+    console.log('[SharedAuthGuard] Token saved from URL query param');
 
     // Remove ?token from the visible URL without reloading
     urlParams.delete('token');
@@ -26,12 +26,12 @@
   var token = TokenUtils.getToken();
 
   if (!token) {
-    console.warn('[FE2AuthGuard] No token found — redirecting to login');
+    console.warn('[SharedAuthGuard] No token found — redirecting to login');
     TokenUtils.redirectToLogin('กรุณาเข้าสู่ระบบก่อนใช้งาน');
     return; // stop execution; redirect is in-flight
   }
 
   // Token exists — page load continues normally.
-  console.log('[FE2AuthGuard] Token present, continuing page load');
+  console.log('[SharedAuthGuard] Token present, continuing page load');
 
 })();
