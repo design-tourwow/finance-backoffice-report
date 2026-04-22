@@ -101,15 +101,7 @@
   gap: 16px;
 }
 
-.rd-kpi-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+/* .rd-kpi-icon base sizing (36×36 box + 18×18 svg) provided by kpi-card.css. */
 
 .rd-kpi-icon.blue   { background: #eff6ff; color: #2563eb; }
 .rd-kpi-icon.red    { background: #fef2f2; color: #dc2626; }

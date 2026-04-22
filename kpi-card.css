@@ -68,22 +68,37 @@
   --kpi-bg: #fff3e0;
 }
 
-.kpi-icon {
+/* Icon box — canonical 36×36 with rounded corners. Aliases bring the
+   page-specific icon boxes from the 4 fe-2 pages onto the same size
+   so the KPI row feels identical across reports. Each page still
+   controls its own background colour via its own modifier rules
+   (.ds-card-icon--blue, .oes-card-icon.green, .rd-kpi-icon.red, etc.)
+   or via the canonical --kpi-bg variable. */
+.kpi-icon,
+.ds-card-icon,
+.oes-card-icon,
+.rd-kpi-icon {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-card);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--kpi-bg);
   flex-shrink: 0;
 }
 
-.kpi-icon svg {
+.kpi-icon { background: var(--kpi-bg); }
+
+/* SVG inside any icon box — single size across the whole app. */
+.kpi-icon svg,
+.ds-card-icon svg,
+.oes-card-icon svg,
+.rd-kpi-icon svg {
   width: 18px;
   height: 18px;
-  stroke: var(--kpi-color);
 }
+
+.kpi-icon svg { stroke: var(--kpi-color); }
 
 .kpi-content {
   flex: 1;
