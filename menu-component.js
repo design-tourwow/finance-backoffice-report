@@ -10,7 +10,6 @@ function handleExternalLink(e, url) {
 // Menu Component - Centralized Menu Management
 (function() {
   'use strict';
-  const CLOSE_OVERLAY_EVENT = 'app:close-dropdown-overlays';
 
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
@@ -96,6 +95,23 @@ function handleExternalLink(e, url) {
     return MENU_ITEMS;
   }
 
+  // Flatten MENU_ITEMS so every entry is a leaf with a url. Parents
+  // that only exist as submenu containers (no url of their own) are
+  // dropped; each of their children gets promoted to the top level.
+  function getFlatMenuItems() {
+    var flat = [];
+    MENU_ITEMS.forEach(function (item) {
+      if (item.submenu && item.submenu.length) {
+        item.submenu.forEach(function (sub) {
+          if (sub && sub.url) flat.push(sub);
+        });
+      } else if (item.url) {
+        flat.push(item);
+      }
+    });
+    return flat;
+  }
+
   // Get current page path
   function getCurrentPath() {
     return window.location.pathname;
@@ -107,146 +123,48 @@ function handleExternalLink(e, url) {
     return currentPath === menuUrl || currentPath === menuUrl + '.html';
   }
 
-  // Check if any submenu item is active
-  function isSubmenuActive(submenu) {
-    if (!submenu) return false;
-    return submenu.some(item => isActive(item.url));
-  }
-
-  // Render sidebar menu
+  // Render sidebar menu — flat list; submenu parents are hidden, their
+  // /slug children are promoted to top-level entries.
   function renderSidebarMenu() {
     const navMenu = document.querySelector('.nav-menu');
     if (!navMenu) return;
 
-    const menuHTML = getVisibleMenuItems().map(item => {
-      if (item.submenu) {
-        // Menu with submenu
-        const isExpanded = isSubmenuActive(item.submenu);
-        const expandedClass = isExpanded ? ' expanded' : '';
-
-        const submenuHTML = item.submenu.map(subItem => {
-          const activeClass = isActive(subItem.url) ? ' active' : '';
-          const ariaCurrent = isActive(subItem.url) ? ' aria-current="page"' : '';
-          return `<a href="${subItem.url}" class="nav-subitem${activeClass}" data-require-auth="${subItem.requireAuth}"${ariaCurrent}>${subItem.label}</a>`;
-        }).join('');
-
-        return `
-          <div class="nav-item-group${expandedClass}">
-            <button class="nav-item nav-item-toggle" data-require-auth="${item.requireAuth}">
-              ${item.label}
-              <svg class="nav-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div class="nav-submenu">
-              ${submenuHTML}
-            </div>
-          </div>
-        `;
-      } else {
-        // Regular menu item
-        const activeClass = isActive(item.url) ? ' active' : '';
-        const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
-        if (item.external) {
-          return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent} onclick="handleExternalLink(event, '${item.url}')">${item.label}</a>`;
-        }
-        return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>`;
+    const menuHTML = getFlatMenuItems().map(item => {
+      const activeClass = isActive(item.url) ? ' active' : '';
+      const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
+      if (item.external) {
+        return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent} onclick="handleExternalLink(event, '${item.url}')">${item.label}</a>`;
       }
+      return `<a href="${item.url}" class="nav-item${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>`;
     }).join('');
 
     navMenu.innerHTML = menuHTML;
-
-    // Add toggle event listeners
-    navMenu.querySelectorAll('.nav-item-toggle').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const group = this.closest('.nav-item-group');
-        group.classList.toggle('expanded');
-      });
-    });
   }
 
-  // Render header menu
+  // Render header menu — flat list; submenu parents are hidden, their
+  // /slug children are promoted to top-level entries.
   function renderHeaderMenu() {
     const navbarList = document.querySelector('.navbar-list');
     if (!navbarList) return;
 
-    function closeHeaderDropdowns() {
-      navbarList.querySelectorAll('.navbar-dropdown').forEach(d => d.classList.remove('open'));
-    }
-
-    const menuHTML = getVisibleMenuItems().map(item => {
-      if (item.submenu) {
-        // Menu with dropdown
-        const isDropdownActive = isSubmenuActive(item.submenu);
-        const activeClass = isDropdownActive ? ' active' : '';
-
-        const submenuHTML = item.submenu.map(subItem => {
-          const subActiveClass = isActive(subItem.url) ? ' active' : '';
-          const ariaCurrent = isActive(subItem.url) ? ' aria-current="page"' : '';
-          return `<a href="${subItem.url}" class="navbar-dropdown-item${subActiveClass}" data-require-auth="${subItem.requireAuth}"${ariaCurrent}>${subItem.label}</a>`;
-        }).join('');
-
-        return `
-          <li class="navbar-item navbar-dropdown">
-            <button class="navbar-link navbar-dropdown-toggle${activeClass}" data-require-auth="${item.requireAuth}">
-              ${item.label}
-              <svg class="navbar-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div class="navbar-dropdown-menu">
-              ${submenuHTML}
-            </div>
-          </li>
-        `;
-      } else {
-        // Regular menu item
-        const activeClass = isActive(item.url) ? ' active' : '';
-        const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
-        if (item.external) {
-          return `
-            <li class="navbar-item">
-              <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent} onclick="handleExternalLink(event, '${item.url}')">${item.label}</a>
-            </li>
-          `;
-        }
+    const menuHTML = getFlatMenuItems().map(item => {
+      const activeClass = isActive(item.url) ? ' active' : '';
+      const ariaCurrent = isActive(item.url) ? ' aria-current="page"' : '';
+      if (item.external) {
         return `
           <li class="navbar-item">
-            <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>
+            <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent} onclick="handleExternalLink(event, '${item.url}')">${item.label}</a>
           </li>
         `;
       }
+      return `
+        <li class="navbar-item">
+          <a href="${item.url}" class="navbar-link${activeClass}" data-require-auth="${item.requireAuth}"${ariaCurrent}>${item.label}</a>
+        </li>
+      `;
     }).join('');
 
     navbarList.innerHTML = menuHTML;
-
-    // Add dropdown toggle event listeners
-    navbarList.querySelectorAll('.navbar-dropdown-toggle').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const dropdown = this.closest('.navbar-dropdown');
-        const isOpen = dropdown.classList.contains('open');
-
-        if (!isOpen) {
-          document.dispatchEvent(new CustomEvent(CLOSE_OVERLAY_EVENT));
-        }
-
-        // Close all dropdowns first
-        closeHeaderDropdowns();
-
-        // Toggle current
-        if (!isOpen) {
-          dropdown.classList.add('open');
-        }
-      });
-    });
-
-    document.addEventListener(CLOSE_OVERLAY_EVENT, closeHeaderDropdowns);
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function() {
-      closeHeaderDropdowns();
-    });
   }
 
   // Check authentication
