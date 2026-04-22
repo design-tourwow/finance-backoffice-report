@@ -11,7 +11,7 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="tour-image-manager.css" />
-    <link rel="stylesheet" href="sales-by-country.css" />
+    <link rel="stylesheet" href="filter-panel.css" />
     <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
     <link rel="stylesheet" href="date-picker-component.css" />
     <link rel="stylesheet" href="commission-report-plus.css" />
@@ -39,6 +39,7 @@
     <script src="tour-image-manager-api.js"></script>
     <script src="commission-report-plus-api.js"></script>
     <script src="filter-sort-dropdown-component.js"></script>
+    <script src="filter-search-dropdown-component.js"></script>
     <script src="date-picker-component.js"></script>
     <script src="menu-component.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -64,7 +65,7 @@
         /* Hide everything except the table */
         .sidebar, .top-bar, .mobile-menu-toggle,
         .breadcrumb, .page-header,
-        .time-granularity-control,
+        .filter-wrap,
         #crp-summary,
         .dashboard-table-actions,
         .skip-link { display: none !important; }

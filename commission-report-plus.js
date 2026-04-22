@@ -139,11 +139,11 @@
       <div class="crp-wrapper">
 
         <!-- Filter Bar -->
-        <div class="time-granularity-control crp-filter-wrap">
+        <div class="filter-wrap filter-wrap-stacked">
 
           <!-- แถว 1: Date Filters + Ez Search -->
-          <div class="crp-filter-row">
-            <div class="crp-date-half">
+          <div class="filter-row">
+            <div class="filter-col-half">
               <span class="time-granularity-label">วันที่สร้าง Order</span>
               <div class="date-picker-wrapper" id="crp-created-picker">
                 <div class="date-icon" aria-hidden="true">
@@ -154,7 +154,7 @@
               </div>
             </div>
 
-            <div class="crp-date-half">
+            <div class="filter-col-half">
               <span class="time-granularity-label">วันชำระงวด 1</span>
               <div class="date-picker-wrapper" id="crp-paid-picker">
                 <div class="date-icon" aria-hidden="true">
@@ -165,19 +165,19 @@
               </div>
             </div>
 
-            <div class="crp-ez-search">
-              <span class="time-granularity-label">ค้นหาเร็ว</span>
-              <div class="crp-ez-btns">
-                <button class="crp-ez-btn crp-ez-active" id="crp-ez-current">เดือนนี้</button>
-                <button class="crp-ez-btn" id="crp-ez-last">เดือนที่แล้ว</button>
+            <div class="filter-ez-group">
+              <span class="filter-label">ค้นหาเร็ว</span>
+              <div class="filter-ez-btns">
+                <button class="filter-ez-btn filter-ez-active" id="crp-ez-current">เดือนนี้</button>
+                <button class="filter-ez-btn" id="crp-ez-last">เดือนที่แล้ว</button>
               </div>
             </div>
           </div>
 
-          <div class="crp-row-divider"></div>
+          <div class="filter-row-divider"></div>
 
           <!-- แถว 2: Dropdowns + Search -->
-          <div class="crp-filter-row">
+          <div class="filter-row">
             <span class="time-granularity-label">ตำแหน่ง</span>
             <div id="crp-dd-position"></div>
 
@@ -196,11 +196,11 @@
             <span class="time-granularity-label">จำนวนผู้เดินทาง</span>
             <div id="crp-dd-travelers"></div>
 
-            <button class="crp-btn-search" id="crp-btn-search">
+            <button class="filter-btn-search" id="crp-btn-search">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               ค้นหา
             </button>
-            <button class="crp-btn-reset" id="crp-btn-reset">
+            <button class="filter-btn-reset" id="crp-btn-reset">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
               เริ่มใหม่
             </button>
@@ -280,11 +280,12 @@
         }))
       ];
 
-      initSearchableSellerDropdown({
+      window.FilterSearchDropdown.init({
         containerId: 'crp-dd-seller',
         defaultLabel: 'ทั้งหมด',
         defaultIcon: getAllIcon(),
         options: sellerOptions,
+        placeholder: 'ค้นหาเซลล์...',
         onChange: function (val) {
           selectedSellerId = val;
         }
@@ -355,8 +356,8 @@
     const btnLast    = document.getElementById('crp-ez-last');
 
     function setActive(active) {
-      btnCurrent.classList.toggle('crp-ez-active', active === 'current');
-      btnLast.classList.toggle('crp-ez-active', active === 'last');
+      btnCurrent.classList.toggle('filter-ez-active', active === 'current');
+      btnLast.classList.toggle('filter-ez-active', active === 'last');
     }
 
     btnCurrent.addEventListener('click', function () {
@@ -382,110 +383,6 @@
     return { ts: 'เซลล์', crm: 'CRM', admin: 'Admin' }[pos] || pos;
   }
 
-  // ---- Searchable Seller Dropdown ----
-  function initSearchableSellerDropdown({ containerId, defaultLabel, defaultIcon, options, onChange }) {
-    const container = document.getElementById(containerId);
-    if (!container) return null;
-
-    const btnId    = `${containerId}Btn`;
-    const menuId   = `${containerId}Menu`;
-    const inputId  = `${containerId}Search`;
-    const listId   = `${containerId}List`;
-
-    container.innerHTML = `
-      <div class="crp-search-dd">
-        <button type="button" class="filter-sort-btn" id="${btnId}">
-          <div class="filter-sort-btn-content">
-            ${defaultIcon}
-            <span class="filter-sort-btn-text">${defaultLabel}</span>
-          </div>
-          <svg class="filter-sort-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div class="crp-search-dd-menu" id="${menuId}">
-          <div class="crp-search-dd-input-wrap">
-            <input type="text" class="crp-search-dd-input" id="${inputId}" placeholder="ค้นหาเซลล์..." autocomplete="off" />
-          </div>
-          <div class="crp-search-dd-list" id="${listId}"></div>
-        </div>
-      </div>
-    `;
-
-    const btn        = document.getElementById(btnId);
-    const menu       = document.getElementById(menuId);
-    const searchInput = document.getElementById(inputId);
-    const listEl     = document.getElementById(listId);
-    const btnContent = btn.querySelector('.filter-sort-btn-content');
-    let currentValue = (options.find(o => o.active) || {}).value || '';
-
-    function renderList(query) {
-      const q = (query || '').toLowerCase();
-      const filtered = q ? options.filter(o => o.label.toLowerCase().includes(q)) : options;
-
-      if (!filtered.length) {
-        listEl.innerHTML = `<div class="crp-search-dd-empty">ไม่พบข้อมูล</div>`;
-        return;
-      }
-
-      listEl.innerHTML = filtered.map(o => `
-        <button type="button" class="crp-search-dd-option ${o.value === currentValue ? 'active' : ''}"
-          data-value="${escHtml(o.value)}" data-label="${escHtml(o.label)}">
-          ${o.icon || ''}
-          <span>${escHtml(o.label)}</span>
-        </button>
-      `).join('');
-
-      listEl.querySelectorAll('.crp-search-dd-option').forEach(opt => {
-        opt.addEventListener('click', function (e) {
-          e.stopPropagation();
-          const val   = this.getAttribute('data-value');
-          const label = this.getAttribute('data-label');
-          const icon  = (options.find(o => o.value === val) || {}).icon || '';
-
-          currentValue = val;
-          btnContent.innerHTML = `${icon}<span class="filter-sort-btn-text">${label}</span>`;
-          menu.classList.remove('open');
-          btn.classList.remove('open');
-          searchInput.value = '';
-          renderList('');
-          if (onChange) onChange(val, label);
-        });
-      });
-    }
-
-    renderList('');
-
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      const isOpen = menu.classList.contains('open');
-      // Close other dropdowns
-      document.querySelectorAll('.filter-sort-menu.open, .crp-search-dd-menu.open').forEach(m => {
-        if (m !== menu) m.classList.remove('open');
-      });
-      document.querySelectorAll('.filter-sort-btn.open').forEach(b => {
-        if (b !== btn) b.classList.remove('open');
-      });
-      menu.classList.toggle('open', !isOpen);
-      btn.classList.toggle('open', !isOpen);
-      if (!isOpen) setTimeout(() => searchInput.focus(), 30);
-    });
-
-    searchInput.addEventListener('input', function (e) { e.stopPropagation(); renderList(this.value); });
-    searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
-
-    document.addEventListener('click', function (e) {
-      if (!container.contains(e.target)) {
-        menu.classList.remove('open');
-        btn.classList.remove('open');
-      }
-    });
-
-    return { setValue: function (val) {
-      const opt = options.find(o => o.value === val);
-      if (opt) { currentValue = val; btnContent.innerHTML = `${opt.icon||''}<span class="filter-sort-btn-text">${opt.label}</span>`; renderList(''); }
-    }};
-  }
 
   // Icon helpers — same Lucide set used across all report pages
   function getAllIcon() {
