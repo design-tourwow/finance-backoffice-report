@@ -90,9 +90,14 @@
       }
 
       listEl.innerHTML = filtered.map(function (o) {
+        // Per-option icon (e.g. country flag) — opt-in: only rendered when
+        // the caller supplies it on the option itself. Empty otherwise so
+        // generic dropdowns stay label-only.
+        var optIcon = o.icon ? o.icon : '';
         return '<button type="button" class="filter-search-dd-option' +
           (String(o.value) === String(currentValue) ? ' active' : '') +
           '" data-value="' + escHtml(o.value) + '" data-label="' + escHtml(o.label) + '">' +
+          optIcon +
           '<span>' + escHtml(o.label) + '</span>' +
           '</button>';
       }).join('');

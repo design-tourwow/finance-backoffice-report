@@ -247,12 +247,16 @@
       if (utils.sortCountriesByThai) {
         try { countries = utils.sortCountriesByThai(countries); } catch (e) { /* noop */ }
       }
+      var flags = window.CountryFlags;
       var opts = [{ value: '', label: 'ทุกประเทศ', icon: ICONS.globe, active: state.country_id == null }]
         .concat(countries.map(function (c) {
           return {
             value : String(c.id),
             label : c.name_th || c.name_en || ('#' + c.id),
-            icon  : ICONS.globe,
+            // Per-option flag in the list. The trigger keeps the globe icon
+            // from current.icon below unless a country is selected — in which
+            // case the selected option's flag replaces it.
+            icon  : flags ? flags.iconFor(c, { size: 18 }) : '',
             active: state.country_id != null && Number(c.id) === Number(state.country_id)
           };
         }));
@@ -260,7 +264,9 @@
       window.FilterSearchDropdown.init({
         containerId : ids.country,
         defaultLabel: current.label,
-        defaultIcon : current.icon,
+        // Trigger icon: globe when no country is selected, the country's flag
+        // when one is active.
+        defaultIcon : current.icon || ICONS.globe,
         options     : opts,
         placeholder : 'ค้นหาประเทศ...',
         onChange    : function (val) {

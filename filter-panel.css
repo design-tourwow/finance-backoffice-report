@@ -277,6 +277,21 @@
   transition: background 0.1s;
 }
 
+/* Country flag icon rendered in-list (and on the trigger when a country
+   is selected). 4:3 aspect ratio, subtle border to separate from white bg. */
+.country-flag {
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 2px;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.filter-sort-btn-content .country-flag {
+  margin-right: 2px;
+}
+
 .filter-search-dd-option:hover {
   background: var(--color-bg-hover);
 }
