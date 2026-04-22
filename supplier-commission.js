@@ -3,7 +3,7 @@
 // Depends on: shared-utils.js, shared-filter-service.js, supplier-commission-api.js,
 //             shared-ui.js, shared-chart.js, shared-table.js, shared-csv.js,
 //             filter-sort-dropdown-component.js, filter-search-dropdown-component.js,
-//             Chart.js (CDN)
+//             report-filter-panel-component.js, Chart.js (CDN)
 
 (function () {
   'use strict';
@@ -32,7 +32,6 @@
     user_id      : null
   };
 
-  // Dropdown option caches populated once from SharedFilterService.
   var filterOptions = {
     countries    : [],
     teams        : [],
@@ -76,303 +75,15 @@
     }
   }
 
-  // ── Filter panel ──────────────────────────────────────────────────────────
-
   function renderFilterPanel() {
-    var container = document.getElementById('sc-filter-container');
-    if (!container) return;
-
-    container.innerHTML =
-      '<div class="filter-wrap filter-wrap-stacked">' +
-        '<div class="filter-row">' +
-          '<span class="filter-label">รูปแบบ</span>' +
-          '<div id="sc-dd-mode"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label" id="sc-period-label">ช่วงเวลา</span>' +
-          '<div id="sc-period-controls" style="display:flex;gap:8px;align-items:center;"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label">ประเทศ</span>' +
-          '<div id="sc-dd-country"></div>' +
-        '</div>' +
-        '<div class="filter-row-divider"></div>' +
-        '<div class="filter-row">' +
-          '<span class="filter-label">ทีม</span>' +
-          '<div id="sc-dd-team"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label">ตำแหน่ง</span>' +
-          '<div id="sc-dd-jobpos"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label">ผู้ใช้</span>' +
-          '<div id="sc-dd-user"></div>' +
-          '<button type="button" class="filter-btn-search" id="sc-btn-apply">' +
-            svgSearch() + 'ค้นหา' +
-          '</button>' +
-          '<button type="button" class="filter-btn-reset" id="sc-btn-reset">' +
-            svgReset() + 'เริ่มใหม่' +
-          '</button>' +
-        '</div>' +
-      '</div>';
-
-    initModeDropdown();
-    initPeriodControls();
-    initCountryDropdown();
-    initTeamDropdown();
-    initJobPosDropdown();
-    initUserDropdown();
-
-    document.getElementById('sc-btn-apply').addEventListener('click', applyFilters);
-    document.getElementById('sc-btn-reset').addEventListener('click', resetFilters);
-  }
-
-  function initModeDropdown() {
-    var opts = [
-      { value: 'all',       label: 'ทั้งหมด',    icon: svgAll() },
-      { value: 'quarterly', label: 'รายไตรมาส',  icon: svgCalendar() },
-      { value: 'monthly',   label: 'รายเดือน',   icon: svgCalendar() },
-      { value: 'yearly',    label: 'รายปี',       icon: svgCalendar() }
-    ].map(function (o) { return Object.assign({}, o, { active: o.value === filterState.mode }); });
-
-    var current = findOption(opts, filterState.mode);
-    window.FilterSortDropdownComponent.initDropdown({
-      containerId : 'sc-dd-mode',
-      defaultLabel: current.label,
-      defaultIcon : current.icon,
-      options     : opts,
-      onChange    : function (val) {
-        filterState.mode = val;
-        // Re-sync period defaults when switching mode.
-        filterState.year    = window.SharedUtils.getCurrentYear();
-        filterState.quarter = window.SharedUtils.getCurrentQuarter();
-        filterState.month   = new Date().getMonth() + 1;
-        initPeriodControls();
-      }
+    window.ReportFilterPanel.init({
+      containerId: 'sc-filter-container',
+      state      : filterState,
+      options    : filterOptions,
+      prefix     : 'sc',
+      onApply    : applyFilters
     });
   }
-
-  function initPeriodControls() {
-    var host = document.getElementById('sc-period-controls');
-    var label = document.getElementById('sc-period-label');
-    if (!host || !label) return;
-
-    if (filterState.mode === 'all') {
-      host.innerHTML = '';
-      label.style.display = 'none';
-      host.style.display = 'none';
-      return;
-    }
-
-    label.style.display = '';
-    host.style.display = 'flex';
-
-    if (filterState.mode === 'quarterly') {
-      host.innerHTML = '<div id="sc-dd-quarter"></div>';
-      var quarters = (window.SharedUtils.getQuarterOptions() || []).map(function (q) {
-        return {
-          value : q.year + '-' + q.quarter,
-          label : q.label,
-          active: Number(q.year) === Number(filterState.year) &&
-                  Number(q.quarter) === Number(filterState.quarter)
-        };
-      });
-      var activeQ = findActive(quarters) || quarters[0];
-      window.FilterSortDropdownComponent.initDropdown({
-        containerId : 'sc-dd-quarter',
-        defaultLabel: activeQ ? activeQ.label : 'เลือกไตรมาส',
-        defaultIcon : svgCalendar(),
-        options     : quarters,
-        onChange    : function (val) {
-          var parts = String(val).split('-');
-          if (parts.length === 2) {
-            filterState.year    = parseInt(parts[0], 10);
-            filterState.quarter = parseInt(parts[1], 10);
-          }
-        }
-      });
-    } else if (filterState.mode === 'monthly') {
-      host.innerHTML = '<div id="sc-dd-month"></div><div id="sc-dd-year"></div>';
-      var months = (window.SharedUtils.getMonthOptions() || []).map(function (m) {
-        return { value: String(m.value), label: m.label, active: Number(m.value) === Number(filterState.month) };
-      });
-      var activeM = findActive(months) || months[0];
-      window.FilterSortDropdownComponent.initDropdown({
-        containerId : 'sc-dd-month',
-        defaultLabel: activeM ? activeM.label : 'เลือกเดือน',
-        defaultIcon : svgCalendar(),
-        options     : months,
-        onChange    : function (val) {
-          filterState.month = parseInt(val, 10);
-        }
-      });
-      initYearDropdown();
-    } else if (filterState.mode === 'yearly') {
-      host.innerHTML = '<div id="sc-dd-year"></div>';
-      initYearDropdown();
-    }
-  }
-
-  function initYearDropdown() {
-    var years = (window.SharedUtils.getYearOptions() || []).map(function (y) {
-      var val = (y && typeof y === 'object') ? y.value : y;
-      var lbl = (y && typeof y === 'object') ? (y.label || String(y.value)) : String(y);
-      return { value: String(val), label: lbl, active: Number(val) === Number(filterState.year) };
-    });
-    var activeY = findActive(years) || years[0];
-    window.FilterSortDropdownComponent.initDropdown({
-      containerId : 'sc-dd-year',
-      defaultLabel: activeY ? activeY.label : 'เลือกปี',
-      defaultIcon : svgCalendar(),
-      options     : years,
-      onChange    : function (val) {
-        filterState.year = parseInt(val, 10);
-      }
-    });
-  }
-
-  function initCountryDropdown() {
-    var countries = filterOptions.countries.slice();
-    if (window.SharedUtils.sortCountriesByThai) {
-      try { countries = window.SharedUtils.sortCountriesByThai(countries); } catch (e) { /* ignore */ }
-    }
-    var opts = [{ value: '', label: 'ทุกประเทศ', icon: svgGlobe(), active: filterState.country_id == null }]
-      .concat(countries.map(function (c) {
-        return {
-          value : String(c.id),
-          label : c.name_th || c.name_en || ('#' + c.id),
-          icon  : svgGlobe(),
-          active: filterState.country_id != null && Number(c.id) === Number(filterState.country_id)
-        };
-      }));
-    var current = findActive(opts) || opts[0];
-    window.FilterSearchDropdown.init({
-      containerId : 'sc-dd-country',
-      defaultLabel: current.label,
-      defaultIcon : current.icon,
-      options     : opts,
-      placeholder : 'ค้นหาประเทศ...',
-      onChange    : function (val) {
-        filterState.country_id = val ? parseInt(val, 10) : null;
-      }
-    });
-  }
-
-  function initTeamDropdown() {
-    var opts = [{ value: '', label: 'ทุกทีม', icon: svgTeam(), active: filterState.team_number == null }]
-      .concat((filterOptions.teams || []).map(function (t) {
-        return {
-          value : String(t.team_number),
-          label : 'Team ' + t.team_number,
-          icon  : svgTeam(),
-          active: filterState.team_number != null && Number(t.team_number) === Number(filterState.team_number)
-        };
-      }));
-    var current = findActive(opts) || opts[0];
-    window.FilterSortDropdownComponent.initDropdown({
-      containerId : 'sc-dd-team',
-      defaultLabel: current.label,
-      defaultIcon : current.icon,
-      options     : opts,
-      onChange    : function (val) {
-        filterState.team_number  = val ? parseInt(val, 10) : null;
-        filterState.job_position = null;  // cascade reset
-        filterState.user_id      = null;
-        initJobPosDropdown();
-        initUserDropdown();
-      }
-    });
-  }
-
-  function initJobPosDropdown() {
-    var raw = filterOptions.jobPositions || [];
-    var jobs = window.SharedUtils.filterAndDisplayJobPositions
-      ? window.SharedUtils.filterAndDisplayJobPositions(raw, filterState.team_number || undefined)
-      : raw;
-    var opts = [{ value: '', label: 'ทุกตำแหน่ง', icon: svgRole(), active: filterState.job_position == null }]
-      .concat(jobs.map(function (p) {
-        return {
-          value : String(p.job_position),
-          label : p.display_name || p.job_position,
-          icon  : svgRole(),
-          active: filterState.job_position != null &&
-                  String(filterState.job_position).toLowerCase() === String(p.job_position).toLowerCase()
-        };
-      }));
-    var current = findActive(opts) || opts[0];
-    window.FilterSortDropdownComponent.initDropdown({
-      containerId : 'sc-dd-jobpos',
-      defaultLabel: current.label,
-      defaultIcon : current.icon,
-      options     : opts,
-      onChange    : function (val) {
-        filterState.job_position = val || null;
-        filterState.user_id      = null;  // cascade reset
-        initUserDropdown();
-      }
-    });
-  }
-
-  function initUserDropdown() {
-    var all = filterOptions.users || [];
-    var filtered = all.filter(function (u) {
-      if (filterState.team_number && u.team_number !== filterState.team_number) return false;
-      if (filterState.job_position && (!u.job_position ||
-          u.job_position.toLowerCase() !== String(filterState.job_position).toLowerCase())) return false;
-      return true;
-    });
-    var opts = [{ value: '', label: 'ทุกคน', icon: svgPerson(), active: filterState.user_id == null }]
-      .concat(filtered.map(function (u) {
-        return {
-          value : String(u.ID),
-          label : userDisplayName(u),
-          icon  : svgPerson(),
-          active: filterState.user_id != null && Number(u.ID) === Number(filterState.user_id)
-        };
-      }));
-    var current = findActive(opts) || opts[0];
-    window.FilterSearchDropdown.init({
-      containerId : 'sc-dd-user',
-      defaultLabel: current.label,
-      defaultIcon : current.icon,
-      options     : opts,
-      placeholder : 'ค้นหาผู้ใช้...',
-      onChange    : function (val) {
-        filterState.user_id = val ? parseInt(val, 10) : null;
-      }
-    });
-  }
-
-  function userDisplayName(u) {
-    if (!u) return '';
-    if (u.nickname) return u.nickname;
-    var first = u.first_name || '';
-    var last  = u.last_name || '';
-    var full  = (first + ' ' + last).trim();
-    return full || ('User ' + (u.ID != null ? u.ID : ''));
-  }
-
-  function findActive(opts) {
-    for (var i = 0; i < opts.length; i++) if (opts[i].active) return opts[i];
-    return null;
-  }
-
-  function findOption(opts, value) {
-    for (var i = 0; i < opts.length; i++) if (String(opts[i].value) === String(value)) return opts[i];
-    return opts[0] || { value: '', label: '' };
-  }
-
-  function resetFilters() {
-    filterState.mode         = 'quarterly';
-    filterState.year         = window.SharedUtils.getCurrentYear();
-    filterState.quarter      = window.SharedUtils.getCurrentQuarter();
-    filterState.month        = new Date().getMonth() + 1;
-    filterState.country_id   = null;
-    filterState.team_number  = null;
-    filterState.job_position = null;
-    filterState.user_id      = null;
-    renderFilterPanel();
-    applyFilters();
-  }
-
-  // ── Data ──────────────────────────────────────────────────────────────────
 
   async function applyFilters() {
     var params = {};
@@ -592,41 +303,12 @@
     });
   }
 
-  // ── Utilities ─────────────────────────────────────────────────────────────
-
   function escHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  // ── Icons ─────────────────────────────────────────────────────────────────
-
-  function svgCalendar() {
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-  }
-  function svgAll() {
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
-  }
-  function svgGlobe() {
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
-  }
-  function svgTeam() {
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
-  }
-  function svgRole() {
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-3V5a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>';
-  }
-  function svgPerson() {
-    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-  }
-  function svgSearch() {
-    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-  }
-  function svgReset() {
-    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>';
   }
 
 })();

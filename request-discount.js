@@ -1,7 +1,8 @@
 // request-discount.js — Request Discount Report Page
 // Depends on: token-utils.js, shared-auth-guard.js, shared-utils.js, shared-http.js,
 //             shared-filter-service.js, shared-ui.js, shared-chart.js, shared-table.js,
-//             shared-csv.js, shared-filter-panel.js, request-discount-api.js, Chart.js.
+//             shared-csv.js, filter-sort-dropdown-component.js, filter-search-dropdown-component.js,
+//             report-filter-panel-component.js, request-discount-api.js, Chart.js.
 
 (function () {
   'use strict';
@@ -206,33 +207,39 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Filter panel (SharedFilterPanel)
+  // Filter panel (ReportFilterPanel)
   // ---------------------------------------------------------------------------
 
   function renderFilterPanel() {
-    var container = el('rd-filter-container');
-    if (!container) return;
+    // ReportFilterPanel uses `mode`; this page's legacy state uses `filterMode`.
+    // Wrap the state with a getter/setter proxy so the panel reads/writes to
+    // filterState.filterMode transparently.
+    var panelState = {
+      year        : filterState.year,
+      quarter     : filterState.quarter,
+      month       : filterState.month,
+      country_id  : filterState.country_id,
+      team_number : filterState.team_number,
+      job_position: filterState.job_position,
+      user_id     : filterState.user_id
+    };
+    Object.defineProperty(panelState, 'mode', {
+      get: function () { return filterState.filterMode; },
+      set: function (v) { filterState.filterMode = v; },
+      enumerable: true
+    });
 
-    SharedFilterPanel.render({
-      containerEl: container,
-      state: {
-        mode        : filterState.filterMode,
-        year        : filterState.year,
-        quarter     : filterState.quarter,
-        month       : filterState.month,
-        country_id  : filterState.country_id,
-        team_number : filterState.team_number,
-        job_position: filterState.job_position,
-        user_id     : filterState.user_id
-      },
-      options: {
+    window.ReportFilterPanel.init({
+      containerId: 'rd-filter-container',
+      state      : panelState,
+      options    : {
         countries   : allCountries,
         teams       : allTeams,
         jobPositions: allJobPositions,
         users       : allUsers
       },
-      onChange: function (next) {
-        filterState.filterMode   = next.mode;
+      prefix     : 'rd',
+      onApply    : function (next) {
         filterState.year         = next.year;
         filterState.quarter      = next.quarter;
         filterState.month        = next.month;

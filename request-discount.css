@@ -1,66 +1,10 @@
 /* Request Discount Page Styles */
-/* Desktop-first, plain CSS3. Depends on tour-image-manager.css for shell and
-   shared-ui.css for shared loading spinner / error banner. */
+/* Desktop-first, plain CSS3. Depends on tour-image-manager.css for shell,
+   filter-panel.css for filter UI, and shared-ui.css for spinner + error. */
 
 /* -----------------------------------------------------------------------
-   Shared FE2 Filter Panel + Table styling (scoped overrides)
+   Shared table styling (scoped overrides)
    ----------------------------------------------------------------------- */
-
-.shared-filter-panel {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.10);
-  padding: 20px 24px;
-  margin-bottom: 20px;
-}
-
-.shared-filter-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 16px 0;
-}
-
-.shared-filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  align-items: end;
-}
-
-.shared-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.shared-filter-group label {
-  font-size: .75rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.shared-filter-group select {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: .85rem;
-  font-family: inherit;
-  color: #111827;
-  background: #fff;
-  cursor: pointer;
-  transition: border-color .15s, box-shadow .15s;
-  appearance: auto;
-}
-
-.shared-filter-group select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
-}
-
-.shared-filter-actions { display: none; }   /* apply-button not used — onChange drives refresh */
 
 .shared-table-wrap {
   overflow-x: auto;

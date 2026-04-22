@@ -1,7 +1,8 @@
 // discount-sales.js — Discount Sales Report page
 // Depends on shared libs: shared-utils.js, shared-filter-service.js, shared-ui.js,
-// shared-chart.js, shared-table.js, shared-csv.js, shared-filter-panel.js,
-// discount-sales-api.js, Chart.js CDN.
+// shared-chart.js, shared-table.js, shared-csv.js,
+// filter-sort-dropdown-component.js, filter-search-dropdown-component.js,
+// report-filter-panel-component.js, discount-sales-api.js, Chart.js CDN.
 
 (function () {
   'use strict';
@@ -53,14 +54,12 @@
   }
 
   function renderFilterPanel() {
-    var area = document.getElementById('ds-filter-area');
-    if (!area) return;
-    window.SharedFilterPanel.render({
-      containerEl: area,
+    window.ReportFilterPanel.init({
+      containerId: 'ds-filter-area',
       state      : filterState,
       options    : filterOptions,
-      onChange   : function (next) { filterState = next; },
-      onApply    : function (next) { filterState = next; loadReportData(); }
+      prefix     : 'ds',
+      onApply    : loadReportData
     });
   }
 

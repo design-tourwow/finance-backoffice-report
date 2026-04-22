@@ -1,6 +1,7 @@
 // order-external-summary.js — Order External Summary page (shared-lib refactor)
 // Depends on: shared-utils.js, shared-filter-service.js, shared-ui.js, shared-table.js,
-//             shared-csv.js, shared-filter-panel.js, order-external-summary-api.js
+//             shared-csv.js, filter-sort-dropdown-component.js, filter-search-dropdown-component.js,
+//             report-filter-panel-component.js, order-external-summary-api.js
 
 (function () {
   'use strict';
@@ -78,17 +79,12 @@
 
   // ── Filter panel ──────────────────────────────────────────────────────────
   function renderFilterPanel() {
-    SharedFilterPanel.render({
-      containerEl: elFilterHost,
+    window.ReportFilterPanel.init({
+      containerId: elFilterHost.id,
       state      : state,
       options    : filterOptions,
-      onChange   : function (next) {
-        Object.assign(state, next);
-      },
-      onApply: function (next) {
-        Object.assign(state, next);
-        loadReport();
-      }
+      prefix     : 'oes',
+      onApply    : loadReport
     });
   }
 
