@@ -239,6 +239,7 @@
         users       : allUsers
       },
       prefix     : 'rd',
+      layout     : 'paired-grid',
       onApply    : function (next) {
         filterState.year         = next.year;
         filterState.quarter      = next.quarter;
@@ -477,13 +478,12 @@
       format: function (_, o) {
         var sc = paymentStatusClass(o.payment_details.status_list);
         return '<span class="rd-status-badge ' + sc + '">' +
-                 o.payment_details.paid_installments + '/' + o.payment_details.total_installments +
-               '</span>' +
-               '<div style="font-size:.7rem;color:#6b7280;margin-top:2px">งวด</div>';
+                 o.payment_details.paid_installments + '/' + o.payment_details.total_installments + ' งวด' +
+               '</span>';
       } },
     { key: 'status',       label: 'สถานะ',         align: 'center', sortable: false,
       format: function (_, o) {
-        return '<span style="font-size:.75rem">' + escapeHtml(o.payment_details.status_list) + '</span>';
+        return escapeHtml(o.payment_details.status_list);
       } }
   ];
 
