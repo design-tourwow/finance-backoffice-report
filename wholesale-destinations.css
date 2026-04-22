@@ -328,114 +328,16 @@
   background: rgba(25, 118, 210, 0.1);
 }
 
-/* KPI Cards */
-.dashboard-kpi-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.dashboard-kpi-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: white;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.dashboard-kpi-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.kpi-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.kpi-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.dashboard-kpi-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--kpi-color);
-}
-
-.dashboard-kpi-card.kpi-travelers {
-  --kpi-color: var(--color-primary);
-  --kpi-bg: #e3f2fd;
-}
-
+/* KPI card base styles come from kpi-card.css. Only wholesale-specific color
+   variants are defined here. */
 .dashboard-kpi-card.kpi-top-wholesale {
   --kpi-color: #f57c00;
   --kpi-bg: #fff3e0;
 }
 
-.dashboard-kpi-card.kpi-top-country {
-  --kpi-color: #7b1fa2;
-  --kpi-bg: #f3e5f5;
-}
-
 .dashboard-kpi-card.kpi-partners {
   --kpi-color: #388e3c;
   --kpi-bg: #e8f5e9;
-}
-
-.kpi-icon {
-  background: var(--kpi-bg);
-}
-
-.kpi-icon svg {
-  stroke: var(--kpi-color);
-}
-
-.kpi-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.kpi-label {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  margin-bottom: 2px;
-  font-weight: 500;
-  font-family: 'Kanit', sans-serif;
-}
-
-.kpi-value {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: 'Kanit', sans-serif;
-}
-
-.kpi-subtext {
-  font-size: 15px;
-  color: var(--color-text-faint);
-  margin-top: 2px;
-  font-family: 'Kanit', sans-serif;
 }
 
 /* Charts Row */

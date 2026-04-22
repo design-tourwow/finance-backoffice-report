@@ -8,9 +8,9 @@
 /* Design tokens — canonical values reused across component CSS files.
    Scoped to :root so any page that loads filter-panel.css inherits them. */
 :root {
-  --color-primary        : var(--color-primary);
-  --color-primary-dark   : var(--color-primary-dark);
-  --color-primary-subtle : var(--color-primary-subtle);
+  --color-primary        : #4a7ba7;
+  --color-primary-dark   : #3b6490;
+  --color-primary-subtle : #e0e7ef;
   --color-border         : #e5e7eb;
   --color-border-strong  : #d1d5db;
   --color-text           : #374151;
