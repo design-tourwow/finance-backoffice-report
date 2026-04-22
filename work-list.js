@@ -2,6 +2,8 @@
 (function () {
   'use strict';
 
+  const CLOSE_OVERLAY_EVENT = 'app:close-dropdown-overlays';
+
   let activeRoleGroup = 'general';
   let currentData = null;
   let selectedTaskTypeId = '';
@@ -91,6 +93,14 @@
     });
   }
 
+  function closeWorkListDropdowns() {
+    document.querySelectorAll('.filter-sort-menu.open').forEach(menu => {
+      menu.classList.remove('open');
+      const btn = menu.parentElement ? menu.parentElement.querySelector('.filter-sort-btn') : null;
+      if (btn) btn.classList.remove('open');
+    });
+  }
+
   function getFilterOptions() {
     const tasks = Array.isArray(currentData && currentData.tasks) ? currentData.tasks : [];
     const taskTypeMap = new Map();
@@ -154,6 +164,9 @@
     button.addEventListener('click', function (event) {
       event.stopPropagation();
       const isOpen = menu.classList.contains('open');
+      if (!isOpen) {
+        document.dispatchEvent(new CustomEvent(CLOSE_OVERLAY_EVENT));
+      }
       document.querySelectorAll('.filter-sort-menu.open').forEach(openMenu => {
         if (openMenu !== menu) {
           openMenu.classList.remove('open');
@@ -174,6 +187,8 @@
       });
     });
   }
+
+  document.addEventListener(CLOSE_OVERLAY_EVENT, closeWorkListDropdowns);
 
   function renderFilters() {
     const { taskTypes, sellers } = getFilterOptions();

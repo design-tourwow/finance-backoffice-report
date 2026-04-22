@@ -10,6 +10,7 @@ function handleExternalLink(e, url) {
 // Menu Component - Centralized Menu Management
 (function() {
   'use strict';
+  const CLOSE_OVERLAY_EVENT = 'app:close-dropdown-overlays';
 
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
@@ -175,6 +176,10 @@ function handleExternalLink(e, url) {
     const navbarList = document.querySelector('.navbar-list');
     if (!navbarList) return;
 
+    function closeHeaderDropdowns() {
+      navbarList.querySelectorAll('.navbar-dropdown').forEach(d => d.classList.remove('open'));
+    }
+
     const menuHTML = getVisibleMenuItems().map(item => {
       if (item.submenu) {
         // Menu with dropdown
@@ -228,8 +233,12 @@ function handleExternalLink(e, url) {
         const dropdown = this.closest('.navbar-dropdown');
         const isOpen = dropdown.classList.contains('open');
 
+        if (!isOpen) {
+          document.dispatchEvent(new CustomEvent(CLOSE_OVERLAY_EVENT));
+        }
+
         // Close all dropdowns first
-        navbarList.querySelectorAll('.navbar-dropdown').forEach(d => d.classList.remove('open'));
+        closeHeaderDropdowns();
 
         // Toggle current
         if (!isOpen) {
@@ -238,9 +247,11 @@ function handleExternalLink(e, url) {
       });
     });
 
+    document.addEventListener(CLOSE_OVERLAY_EVENT, closeHeaderDropdowns);
+
     // Close dropdown when clicking outside
     document.addEventListener('click', function() {
-      navbarList.querySelectorAll('.navbar-dropdown').forEach(d => d.classList.remove('open'));
+      closeHeaderDropdowns();
     });
   }
 

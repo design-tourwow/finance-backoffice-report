@@ -1543,7 +1543,11 @@
       filterMenu.classList.remove('show');
     }
 
-    document.addEventListener(CLOSE_OVERLAY_EVENT, closeLeadTimeFilterMenu);
+    if (filterMenu.__closeOverlayHandler) {
+      document.removeEventListener(CLOSE_OVERLAY_EVENT, filterMenu.__closeOverlayHandler);
+    }
+    filterMenu.__closeOverlayHandler = closeLeadTimeFilterMenu;
+    document.addEventListener(CLOSE_OVERLAY_EVENT, filterMenu.__closeOverlayHandler);
 
     // Remove old button listener by cloning
     const newFilterBtn = filterBtn.cloneNode(true);
