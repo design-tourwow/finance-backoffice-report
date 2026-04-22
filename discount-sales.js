@@ -30,7 +30,8 @@
     countries    : [],
     teams        : [],
     jobPositions : [],
-    users        : []
+    users        : [],
+    availablePeriods: { years: [] }
   };
 
   var chartAmount  = null;
@@ -59,6 +60,7 @@
       state      : filterState,
       options    : filterOptions,
       prefix     : 'ds',
+      layout     : 'paired-grid',
       onApply    : loadReportData
     });
   }
@@ -66,16 +68,18 @@
   // ── Load dropdown lookups ──────────────────────────────────────────────────
   async function loadInitialData() {
     var results = await Promise.all([
+      svc.getAvailablePeriods(),
       svc.getCountries(),
       svc.getTeams(),
       svc.getJobPositions(),
       svc.getUsers()
     ]);
     filterOptions = {
-      countries   : results[0] || [],
-      teams       : results[1] || [],
-      jobPositions: results[2] || [],
-      users       : results[3] || []
+      availablePeriods: results[0] || { years: [] },
+      countries   : results[1] || [],
+      teams       : results[2] || [],
+      jobPositions: results[3] || [],
+      users       : results[4] || []
     };
     renderFilterPanel();
     loadReportData();

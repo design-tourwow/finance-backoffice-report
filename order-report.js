@@ -451,6 +451,14 @@
 
   // Initialize Export CSV button
   function initExportButton() {
+    const host = document.getElementById('exportCsvBtnHost');
+    if (host && window.SharedExportButton) {
+      window.SharedExportButton.mount(host, {
+        id: 'exportCsvBtn',
+        className: 'export-csv-btn'
+      });
+    }
+
     const exportBtn = document.getElementById('exportCsvBtn');
     if (!exportBtn) return;
 

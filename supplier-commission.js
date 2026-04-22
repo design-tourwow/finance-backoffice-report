@@ -36,7 +36,8 @@
     countries    : [],
     teams        : [],
     jobPositions : [],
-    users        : []
+    users        : [],
+    availablePeriods: { years: [] }
   };
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -61,15 +62,17 @@
   async function loadFilterOptions() {
     try {
       var results = await Promise.all([
+        window.SharedFilterService.getAvailablePeriods(),
         window.SharedFilterService.getCountries(),
         window.SharedFilterService.getTeams(),
         window.SharedFilterService.getJobPositions(),
         window.SharedFilterService.getUsers()
       ]);
-      filterOptions.countries    = results[0] || [];
-      filterOptions.teams        = results[1] || [];
-      filterOptions.jobPositions = results[2] || [];
-      filterOptions.users        = results[3] || [];
+      filterOptions.availablePeriods = results[0] || { years: [] };
+      filterOptions.countries    = results[1] || [];
+      filterOptions.teams        = results[2] || [];
+      filterOptions.jobPositions = results[3] || [];
+      filterOptions.users        = results[4] || [];
     } catch (err) {
       console.warn('[SupplierCommission] loadFilterOptions error:', err);
     }
@@ -81,6 +84,7 @@
       state      : filterState,
       options    : filterOptions,
       prefix     : 'sc',
+      layout     : 'paired-grid',
       onApply    : applyFilters
     });
   }

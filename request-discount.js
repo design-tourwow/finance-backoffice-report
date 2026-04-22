@@ -43,6 +43,7 @@
   var allTeams        = [];
   var allJobPositions = [];
   var allUsers        = [];
+  var availablePeriods = { years: [] };
 
   // Chart instances
   var chartAmount  = null;
@@ -233,6 +234,7 @@
       containerId: 'rd-filter-container',
       state      : panelState,
       options    : {
+        availablePeriods: availablePeriods,
         countries   : allCountries,
         teams       : allTeams,
         jobPositions: allJobPositions,
@@ -787,15 +789,17 @@
 
     try {
       var results = await Promise.all([
+        SharedFilterService.getAvailablePeriods(),
         SharedFilterService.getCountries(),
         SharedFilterService.getTeams(),
         SharedFilterService.getJobPositions(),
         SharedFilterService.getUsers()
       ]);
-      allCountries    = results[0] || [];
-      allTeams        = results[1] || [];
-      allJobPositions = results[2] || [];
-      allUsers        = results[3] || [];
+      availablePeriods = results[0] || { years: [] };
+      allCountries    = results[1] || [];
+      allTeams        = results[2] || [];
+      allJobPositions = results[3] || [];
+      allUsers        = results[4] || [];
     } catch (e) {
       console.warn('[RequestDiscount] init filter data error:', e);
     }

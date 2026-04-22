@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="table-sorting-component.css" />
     <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
     <link rel="stylesheet" href="order-report.css" />
+    <link rel="stylesheet" href="shared-export-button.css" />
     
     <!-- Configuration -->
     <script>
@@ -50,6 +51,7 @@
     <script src="searchable-dropdown-component.js"></script>
     <script src="table-sorting-component.js"></script>
     <script src="filter-sort-dropdown-component.js"></script>
+    <script src="shared-export-button.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Load sidebar state -->
@@ -365,12 +367,7 @@
                   <div id="tabFilterContainer"></div>
                   
                   <!-- Export Button -->
-                  <button type="button" class="btn btn-secondary export-csv-btn" id="exportCsvBtn" title="Export เป็น CSV">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                    </svg>
-                    Export CSV
-                  </button>
+                  <div id="exportCsvBtnHost" class="shared-export-button-host"></div>
                 </div>
                 
                 <!-- Search Results (below search bar) -->

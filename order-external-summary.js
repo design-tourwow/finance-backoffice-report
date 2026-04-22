@@ -21,7 +21,8 @@
     countries    : [],
     teams        : [],
     jobPositions : [],
-    users        : []
+    users        : [],
+    availablePeriods: { years: [] }
   };
 
   var lastData   = [];
@@ -63,15 +64,17 @@
   async function loadDropdownData() {
     try {
       var results = await Promise.all([
+        SharedFilterService.getAvailablePeriods(),
         SharedFilterService.getCountries(),
         SharedFilterService.getTeams(),
         SharedFilterService.getJobPositions(),
         SharedFilterService.getUsers()
       ]);
-      filterOptions.countries    = results[0] || [];
-      filterOptions.teams        = results[1] || [];
-      filterOptions.jobPositions = results[2] || [];
-      filterOptions.users        = results[3] || [];
+      filterOptions.availablePeriods = results[0] || { years: [] };
+      filterOptions.countries    = results[1] || [];
+      filterOptions.teams        = results[2] || [];
+      filterOptions.jobPositions = results[3] || [];
+      filterOptions.users        = results[4] || [];
     } catch (err) {
       console.error('[OrderExternalSummary] loadDropdownData failed:', err);
     }
@@ -98,8 +101,10 @@
 
     try {
       var data = await OrderExternalAPI.fetch({
-        year         : state.year,
-        month        : state.month,
+        filterMode   : state.mode,
+        year         : state.mode !== 'all' ? state.year : null,
+        quarter      : state.mode === 'quarterly' ? state.quarter : null,
+        month        : state.mode === 'monthly' ? state.month : null,
         country_id   : state.country_id,
         job_position : state.job_position,
         team_number  : state.team_number,
@@ -234,10 +239,7 @@
       '<div class="oes-table-section">' +
       '  <div class="oes-table-header">' +
       '    <h2>รายละเอียด Orders</h2>' +
-      '    <button class="oes-btn-export" id="oes-export-btn" type="button">' +
-      '      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
-      '      Export CSV' +
-      '    </button>' +
+      '    ' + window.SharedExportButton.render({ id: 'oes-export-btn' }) +
       '  </div>' +
       '  <div id="oes-table-body"></div>' +
       '</div>';
