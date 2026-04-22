@@ -1,18 +1,31 @@
 // filter-search-dropdown-component.js
-// Single-select dropdown with in-menu search.
-// Visually matches .filter-sort-btn so it can sit beside FilterSortDropdowns
-// in the same filter row. Styles come from filter-panel.css (.filter-search-dd-*).
+// Single- or multi-select dropdown with in-menu search. Visually matches
+// .filter-sort-btn so it sits beside FilterSortDropdowns in the same filter
+// row. Styles come from filter-panel.css (.filter-search-dd-*).
 //
 // Exposes window.FilterSearchDropdown (IIFE).
 //
-// Usage:
+// Single-select usage:
 //   FilterSearchDropdown.init({
-//     containerId: 'my-container',
+//     containerId : 'my-container',
 //     defaultLabel: 'ทุกคน',
-//     defaultIcon : '<svg>...</svg>',        // optional
+//     defaultIcon : '<svg>...</svg>',
 //     options     : [{value, label, icon, active}],
-//     placeholder : 'ค้นหา...',              // optional, default 'ค้นหา...'
+//     placeholder : 'ค้นหา...',
 //     onChange    : function (value, label) { ... }
+//   });
+//
+// Multi-select usage — each option gets a checkbox; trigger label shows
+// a count badge ("ทุกประเทศ (3)"). onChange fires once the user confirms
+// with "ยืนยัน" (not on every checkbox toggle) and receives the selected
+// values as a comma-separated string + an array:
+//   FilterSearchDropdown.init({
+//     ...
+//     multiSelect    : true,
+//     groupLabel     : 'ประเทศ',      // "{label} (N)" when any selected
+//     confirmLabel   : 'ยืนยัน',      // optional
+//     clearLabel     : 'ล้าง',         // optional
+//     onChange       : function (csvValue, valuesArray) { ... }
 //   });
 
 (function () {
@@ -34,20 +47,34 @@
       return null;
     }
 
-    var btnId = cfg.containerId + 'Btn';
-    var menuId = cfg.containerId + 'Menu';
+    var multi = !!cfg.multiSelect;
+    var btnId   = cfg.containerId + 'Btn';
+    var menuId  = cfg.containerId + 'Menu';
     var inputId = cfg.containerId + 'Search';
-    var listId = cfg.containerId + 'List';
+    var listId  = cfg.containerId + 'List';
+
+    // Single: currentValue is a scalar string. Multi: selected is a Set.
     var currentValue = '';
+    var selected = Object.create(null); // used in multi mode: { [value]: true }
     for (var i = 0; i < cfg.options.length; i++) {
       if (cfg.options[i].active) {
-        currentValue = String(cfg.options[i].value || '');
-        break;
+        var v = String(cfg.options[i].value || '');
+        if (multi && v) selected[v] = true;
+        else if (!multi) { currentValue = v; break; }
       }
     }
 
+    var actionsHTML = '';
+    if (multi) {
+      actionsHTML =
+        '<div class="filter-search-dd-actions">' +
+          '<button type="button" class="filter-search-dd-clear">' + escHtml(cfg.clearLabel || 'ล้าง') + '</button>' +
+          '<button type="button" class="filter-search-dd-confirm">' + escHtml(cfg.confirmLabel || 'ยืนยัน') + '</button>' +
+        '</div>';
+    }
+
     container.innerHTML =
-      '<div class="filter-search-dd">' +
+      '<div class="filter-search-dd' + (multi ? ' filter-search-dd--multi' : '') + '">' +
         '<button type="button" class="filter-sort-btn" id="' + btnId + '">' +
           '<div class="filter-sort-btn-content">' +
             (cfg.defaultIcon || '') +
@@ -63,6 +90,7 @@
               '" placeholder="' + escHtml(cfg.placeholder || 'ค้นหา...') + '" autocomplete="off" />' +
           '</div>' +
           '<div class="filter-search-dd-list" id="' + listId + '"></div>' +
+          actionsHTML +
         '</div>' +
       '</div>';
 
@@ -84,10 +112,36 @@
       return null;
     }
 
-    function getTriggerIconHTML(value) {
-      var selected = findOptionByValue(value);
-      if (selected && selected.icon) return selected.icon;
-      return cfg.defaultIcon || '';
+    function getSelectedValues() {
+      var arr = [];
+      for (var k in selected) if (selected[k]) arr.push(k);
+      return arr;
+    }
+
+    function updateTriggerSingle(value, label) {
+      var selOpt = findOptionByValue(value);
+      var iconHTML = (selOpt && selOpt.icon) ? selOpt.icon : (cfg.defaultIcon || '');
+      btnContent.innerHTML = iconHTML +
+        '<span class="filter-sort-btn-text">' + escHtml(label) + '</span>';
+    }
+
+    function updateTriggerMulti() {
+      var values = getSelectedValues();
+      var count = values.length;
+      if (count === 0) {
+        btnContent.innerHTML = (cfg.defaultIcon || '') +
+          '<span class="filter-sort-btn-text">' + escHtml(cfg.defaultLabel) + '</span>';
+      } else if (count === 1) {
+        var opt = findOptionByValue(values[0]);
+        var iconHTML = (opt && opt.icon) ? opt.icon : (cfg.defaultIcon || '');
+        var label = opt ? opt.label : values[0];
+        btnContent.innerHTML = iconHTML +
+          '<span class="filter-sort-btn-text">' + escHtml(label) + '</span>';
+      } else {
+        var group = cfg.groupLabel || cfg.defaultLabel || '';
+        btnContent.innerHTML = (cfg.defaultIcon || '') +
+          '<span class="filter-sort-btn-text">' + escHtml(group) + ' (' + count + ')</span>';
+      }
     }
 
     function renderList(query) {
@@ -103,10 +157,21 @@
 
       listEl.innerHTML = filtered.map(function (o) {
         var optIcon = o.icon ? o.icon : '';
-        return '<button type="button" class="filter-search-dd-option' +
-          (String(o.value) === String(currentValue) ? ' active' : '') +
+        var val = String(o.value);
+        var isActive = multi
+          ? !!selected[val]
+          : (val === String(currentValue));
+        var cls = 'filter-search-dd-option' + (isActive ? ' active' : '');
+        var checkbox = multi
+          ? '<span class="filter-search-dd-check" aria-hidden="true">' +
+              (isActive
+                ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+                : '') +
+            '</span>'
+          : '';
+        return '<button type="button" class="' + cls +
           '" data-value="' + escHtml(o.value) + '" data-label="' + escHtml(o.label) + '">' +
-          optIcon +
+          checkbox + optIcon +
           '<span>' + escHtml(o.label) + '</span>' +
           '</button>';
       }).join('');
@@ -116,19 +181,30 @@
           e.stopPropagation();
           var val = this.getAttribute('data-value');
           var lbl = this.getAttribute('data-label');
-          currentValue = val;
-          btnContent.innerHTML = getTriggerIconHTML(val) +
-            '<span class="filter-sort-btn-text">' + escHtml(lbl) + '</span>';
-          menu.classList.remove('open');
-          btn.classList.remove('open');
-          searchInput.value = '';
-          renderList('');
-          if (typeof cfg.onChange === 'function') cfg.onChange(val, lbl);
+
+          if (multi) {
+            if (!val) { // the "all" option clears selection
+              selected = Object.create(null);
+            } else if (selected[val]) {
+              delete selected[val];
+            } else {
+              selected[val] = true;
+            }
+            renderList(searchInput.value);
+          } else {
+            currentValue = val;
+            updateTriggerSingle(val, lbl);
+            closeMenu();
+            searchInput.value = '';
+            renderList('');
+            if (typeof cfg.onChange === 'function') cfg.onChange(val, lbl);
+          }
         });
       });
     }
 
     renderList('');
+    if (multi) updateTriggerMulti();
 
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -146,6 +222,25 @@
       renderList(this.value);
     });
     searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    if (multi) {
+      menu.querySelector('.filter-search-dd-clear').addEventListener('click', function (e) {
+        e.stopPropagation();
+        selected = Object.create(null);
+        renderList(searchInput.value);
+        updateTriggerMulti();
+        if (typeof cfg.onChange === 'function') cfg.onChange('', []);
+      });
+      menu.querySelector('.filter-search-dd-confirm').addEventListener('click', function (e) {
+        e.stopPropagation();
+        var arr = getSelectedValues();
+        closeMenu();
+        searchInput.value = '';
+        renderList('');
+        updateTriggerMulti();
+        if (typeof cfg.onChange === 'function') cfg.onChange(arr.join(','), arr);
+      });
+    }
 
     document.addEventListener(CLOSE_OVERLAY_EVENT, closeMenu);
 
