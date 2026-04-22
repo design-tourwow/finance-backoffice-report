@@ -12,6 +12,13 @@
 (function () {
   'use strict';
 
+  var CHART_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
+    ? window.AppFont.cssFamily()
+    : "'Kanit', sans-serif";
+  var CHART_FONT_FAMILY = window.AppFont && typeof window.AppFont.chartFamily === 'function'
+    ? window.AppFont.chartFamily()
+    : 'Kanit';
+
   function hasChart() {
     return typeof window.Chart !== 'undefined';
   }
@@ -25,7 +32,7 @@
   // renders in Kanit to match the surrounding UI. Runs once when this file
   // loads after the Chart.js CDN.
   if (hasChart() && window.Chart.defaults && window.Chart.defaults.font) {
-    window.Chart.defaults.font.family = "'Kanit', sans-serif";
+    window.Chart.defaults.font.family = CHART_FONT_CSS_FAMILY;
   }
 
   function formatCurrency(v) {
@@ -80,8 +87,8 @@
           borderColor: 'rgba(74, 123, 167, 0.5)',
           borderWidth: 1,
           padding: 12,
-          titleFont: { family: 'Kanit', size: 16, weight: '600' },
-          bodyFont: { family: 'Kanit', size: 15 }
+          titleFont: { family: CHART_FONT_FAMILY, size: 16, weight: '600' },
+          bodyFont: { family: CHART_FONT_FAMILY, size: 15 }
         }
       },
       scales: {
@@ -90,7 +97,7 @@
           beginAtZero: horizontal ? true : undefined,
           ticks: {
             color: '#6b7280',
-            font: { family: 'Kanit', size: 13 },
+            font: { family: CHART_FONT_FAMILY, size: 13 },
             maxRotation: horizontal ? 0 : 45,
             minRotation: horizontal ? 0 : 0,
             callback: horizontal
@@ -103,7 +110,7 @@
           beginAtZero: horizontal ? undefined : true,
           ticks: {
             color: '#6b7280',
-            font: { family: 'Kanit', size: 13 },
+            font: { family: CHART_FONT_FAMILY, size: 13 },
             callback: horizontal
               ? undefined
               : function (val) { return '฿' + formatCurrency(val); }
@@ -119,7 +126,7 @@
         align: horizontal ? 'end' : 'top',
         offset: horizontal ? 4 : 4,
         color: '#374151',
-        font: { family: 'Kanit', size: 13, weight: '600' },
+        font: { family: CHART_FONT_FAMILY, size: 13, weight: '600' },
         formatter: function (value) { return formatNumber(value); }
       };
     }

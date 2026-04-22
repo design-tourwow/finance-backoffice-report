@@ -2,6 +2,13 @@
 (function () {
   'use strict';
 
+  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
+    ? window.AppFont.cssFamily()
+    : "'Kanit', sans-serif";
+  const APP_FONT_STYLESHEET_TAG = window.AppFont && typeof window.AppFont.stylesheetTag === 'function'
+    ? window.AppFont.stylesheetTag()
+    : '<link rel="stylesheet" href="shared-font.css" />';
+
   // Utility: Debounce function
   function debounce(func, wait) {
     let timeout;
@@ -1557,8 +1564,9 @@ function initShowAllButtons() {
       <head>
         <meta charset="UTF-8">
         <title>Tour Images Report</title>
+        ${APP_FONT_STYLESHEET_TAG}
         <style>
-          body { font-family: 'Kanit', sans-serif; padding: 20px; }
+          body { font-family: ${APP_FONT_CSS_FAMILY}; padding: 20px; }
           h1 { color: #4a7ba7; text-align: center; }
           .meta { text-align: center; color: #666; margin-bottom: 30px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }

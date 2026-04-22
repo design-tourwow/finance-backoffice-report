@@ -7,7 +7,7 @@
   var FALLBACK_CHART_FAMILY = 'Kanit';
 
   function cssFamily() {
-    var root = document && document.documentElement;
+    var root = typeof document !== 'undefined' ? document.documentElement : null;
     if (!root || typeof window.getComputedStyle !== 'function') return FALLBACK_CSS_FAMILY;
 
     var value = window.getComputedStyle(root).getPropertyValue(CSS_VAR_NAME);

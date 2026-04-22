@@ -2,6 +2,13 @@
 (function () {
   'use strict';
 
+  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
+    ? window.AppFont.cssFamily()
+    : "'Kanit', sans-serif";
+  const APP_FONT_CHART_FAMILY = window.AppFont && typeof window.AppFont.chartFamily === 'function'
+    ? window.AppFont.chartFamily()
+    : 'Kanit';
+
   let currentChart = null;
   let currentTab = 'country';
   let currentFilters = {};
@@ -2293,7 +2300,7 @@
               position: 'right',
               align: 'start', // Align legend items to top
               labels: {
-                font: { family: 'Kanit', size: 13 },
+                font: { family: APP_FONT_CHART_FAMILY, size: 13 },
                 padding: 8,
                 usePointStyle: true,
                 pointStyle: 'circle'
@@ -2302,7 +2309,7 @@
             datalabels: {
               color: '#fff',
               font: {
-                family: 'Kanit',
+                family: APP_FONT_CHART_FAMILY,
                 size: 14,
                 weight: '600'
               },
@@ -2323,8 +2330,8 @@
               titleColor: '#fff',
               bodyColor: 'rgba(255,255,255,0.9)',
               padding: 12,
-              titleFont: { family: 'Kanit', size: 16, weight: '600' },
-              bodyFont: { family: 'Kanit', size: 15 },
+              titleFont: { family: APP_FONT_CHART_FAMILY, size: 16, weight: '600' },
+              bodyFont: { family: APP_FONT_CHART_FAMILY, size: 15 },
               callbacks: {
                 label: function(context) {
                   const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -2388,7 +2395,7 @@
               align: 'top',
               offset: 4,
               color: '#374151',
-              font: { family: 'Kanit', size: 14, weight: '600' },
+              font: { family: APP_FONT_CHART_FAMILY, size: 14, weight: '600' },
               formatter: function(value) {
                 return isCurrency ? formatCurrencyShort(value) : formatNumber(value);
               }
@@ -2400,8 +2407,8 @@
               borderColor: 'rgba(74, 123, 167, 0.5)',
               borderWidth: 1,
               padding: 12,
-              titleFont: { family: 'Kanit', size: 16, weight: '600' },
-              bodyFont: { family: 'Kanit', size: 15 },
+              titleFont: { family: APP_FONT_CHART_FAMILY, size: 16, weight: '600' },
+              bodyFont: { family: APP_FONT_CHART_FAMILY, size: 15 },
               callbacks: {
                 label: function(context) {
                   if (currentViewMode === 'sales') return `ยอดขาย: ${formatCurrency(context.raw)}`;
@@ -2417,7 +2424,7 @@
               grid: { display: false },
               ticks: {
                 color: '#6b7280',
-                font: { family: 'Kanit', size: 14 },
+                font: { family: APP_FONT_CHART_FAMILY, size: 14 },
                 maxRotation: 45,
                 minRotation: 45
               }
@@ -2426,7 +2433,7 @@
               grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
               ticks: {
                 color: '#6b7280',
-                font: { family: 'Kanit', size: 13 },
+                font: { family: APP_FONT_CHART_FAMILY, size: 13 },
                 callback: function(value) { return isCurrency ? formatCurrencyShort(value) : formatNumber(value); }
               },
               beginAtZero: true,
@@ -2929,7 +2936,7 @@
             font: {
               size: 14,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -2958,7 +2965,7 @@
           stacked: true,
           ticks: {
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 16
             }
           }
@@ -3034,7 +3041,7 @@
             font: {
               size: 14,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -3071,7 +3078,7 @@
             maxRotation: 90,
             minRotation: 90,
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 16
             }
           }
@@ -3149,7 +3156,7 @@
             font: {
               size: 14,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -3186,7 +3193,7 @@
             maxRotation: 90,
             minRotation: 90,
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 16
             }
           }
@@ -3266,7 +3273,7 @@
             font: {
               size: 14,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -3295,7 +3302,7 @@
           stacked: true,
           ticks: {
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 16
             }
           }
@@ -3496,7 +3503,7 @@
       gap: 8px;
       font-size: 15px;
       color: #666;
-      font-family: 'Kanit', sans-serif;
+      font-family: ${APP_FONT_CSS_FAMILY};
     `;
     
     indicator.innerHTML = `
@@ -3713,7 +3720,7 @@
         ticks: {
           stepSize: niceScale.tickSpacing,
           font: {
-            family: 'Kanit'
+            family: APP_FONT_CHART_FAMILY
           },
           precision: 0
         }
@@ -3737,11 +3744,11 @@
         padding: 12,
         titleFont: {
           size: 16,
-          family: 'Kanit'
+          family: APP_FONT_CHART_FAMILY
         },
         bodyFont: {
           size: 15,
-          family: 'Kanit'
+          family: APP_FONT_CHART_FAMILY
         },
         filter: function(tooltipItem) {
           // Hide 'Background' dataset from tooltip
@@ -3778,7 +3785,7 @@
             y: isHorizontal ? {
               ticks: {
                 font: {
-                  family: 'Kanit'
+                  family: APP_FONT_CHART_FAMILY
                 }
               },
               grid: {
@@ -3801,7 +3808,7 @@
             } : {
               ticks: {
                 font: {
-                  family: 'Kanit'
+                  family: APP_FONT_CHART_FAMILY
                 }
               },
               grid: {

@@ -2,6 +2,13 @@
 (function () {
   'use strict';
 
+  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
+    ? window.AppFont.cssFamily()
+    : "'Kanit', sans-serif";
+  const APP_FONT_STYLESHEET_TAG = window.AppFont && typeof window.AppFont.stylesheetTag === 'function'
+    ? window.AppFont.stylesheetTag()
+    : '<link rel="stylesheet" href="shared-font.css" />';
+
   // ---- State ----
   let currentUser = null;
   let currentData = null;
@@ -786,13 +793,14 @@
   <head>
     <meta charset="UTF-8" />
     <title>Commission Report Plus</title>
+    ${APP_FONT_STYLESHEET_TAG}
     <style>
       @page { size: A4 landscape; margin: 10mm; }
       * { box-sizing: border-box; }
       body {
         margin: 0;
         color: #111827;
-        font-family: 'Kanit', sans-serif;
+        font-family: ${APP_FONT_CSS_FAMILY};
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -987,7 +995,7 @@
     wrapper.style.background = '#ffffff';
     wrapper.style.padding = '22px 24px 18px';
     wrapper.style.zIndex = '-1';
-    wrapper.style.fontFamily = "'Kanit', sans-serif";
+    wrapper.style.fontFamily = APP_FONT_CSS_FAMILY;
     wrapper.className = 'crp-pdf-source';
     wrapper.dataset.countText = countText || '';
 

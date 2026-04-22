@@ -2,6 +2,13 @@
 (function () {
   'use strict';
 
+  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
+    ? window.AppFont.cssFamily()
+    : "'Kanit', sans-serif";
+  const APP_FONT_CHART_FAMILY = window.AppFont && typeof window.AppFont.chartFamily === 'function'
+    ? window.AppFont.chartFamily()
+    : 'Kanit';
+
   let currentFilters = {};
   let currentData = null;
   let topWholesalesChart = null;
@@ -1696,7 +1703,7 @@
             anchor: 'end',
             align: 'end',
             color: '#374151',
-            font: { family: 'Kanit', size: 14, weight: '600' },
+            font: { family: APP_FONT_CHART_FAMILY, size: 14, weight: '600' },
             formatter: function(value) {
               return currentViewMode === 'travelers' ? formatNumber(value) : formatNumber(value);
             }
@@ -1706,8 +1713,8 @@
             titleColor: '#fff',
             bodyColor: 'rgba(255,255,255,0.9)',
             padding: 12,
-            titleFont: { family: 'Kanit', size: 16, weight: '600' },
-            bodyFont: { family: 'Kanit', size: 15 },
+            titleFont: { family: APP_FONT_CHART_FAMILY, size: 16, weight: '600' },
+            bodyFont: { family: APP_FONT_CHART_FAMILY, size: 15 },
             callbacks: {
               label: function(context) {
                 const label = { sales: 'ยอดขาย', travelers: 'ผู้เดินทาง', orders: 'ออเดอร์', net_commission: 'ค่าคอมสุทธิ' }[currentViewMode] || 'ยอดขาย';
@@ -1722,7 +1729,7 @@
             beginAtZero: true,
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: {
-              font: { family: 'Kanit', size: 14 },
+              font: { family: APP_FONT_CHART_FAMILY, size: 14 },
               callback: function(value) {
                 return formatNumber(value);
               }
@@ -1731,7 +1738,7 @@
           y: {
             grid: { display: false },
             ticks: {
-              font: { family: 'Kanit', size: 14 }
+              font: { family: APP_FONT_CHART_FAMILY, size: 14 }
             }
           }
         }
@@ -1807,7 +1814,7 @@
             align: 'center',
             maxHeight: 40,
             labels: {
-              font: { family: 'Kanit', size: 11 },
+              font: { family: APP_FONT_CHART_FAMILY, size: 11 },
               padding: 8,
               boxWidth: 8,
               usePointStyle: true,
@@ -1820,8 +1827,8 @@
             titleColor: '#fff',
             bodyColor: 'rgba(255,255,255,0.9)',
             padding: 12,
-            titleFont: { family: 'Kanit', size: 16, weight: '600' },
-            bodyFont: { family: 'Kanit', size: 15 },
+            titleFont: { family: APP_FONT_CHART_FAMILY, size: 16, weight: '600' },
+            bodyFont: { family: APP_FONT_CHART_FAMILY, size: 15 },
             callbacks: {
               label: function(context) {
                 const value = formatValueByMode(context.raw, currentViewMode);
@@ -1835,7 +1842,7 @@
             stacked: true,
             grid: { display: false },
             ticks: {
-              font: { family: 'Kanit', size: 13 },
+              font: { family: APP_FONT_CHART_FAMILY, size: 13 },
               maxRotation: 45,
               minRotation: 45
             }
@@ -1845,7 +1852,7 @@
             beginAtZero: true,
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: {
-              font: { family: 'Kanit', size: 14 },
+              font: { family: APP_FONT_CHART_FAMILY, size: 14 },
               callback: function(value) {
                 return formatNumber(value);
               }

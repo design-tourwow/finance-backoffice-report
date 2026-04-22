@@ -2,6 +2,13 @@
 (function () {
   'use strict';
 
+  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
+    ? window.AppFont.cssFamily()
+    : "'Kanit', sans-serif";
+  const APP_FONT_STYLESHEET_TAG = window.AppFont && typeof window.AppFont.stylesheetTag === 'function'
+    ? window.AppFont.stylesheetTag()
+    : '<link rel="stylesheet" href="shared-font.css" />';
+
   // Utility: Debounce function
   function debounce(func, wait) {
     let timeout;
@@ -2031,11 +2038,11 @@ function initShowAllButtons() {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>รายงานรูปภาพทัวร์ - Tour Image Manager</title>
-        <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        ${APP_FONT_STYLESHEET_TAG}
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
-            font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: ${APP_FONT_CSS_FAMILY};
             padding: 30px;
             background: #f7f8fa;
             color: #1a1a1a;
@@ -2127,7 +2134,7 @@ function initShowAllButtons() {
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-family: 'Kanit', sans-serif;
+            font-family: ${APP_FONT_CSS_FAMILY};
             font-size: 14px;
             font-weight: 500;
             margin: 0 5px;

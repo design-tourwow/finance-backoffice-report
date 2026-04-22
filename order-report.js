@@ -2,6 +2,13 @@
 (function () {
   'use strict';
 
+  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
+    ? window.AppFont.cssFamily()
+    : "'Kanit', sans-serif";
+  const APP_FONT_CHART_FAMILY = window.AppFont && typeof window.AppFont.chartFamily === 'function'
+    ? window.AppFont.chartFamily()
+    : 'Kanit';
+
   let currentChart = null;
   let currentTab = 'country';
   let currentFilters = {};
@@ -624,7 +631,7 @@
             font: {
               size: 12,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -653,7 +660,7 @@
           stacked: true,
           ticks: {
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 14
             }
           }
@@ -1054,7 +1061,7 @@
             font: {
               size: 12,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -1083,7 +1090,7 @@
           stacked: true,
           ticks: {
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 14
             }
           }
@@ -1159,7 +1166,7 @@
             font: {
               size: 12,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -1196,7 +1203,7 @@
             maxRotation: 90,
             minRotation: 90,
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 14
             }
           }
@@ -1274,7 +1281,7 @@
             font: {
               size: 12,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -1311,7 +1318,7 @@
             maxRotation: 90,
             minRotation: 90,
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 14
             }
           }
@@ -1391,7 +1398,7 @@
             font: {
               size: 12,
               weight: 'bold',
-              family: 'Kanit'
+              family: APP_FONT_CHART_FAMILY
             },
             formatter: (value) => {
               return formatNumber(value);
@@ -1420,7 +1427,7 @@
           stacked: true,
           ticks: {
             font: {
-              family: 'Kanit',
+              family: APP_FONT_CHART_FAMILY,
               size: 14
             }
           }
@@ -1621,7 +1628,7 @@
       gap: 8px;
       font-size: 13px;
       color: #666;
-      font-family: 'Kanit', sans-serif;
+      font-family: ${APP_FONT_CSS_FAMILY};
     `;
     
     indicator.innerHTML = `
@@ -1838,7 +1845,7 @@
         ticks: {
           stepSize: niceScale.tickSpacing,
           font: {
-            family: 'Kanit'
+            family: APP_FONT_CHART_FAMILY
           },
           precision: 0
         }
@@ -1862,11 +1869,11 @@
         padding: 12,
         titleFont: {
           size: 14,
-          family: 'Kanit'
+          family: APP_FONT_CHART_FAMILY
         },
         bodyFont: {
           size: 13,
-          family: 'Kanit'
+          family: APP_FONT_CHART_FAMILY
         },
         filter: function(tooltipItem) {
           // Hide 'Background' dataset from tooltip
@@ -1903,7 +1910,7 @@
             y: isHorizontal ? {
               ticks: {
                 font: {
-                  family: 'Kanit'
+                  family: APP_FONT_CHART_FAMILY
                 }
               },
               grid: {
@@ -1926,7 +1933,7 @@
             } : {
               ticks: {
                 font: {
-                  family: 'Kanit'
+                  family: APP_FONT_CHART_FAMILY
                 }
               },
               grid: {

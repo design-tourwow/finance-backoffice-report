@@ -6,6 +6,10 @@
 (function () {
   'use strict';
   if (typeof window.Chart !== 'undefined' && window.Chart.defaults && window.Chart.defaults.font) {
-    window.Chart.defaults.font.family = "'Kanit', sans-serif";
+    if (window.AppFont && typeof window.AppFont.applyChartDefaults === 'function') {
+      window.AppFont.applyChartDefaults(window.Chart);
+    } else {
+      window.Chart.defaults.font.family = "'Kanit', sans-serif";
+    }
   }
 })();
