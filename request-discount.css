@@ -136,16 +136,16 @@
 
 .rd-rank-badge.top { background: #eab308; }
 
-/* Discount breakdown cell */
+/* Discount breakdown cell — inherits canonical 16px body size so it
+   reads at the same weight as its sibling cells. */
 .rd-breakdown {
-  font-size: .75rem;
-  line-height: 1.7;
+  line-height: 1.5;
 }
 
 .rd-breakdown-row {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
 }
 
 /* Payment status badge — sized to match .ds-badge / .sc-pax-badge so the
