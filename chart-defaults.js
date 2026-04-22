@@ -5,8 +5,23 @@
 
 (function () {
   'use strict';
+  function updateExistingCharts() {
+    if (typeof window.Chart === 'undefined' || !window.Chart.instances) return;
+    Object.values(window.Chart.instances).forEach(function (chart) {
+      if (chart && typeof chart.update === 'function') {
+        chart.update('none');
+      }
+    });
+  }
+
   if (!window.AppFont || typeof window.AppFont.applyChartDefaults !== 'function') return;
   if (typeof window.Chart !== 'undefined' && window.Chart.defaults && window.Chart.defaults.font) {
     window.AppFont.applyChartDefaults(window.Chart);
+  }
+  if (document.fonts && typeof document.fonts.ready === 'object' && typeof document.fonts.ready.then === 'function') {
+    document.fonts.ready.then(function () {
+      window.AppFont.applyChartDefaults(window.Chart);
+      updateExistingCharts();
+    });
   }
 })();

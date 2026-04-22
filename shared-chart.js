@@ -24,12 +24,29 @@
     return typeof window.ChartDataLabels !== 'undefined';
   }
 
+  function updateExistingCharts() {
+    if (!hasChart() || !window.Chart.instances) return;
+    Object.values(window.Chart.instances).forEach(function (chart) {
+      if (chart && typeof chart.update === 'function') {
+        chart.update('none');
+      }
+    });
+  }
+
   // Chart.js renders labels / legend / tooltip in a <canvas> — CSS font-family
   // rules do NOT apply there. Set a global default so every chart on the site
   // renders in the shared UI font. Runs once when this file
   // loads after the Chart.js CDN.
   if (hasChart() && window.Chart.defaults && window.Chart.defaults.font) {
     window.Chart.defaults.font.family = CHART_FONT_CSS_FAMILY;
+  }
+  if (document.fonts && typeof document.fonts.ready === 'object' && typeof document.fonts.ready.then === 'function') {
+    document.fonts.ready.then(function () {
+      if (hasChart() && window.Chart.defaults && window.Chart.defaults.font) {
+        window.Chart.defaults.font.family = CHART_FONT_CSS_FAMILY;
+      }
+      updateExistingCharts();
+    });
   }
 
   function formatCurrency(v) {

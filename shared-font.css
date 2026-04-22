@@ -1,5 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
+@font-face {
+  font-family: 'Kanit';
+  src:
+    local('Kanit Regular'),
+    local('Kanit-Regular'),
+    url('/assets/fonts/Kanit-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --font-family-base: 'Kanit', sans-serif;
   --font-family: var(--font-family-base);
