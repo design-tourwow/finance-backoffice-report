@@ -792,7 +792,7 @@
       body {
         margin: 0;
         color: #111827;
-        font-family: 'Kanit', 'Sarabun', sans-serif;
+        font-family: 'Kanit', sans-serif;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }

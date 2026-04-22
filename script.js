@@ -1558,7 +1558,7 @@ function initShowAllButtons() {
         <meta charset="UTF-8">
         <title>Tour Images Report</title>
         <style>
-          body { font-family: 'Sarabun', Arial, sans-serif; padding: 20px; }
+          body { font-family: 'Kanit', sans-serif; padding: 20px; }
           h1 { color: #4a7ba7; text-align: center; }
           .meta { text-align: center; color: #666; margin-bottom: 30px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }

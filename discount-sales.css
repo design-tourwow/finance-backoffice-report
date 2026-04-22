@@ -225,7 +225,7 @@
 
 .shared-sort-btn:hover { color: #374151; }
 
-.shared-th--sort-active .shared-sort-btn { color: #2563eb; }
+.shared-th--sort-active .shared-sort-btn { color: var(--color-primary); }
 
 .shared-sort-icon {
   width: 14px;

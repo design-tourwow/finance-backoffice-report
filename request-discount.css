@@ -60,7 +60,7 @@
 }
 .shared-sort-icon--active { opacity: 1; }
 
-.shared-th--sort-active { color: #2563eb; }
+.shared-th--sort-active { color: var(--color-primary); }
 
 .shared-table tbody tr {
   border-bottom: 1px solid #f3f4f6;

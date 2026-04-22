@@ -13,6 +13,14 @@
     return typeof window.Chart !== 'undefined';
   }
 
+  // Chart.js renders labels / legend / tooltip in a <canvas> — CSS font-family
+  // rules do NOT apply there. Set a global default so every chart on the site
+  // renders in Kanit to match the surrounding UI. Runs once when this file
+  // loads after the Chart.js CDN.
+  if (hasChart() && window.Chart.defaults && window.Chart.defaults.font) {
+    window.Chart.defaults.font.family = "'Kanit', sans-serif";
+  }
+
   function formatCurrency(v) {
     if (window.SharedUtils && typeof window.SharedUtils.formatCurrency === 'function') {
       return window.SharedUtils.formatCurrency(v);
