@@ -1,0 +1,135 @@
+/* ========================================
+   KPI / Summary Cards
+   Shared dashboard card pattern — coloured accent stripe on the left,
+   icon + label + value composition. Used by sales-by-country,
+   wholesale-destinations, commission-report-plus.
+   Consumes design tokens from filter-panel.css.
+   ======================================== */
+
+.dashboard-kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dashboard-kpi-card {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--kpi-color);
+}
+
+.dashboard-kpi-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Colour variants — CSS custom properties scoped to the modifier class */
+.dashboard-kpi-card.kpi-travelers {
+  --kpi-color: var(--color-primary);
+  --kpi-bg: #e3f2fd;
+}
+
+.dashboard-kpi-card.kpi-top-country {
+  --kpi-color: #7b1fa2;
+  --kpi-bg: #f3e5f5;
+}
+
+.dashboard-kpi-card.kpi-growth {
+  --kpi-color: #388e3c;
+  --kpi-bg: #e8f5e9;
+}
+
+.dashboard-kpi-card.kpi-active {
+  --kpi-color: #f57c00;
+  --kpi-bg: #fff3e0;
+}
+
+.kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--kpi-bg);
+  flex-shrink: 0;
+}
+
+.kpi-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--kpi-color);
+}
+
+.kpi-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+  font-weight: 500;
+  font-family: var(--font-family);
+}
+
+.kpi-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-family);
+}
+
+.kpi-subtext {
+  font-size: 15px;
+  color: var(--color-text-faint);
+  margin-top: 2px;
+  font-family: var(--font-family);
+}
+
+.kpi-subtext.positive {
+  color: #388e3c;
+}
+
+.kpi-subtext.negative {
+  color: #dc2626;
+}
+
+/* Responsive: stack to 2 columns on tablet, 1 on mobile */
+@media (max-width: 900px) {
+  .dashboard-kpi-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-kpi-cards {
+    grid-template-columns: 1fr;
+  }
+  .kpi-value {
+    font-size: 18px;
+  }
+}
