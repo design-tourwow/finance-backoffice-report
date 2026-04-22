@@ -1,0 +1,192 @@
+name: Test Suite
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Nightly — full E2E at 02:00 UTC (09:00 Bangkok)
+    - cron: '0 2 * * *'
+    # Weekly — P3 + mobile + perf at 03:00 UTC on Monday
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - p0
+          - p1
+          - full
+          - weekly
+
+env:
+  CI: true
+  NODE_VERSION: 24
+
+jobs:
+  # ============================================================
+  # Job 1: Fast PR Gate — Unit + Component + API + P0 E2E smoke
+  # Target: < 5 minutes. Blocks PR merge if any failure.
+  # ============================================================
+  pr-gate:
+    name: PR Gate (smoke)
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.suite == 'smoke')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit tests
+        run: npm run test:unit
+        continue-on-error: false
+
+      - name: Run component tests (chromium)
+        run: npm run test:component
+
+      - name: Run API tests
+        run: npm run test:api
+
+      - name: Run P0 E2E smoke (chromium only)
+        run: npx playwright test --project=e2e-chromium --grep "@p0|@smoke"
+
+      - name: Upload test results (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-gate-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # ============================================================
+  # Job 2: Nightly Full E2E — all P0 + P1 + P2 across 3 browsers
+  # Target: < 20 minutes. Notifies on failure only.
+  # ============================================================
+  nightly:
+    name: Nightly E2E (full)
+    if: (github.event_name == 'schedule' && github.event.schedule == '0 2 * * *') || (github.event_name == 'workflow_dispatch' && contains('p0,p1,full', github.event.inputs.suite))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit, firefox]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps
+
+      - name: Run full E2E suite
+        run: npx playwright test --project=e2e-${{ matrix.browser }} --grep "@p0|@p1|@p2"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-${{ matrix.browser }}-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # ============================================================
+  # Job 3: Weekly — P3 + mobile viewport
+  # Monday 03:00 UTC. Best-effort; does not block.
+  # ============================================================
+  weekly:
+    name: Weekly extended (p3 + mobile)
+    if: (github.event_name == 'schedule' && github.event.schedule == '0 3 * * 1') || (github.event_name == 'workflow_dispatch' && github.event.inputs.suite == 'weekly')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run P3 + mobile tests
+        run: npx playwright test --grep "@p3"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 30
+
+  # ============================================================
+  # Job 4: Quality Gate Report — aggregates results, posts summary
+  # ============================================================
+  quality-gate:
+    name: Quality Gate
+    needs: [pr-gate]
+    if: always() && (github.event_name == 'pull_request' || github.event_name == 'push')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR gate passed
+        if: needs.pr-gate.result != 'success'
+        run: |
+          echo "❌ PR gate failed — P0 tests did not all pass."
+          echo "Blocking criteria from test-design-qa.md: P0 pass rate must be 100%."
+          exit 1
+
+      - name: Report success
+        if: needs.pr-gate.result == 'success'
+        run: echo "✅ PR gate passed. All P0 + smoke tests green."
