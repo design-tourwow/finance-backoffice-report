@@ -687,6 +687,12 @@ const SearchableDropdownComponent = {
   }
 };
 
+// Classic <script> `const` bindings don't attach to window — expose so
+// pages can reference via window.SearchableDropdownComponent uniformly.
+if (typeof window !== 'undefined') {
+  window.SearchableDropdownComponent = SearchableDropdownComponent;
+}
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = SearchableDropdownComponent;

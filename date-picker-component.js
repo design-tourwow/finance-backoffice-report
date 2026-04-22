@@ -712,6 +712,12 @@ const DatePickerComponent = {
   }
 };
 
+// Classic <script> `const` bindings don't attach to window — expose so
+// pages can reference via window.DatePickerComponent uniformly.
+if (typeof window !== 'undefined') {
+  window.DatePickerComponent = DatePickerComponent;
+}
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = DatePickerComponent;
