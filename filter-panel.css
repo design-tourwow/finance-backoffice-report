@@ -73,6 +73,16 @@
   gap: 8px;
 }
 
+.filter-period-controls--monthly {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(112px, 0.9fr);
+}
+
+.filter-period-controls--quarterly,
+.filter-period-controls--yearly {
+  display: flex;
+}
+
 /* Vertical divider between items within a row */
 .filter-separator {
   width: 1px;
@@ -378,6 +388,10 @@
   min-width: 0;
 }
 
+.filter-wrap.filter-wrap-paired-grid .filter-field-period .filter-period-controls--monthly > div {
+  min-width: 0;
+}
+
 .filter-wrap.filter-wrap-paired-grid .filter-actions {
   display: flex;
   align-items: center;
@@ -403,6 +417,10 @@
 @media (max-width: 1200px) {
   .filter-wrap.filter-wrap-paired-grid .filter-grid-main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-wrap.filter-wrap-paired-grid .filter-field-period .filter-period-controls--monthly {
+    grid-template-columns: minmax(0, 1fr) minmax(104px, 0.8fr);
   }
 }
 
@@ -454,5 +472,9 @@
   .filter-wrap.filter-wrap-paired-grid .filter-actions .filter-btn-reset {
     width: 100%;
     justify-content: center;
+  }
+
+  .filter-period-controls--monthly {
+    grid-template-columns: 1fr;
   }
 }

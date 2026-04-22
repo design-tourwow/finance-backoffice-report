@@ -13,7 +13,7 @@
 //   ReportFilterPanel.init({
 //     containerId: 'xx-filter-area',
 //     state      : filterState,          // mutated on change / apply
-//     options    : filterOptions,        // { countries, teams, jobPositions, users }
+//     options    : filterOptions,        // { countries, teams, jobPositions, users, availablePeriods }
 //     prefix     : 'xx',                 // used for dropdown sub-container IDs
 //     onApply    : function (state) {},  // called when "ค้นหา" is clicked
 //   });
@@ -53,6 +53,101 @@
     var last  = u.last_name || '';
     var full  = (first + ' ' + last).trim();
     return full || ('User ' + (u.ID != null ? u.ID : ''));
+  }
+
+  function periodYears(periods) {
+    return periods && Array.isArray(periods.years) ? periods.years : [];
+  }
+
+  function buildYearLabel(entry) {
+    if (!entry || entry.year_ce == null) return '';
+    if (entry.label != null && entry.label !== '') {
+      return 'พ.ศ. ' + entry.label + ' (' + entry.year_ce + ')';
+    }
+    return String(entry.year_ce);
+  }
+
+  function buildYearOptionsFromPeriods(periods, utils) {
+    var years = periodYears(periods);
+    if (!years.length) {
+      return (utils.getYearOptions() || []).map(function (y) {
+        var val = (y && typeof y === 'object') ? y.value : y;
+        var lbl = (y && typeof y === 'object') ? (y.label || String(y.value)) : String(y);
+        return { value: String(val), label: lbl };
+      });
+    }
+    return years.map(function (entry) {
+      return { value: String(entry.year_ce), label: buildYearLabel(entry) };
+    });
+  }
+
+  function buildQuarterOptionsFromPeriods(periods, utils) {
+    var years = periodYears(periods);
+    if (!years.length) {
+      return (utils.getQuarterOptions() || []).map(function (q) {
+        return {
+          value: q.year + '-' + q.quarter,
+          label: q.label,
+          year: Number(q.year),
+          quarter: Number(q.quarter)
+        };
+      });
+    }
+    var items = [];
+    years.forEach(function (entry) {
+      (entry.quarters || []).forEach(function (quarter) {
+        items.push({
+          value: entry.year_ce + '-' + quarter.quarter,
+          label: (quarter.label || ('Q' + quarter.quarter)) + ' ' + (entry.label || entry.year_ce),
+          year: Number(entry.year_ce),
+          quarter: Number(quarter.quarter)
+        });
+      });
+    });
+    return items;
+  }
+
+  function buildMonthOptionsFromPeriods(periods, selectedYear, utils) {
+    var years = periodYears(periods);
+    if (!years.length) {
+      return (utils.getMonthOptions() || []).map(function (m) {
+        return { value: String(m.value), label: m.label, month: Number(m.value) };
+      });
+    }
+
+    var activeYear = null;
+    years.forEach(function (entry) {
+      if (Number(entry.year_ce) === Number(selectedYear)) activeYear = entry;
+    });
+    if (!activeYear) activeYear = years[0];
+
+    return (activeYear.months || []).map(function (month) {
+      return {
+        value: String(month.month),
+        label: month.label_short || month.label || ('เดือน ' + month.month),
+        month: Number(month.month)
+      };
+    });
+  }
+
+  function applyActiveOption(options, currentValue, onMatched) {
+    var matched = null;
+    for (var i = 0; i < options.length; i++) {
+      if (String(options[i].value) === String(currentValue)) {
+        matched = options[i];
+        break;
+      }
+    }
+    if (!matched && options.length) matched = options[0];
+    if (!matched) return [];
+
+    if (typeof onMatched === 'function') onMatched(matched);
+
+    return options.map(function (opt) {
+      return Object.assign({}, opt, {
+        active: String(opt.value) === String(matched.value)
+      });
+    });
   }
 
   function init(cfg) {
@@ -145,6 +240,7 @@
     function initPeriodControls() {
       var host  = document.getElementById(ids.period);
       var label = document.getElementById(ids.periodL);
+      var periods = options.availablePeriods || { years: [] };
       if (!host || !label) return;
 
       if (state.mode === 'all') {
@@ -155,16 +251,14 @@
       }
       label.style.display = '';
       host.style.display = 'flex';
+      host.className = 'filter-period-controls filter-period-controls--' + state.mode;
 
       if (state.mode === 'quarterly') {
         host.innerHTML = '<div id="' + ids.quarter + '"></div>';
-        var quarters = (utils.getQuarterOptions() || []).map(function (q) {
-          return {
-            value : q.year + '-' + q.quarter,
-            label : q.label,
-            active: Number(q.year) === Number(state.year) &&
-                    Number(q.quarter) === Number(state.quarter)
-          };
+        var quarterBase = buildQuarterOptionsFromPeriods(periods, utils);
+        var quarters = applyActiveOption(quarterBase, state.year + '-' + state.quarter, function (active) {
+          state.year = Number(active.year != null ? active.year : String(active.value).split('-')[0]);
+          state.quarter = Number(active.quarter != null ? active.quarter : String(active.value).split('-')[1]);
         });
         var active = findActive(quarters) || quarters[0];
         window.FilterSortDropdownComponent.initDropdown({
@@ -182,8 +276,15 @@
         });
       } else if (state.mode === 'monthly') {
         host.innerHTML = '<div id="' + ids.month + '"></div><div id="' + ids.year + '"></div>';
-        var months = (utils.getMonthOptions() || []).map(function (m) {
-          return { value: String(m.value), label: m.label, active: Number(m.value) === Number(state.month) };
+        var yearBase = buildYearOptionsFromPeriods(periods, utils);
+        var years = applyActiveOption(yearBase, state.year, function (active) {
+          state.year = parseInt(active.value, 10);
+        });
+        var activeY = findActive(years) || years[0];
+
+        var monthBase = buildMonthOptionsFromPeriods(periods, state.year, utils);
+        var months = applyActiveOption(monthBase, state.month, function (active) {
+          state.month = parseInt(active.value, 10);
         });
         var activeM = findActive(months) || months[0];
         window.FilterSortDropdownComponent.initDropdown({
@@ -193,7 +294,16 @@
           options     : months,
           onChange    : function (val) { state.month = parseInt(val, 10); }
         });
-        initYearDropdown();
+        window.FilterSortDropdownComponent.initDropdown({
+          containerId : ids.year,
+          defaultLabel: activeY ? activeY.label : 'เลือกปี',
+          defaultIcon : ICONS.calendar,
+          options     : years,
+          onChange    : function (val) {
+            state.year = parseInt(val, 10);
+            initPeriodControls();
+          }
+        });
       } else if (state.mode === 'yearly') {
         host.innerHTML = '<div id="' + ids.year + '"></div>';
         initYearDropdown();
@@ -201,10 +311,8 @@
     }
 
     function initYearDropdown() {
-      var years = (utils.getYearOptions() || []).map(function (y) {
-        var val = (y && typeof y === 'object') ? y.value : y;
-        var lbl = (y && typeof y === 'object') ? (y.label || String(y.value)) : String(y);
-        return { value: String(val), label: lbl, active: Number(val) === Number(state.year) };
+      var years = applyActiveOption(buildYearOptionsFromPeriods(options.availablePeriods, utils), state.year, function (active) {
+        state.year = parseInt(active.value, 10);
       });
       var active = findActive(years) || years[0];
       window.FilterSortDropdownComponent.initDropdown({

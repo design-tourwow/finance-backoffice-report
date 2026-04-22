@@ -12,13 +12,20 @@ const PAGES = [
   { path: '/request-discount', reportKey: 'orderHasDiscount' },
 ] as const;
 
+function sampleRows(reportKey: (typeof PAGES)[number]['reportKey']) {
+  if (reportKey === 'supplierReport') return [factory.supplier(1)];
+  if (reportKey === 'discountSalesReport') return [factory.discountSale(1)];
+  if (reportKey === 'orderExternalSummary') return [factory.orderExternal(1)];
+  return [factory.orderHasDiscount(1)];
+}
+
 test.describe('@p2 E11 CSV export with Thai', () => {
   for (const { path: route, reportKey } of PAGES) {
     test(`${route} CSV has UTF-8 BOM + Thai content`, async ({ page, mockedBackend, mockToken }) => {
       await seedToken(page, mockToken);
       await mockedBackend({
         countries: [factory.country()],
-        [reportKey]: [factory.supplier(1)],
+        [reportKey]: sampleRows(reportKey),
       } as any);
       await page.goto(route);
       await page.waitForLoadState('networkidle');

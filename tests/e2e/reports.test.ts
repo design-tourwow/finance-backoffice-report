@@ -13,6 +13,13 @@ const PAGES = [
   { path: '/request-discount', reportKey: 'orderHasDiscount' },
 ] as const;
 
+function sampleRows(reportKey: (typeof PAGES)[number]['reportKey']) {
+  if (reportKey === 'supplierReport') return Array.from({ length: 3 }, (_, i) => factory.supplier(i + 1));
+  if (reportKey === 'discountSalesReport') return Array.from({ length: 3 }, (_, i) => factory.discountSale(i + 1));
+  if (reportKey === 'orderExternalSummary') return Array.from({ length: 3 }, (_, i) => factory.orderExternal(i + 1));
+  return Array.from({ length: 3 }, (_, i) => factory.orderHasDiscount(i + 1));
+}
+
 test.describe('@p0 E4 API failure → error banner (not blank)', () => {
   for (const { path: route } of PAGES) {
     test(`${route} shows error banner on 500`, async ({ page, mockedBackend, mockToken }) => {
@@ -43,7 +50,7 @@ test.describe('@p1 E6 Filter Apply triggers render', () => {
         teams: [factory.team()],
         jobPositions: [factory.jobPosition()],
         users: [factory.user()],
-        [reportKey]: Array.from({ length: 3 }, (_, i) => factory.supplier(i + 1)),
+        [reportKey]: sampleRows(reportKey),
       } as any);
       await page.goto(route);
       await page.waitForLoadState('networkidle');
@@ -68,7 +75,7 @@ test.describe('@p1 E8 Sortable table', () => {
       await mockedBackend({
         countries: [factory.country()],
         teams: [factory.team()],
-        [reportKey]: [factory.supplier(1), factory.supplier(2), factory.supplier(3)],
+        [reportKey]: sampleRows(reportKey),
       } as any);
       await page.goto(route);
       await page.waitForLoadState('networkidle');

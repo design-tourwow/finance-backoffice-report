@@ -11,13 +11,19 @@ const CHART_PAGES = [
   { path: '/request-discount', reportKey: 'orderHasDiscount' },
 ] as const;
 
+function sampleRows(reportKey: (typeof CHART_PAGES)[number]['reportKey']) {
+  if (reportKey === 'supplierReport') return [factory.supplier(1), factory.supplier(2), factory.supplier(3)];
+  if (reportKey === 'discountSalesReport') return [factory.discountSale(1), factory.discountSale(2), factory.discountSale(3)];
+  return [factory.orderHasDiscount(1), factory.orderHasDiscount(2), factory.orderHasDiscount(3)];
+}
+
 test.describe('@p2 E13 Chart render', () => {
   for (const { path: route, reportKey } of CHART_PAGES) {
     test(`${route} renders Chart.js canvas with data`, async ({ page, mockedBackend, mockToken }) => {
       await seedToken(page, mockToken);
       await mockedBackend({
         countries: [factory.country()],
-        [reportKey]: [factory.supplier(1), factory.supplier(2), factory.supplier(3)],
+        [reportKey]: sampleRows(reportKey),
       } as any);
       await page.goto(route);
       await page.waitForLoadState('networkidle');

@@ -28,6 +28,22 @@ function loadFilterService(opts: {
 }
 
 test.describe('@p0 SharedFilterService', () => {
+  test('A6 getAvailablePeriods — returns stable period object on success', async () => {
+    const { SharedFilterService } = loadFilterService({
+      httpGetImpl: async () => ({ data: { years: [{ year_ce: 2026, label: '2569' }] } }),
+    });
+    const result = await SharedFilterService.getAvailablePeriods();
+    expect(result).toEqual({ years: [{ year_ce: 2026, label: '2569' }] });
+  });
+
+  test('A6 getAvailablePeriods — returns empty shape on error', async () => {
+    const { SharedFilterService } = loadFilterService({
+      httpGetImpl: async () => { throw new Error('network down'); },
+    });
+    const result = await SharedFilterService.getAvailablePeriods();
+    expect(result).toEqual({ years: [] });
+  });
+
   test('A6 getCountries — returns array on success', async () => {
     const { SharedFilterService } = loadFilterService({
       httpGetImpl: async () => [{ id: 1, name_th: 'ไทย' }],

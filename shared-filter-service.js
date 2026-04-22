@@ -22,6 +22,19 @@
     return [];
   }
 
+  function normalisePeriods(response) {
+    if (response && typeof response === 'object' && Array.isArray(response.years)) {
+      return response;
+    }
+    if (response && typeof response === 'object' &&
+        response.data && typeof response.data === 'object' &&
+        Array.isArray(response.data.years)) {
+      return response.data;
+    }
+    console.warn('[SharedFilterService] Unexpected response format for available-periods:', response);
+    return { years: [] };
+  }
+
   /**
    * GET wrapper that never throws — returns [] on failure to preserve
    * the "filter service always resolves" contract.
@@ -101,6 +114,24 @@
     return users;
   }
 
+  /**
+   * GET /api/reports/available-periods
+   * Returns the same period payload shape used by the legacy reports.
+   * @param {Object} [params]
+   * @returns {Promise<{years: Array}>}
+   */
+  async function getAvailablePeriods(params) {
+    try {
+      var response = await window.SharedHttp.get('/api/reports/available-periods', {
+        params: params || {}
+      });
+      return normalisePeriods(response);
+    } catch (err) {
+      console.error('[SharedFilterService] available-periods failed:', err);
+      return { years: [] };
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Expose
   // ---------------------------------------------------------------------------
@@ -109,7 +140,8 @@
     getCountries: getCountries,
     getTeams: getTeams,
     getJobPositions: getJobPositions,
-    getUsers: getUsers
+    getUsers: getUsers,
+    getAvailablePeriods: getAvailablePeriods
   };
 
 })();

@@ -8,7 +8,9 @@
   /**
    * Fetch order-external-summary report.
    * @param {Object} filters
+   * @param {string}  [filters.filterMode]
    * @param {number}  [filters.year]
+   * @param {number}  [filters.quarter]
    * @param {number}  [filters.month]
    * @param {number}  [filters.country_id]
    * @param {string}  [filters.job_position]
@@ -20,8 +22,9 @@
     filters = filters || {};
 
     var query = {
-      year: filters.year,
-      month: filters.month,
+      year: filters.filterMode !== 'all' ? filters.year : null,
+      quarter: filters.filterMode === 'quarterly' ? filters.quarter : null,
+      month: filters.filterMode === 'monthly' ? filters.month : null,
       country_id: filters.country_id && filters.country_id > 0 ? filters.country_id : null,
       job_position: filters.job_position,
       team_number: filters.team_number,
