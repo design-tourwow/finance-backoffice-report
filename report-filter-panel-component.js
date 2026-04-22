@@ -130,6 +130,37 @@
     });
   }
 
+  // Combined month+year options so monthly mode can render a single
+  // dropdown (matches the quarterly UX — values shaped "YYYY-M").
+  function buildMonthYearOptionsFromPeriods(periods, utils) {
+    var years = periodYears(periods);
+    if (!years.length) {
+      var currentYear = utils.getCurrentYear ? utils.getCurrentYear() : new Date().getFullYear();
+      var monthFallback = (utils.getMonthOptions() || []).map(function (m) {
+        return {
+          value: currentYear + '-' + m.value,
+          label: m.label + ' ' + currentYear,
+          year : Number(currentYear),
+          month: Number(m.value)
+        };
+      });
+      return monthFallback;
+    }
+    var items = [];
+    years.forEach(function (entry) {
+      (entry.months || []).forEach(function (month) {
+        items.push({
+          value: entry.year_ce + '-' + month.month,
+          label: (month.label_short || month.label || ('เดือน ' + month.month)) +
+                 ' ' + (entry.label || entry.year_ce),
+          year : Number(entry.year_ce),
+          month: Number(month.month)
+        });
+      });
+    });
+    return items;
+  }
+
   function applyActiveOption(options, currentValue, onMatched) {
     var matched = null;
     for (var i = 0; i < options.length; i++) {
@@ -275,33 +306,25 @@
           }
         });
       } else if (state.mode === 'monthly') {
-        host.innerHTML = '<div id="' + ids.month + '"></div><div id="' + ids.year + '"></div>';
-        var yearBase = buildYearOptionsFromPeriods(periods, utils);
-        var years = applyActiveOption(yearBase, state.year, function (active) {
-          state.year = parseInt(active.value, 10);
+        host.innerHTML = '<div id="' + ids.month + '"></div>';
+        var monthYearBase = buildMonthYearOptionsFromPeriods(periods, utils);
+        var activeVal = state.year + '-' + state.month;
+        var monthYears = applyActiveOption(monthYearBase, activeVal, function (active) {
+          state.year  = Number(active.year);
+          state.month = Number(active.month);
         });
-        var activeY = findActive(years) || years[0];
-
-        var monthBase = buildMonthOptionsFromPeriods(periods, state.year, utils);
-        var months = applyActiveOption(monthBase, state.month, function (active) {
-          state.month = parseInt(active.value, 10);
-        });
-        var activeM = findActive(months) || months[0];
+        var activeMY = findActive(monthYears) || monthYears[0];
         window.FilterSortDropdownComponent.initDropdown({
           containerId : ids.month,
-          defaultLabel: activeM ? activeM.label : 'เลือกเดือน',
+          defaultLabel: activeMY ? activeMY.label : 'เลือกเดือน',
           defaultIcon : ICONS.calendar,
-          options     : months,
-          onChange    : function (val) { state.month = parseInt(val, 10); }
-        });
-        window.FilterSortDropdownComponent.initDropdown({
-          containerId : ids.year,
-          defaultLabel: activeY ? activeY.label : 'เลือกปี',
-          defaultIcon : ICONS.calendar,
-          options     : years,
+          options     : monthYears,
           onChange    : function (val) {
-            state.year = parseInt(val, 10);
-            initPeriodControls();
+            var parts = String(val).split('-');
+            if (parts.length === 2) {
+              state.year  = parseInt(parts[0], 10);
+              state.month = parseInt(parts[1], 10);
+            }
           }
         });
       } else if (state.mode === 'yearly') {
