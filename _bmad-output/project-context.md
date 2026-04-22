@@ -26,7 +26,12 @@ _This file captures the non-obvious rules and implementation patterns that AI ag
 
 - Flat repository layout with page files, JS files, CSS files, and docs side by side at the root
 - Route-specific HTML entry points such as `index.html`, `auth.html`, `tour-image-manager.html`, `order-report.html`, `sales-by-country.html`, `wholesale-destinations.html`, `commission-report-plus.html`, and `work-list.html`
-- Shared modules are plain scripts, not imports, and are typically named by concern. Shell/component modules use the `*-component.js` suffix (`menu-component.js`, `date-picker-component.js`, `filter-sort-dropdown-component.js`, `period-filter-component.js`). Cross-page libraries use the `shared-*.js` prefix (`shared-auth-guard.js`, `shared-utils.js`, `shared-http.js`, `shared-filter-service.js`, `shared-ui.js`, `shared-chart.js`, `shared-table.js`, `shared-csv.js`, `shared-filter-panel.js` — renamed from `fe2-*.js` in Phase 2, 2026-04-22, commit `dd5db13`).
+- Shared modules are plain scripts, not imports, and are typically named by concern using two conventions:
+  - **`*-component.js` suffix** — encapsulated UI widgets that render into a container. Examples: `menu-component.js`, `date-picker-component.js`, `filter-sort-dropdown-component.js`, `searchable-dropdown-component.js`, `table-sorting-component.js`, `filter-search-dropdown-component.js` (Phase 3), `report-filter-panel-component.js` (Phase 3).
+  - **`shared-*.js` prefix, no suffix** — cross-page utilities and base styles with no autonomous UI lifecycle. Examples: `shared-auth-guard.js`, `shared-utils.js`, `shared-http.js`, `shared-filter-service.js`, `shared-ui.js` (+ `shared-ui.css`), `shared-chart.js`, `shared-table.js`, `shared-csv.js`.
+- Generic wrapper CSS lives at the root with no suffix: `filter-panel.css` owns `.filter-*` layout classes + design tokens (`--color-primary`, `--radius-card`, etc.) consumed by all report pages.
+- **Orphan component rule**: a component file is only kept if at least one page calls it. Zero-caller components get deleted (git history is the archive).
+- **No cross-page CSS cross-loading**: a page HTML must not `<link>` another page's CSS. Shared layout rules live in `filter-panel.css` or `tour-image-manager.css`.
 - Bootstrapping code is commonly wrapped in IIFEs to keep the global scope clean
 - Application state is often kept in `localStorage` or `sessionStorage`
 - The UI mixes English docs with Thai-facing product copy

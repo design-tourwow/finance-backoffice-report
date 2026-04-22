@@ -5,6 +5,8 @@ status: 'complete'
 completedAt: '2026-04-21'
 phase2CompletedAt: '2026-04-22'
 phase2Commit: '1ce6825'
+phase3CompletedAt: '2026-04-22'
+phase3Commit: '1f6c171'
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/epics.md
@@ -291,7 +293,10 @@ touch {page-name}.html {page-name}.js {page-name}.css
 - Page triplet: `{page-name}.html`, `{page-name}.js`, `{page-name}.css`.
 - Optional per-page backend client: `{page-name}-api.js`.
 - URL path equals filename without extension: `/{page-name}` ↔ `{page-name}.html`.
-- Shared modules (originally ported from fe-2, renamed in Phase 2): `shared-{purpose}.js` — `shared-auth-guard.js`, `shared-utils.js`, `shared-filter-service.js`, `shared-http.js`, `shared-ui.js` (+ `shared-ui.css`), `shared-chart.js`, `shared-table.js`, `shared-csv.js`, `shared-filter-panel.js`.
+- Shared utility modules (`shared-*.js`, no suffix): `shared-auth-guard.js`, `shared-utils.js`, `shared-filter-service.js`, `shared-http.js`, `shared-ui.js` (+ `shared-ui.css`), `shared-chart.js`, `shared-table.js`, `shared-csv.js`.
+- UI widget components (`*-component.js` suffix): `filter-sort-dropdown-component.js`, `searchable-dropdown-component.js`, `date-picker-component.js`, `table-sorting-component.js`, `filter-search-dropdown-component.js` (Phase 3), `report-filter-panel-component.js` (Phase 3).
+- Generic wrapper CSS: `filter-panel.css` (Phase 3) — design tokens (`:root { --color-primary, --color-border, --radius-card, ... }`) + layout classes (`.filter-wrap`, `.filter-row`, `.filter-btn-search`, `.filter-ez-btn`, `.filter-search-dd-*`).
+- Retired (Phase 3, commit `1f6c171`): `shared-filter-panel.js` (replaced by `report-filter-panel-component.js`), `country-filter-component.js`, `period-filter-component.js` (both had zero callers).
 - Kebab-case throughout for filenames and URLs.
 - ❌ **Anti-pattern:** nesting files in subdirectories (`pages/foo.html`).
 - ❌ **Anti-pattern:** camelCase or PascalCase filenames.
@@ -379,7 +384,9 @@ touch {page-name}.html {page-name}.js {page-name}.css
   <script src="shared-chart.js"></script>               <!-- if page has charts -->
   <script src="shared-table.js"></script>
   <script src="shared-csv.js"></script>
-  <script src="shared-filter-panel.js"></script>
+  <script src="filter-sort-dropdown-component.js"></script>
+  <script src="filter-search-dropdown-component.js"></script>
+  <script src="report-filter-panel-component.js"></script>
 </head>
 <body>
   <div class="app-wrapper">
@@ -567,7 +574,13 @@ finance-backoffice-report/
 ├── shared-chart.js                       # SharedChart — Chart.js wrapper (Phase 2)
 ├── shared-table.js                       # SharedTable — sortable-table renderer (Phase 2)
 ├── shared-csv.js                         # SharedCsv — UTF-8 BOM export helper (Phase 2)
-├── shared-filter-panel.js                # SharedFilterPanel — unified filter-panel renderer (Phase 2)
+├── filter-panel.css                      # .filter-* wrapper CSS + design tokens (Phase 3)
+├── filter-sort-dropdown-component.js     # FilterSortDropdown — single-select button dropdown
+├── filter-search-dropdown-component.js   # FilterSearchDropdown — searchable single-select (Phase 3)
+├── searchable-dropdown-component.js      # SearchableDropdown — multi-select with search
+├── date-picker-component.js              # DatePicker — Thai Buddhist range picker
+├── table-sorting-component.js            # TableSorting — sortable column headers
+├── report-filter-panel-component.js      # ReportFilterPanel — report filter composition (Phase 3)
 │
 ├── ─── PAGE TRIPLETS ────────────────────────────────────────────
 ├── tour-image-manager.{html,js,css}   # [existing, untouched]
@@ -940,3 +953,47 @@ Phase 2 (fe-2-project retirement + shared-http extraction + Playwright suite) sh
 - CI gate currently runs Chromium only; WebKit + Firefox fail with "Executable doesn't exist" on the runner. Either install them via `playwright install` on the runner or scope CI explicitly to `--project=e2e-chromium`.
 - `mock-backend.ts` had to be patched alongside Phase 2 (it still pointed at the retired be-2 host); any future backend URL change must also update the test fixture. Consider a shared constants module.
 - `tour-image-manager` remains on `fin-api.tourwow.com`. It is outside the report pipeline but still deployed from this repo; any future "one backend to rule them all" initiative should track it.
+
+
+## Phase 3 Retrospective (2026-04-22) — UI Component Unification
+
+**Delivered:**
+
+| Area | Commit(s) | Outcome |
+|---|---|---|
+| Dead code retirement | `0bed390` | Deleted `country-filter-component.js` (377 lines) + `period-filter-component.js` (617 lines) — both had zero callers. Removed 4 dead `<script>` + 4 dead `<link>` tags from wholesale-destinations.html. |
+| Test infra fix | `0bed390` | `mock-backend.ts` factory.supplier now emits the nested `{ metrics: { ... } }` shape that pages actually read. Unblocks E6 @p1 as a useful regression signal. |
+| FilterSearchDropdown | `c7e96be` | Extracted from `supplier-commission.js` inline helper into `filter-search-dropdown-component.js`. Exposes `window.FilterSearchDropdown.init`. Canonical single-select-with-search that visually matches `.filter-sort-btn`. |
+| Old-page wrapper CSS unification | `fcb002f` | `sales-by-country.css` base classes (`.time-granularity-*`, `.filter-separator`, `.time-btn`) promoted to `filter-panel.css` as selector aliases of `.filter-*`. commission-report-plus swapped `.crp-*` → `.filter-*` and dropped the `sales-by-country.css` cross-load. Removed ~300 lines of duplicated CSS. |
+| ReportFilterPanel | `1f6c171` | New `report-filter-panel-component.js` encapsulates the full report filter (mode + period + country + team + jobPos + user) with cascade. Replaces `shared-filter-panel.js` (deleted). |
+| 4 fe-2 pages ported | `1f6c171` | supplier-commission, discount-sales, order-external-summary, request-discount all use `ReportFilterPanel.init()` + `filter-panel.css` + central widget components. No page uses native `<select>` for filters anymore. |
+| Design tokens | Phase 3 follow-up | `:root` CSS custom properties in `filter-panel.css`: `--color-primary` (#4a7ba7), `--color-primary-dark`, `--color-primary-subtle`, `--color-border`, `--color-border-strong`, `--color-text`, `--color-text-muted`, `--color-text-faint`, `--color-bg-subtle`, `--color-bg-hover`, `--radius-card` (8px), `--shadow-card`, `--font-family` (Kanit). |
+| order-report prep | Phase 3 follow-up | Added `<link filter-panel.css>` to order-report.html (filter section is currently `display: none !important`; tokens available when the filter UI is revived). |
+
+**Component registry after Phase 3:**
+
+| Role | File | Usage |
+|---|---|---|
+| Widget | `date-picker-component.js` | tour-image-manager, sales-by-country, commission-report-plus |
+| Widget | `filter-sort-dropdown-component.js` | commission-report-plus, sales-by-country + 4 fe-2 pages via ReportFilterPanel |
+| Widget | `searchable-dropdown-component.js` | sales-by-country (multi-select use case) |
+| Widget | `filter-search-dropdown-component.js` 🆕 | supplier-commission, commission-report-plus, + 4 fe-2 pages via ReportFilterPanel |
+| Widget | `table-sorting-component.js` | sales-by-country |
+| Composition | `report-filter-panel-component.js` 🆕 | all 4 fe-2 report pages — single init renders the whole panel |
+| Wrapper CSS | `filter-panel.css` | all 6 unified pages: supplier-commission, discount-sales, order-external-summary, request-discount, commission-report-plus, sales-by-country (and order-report prep) |
+| Legacy utility | `shared-*.js` (8 files) | all pages (no UI rendering) |
+
+**Architectural principles established:**
+
+- **Orphan component rule**: a component file is only in the repo if at least one page calls it. Zero-caller files get deleted; git history preserves them if revival is ever needed.
+- **Naming convention**: `-component.js` suffix for encapsulated UI widgets; no suffix for shared utilities / base styles. `filter-panel.css` has no suffix (wrapper layout, not a widget).
+- **No cross-page CSS cross-loading**: page CSS files must not `<link>` another page's CSS. Shared layout rules live in `filter-panel.css` or `tour-image-manager.css`.
+- **Design tokens lead styling**: new CSS should consume `var(--color-*)` / `var(--radius-*)` / `var(--shadow-*)` rather than raw hex.
+
+**Carry-forward (not blocking):**
+
+- `wholesale-destinations` still uses its own `.time-dropdown-*` custom UI (multi-select period comparison). UX team recommended preserving this power-user feature until a second page genuinely needs the pattern. Dead imports removed; custom UI untouched.
+- `order-report` has `.filter-section` + `.filter-form` markup that is currently hidden (`display: none !important`). Filter-panel.css is linked in, so a future revival can adopt the unified pattern in minutes.
+- `tour-image-manager` is out of the report pipeline (image management domain). Uses DatePicker only. No unification needed.
+- `work-list` was explicitly excluded from this pass per Gap.
+
