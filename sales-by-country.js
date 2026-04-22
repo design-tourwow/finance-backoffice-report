@@ -2,12 +2,9 @@
 (function () {
   'use strict';
 
-  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
-    ? window.AppFont.cssFamily()
-    : "'Kanit', sans-serif";
-  const APP_FONT_CHART_FAMILY = window.AppFont && typeof window.AppFont.chartFamily === 'function'
-    ? window.AppFont.chartFamily()
-    : 'Kanit';
+  const APP_FONT = window.AppFont;
+  const APP_FONT_CSS_FAMILY = APP_FONT.cssFamily();
+  const APP_FONT_CHART_FAMILY = APP_FONT.chartFamily();
 
   let currentChart = null;
   let currentTab = 'country';

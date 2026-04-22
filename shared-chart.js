@@ -1,7 +1,7 @@
 // shared-chart.js — Shared Chart.js bar-chart wrapper.
 // Mirrors the visual pattern used by wholesale-destinations.js +
 // sales-by-country.js (the original system) so every bar chart across the
-// app shares one look: Kanit font, dark tooltip with blue border,
+// app shares one look: shared app font, dark tooltip with blue border,
 // subtle grid lines, rounded bars, ChartDataLabels enabled.
 //
 // Assumes Chart.js (window.Chart) is loaded via CDN in the page HTML.
@@ -12,12 +12,9 @@
 (function () {
   'use strict';
 
-  var CHART_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
-    ? window.AppFont.cssFamily()
-    : "'Kanit', sans-serif";
-  var CHART_FONT_FAMILY = window.AppFont && typeof window.AppFont.chartFamily === 'function'
-    ? window.AppFont.chartFamily()
-    : 'Kanit';
+  var APP_FONT = window.AppFont;
+  var CHART_FONT_CSS_FAMILY = APP_FONT.cssFamily();
+  var CHART_FONT_FAMILY = APP_FONT.chartFamily();
 
   function hasChart() {
     return typeof window.Chart !== 'undefined';
@@ -29,7 +26,7 @@
 
   // Chart.js renders labels / legend / tooltip in a <canvas> — CSS font-family
   // rules do NOT apply there. Set a global default so every chart on the site
-  // renders in Kanit to match the surrounding UI. Runs once when this file
+  // renders in the shared UI font. Runs once when this file
   // loads after the Chart.js CDN.
   if (hasChart() && window.Chart.defaults && window.Chart.defaults.font) {
     window.Chart.defaults.font.family = CHART_FONT_CSS_FAMILY;

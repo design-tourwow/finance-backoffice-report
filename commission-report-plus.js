@@ -2,12 +2,9 @@
 (function () {
   'use strict';
 
-  const APP_FONT_CSS_FAMILY = window.AppFont && typeof window.AppFont.cssFamily === 'function'
-    ? window.AppFont.cssFamily()
-    : "'Kanit', sans-serif";
-  const APP_FONT_STYLESHEET_TAG = window.AppFont && typeof window.AppFont.stylesheetTag === 'function'
-    ? window.AppFont.stylesheetTag()
-    : '<link rel="stylesheet" href="shared-font.css" />';
+  const APP_FONT = window.AppFont;
+  const APP_FONT_CSS_FAMILY = APP_FONT.cssFamily();
+  const APP_FONT_STYLESHEET_TAG = APP_FONT.stylesheetTag();
 
   // ---- State ----
   let currentUser = null;
