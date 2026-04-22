@@ -65,6 +65,7 @@
     var state   = cfg.state || {};
     var options = cfg.options || {};
     var prefix  = cfg.prefix || 'rfp';
+    var layout  = cfg.layout || 'stacked';
     var onApply = typeof cfg.onApply === 'function' ? cfg.onApply : function () {};
     var utils   = window.SharedUtils;
 
@@ -89,36 +90,9 @@
       reset   : prefix + '-btn-reset'
     };
 
-    container.innerHTML =
-      '<div class="filter-wrap filter-wrap-stacked">' +
-        '<div class="filter-row">' +
-          '<span class="filter-label">รูปแบบ</span>' +
-          '<div id="' + ids.mode + '"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label" id="' + ids.periodL + '">ช่วงเวลา</span>' +
-          '<div id="' + ids.period + '" style="display:flex;gap:8px;align-items:center;"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label">ประเทศ</span>' +
-          '<div id="' + ids.country + '"></div>' +
-        '</div>' +
-        '<div class="filter-row-divider"></div>' +
-        '<div class="filter-row">' +
-          '<span class="filter-label">ทีม</span>' +
-          '<div id="' + ids.team + '"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label">ตำแหน่ง</span>' +
-          '<div id="' + ids.jobpos + '"></div>' +
-          '<div class="filter-separator"></div>' +
-          '<span class="filter-label">ผู้ใช้</span>' +
-          '<div id="' + ids.user + '"></div>' +
-          '<button type="button" class="filter-btn-search" id="' + ids.apply + '">' +
-            ICONS.search + 'ค้นหา' +
-          '</button>' +
-          '<button type="button" class="filter-btn-reset" id="' + ids.reset + '">' +
-            ICONS.reset + 'เริ่มใหม่' +
-          '</button>' +
-        '</div>' +
-      '</div>';
+    container.innerHTML = layout === 'paired-grid'
+      ? renderPairedGridLayout(ids)
+      : renderStackedLayout(ids);
 
     initModeDropdown();
     initPeriodControls();
@@ -364,6 +338,71 @@
       state: state,
       destroy: function () { container.innerHTML = ''; }
     };
+  }
+
+  function renderStackedLayout(ids) {
+    return '' +
+      '<div class="filter-wrap filter-wrap-stacked">' +
+        '<div class="filter-row">' +
+          '<span class="filter-label">รูปแบบ</span>' +
+          '<div id="' + ids.mode + '"></div>' +
+          '<div class="filter-separator"></div>' +
+          '<span class="filter-label" id="' + ids.periodL + '">ช่วงเวลา</span>' +
+          '<div class="filter-period-controls" id="' + ids.period + '"></div>' +
+          '<div class="filter-separator"></div>' +
+          '<span class="filter-label">ประเทศ</span>' +
+          '<div id="' + ids.country + '"></div>' +
+        '</div>' +
+        '<div class="filter-row-divider"></div>' +
+        '<div class="filter-row">' +
+          '<span class="filter-label">ทีม</span>' +
+          '<div id="' + ids.team + '"></div>' +
+          '<div class="filter-separator"></div>' +
+          '<span class="filter-label">ตำแหน่ง</span>' +
+          '<div id="' + ids.jobpos + '"></div>' +
+          '<div class="filter-separator"></div>' +
+          '<span class="filter-label">ผู้ใช้</span>' +
+          '<div id="' + ids.user + '"></div>' +
+          '<button type="button" class="filter-btn-search" id="' + ids.apply + '">' +
+            ICONS.search + 'ค้นหา' +
+          '</button>' +
+          '<button type="button" class="filter-btn-reset" id="' + ids.reset + '">' +
+            ICONS.reset + 'เริ่มใหม่' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderPairedGridLayout(ids) {
+    return '' +
+      '<div class="filter-wrap filter-wrap-stacked filter-wrap-paired-grid">' +
+        '<div class="filter-grid">' +
+          '<div class="filter-grid-main">' +
+            renderField('รูปแบบ', '<div id="' + ids.mode + '"></div>') +
+            renderField('ช่วงเวลา', '<div class="filter-period-controls" id="' + ids.period + '"></div>', ids.periodL, 'filter-field-period') +
+            renderField('ประเทศ', '<div id="' + ids.country + '"></div>') +
+            renderField('ทีม', '<div id="' + ids.team + '"></div>') +
+            renderField('ตำแหน่ง', '<div id="' + ids.jobpos + '"></div>') +
+            renderField('ผู้ใช้', '<div id="' + ids.user + '"></div>') +
+          '</div>' +
+          '<div class="filter-actions">' +
+            '<button type="button" class="filter-btn-search" id="' + ids.apply + '">' +
+              ICONS.search + 'ค้นหา' +
+            '</button>' +
+            '<button type="button" class="filter-btn-reset" id="' + ids.reset + '">' +
+              ICONS.reset + 'เริ่มใหม่' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderField(labelText, controlHtml, labelId, extraClass) {
+    return '' +
+      '<div class="filter-field' + (extraClass ? ' ' + extraClass : '') + '">' +
+        '<span class="filter-label"' + (labelId ? ' id="' + labelId + '"' : '') + '>' + labelText + '</span>' +
+        controlHtml +
+      '</div>';
   }
 
   window.ReportFilterPanel = { init: init };

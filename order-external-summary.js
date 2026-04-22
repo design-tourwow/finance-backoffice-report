@@ -84,6 +84,7 @@
       state      : state,
       options    : filterOptions,
       prefix     : 'oes',
+      layout     : 'paired-grid',
       onApply    : loadReport
     });
   }

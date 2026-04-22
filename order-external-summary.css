@@ -89,84 +89,19 @@
   font-size: 0.875rem;
 }
 
-.shared-table thead tr {
-  background: #f9fafb;
-}
+/* .shared-table header / cells / hover / sort-button visuals now provided
+   by dashboard-table.css so every report page renders the same. */
 
-.shared-th {
-  padding: 12px 20px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.shared-th--sort-active {
-  color: var(--color-primary);
-}
-
-.shared-cell-left   { text-align: left; }
-.shared-cell-right  { text-align: right; }
-.shared-cell-center { text-align: center; }
-
-.shared-sort-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  text-transform: inherit;
-  letter-spacing: inherit;
-  cursor: pointer;
-}
-
+/* Keep only the rules that align the sort button inside right/center
+   cells — this is page-specific layout that the canonical rule leaves
+   to consumers. */
 .shared-cell-right .shared-sort-btn {
   width: 100%;
   justify-content: flex-end;
 }
-
 .shared-cell-center .shared-sort-btn {
   width: 100%;
   justify-content: center;
-}
-
-.shared-sort-icon {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  opacity: 0.6;
-}
-
-.shared-sort-icon--active {
-  opacity: 1;
-}
-
-.shared-td {
-  padding: 14px 20px;
-  white-space: nowrap;
-  border-bottom: 1px solid #f3f4f6;
-  color: #111827;
-}
-
-.shared-table tbody tr:hover {
-  background: #f9fafb;
-}
-
-.shared-table tbody tr:last-child .shared-td {
-  border-bottom: none;
-}
-
-.shared-empty-row {
-  padding: 32px 20px;
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.875rem;
 }
 
 .oes-order-code {

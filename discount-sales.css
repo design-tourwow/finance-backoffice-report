@@ -150,71 +150,8 @@
   font-size: 0.875rem;
 }
 
-.shared-table thead tr {
-  background: #f9fafb;
-}
-
-.shared-table .shared-th {
-  padding: 12px 20px;
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap;
-}
-
-.shared-table .shared-cell-right  { text-align: right; }
-.shared-table .shared-cell-center { text-align: center; }
-.shared-table .shared-cell-left   { text-align: left; }
-
-.shared-table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background .1s;
-}
-
-.shared-table tbody tr:hover { background: #f9fafb; }
-
-.shared-table .shared-td {
-  padding: 14px 20px;
-  white-space: nowrap;
-  color: #111827;
-}
-
-.shared-table .shared-empty-row {
-  padding: 24px;
-  text-align: center;
-  color: #6b7280;
-}
-
-.shared-sort-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.shared-sort-btn:hover { color: #374151; }
-
-.shared-th--sort-active .shared-sort-btn { color: var(--color-primary); }
-
-.shared-sort-icon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
+/* .shared-table header / cells / hover / sort-button visuals now provided
+   by dashboard-table.css so every report page renders the same. */
 
 /* Cell color variants */
 .ds-cell-red    { color: #dc2626; }
