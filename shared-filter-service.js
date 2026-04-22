@@ -83,7 +83,9 @@
    * @returns {Promise<Array>}
    */
   async function getUsers(teamId, jobPositionId) {
-    var users = await safeGet('/api/users', 'users');
+    // Note: our own backend exposes this at /api/agency-members (/api/users
+    // is already reserved for chat users). Semantics match fe-2's /api/users.
+    var users = await safeGet('/api/agency-members', 'agency-members');
 
     if (teamId !== undefined && teamId !== null) {
       users = users.filter(function (u) {
