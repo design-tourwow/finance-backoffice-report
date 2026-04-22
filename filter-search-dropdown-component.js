@@ -71,6 +71,13 @@
     var listEl = document.getElementById(listId);
     var btnContent = btn.querySelector('.filter-sort-btn-content');
 
+    // Capture the trigger icon once and re-use it when selections change.
+    // Options in the list render label-only — icons stay in the trigger.
+    var triggerIconHTML = (function () {
+      var initial = btn.querySelector('.filter-sort-btn-content svg');
+      return initial ? initial.outerHTML : (cfg.defaultIcon || '');
+    })();
+
     function renderList(query) {
       var q = (query || '').toLowerCase();
       var filtered = q
@@ -86,7 +93,6 @@
         return '<button type="button" class="filter-search-dd-option' +
           (String(o.value) === String(currentValue) ? ' active' : '') +
           '" data-value="' + escHtml(o.value) + '" data-label="' + escHtml(o.label) + '">' +
-          (o.icon || '') +
           '<span>' + escHtml(o.label) + '</span>' +
           '</button>';
       }).join('');
@@ -96,15 +102,8 @@
           e.stopPropagation();
           var val = this.getAttribute('data-value');
           var lbl = this.getAttribute('data-label');
-          var foundIcon = '';
-          for (var i = 0; i < cfg.options.length; i++) {
-            if (String(cfg.options[i].value) === String(val)) {
-              foundIcon = cfg.options[i].icon || '';
-              break;
-            }
-          }
           currentValue = val;
-          btnContent.innerHTML = foundIcon +
+          btnContent.innerHTML = triggerIconHTML +
             '<span class="filter-sort-btn-text">' + escHtml(lbl) + '</span>';
           menu.classList.remove('open');
           btn.classList.remove('open');

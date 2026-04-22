@@ -53,11 +53,6 @@ const FilterSortDropdownComponent = (function() {
         <div class="filter-sort-menu" id="${menuId}">
           ${options.map(opt => `
             <button type="button" class="filter-sort-option ${opt.active ? 'active' : ''}" data-value="${opt.value}">
-              ${opt.icon || `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                </svg>
-              `}
               <span class="filter-sort-option-label">${opt.label}</span>
             </button>
           `).join('')}
@@ -100,37 +95,36 @@ const FilterSortDropdownComponent = (function() {
 
     // Handle option selection
     const dropdownOptions = menu.querySelectorAll('.filter-sort-option');
+    // The trigger button's icon stays constant across selections — options no
+    // longer carry their own icons, so capture the initial default once and
+    // re-use it when rebuilding the button content after a selection.
+    const triggerIconHTML = (() => {
+      const initial = btn.querySelector('.filter-sort-btn-content svg');
+      return initial ? initial.outerHTML : '';
+    })();
+
     dropdownOptions.forEach(option => {
       option.addEventListener('click', function(e) {
         e.stopPropagation();
         const value = this.getAttribute('data-value');
-        
+
         // Get label from span
         const labelSpan = this.querySelector('.filter-sort-option-label');
         const labelText = labelSpan ? labelSpan.textContent.trim() : '';
-        
-        const icon = this.querySelector('svg')?.outerHTML || '';
-        
-        console.log('🔍 Option selected:', { value, labelText, icon: icon.substring(0, 20) + '...' });
-        console.log('📝 Updating button with label:', labelText);
-        
+
         // Update active state
         dropdownOptions.forEach(opt => opt.classList.remove('active'));
         this.classList.add('active');
-        
+
         // Get fresh reference to button content (in case it was re-created)
         const currentBtn = document.getElementById(btnId);
         const currentBtnContent = currentBtn ? currentBtn.querySelector('.filter-sort-btn-content') : null;
-        
+
         if (currentBtnContent) {
-          // Update button text and icon
           currentBtnContent.innerHTML = `
-            ${icon}
+            ${triggerIconHTML}
             <span class="filter-sort-btn-text">${labelText}</span>
           `;
-          console.log('✅ Button content updated successfully');
-        } else {
-          console.error('❌ Could not find button content element');
         }
         
         // Close dropdown
