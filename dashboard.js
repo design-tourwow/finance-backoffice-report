@@ -6,66 +6,48 @@
 (function () {
   'use strict';
 
-  var CARD_GROUPS = [
+  var CARDS = [
     {
-      id: 'report',
-      title: 'Report',
-      cards: [
-        {
-          href: '/sales-by-country',
-          title: 'Sales by Country',
-          description: 'สรุปยอดขายแยกตามประเทศปลายทาง',
-          icon: iconGlobe()
-        },
-        {
-          href: '/wholesale-destinations',
-          title: 'Wholesale Destinations',
-          description: 'รายงานยอด Wholesale แยกตามปลายทาง',
-          icon: iconMap()
-        },
-        {
-          href: '/commission-report-plus',
-          title: 'Commission Report Plus',
-          description: 'รายงานคอมมิชชั่นระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
-          icon: iconReceipt()
-        }
-      ]
+      href: '/sales-by-country',
+      title: 'Sales by Country',
+      description: 'สรุปยอดขายแยกตามประเทศปลายทาง',
+      icon: iconGlobe()
     },
     {
-      id: 'pnut',
-      title: "Report P'NUT",
-      cards: [
-        {
-          href: '/supplier-commission',
-          title: 'Supplier Commission',
-          description: 'รายงาน Supplier Commission แยกตามประเทศและทีม',
-          icon: iconChart()
-        },
-        {
-          href: '/discount-sales',
-          title: 'Discount Sales',
-          description: 'รายงานยอดส่วนลดจากการขาย',
-          icon: iconTag()
-        }
-      ]
+      href: '/wholesale-destinations',
+      title: 'Wholesale Destinations',
+      description: 'รายงานยอด Wholesale แยกตามปลายทาง',
+      icon: iconMap()
     },
     {
-      id: 'poh',
-      title: "Report P'OH",
-      cards: [
-        {
-          href: '/request-discount',
-          title: 'Order Discount',
-          description: 'รายงานคำขอส่วนลดของออเดอร์',
-          icon: iconDocument()
-        },
-        {
-          href: '/order-external-summary',
-          title: 'Order แก้ย้อนหลัง',
-          description: 'รายงานการแก้ไขออเดอร์ย้อนหลังจากระบบภายนอก',
-          icon: iconClock()
-        }
-      ]
+      href: '/commission-report-plus',
+      title: 'Commission Report Plus',
+      description: 'รายงานคอมมิชชั่นระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
+      icon: iconReceipt()
+    },
+    {
+      href: '/supplier-commission',
+      title: 'Supplier Commission',
+      description: 'รายงาน Supplier Commission แยกตามประเทศและทีม',
+      icon: iconChart()
+    },
+    {
+      href: '/discount-sales',
+      title: 'Discount Sales',
+      description: 'รายงานยอดส่วนลดจากการขาย',
+      icon: iconTag()
+    },
+    {
+      href: '/request-discount',
+      title: 'Order Discount',
+      description: 'รายงานคำขอส่วนลดของออเดอร์',
+      icon: iconDocument()
+    },
+    {
+      href: '/order-external-summary',
+      title: 'Order แก้ย้อนหลัง',
+      description: 'รายงานการแก้ไขออเดอร์ย้อนหลังจากระบบภายนอก',
+      icon: iconClock()
     }
   ];
 
@@ -81,7 +63,7 @@
 
     pc.innerHTML = [
       renderHero(),
-      renderGroups()
+      renderCards()
     ].join('\n');
   }
 
@@ -98,19 +80,14 @@
     ].join('\n');
   }
 
-  function renderGroups() {
-    return CARD_GROUPS.map(function (group) {
-      return [
-        '<section class="dashboard-group" aria-labelledby="dashboard-group-' + escapeHtml(group.id) + '">',
-        '  <h2 id="dashboard-group-' + escapeHtml(group.id) + '" class="dashboard-group-title">',
-        '    ' + escapeHtml(group.title),
-        '  </h2>',
-        '  <div class="dashboard-card-grid">',
-        group.cards.map(renderCard).join('\n'),
-        '  </div>',
-        '</section>'
-      ].join('\n');
-    }).join('\n');
+  function renderCards() {
+    return [
+      '<section class="dashboard-cards" aria-label="เมนูรายงาน">',
+      '  <div class="dashboard-card-grid">',
+      CARDS.map(renderCard).join('\n'),
+      '  </div>',
+      '</section>'
+    ].join('\n');
   }
 
   function renderCard(card) {
