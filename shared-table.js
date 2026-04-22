@@ -135,6 +135,22 @@
         });
       }
     }
+
+    // Scroll-hint fade: toggle .shared-hint-hidden on the wrap when the
+    // table fits horizontally or the user has scrolled to the end. The
+    // gradient overlay itself is styled in dashboard-table.css.
+    var wrap = cfg.containerEl.querySelector('.shared-table-wrap');
+    if (wrap) {
+      var updateHint = function () {
+        var atEnd = wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 2;
+        var noScroll = wrap.scrollWidth <= wrap.clientWidth;
+        wrap.classList.toggle('shared-hint-hidden', atEnd || noScroll);
+      };
+      wrap.addEventListener('scroll', updateHint);
+      window.addEventListener('resize', updateHint);
+      // Defer initial check so the browser has laid out the table.
+      setTimeout(updateHint, 0);
+    }
   }
 
   window.SharedTable = {

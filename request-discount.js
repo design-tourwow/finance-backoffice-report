@@ -370,7 +370,8 @@
         datasets: [{
           label: 'ส่วนลด (฿)',
           data : amountData.map(function (s) { return s.total_discount; }),
-          backgroundColor: '#EF4444'
+          backgroundColor: '#EF4444',
+          borderWidth: 0
         }],
         options: {
           plugins: {
@@ -404,7 +405,8 @@
         datasets: [{
           label: 'ส่วนลด (%)',
           data : pctData.map(function (s) { return s.avg_discount_percent; }),
-          backgroundColor: '#FF8042'
+          backgroundColor: '#FF8042',
+          borderWidth: 0
         }],
         options: {
           scales: {
@@ -512,10 +514,7 @@
               '<p>' + subtitleMap[subtitleKey] + '</p>' +
             '</div>' +
             '<div class="rd-table-controls">' +
-              '<button class="rd-export-btn" id="rd-export-btn">' +
-                '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
-                'Export CSV' +
-              '</button>' +
+              window.SharedExportButton.render({ id: 'rd-export-btn' }) +
               '<label class="rd-checkbox-label">' +
                 '<input type="checkbox" id="rd-chk-discount"' + (showDiscountOnly ? ' checked' : '') + '>' +
                 'แสดงเฉพาะ Order ที่มีส่วนลด' +
@@ -665,6 +664,20 @@
 
     var exportBtn = el('rd-export-btn');
     if (exportBtn) exportBtn.addEventListener('click', exportCSV);
+
+    // Scroll-hint fade on the Top-Sales summary table (hand-rolled markup,
+    // not SharedTable — SharedTable wires this up itself in shared-table.js).
+    var rdWrap = document.querySelector('#rd-content .rd-table-wrap');
+    if (rdWrap) {
+      var updateRdHint = function () {
+        var atEnd = rdWrap.scrollLeft + rdWrap.clientWidth >= rdWrap.scrollWidth - 2;
+        var noScroll = rdWrap.scrollWidth <= rdWrap.clientWidth;
+        rdWrap.classList.toggle('shared-hint-hidden', atEnd || noScroll);
+      };
+      rdWrap.addEventListener('scroll', updateRdHint);
+      window.addEventListener('resize', updateRdHint);
+      setTimeout(updateRdHint, 0);
+    }
   }
 
   // ---------------------------------------------------------------------------

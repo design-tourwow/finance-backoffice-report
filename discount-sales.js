@@ -142,7 +142,7 @@
       '<div class="ds-table-card">' +
         '<div class="ds-table-header">' +
           '<h2>รายละเอียดส่วนลด</h2>' +
-          '<button class="ds-btn-export" id="ds-export-btn" type="button">' + iconDownload() + ' Export CSV</button>' +
+          window.SharedExportButton.render({ id: 'ds-export-btn' }) +
         '</div>' +
         '<div id="ds-table-host"></div>' +
       '</div>';
@@ -232,7 +232,8 @@
       datasets: [{
         label: 'ส่วนลด (฿)',
         data : amountData.map(function (d) { return d.metrics.total_discount; }),
-        backgroundColor: '#EF4444'
+        backgroundColor: '#EF4444',
+        borderWidth: 0
       }],
       options: {
         plugins: { tooltip: { callbacks: tooltipCallbacks('amount', amountData) } }
@@ -250,7 +251,8 @@
       datasets: [{
         label: 'ส่วนลด (%)',
         data : pctData.map(function (d) { return Math.round(d.metrics.discount_percentage); }),
-        backgroundColor: '#FF8042'
+        backgroundColor: '#FF8042',
+        borderWidth: 0
       }],
       options: {
         plugins: { tooltip: { callbacks: tooltipCallbacks('percent', pctData) } },

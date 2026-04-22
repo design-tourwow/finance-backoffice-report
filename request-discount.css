@@ -107,67 +107,15 @@
   accent-color: #3b82f6;
 }
 
-.rd-export-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: #16a34a;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: .82rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background .15s;
-}
-
-.rd-export-btn:hover { background: #15803d; }
+/* .rd-export-btn visuals (white + border) now come from dashboard-table.css
+   so the button matches the other 3 fe-2 report pages. */
 
 /* -----------------------------------------------------------------------
    Top-Sales Summary Table (page-unique — not sortable, not SharedTable)
+   Canonical table visuals (.rd-table base, thead/tbody, hover, right/center
+   alignment, scroll overlay) live in dashboard-table.css. Only the page-
+   specific rank highlights + badge/breakdown/status remain below.
    ----------------------------------------------------------------------- */
-
-.rd-table-wrap { overflow-x: auto; }
-
-.rd-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: .85rem;
-}
-
-.rd-table thead th {
-  background: #f9fafb;
-  padding: 10px 16px;
-  text-align: left;
-  font-size: .72rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  white-space: nowrap;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.rd-table thead th.right  { text-align: right; }
-.rd-table thead th.center { text-align: center; }
-
-.rd-table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background .1s;
-}
-
-.rd-table tbody tr:hover { background: #f9fafb; }
-
-.rd-table tbody td {
-  padding: 12px 16px;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.rd-table tbody td.right  { text-align: right; }
-.rd-table tbody td.center { text-align: center; }
 
 /* Top-3 row highlights */
 .rd-rank-1 { background: #fee2e2 !important; border-left: 4px solid #dc2626; }

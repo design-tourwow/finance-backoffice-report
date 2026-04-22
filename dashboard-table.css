@@ -71,19 +71,49 @@
    shared-table.js (SharedTable.render) used by the 4 fe-2 report pages.
    Listing them together keeps one source of truth for the visual contract. */
 .dashboard-table,
-.shared-table {
+.shared-table,
+.rd-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 16px;
 }
 
-.shared-table-wrap {
+/* Horizontal-scroll hint: dense tables overflow the card. Show a subtle
+   white gradient on the right edge so users know more columns are off-
+   screen. Matches commission-report-plus .crp-scroll-hint-wrapper —
+   SharedTable's init attaches a scroll+resize listener that toggles
+   .shared-hint-hidden when the user has scrolled to the end (or when no
+   horizontal scroll is needed), fading the gradient out. */
+.shared-table-wrap,
+.rd-table-wrap {
   overflow-x: auto;
+  position: relative;
+}
+
+.shared-table-wrap::after,
+.rd-table-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 64px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.92));
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.25s;
+  z-index: 3;
+}
+
+.shared-table-wrap.shared-hint-hidden::after,
+.rd-table-wrap.shared-hint-hidden::after {
+  opacity: 0;
 }
 
 .dashboard-table thead th,
 .shared-table thead th,
-.shared-th {
+.shared-th,
+.rd-table thead th {
   padding: 12px 16px;
   text-align: left;
   font-size: 14px;
@@ -127,23 +157,34 @@
 }
 
 .dashboard-table tbody tr,
-.shared-table tbody tr {
+.shared-table tbody tr,
+.rd-table tbody tr {
   transition: background 0.2s ease;
 }
 
 .dashboard-table tbody tr:hover,
-.shared-table tbody tr:hover {
+.shared-table tbody tr:hover,
+.rd-table tbody tr:hover {
   background: var(--color-bg-subtle);
 }
 
 .dashboard-table tbody td,
 .shared-table tbody td,
-.shared-td {
+.shared-td,
+.rd-table tbody td {
   padding: 14px 16px;
   color: #1f2937;
   border-bottom: 1px solid var(--color-bg-hover);
   vertical-align: middle;
+  white-space: nowrap;
 }
+
+/* Right/center alignment on .rd-table cells — rd markup uses plain
+   .right / .center classes on <th>/<td> instead of .shared-cell-*. */
+.rd-table thead th.right,
+.rd-table tbody td.right  { text-align: right; font-variant-numeric: tabular-nums; }
+.rd-table thead th.center,
+.rd-table tbody td.center { text-align: center; }
 
 .shared-cell-left   { text-align: left; }
 .shared-cell-right  { text-align: right; font-variant-numeric: tabular-nums; }
