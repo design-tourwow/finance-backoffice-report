@@ -1,6 +1,6 @@
 // supplier-commission-api.js
 // Exposes window.SupplierCommissionAPI
-// Depends on: window.FE2Http (fe2-http.js)
+// Depends on: window.SharedHttp (shared-http.js)
 
 (function () {
   'use strict';
@@ -37,7 +37,7 @@
       user_id: params.user_id
     };
 
-    var response = await window.FE2Http.get('/api/reports/supplier-performance', { params: query });
+    var response = await window.SharedHttp.get('/api/reports/supplier-performance', { params: query });
     return normaliseArray(response, 'supplier-performance');
   }
 

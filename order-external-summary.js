@@ -1,6 +1,6 @@
 // order-external-summary.js — Order External Summary page (shared-lib refactor)
-// Depends on: fe2-utils.js, fe2-filter-service.js, fe2-ui.js, fe2-table.js,
-//             fe2-csv.js, fe2-filter-panel.js, order-external-summary-api.js
+// Depends on: shared-utils.js, shared-filter-service.js, shared-ui.js, shared-table.js,
+//             shared-csv.js, shared-filter-panel.js, order-external-summary-api.js
 
 (function () {
   'use strict';
@@ -62,10 +62,10 @@
   async function loadDropdownData() {
     try {
       var results = await Promise.all([
-        FE2FilterService.getCountries(),
-        FE2FilterService.getTeams(),
-        FE2FilterService.getJobPositions(),
-        FE2FilterService.getUsers()
+        SharedFilterService.getCountries(),
+        SharedFilterService.getTeams(),
+        SharedFilterService.getJobPositions(),
+        SharedFilterService.getUsers()
       ]);
       filterOptions.countries    = results[0] || [];
       filterOptions.teams        = results[1] || [];
@@ -78,7 +78,7 @@
 
   // ── Filter panel ──────────────────────────────────────────────────────────
   function renderFilterPanel() {
-    FE2FilterPanel.render({
+    SharedFilterPanel.render({
       containerEl: elFilterHost,
       state      : state,
       options    : filterOptions,
@@ -94,10 +94,10 @@
 
   // ── Report loading ────────────────────────────────────────────────────────
   async function loadReport() {
-    FE2UI.hideError(elStatusHost);
+    SharedUI.hideError(elStatusHost);
     elSummaryHost.innerHTML = '';
     elTableHost.innerHTML   = '';
-    FE2UI.showLoading(elStatusHost, 'กำลังโหลดข้อมูล Order แก้ย้อนหลัง...');
+    SharedUI.showLoading(elStatusHost, 'กำลังโหลดข้อมูล Order แก้ย้อนหลัง...');
 
     try {
       var data = await OrderExternalAPI.fetch({
@@ -108,12 +108,12 @@
         team_number  : state.team_number,
         user_id      : state.user_id
       });
-      FE2UI.hideLoading(elStatusHost);
+      SharedUI.hideLoading(elStatusHost);
       renderResults(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('[OrderExternalSummary] API error:', err);
-      FE2UI.hideLoading(elStatusHost);
-      FE2UI.showError(elStatusHost, 'เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง', {
+      SharedUI.hideLoading(elStatusHost);
+      SharedUI.showError(elStatusHost, 'เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาลองใหม่อีกครั้ง', {
         retryFn: loadReport
       });
     }
@@ -140,7 +140,7 @@
   }
 
   function renderSummaryCards(totals) {
-    var fmt = FE2Utils.formatCurrency;
+    var fmt = SharedUtils.formatCurrency;
 
     elSummaryHost.innerHTML = [
       '<div class="oes-summary-cards">',
@@ -201,16 +201,16 @@
     return '<span class="oes-order-code">' + escapeHtml(val || '') + '</span>';
   }
   function fmtDate(val) {
-    return val ? escapeHtml(FE2Utils.formatDateTH(val)) : '';
+    return val ? escapeHtml(SharedUtils.formatDateTH(val)) : '';
   }
   function fmtBaht(val) {
-    return '฿' + FE2Utils.formatCurrency(val || 0);
+    return '฿' + SharedUtils.formatCurrency(val || 0);
   }
   function fmtBahtCommission(val) {
-    return '<span class="oes-commission">฿' + FE2Utils.formatCurrency(val || 0) + '</span>';
+    return '<span class="oes-commission">฿' + SharedUtils.formatCurrency(val || 0) + '</span>';
   }
   function fmtBahtDiscount(val) {
-    return '<span class="oes-discount">฿' + FE2Utils.formatCurrency(val || 0) + '</span>';
+    return '<span class="oes-discount">฿' + SharedUtils.formatCurrency(val || 0) + '</span>';
   }
   function fmtSeller(val) {
     return escapeHtml(val || '-');
@@ -245,7 +245,7 @@
       '  <div id="oes-table-body"></div>' +
       '</div>';
 
-    FE2Table.render({
+    SharedTable.render({
       containerEl: document.getElementById('oes-table-body'),
       columns    : COLUMNS,
       rows       : sortRows(lastData),
@@ -268,7 +268,7 @@
 
   // ── CSV Export ────────────────────────────────────────────────────────────
   function exportCSV() {
-    var fmt = FE2Utils.formatCurrency;
+    var fmt = SharedUtils.formatCurrency;
 
     var headers = [
       'รหัส Order',
@@ -284,12 +284,12 @@
     var rows = lastData.map(function (item) {
       return [
         item.order_code || '',
-        item.created_at ? FE2Utils.formatDateTH(item.created_at) : '',
+        item.created_at ? SharedUtils.formatDateTH(item.created_at) : '',
         item.customer_name || '',
         fmt(item.net_amount || 0),
         fmt(item.supplier_commission || 0),
         fmt(item.discount || 0),
-        item.paid_at ? FE2Utils.formatDateTH(item.paid_at) : '',
+        item.paid_at ? SharedUtils.formatDateTH(item.paid_at) : '',
         item.seller_nickname || '-'
       ];
     });
@@ -312,7 +312,7 @@
     var mm = String(d.getMonth() + 1).padStart(2, '0');
     var dd = String(d.getDate()).padStart(2, '0');
 
-    FE2CSV.export({
+    SharedCSV.export({
       filename: 'order-external-summary-' + yyyy + mm + dd + '.csv',
       headers : headers,
       rows    : rows

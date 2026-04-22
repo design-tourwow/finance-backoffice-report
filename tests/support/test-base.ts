@@ -33,7 +33,7 @@ export const test = base.extend<{
 
 /**
  * Helper: navigate to page with token query param (simulates Finance Backoffice handoff).
- * Token is stripped from URL by fe2-auth-guard.js.
+ * Token is stripped from URL by shared-auth-guard.js.
  */
 export async function navigateWithToken(page: import('@playwright/test').Page, path: string, token: string): Promise<void> {
   const url = path.includes('?') ? `${path}&token=${encodeURIComponent(token)}` : `${path}?token=${encodeURIComponent(token)}`;

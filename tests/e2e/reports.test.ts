@@ -25,7 +25,7 @@ test.describe('@p0 E4 API failure → error banner (not blank)', () => {
       await page.goto(route);
       await page.waitForLoadState('domcontentloaded');
       // Either an error banner appears, or at worst the page is not blank
-      const errorBanner = page.locator('.fe2-error-banner, .sc-error-banner, .ds-error, .oes-error, .rd-error');
+      const errorBanner = page.locator('.shared-error-banner, .sc-error-banner, .ds-error, .oes-error, .rd-error');
       const body = page.locator('body');
       await expect(body).not.toBeEmpty();
       // Error surface should eventually appear within a generous timeout
@@ -73,7 +73,7 @@ test.describe('@p1 E8 Sortable table', () => {
       await page.goto(route);
       await page.waitForLoadState('networkidle');
 
-      const sortableHeader = page.locator('th[role=columnheader], th button, .fe2-sort-btn').first();
+      const sortableHeader = page.locator('th[role=columnheader], th button, .shared-sort-btn').first();
       if (await sortableHeader.count() > 0) {
         const before = await page.locator('tbody tr').first().textContent();
         await sortableHeader.click();

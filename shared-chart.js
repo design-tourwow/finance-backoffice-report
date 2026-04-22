@@ -1,10 +1,10 @@
-// fe2-chart.js — Shared Chart.js bar-chart wrapper.
+// shared-chart.js — Shared Chart.js bar-chart wrapper.
 // Destroy-and-redraw safe. Extracted from discount-sales.js / supplier-commission.js /
 // request-discount.js patterns where every page manually calls chart.destroy() before
 // recreating the same canvas.
 //
 // Assumes Chart.js (window.Chart) is loaded via CDN in the page HTML.
-// Exposes window.FE2Chart (IIFE).
+// Exposes window.SharedChart (IIFE).
 
 (function () {
   'use strict';
@@ -14,8 +14,8 @@
   }
 
   function formatCurrency(v) {
-    if (window.FE2Utils && typeof window.FE2Utils.formatCurrency === 'function') {
-      return window.FE2Utils.formatCurrency(v);
+    if (window.SharedUtils && typeof window.SharedUtils.formatCurrency === 'function') {
+      return window.SharedUtils.formatCurrency(v);
     }
     return Number(v).toLocaleString();
   }
@@ -85,15 +85,15 @@
   function createBarChart(cfg) {
     cfg = cfg || {};
     if (!hasChart()) {
-      console.warn('[FE2Chart] Chart.js is not loaded — cannot create bar chart');
+      console.warn('[SharedChart] Chart.js is not loaded — cannot create bar chart');
       return null;
     }
     if (!cfg.canvasEl) {
-      console.warn('[FE2Chart] createBarChart: canvasEl is required');
+      console.warn('[SharedChart] createBarChart: canvasEl is required');
       return null;
     }
     if (!Array.isArray(cfg.labels) || !Array.isArray(cfg.datasets)) {
-      console.warn('[FE2Chart] createBarChart: labels and datasets must be arrays');
+      console.warn('[SharedChart] createBarChart: labels and datasets must be arrays');
       return null;
     }
 
@@ -114,7 +114,7 @@
         options: options
       });
     } catch (err) {
-      console.warn('[FE2Chart] Chart construction failed:', err);
+      console.warn('[SharedChart] Chart construction failed:', err);
       return null;
     }
   }
@@ -123,11 +123,11 @@
     if (!chart) return;
     if (typeof chart.destroy === 'function') {
       try { chart.destroy(); }
-      catch (e) { console.warn('[FE2Chart] destroy threw:', e); }
+      catch (e) { console.warn('[SharedChart] destroy threw:', e); }
     }
   }
 
-  window.FE2Chart = {
+  window.SharedChart = {
     createBarChart: createBarChart,
     destroy       : destroy
   };

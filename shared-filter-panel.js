@@ -1,4 +1,4 @@
-// fe2-filter-panel.js — Shared cascading filter-panel renderer.
+// shared-filter-panel.js — Shared cascading filter-panel renderer.
 // Structurally extracted from supplier-commission.js (canonical) with dropdown
 // cascade logic (team → jobPos → user) mirroring all 4 fe-2 pages.
 //
@@ -7,7 +7,7 @@
 //   - Changing "jobPosition" clears user, and filters the user list.
 //   - Changing "country" / "year" / "quarter" / "month" / "mode" does not cascade.
 //
-// Exposes window.FE2FilterPanel (IIFE).
+// Exposes window.SharedFilterPanel (IIFE).
 
 (function () {
   'use strict';
@@ -63,8 +63,8 @@
   // Compute default/derived values so render() is tolerant of partial state objects.
   function normalizeState(state) {
     state = state || {};
-    var currentYear    = (window.FE2Utils && window.FE2Utils.getCurrentYear)    ? window.FE2Utils.getCurrentYear()    : new Date().getFullYear();
-    var currentQuarter = (window.FE2Utils && window.FE2Utils.getCurrentQuarter) ? window.FE2Utils.getCurrentQuarter() : Math.ceil((new Date().getMonth() + 1) / 3);
+    var currentYear    = (window.SharedUtils && window.SharedUtils.getCurrentYear)    ? window.SharedUtils.getCurrentYear()    : new Date().getFullYear();
+    var currentQuarter = (window.SharedUtils && window.SharedUtils.getCurrentQuarter) ? window.SharedUtils.getCurrentQuarter() : Math.ceil((new Date().getMonth() + 1) / 3);
 
     return {
       mode         : state.mode || 'quarterly',
@@ -101,7 +101,7 @@
   function render(cfg) {
     cfg = cfg || {};
     if (!isEl(cfg.containerEl)) {
-      console.warn('[FE2FilterPanel] render: invalid containerEl');
+      console.warn('[SharedFilterPanel] render: invalid containerEl');
       return;
     }
 
@@ -115,8 +115,8 @@
 
     // Sort countries by Thai name if helper available
     var countries = Array.isArray(options.countries) ? options.countries.slice() : [];
-    if (window.FE2Utils && typeof window.FE2Utils.sortCountriesByThai === 'function' && countries.length > 0) {
-      try { countries = window.FE2Utils.sortCountriesByThai(countries); }
+    if (window.SharedUtils && typeof window.SharedUtils.sortCountriesByThai === 'function' && countries.length > 0) {
+      try { countries = window.SharedUtils.sortCountriesByThai(countries); }
       catch (e) { /* ignore sort failure, keep unsorted */ }
     }
     var countryOpts = '<option value="">' + escapeHtml(labels.anyCountry) + '</option>' +
@@ -137,8 +137,8 @@
     // Filter & display-label job positions using the shared helper if available.
     var rawJobs = Array.isArray(options.jobPositions) ? options.jobPositions : [];
     var jobPositions;
-    if (window.FE2Utils && typeof window.FE2Utils.filterAndDisplayJobPositions === 'function') {
-      try { jobPositions = window.FE2Utils.filterAndDisplayJobPositions(rawJobs, state.team_number || undefined); }
+    if (window.SharedUtils && typeof window.SharedUtils.filterAndDisplayJobPositions === 'function') {
+      try { jobPositions = window.SharedUtils.filterAndDisplayJobPositions(rawJobs, state.team_number || undefined); }
       catch (e) { jobPositions = rawJobs; }
     } else {
       jobPositions = rawJobs;
@@ -163,7 +163,7 @@
     // Period selects — only render the ones relevant to the current mode.
     var yearList = Array.isArray(options.years) && options.years.length > 0
       ? options.years
-      : ((window.FE2Utils && window.FE2Utils.getYearOptions) ? window.FE2Utils.getYearOptions() : []);
+      : ((window.SharedUtils && window.SharedUtils.getYearOptions) ? window.SharedUtils.getYearOptions() : []);
     var yearOpts = yearList.map(function (y) {
       var val = (y && typeof y === 'object') ? y.value : y;
       var lbl = (y && typeof y === 'object') ? (y.label || y.value) : y;
@@ -173,12 +173,12 @@
 
     var monthList = Array.isArray(options.months) && options.months.length > 0
       ? options.months
-      : ((window.FE2Utils && window.FE2Utils.getMonthOptions) ? window.FE2Utils.getMonthOptions() : []);
+      : ((window.SharedUtils && window.SharedUtils.getMonthOptions) ? window.SharedUtils.getMonthOptions() : []);
     var monthOpts = buildOptions(monthList, 'value', 'label', state.month);
 
     var quarterList = Array.isArray(options.quarters) && options.quarters.length > 0
       ? options.quarters
-      : ((window.FE2Utils && window.FE2Utils.getQuarterOptions) ? window.FE2Utils.getQuarterOptions() : []);
+      : ((window.SharedUtils && window.SharedUtils.getQuarterOptions) ? window.SharedUtils.getQuarterOptions() : []);
     var quarterOpts = quarterList.map(function (q) {
       if (!q) return '';
       var val = q.year + '-' + q.quarter;
@@ -189,37 +189,37 @@
     var periodHTML = '';
     if (state.mode === 'quarterly') {
       periodHTML =
-        '<div class="fe2-filter-group">' +
-          '<label for="fe2-quarter-sel">' + escapeHtml(labels.quarter) + '</label>' +
-          '<select id="fe2-quarter-sel" data-fe2-field="quarter">' + quarterOpts + '</select>' +
+        '<div class="shared-filter-group">' +
+          '<label for="shared-quarter-sel">' + escapeHtml(labels.quarter) + '</label>' +
+          '<select id="shared-quarter-sel" data-shared-field="quarter">' + quarterOpts + '</select>' +
         '</div>';
     } else if (state.mode === 'monthly') {
       periodHTML =
-        '<div class="fe2-filter-group">' +
-          '<label for="fe2-month-sel">' + escapeHtml(labels.month) + '</label>' +
-          '<select id="fe2-month-sel" data-fe2-field="month">' + monthOpts + '</select>' +
+        '<div class="shared-filter-group">' +
+          '<label for="shared-month-sel">' + escapeHtml(labels.month) + '</label>' +
+          '<select id="shared-month-sel" data-shared-field="month">' + monthOpts + '</select>' +
         '</div>' +
-        '<div class="fe2-filter-group">' +
-          '<label for="fe2-year-sel">' + escapeHtml(labels.year) + '</label>' +
-          '<select id="fe2-year-sel" data-fe2-field="year">' + yearOpts + '</select>' +
+        '<div class="shared-filter-group">' +
+          '<label for="shared-year-sel">' + escapeHtml(labels.year) + '</label>' +
+          '<select id="shared-year-sel" data-shared-field="year">' + yearOpts + '</select>' +
         '</div>';
     } else if (state.mode === 'yearly') {
       periodHTML =
-        '<div class="fe2-filter-group">' +
-          '<label for="fe2-year-sel">' + escapeHtml(labels.year) + '</label>' +
-          '<select id="fe2-year-sel" data-fe2-field="year">' + yearOpts + '</select>' +
+        '<div class="shared-filter-group">' +
+          '<label for="shared-year-sel">' + escapeHtml(labels.year) + '</label>' +
+          '<select id="shared-year-sel" data-shared-field="year">' + yearOpts + '</select>' +
         '</div>';
     }
 
     // ── Assemble panel HTML ──────────────────────────────────────────────────
 
     var html =
-      '<div class="fe2-filter-panel">' +
-        '<h2 class="fe2-filter-title">' + escapeHtml(labels.title) + '</h2>' +
-        '<div class="fe2-filter-grid">' +
-          '<div class="fe2-filter-group">' +
-            '<label for="fe2-mode-sel">' + escapeHtml(labels.mode) + '</label>' +
-            '<select id="fe2-mode-sel" data-fe2-field="mode">' +
+      '<div class="shared-filter-panel">' +
+        '<h2 class="shared-filter-title">' + escapeHtml(labels.title) + '</h2>' +
+        '<div class="shared-filter-grid">' +
+          '<div class="shared-filter-group">' +
+            '<label for="shared-mode-sel">' + escapeHtml(labels.mode) + '</label>' +
+            '<select id="shared-mode-sel" data-shared-field="mode">' +
               '<option value="all"'       + (state.mode === 'all'       ? ' selected' : '') + '>' + escapeHtml(labels.modeAll)     + '</option>' +
               '<option value="quarterly"' + (state.mode === 'quarterly' ? ' selected' : '') + '>' + escapeHtml(labels.modeQuarter) + '</option>' +
               '<option value="monthly"'   + (state.mode === 'monthly'   ? ' selected' : '') + '>' + escapeHtml(labels.modeMonth)   + '</option>' +
@@ -227,24 +227,24 @@
             '</select>' +
           '</div>' +
           periodHTML +
-          '<div class="fe2-filter-group">' +
-            '<label for="fe2-country-sel">' + escapeHtml(labels.country) + '</label>' +
-            '<select id="fe2-country-sel" data-fe2-field="country_id">' + countryOpts + '</select>' +
+          '<div class="shared-filter-group">' +
+            '<label for="shared-country-sel">' + escapeHtml(labels.country) + '</label>' +
+            '<select id="shared-country-sel" data-shared-field="country_id">' + countryOpts + '</select>' +
           '</div>' +
-          '<div class="fe2-filter-group">' +
-            '<label for="fe2-team-sel">' + escapeHtml(labels.team) + '</label>' +
-            '<select id="fe2-team-sel" data-fe2-field="team_number">' + teamOpts + '</select>' +
+          '<div class="shared-filter-group">' +
+            '<label for="shared-team-sel">' + escapeHtml(labels.team) + '</label>' +
+            '<select id="shared-team-sel" data-shared-field="team_number">' + teamOpts + '</select>' +
           '</div>' +
-          '<div class="fe2-filter-group">' +
-            '<label for="fe2-jobpos-sel">' + escapeHtml(labels.jobPosition) + '</label>' +
-            '<select id="fe2-jobpos-sel" data-fe2-field="job_position">' + jobOpts + '</select>' +
+          '<div class="shared-filter-group">' +
+            '<label for="shared-jobpos-sel">' + escapeHtml(labels.jobPosition) + '</label>' +
+            '<select id="shared-jobpos-sel" data-shared-field="job_position">' + jobOpts + '</select>' +
           '</div>' +
-          '<div class="fe2-filter-group">' +
-            '<label for="fe2-user-sel">' + escapeHtml(labels.user) + '</label>' +
-            '<select id="fe2-user-sel" data-fe2-field="user_id">' + userOpts + '</select>' +
+          '<div class="shared-filter-group">' +
+            '<label for="shared-user-sel">' + escapeHtml(labels.user) + '</label>' +
+            '<select id="shared-user-sel" data-shared-field="user_id">' + userOpts + '</select>' +
           '</div>' +
-          '<div class="fe2-filter-actions">' +
-            '<button type="button" class="fe2-btn-apply" data-fe2-apply>' + escapeHtml(labels.apply) + '</button>' +
+          '<div class="shared-filter-actions">' +
+            '<button type="button" class="shared-btn-apply" data-shared-apply>' + escapeHtml(labels.apply) + '</button>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -257,7 +257,7 @@
     function emitChange(nextState) {
       if (!onChange) return;
       try { onChange(nextState); }
-      catch (e) { console.warn('[FE2FilterPanel] onChange threw:', e); }
+      catch (e) { console.warn('[SharedFilterPanel] onChange threw:', e); }
     }
 
     function rerenderWith(nextState) {
@@ -275,7 +275,7 @@
     cfg.containerEl.addEventListener('change', function (e) {
       var t = e.target;
       if (!t || !t.getAttribute) return;
-      var field = t.getAttribute('data-fe2-field');
+      var field = t.getAttribute('data-shared-field');
       if (!field) return;
 
       // Accumulate onto the closure's own state so successive changes without
@@ -288,15 +288,15 @@
         case 'mode':
           nextState.mode = raw;
           // Re-sync period defaults when switching mode (matches existing pages).
-          if (window.FE2Utils) {
+          if (window.SharedUtils) {
             if (raw === 'quarterly') {
-              nextState.year    = window.FE2Utils.getCurrentYear();
-              nextState.quarter = window.FE2Utils.getCurrentQuarter();
+              nextState.year    = window.SharedUtils.getCurrentYear();
+              nextState.quarter = window.SharedUtils.getCurrentQuarter();
             } else if (raw === 'monthly') {
-              nextState.year  = window.FE2Utils.getCurrentYear();
+              nextState.year  = window.SharedUtils.getCurrentYear();
               nextState.month = new Date().getMonth() + 1;
             } else if (raw === 'yearly') {
-              nextState.year = window.FE2Utils.getCurrentYear();
+              nextState.year = window.SharedUtils.getCurrentYear();
             }
           }
           needsRerender = true;
@@ -345,15 +345,15 @@
     cfg.containerEl.addEventListener('click', function (e) {
       var t = e.target;
       if (!t || !t.getAttribute) return;
-      if (t.hasAttribute('data-fe2-apply')) {
+      if (t.hasAttribute('data-shared-apply')) {
         if (!onApply) return;
         try { onApply(normalizeState(state)); }
-        catch (err) { console.warn('[FE2FilterPanel] onApply threw:', err); }
+        catch (err) { console.warn('[SharedFilterPanel] onApply threw:', err); }
       }
     });
   }
 
-  window.FE2FilterPanel = {
+  window.SharedFilterPanel = {
     render: render
   };
 

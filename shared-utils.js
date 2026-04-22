@@ -1,5 +1,5 @@
-// fe2-utils.js — Shared utility functions ported from fe-2-project-main
-// Exposes window.FE2Utils (IIFE)
+// shared-utils.js — Shared utility functions ported from fe-2-project-main
+// Exposes window.SharedUtils (IIFE)
 
 (function () {
   'use strict';
@@ -166,7 +166,7 @@
   // Expose
   // ---------------------------------------------------------------------------
 
-  window.FE2Utils = {
+  window.SharedUtils = {
     formatCurrency: formatCurrency,
     formatDateTH: formatDateTH,
     getCurrentYear: getCurrentYear,

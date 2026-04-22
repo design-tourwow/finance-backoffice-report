@@ -63,7 +63,7 @@ tests/
   Always call before `page.goto` on a page that fetches data.
 - `mockToken` — JWT-shaped string with 24h expiry.
 - `seedToken(page, token)` — pre-populates sessionStorage + localStorage so
-  `fe2-auth-guard.js` doesn't redirect.
+  `shared-auth-guard.js` doesn't redirect.
 - `navigateWithToken(page, path, token)` — simulates Finance Backoffice
   handoff via `?token=` URL param.
 

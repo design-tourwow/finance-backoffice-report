@@ -1,10 +1,10 @@
 /* discount-sales.css — Page-specific styles for Discount Sales report.
-   Global fe2-* widget styles (loading, error, filter-panel, table) live alongside;
-   only the .fe2-filter-panel and .fe2-table layouts unique to this page are styled here.
+   Global shared-* widget styles (loading, error, filter-panel, table) live alongside;
+   only the .shared-filter-panel and .shared-table layouts unique to this page are styled here.
 */
 
-/* ─── Filter Panel (fe2-filter-panel widget) ───────────────────────── */
-.fe2-filter-panel {
+/* ─── Filter Panel (shared-filter-panel widget) ───────────────────────── */
+.shared-filter-panel {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,.1);
@@ -12,33 +12,33 @@
   margin-bottom: 24px;
 }
 
-.fe2-filter-title {
+.shared-filter-title {
   font-size: 1.1rem;
   font-weight: 600;
   color: #111827;
   margin: 0 0 16px;
 }
 
-.fe2-filter-grid {
+.shared-filter-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 16px;
   align-items: end;
 }
 
-.fe2-filter-group {
+.shared-filter-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.fe2-filter-group label {
+.shared-filter-group label {
   font-size: 0.8125rem;
   font-weight: 500;
   color: #374151;
 }
 
-.fe2-filter-group select {
+.shared-filter-group select {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid #d1d5db;
@@ -51,17 +51,17 @@
   transition: border-color .15s;
 }
 
-.fe2-filter-group select:focus {
+.shared-filter-group select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59,130,246,.2);
 }
 
-.fe2-filter-actions {
+.shared-filter-actions {
   display: flex;
   align-items: flex-end;
 }
 
-.fe2-btn-apply {
+.shared-btn-apply {
   padding: 9px 20px;
   background: #2563eb;
   color: #fff;
@@ -75,7 +75,7 @@
   transition: background .15s;
 }
 
-.fe2-btn-apply:hover {
+.shared-btn-apply:hover {
   background: #1d4ed8;
 }
 
@@ -192,7 +192,7 @@
   height: 320px;
 }
 
-/* ─── Data Table (fe2-table widget) ────────────────────────────────── */
+/* ─── Data Table (shared-table widget) ────────────────────────────────── */
 .ds-table-card {
   background: #fff;
   border-radius: 8px;
@@ -234,21 +234,21 @@
 
 .ds-btn-export:hover { background: #15803d; }
 
-.fe2-table-wrap {
+.shared-table-wrap {
   overflow-x: auto;
 }
 
-.fe2-table {
+.shared-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
 
-.fe2-table thead tr {
+.shared-table thead tr {
   background: #f9fafb;
 }
 
-.fe2-table .fe2-th {
+.shared-table .shared-th {
   padding: 12px 20px;
   text-align: left;
   font-size: 0.75rem;
@@ -260,30 +260,30 @@
   white-space: nowrap;
 }
 
-.fe2-table .fe2-cell-right  { text-align: right; }
-.fe2-table .fe2-cell-center { text-align: center; }
-.fe2-table .fe2-cell-left   { text-align: left; }
+.shared-table .shared-cell-right  { text-align: right; }
+.shared-table .shared-cell-center { text-align: center; }
+.shared-table .shared-cell-left   { text-align: left; }
 
-.fe2-table tbody tr {
+.shared-table tbody tr {
   border-bottom: 1px solid #f3f4f6;
   transition: background .1s;
 }
 
-.fe2-table tbody tr:hover { background: #f9fafb; }
+.shared-table tbody tr:hover { background: #f9fafb; }
 
-.fe2-table .fe2-td {
+.shared-table .shared-td {
   padding: 14px 20px;
   white-space: nowrap;
   color: #111827;
 }
 
-.fe2-table .fe2-empty-row {
+.shared-table .shared-empty-row {
   padding: 24px;
   text-align: center;
   color: #6b7280;
 }
 
-.fe2-sort-btn {
+.shared-sort-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -300,11 +300,11 @@
   white-space: nowrap;
 }
 
-.fe2-sort-btn:hover { color: #374151; }
+.shared-sort-btn:hover { color: #374151; }
 
-.fe2-th--sort-active .fe2-sort-btn { color: #2563eb; }
+.shared-th--sort-active .shared-sort-btn { color: #2563eb; }
 
-.fe2-sort-icon {
+.shared-sort-icon {
   width: 14px;
   height: 14px;
   flex-shrink: 0;

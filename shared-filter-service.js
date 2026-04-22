@@ -1,6 +1,6 @@
-// fe2-filter-service.js — Filter API service ported from fe-2-project-main
-// Exposes window.FE2FilterService (IIFE)
-// Depends on: window.FE2Http (fe2-http.js)
+// shared-filter-service.js — Filter API service ported from fe-2-project-main
+// Exposes window.SharedFilterService (IIFE)
+// Depends on: window.SharedHttp (shared-http.js)
 
 (function () {
   'use strict';
@@ -18,7 +18,7 @@
     if (response && typeof response === 'object' && Array.isArray(response.data)) {
       return response.data;
     }
-    console.warn('[FE2FilterService] Unexpected response format for ' + label + ':', response);
+    console.warn('[SharedFilterService] Unexpected response format for ' + label + ':', response);
     return [];
   }
 
@@ -31,10 +31,10 @@
    */
   async function safeGet(endpoint, label) {
     try {
-      var response = await window.FE2Http.get(endpoint);
+      var response = await window.SharedHttp.get(endpoint);
       return normaliseArray(response, label);
     } catch (err) {
-      console.error('[FE2FilterService] ' + label + ' failed:', err);
+      console.error('[SharedFilterService] ' + label + ' failed:', err);
       return [];
     }
   }
@@ -104,7 +104,7 @@
   // Expose
   // ---------------------------------------------------------------------------
 
-  window.FE2FilterService = {
+  window.SharedFilterService = {
     getCountries: getCountries,
     getTeams: getTeams,
     getJobPositions: getJobPositions,

@@ -1,8 +1,8 @@
-// fe2-csv.js — Shared CSV export utility with UTF-8 BOM for Thai in Excel.
+// shared-csv.js — Shared CSV export utility with UTF-8 BOM for Thai in Excel.
 // Extracted from the 4 fe-2 pages' exportCSV() helpers (all structurally identical:
 // BOM + join + Blob + anchor click + revoke).
 //
-// Exposes window.FE2CSV (IIFE).
+// Exposes window.SharedCSV (IIFE).
 
 (function () {
   'use strict';
@@ -38,7 +38,7 @@
           lines.push(r.map(escapeField).join(','));
         } else {
           // Skip non-array rows but warn — do not throw.
-          console.warn('[FE2CSV] row[' + i + '] is not an array, skipping');
+          console.warn('[SharedCSV] row[' + i + '] is not an array, skipping');
         }
       }
     }
@@ -55,12 +55,12 @@
   function exportCSV(cfg) {
     cfg = cfg || {};
     if (!cfg.filename || typeof cfg.filename !== 'string') {
-      console.warn('[FE2CSV] export: filename is required');
+      console.warn('[SharedCSV] export: filename is required');
       return;
     }
     if (typeof document === 'undefined' || typeof Blob === 'undefined' ||
         typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
-      console.warn('[FE2CSV] export: browser APIs not available');
+      console.warn('[SharedCSV] export: browser APIs not available');
       return;
     }
 
@@ -86,7 +86,7 @@
     }, 0);
   }
 
-  window.FE2CSV = {
+  window.SharedCSV = {
     // Primary API surface required by the spec.
     export: exportCSV,
     // Alias for call sites that can't use the `export` keyword directly

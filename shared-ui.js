@@ -1,10 +1,10 @@
-// fe2-ui.js — Shared loading spinner + error banner utilities
+// shared-ui.js — Shared loading spinner + error banner utilities
 // Extracted VERBATIM (structurally) from supplier-commission.js / discount-sales.js /
 // order-external-summary.js / request-discount.js so that all 4 fe-2 pages can share
 // one implementation in Phase B.
 //
-// Exposes window.FE2UI (IIFE — no build tools, no ES modules).
-// Assumes styles from fe2-ui.css are loaded on the page.
+// Exposes window.SharedUI (IIFE — no build tools, no ES modules).
+// Assumes styles from shared-ui.css are loaded on the page.
 
 (function () {
   'use strict';
@@ -25,10 +25,10 @@
     return containerEl && typeof containerEl === 'object' && typeof containerEl.appendChild === 'function';
   }
 
-  // Always clear any existing FE2UI-owned child (loading or error) before injecting a new one.
+  // Always clear any existing SharedUI-owned child (loading or error) before injecting a new one.
   function clearOwn(containerEl) {
     if (!isEl(containerEl)) return;
-    var nodes = containerEl.querySelectorAll('.fe2-loading, .fe2-error-banner');
+    var nodes = containerEl.querySelectorAll('.shared-loading, .shared-error-banner');
     for (var i = 0; i < nodes.length; i++) {
       if (nodes[i].parentNode === containerEl) {
         containerEl.removeChild(nodes[i]);
@@ -42,7 +42,7 @@
 
   function showLoading(containerEl, message) {
     if (!isEl(containerEl)) {
-      console.warn('[FE2UI] showLoading: invalid containerEl');
+      console.warn('[SharedUI] showLoading: invalid containerEl');
       return;
     }
     var msg = (message == null || message === '') ? 'กำลังโหลดข้อมูล...' : String(message);
@@ -50,22 +50,22 @@
     clearOwn(containerEl);
 
     var wrap = document.createElement('div');
-    wrap.className = 'fe2-loading';
+    wrap.className = 'shared-loading';
     wrap.setAttribute('role', 'status');
     wrap.setAttribute('aria-live', 'polite');
     wrap.innerHTML =
-      '<div class="fe2-spinner" aria-hidden="true"></div>' +
-      '<span class="fe2-loading-text">' + escapeHtml(msg) + '</span>';
+      '<div class="shared-spinner" aria-hidden="true"></div>' +
+      '<span class="shared-loading-text">' + escapeHtml(msg) + '</span>';
 
     containerEl.appendChild(wrap);
   }
 
   function hideLoading(containerEl) {
     if (!isEl(containerEl)) {
-      console.warn('[FE2UI] hideLoading: invalid containerEl');
+      console.warn('[SharedUI] hideLoading: invalid containerEl');
       return;
     }
-    var nodes = containerEl.querySelectorAll('.fe2-loading');
+    var nodes = containerEl.querySelectorAll('.shared-loading');
     for (var i = 0; i < nodes.length; i++) {
       if (nodes[i].parentNode === containerEl) {
         containerEl.removeChild(nodes[i]);
@@ -79,7 +79,7 @@
 
   function showError(containerEl, message, opts) {
     if (!isEl(containerEl)) {
-      console.warn('[FE2UI] showError: invalid containerEl');
+      console.warn('[SharedUI] showError: invalid containerEl');
       return;
     }
     var msg = (message == null || message === '')
@@ -91,26 +91,26 @@
     var retryFn = opts && typeof opts.retryFn === 'function' ? opts.retryFn : null;
 
     var banner = document.createElement('div');
-    banner.className = 'fe2-error-banner';
+    banner.className = 'shared-error-banner';
     banner.setAttribute('role', 'alert');
 
     var iconSvg =
-      '<svg class="fe2-error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">' +
+      '<svg class="shared-error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">' +
         '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>' +
       '</svg>';
 
-    var html = iconSvg + '<span class="fe2-error-message">' + escapeHtml(msg) + '</span>';
+    var html = iconSvg + '<span class="shared-error-message">' + escapeHtml(msg) + '</span>';
     if (retryFn) {
-      html += '<button type="button" class="fe2-error-retry">ลองใหม่</button>';
+      html += '<button type="button" class="shared-error-retry">ลองใหม่</button>';
     }
     banner.innerHTML = html;
 
     if (retryFn) {
-      var btn = banner.querySelector('.fe2-error-retry');
+      var btn = banner.querySelector('.shared-error-retry');
       if (btn) {
         btn.addEventListener('click', function () {
           try { retryFn(); }
-          catch (e) { console.warn('[FE2UI] retryFn threw:', e); }
+          catch (e) { console.warn('[SharedUI] retryFn threw:', e); }
         });
       }
     }
@@ -120,10 +120,10 @@
 
   function hideError(containerEl) {
     if (!isEl(containerEl)) {
-      console.warn('[FE2UI] hideError: invalid containerEl');
+      console.warn('[SharedUI] hideError: invalid containerEl');
       return;
     }
-    var nodes = containerEl.querySelectorAll('.fe2-error-banner');
+    var nodes = containerEl.querySelectorAll('.shared-error-banner');
     for (var i = 0; i < nodes.length; i++) {
       if (nodes[i].parentNode === containerEl) {
         containerEl.removeChild(nodes[i]);
@@ -135,7 +135,7 @@
   // Expose
   // ---------------------------------------------------------------------------
 
-  window.FE2UI = {
+  window.SharedUI = {
     showLoading: showLoading,
     hideLoading: hideLoading,
     showError  : showError,

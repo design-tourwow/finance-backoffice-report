@@ -1,6 +1,6 @@
 // request-discount-api.js — API service for Request Discount report
 // Exposes window.RequestDiscountAPI (IIFE)
-// Depends on: window.FE2Http (fe2-http.js)
+// Depends on: window.SharedHttp (shared-http.js)
 
 (function () {
   'use strict';
@@ -33,7 +33,7 @@
       user_id: params.user_id
     };
 
-    var response = await window.FE2Http.get('/api/reports/order-has-discount', { params: query });
+    var response = await window.SharedHttp.get('/api/reports/order-has-discount', { params: query });
 
     if (Array.isArray(response)) return response;
     if (response && typeof response === 'object' && Array.isArray(response.data)) return response.data;
