@@ -1,0 +1,192 @@
+/* ========================================
+   Dashboard Table
+   Shared pattern used by commission-report-plus, sales-by-country, and
+   wholesale-destinations to render a data table inside a card with a
+   header row (title + search + export/PDF buttons) + loading / empty
+   states.
+
+   Consumes design tokens from filter-panel.css.
+   ======================================== */
+
+.dashboard-table-container {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* Table header row — title on the left, actions (search + export) on the
+   right. Must be a flex row so the elements sit side-by-side; without this,
+   they collapse to a vertical stack. */
+.dashboard-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dashboard-table-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-table-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-primary);
+}
+
+.dashboard-table-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Light-mode data table */
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+}
+
+.dashboard-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+  white-space: nowrap;
+}
+
+.dashboard-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.dashboard-table tbody tr:hover {
+  background: var(--color-bg-subtle);
+}
+
+.dashboard-table tbody td {
+  padding: 14px 16px;
+  color: #1f2937;
+  border-bottom: 1px solid var(--color-bg-hover);
+  vertical-align: middle;
+}
+
+.dashboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Search input — sits inside the header row */
+.dashboard-search-wrapper {
+  position: relative;
+  max-width: 280px;
+}
+
+.dashboard-search-input {
+  width: 100%;
+  padding: 10px 40px 10px 40px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: var(--font-family);
+  color: #1f2937;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.dashboard-search-input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.dashboard-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
+}
+
+.dashboard-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+/* Export / PDF button */
+.dashboard-export-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: white;
+  color: var(--color-text);
+  font-size: 16px;
+  font-family: var(--font-family);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dashboard-export-btn:hover {
+  background: var(--color-bg-subtle);
+  border-color: #9ca3af;
+}
+
+.dashboard-export-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Loading state */
+.dashboard-table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--color-text-muted);
+}
+
+.dashboard-table-loading .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: dashboard-table-spin 0.8s linear infinite;
+  margin-right: 12px;
+}
+
+@keyframes dashboard-table-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty state inside table */
+.dashboard-table-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+.dashboard-table-empty svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  stroke: var(--color-border-strong);
+}
