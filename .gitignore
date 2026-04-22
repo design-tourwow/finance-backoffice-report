@@ -54,3 +54,9 @@ playwright-report/
 playwright/.cache/
 blob-report/
 .env
+
+# Local Claude Code state (agent sessions, worktrees, skills cache)
+.claude/
+
+# BMAD local module cache (scratch — planning artefacts go under _bmad-output/)
+_bmad/
