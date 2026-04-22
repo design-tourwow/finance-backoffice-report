@@ -1,15 +1,36 @@
 // dashboard.js
 // Dashboard landing page — vanilla JS
-// Renders a welcome hero and a grid of cards linking to the four
-// ported report pages (Report P'NUT / Report P'OH).
+// Renders a welcome hero and a grid of entry-point cards for every
+// report page in the sidebar (Work List is intentionally excluded).
 
 (function () {
   'use strict';
 
-  // ------------------------------------------------------------------ //
-  // Card configuration                                                  //
-  // ------------------------------------------------------------------ //
   var CARD_GROUPS = [
+    {
+      id: 'report',
+      title: 'Report',
+      cards: [
+        {
+          href: '/sales-by-country',
+          title: 'Sales by Country',
+          description: 'สรุปยอดขายแยกตามประเทศปลายทาง',
+          icon: iconGlobe()
+        },
+        {
+          href: '/wholesale-destinations',
+          title: 'Wholesale Destinations',
+          description: 'รายงานยอด Wholesale แยกตามปลายทาง',
+          icon: iconMap()
+        },
+        {
+          href: '/commission-report-plus',
+          title: 'Commission Report Plus',
+          description: 'รายงานคอมมิชชั่นระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
+          icon: iconReceipt()
+        }
+      ]
+    },
     {
       id: 'pnut',
       title: "Report P'NUT",
@@ -48,18 +69,12 @@
     }
   ];
 
-  // ------------------------------------------------------------------ //
-  // Bootstrap                                                           //
-  // ------------------------------------------------------------------ //
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', render);
   } else {
     render();
   }
 
-  // ------------------------------------------------------------------ //
-  // Render                                                              //
-  // ------------------------------------------------------------------ //
   function render() {
     var pc = document.getElementById('page-content');
     if (!pc) return;
@@ -106,13 +121,39 @@
       '      <span class="dashboard-card-title">' + escapeHtml(card.title) + '</span>',
       '      <span class="dashboard-card-description">' + escapeHtml(card.description) + '</span>',
       '    </span>',
+      '    <span class="dashboard-card-arrow" aria-hidden="true">',
+      '      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+      '    </span>',
       '  </a>'
     ].join('\n');
   }
 
-  // ------------------------------------------------------------------ //
-  // Inline SVG icons                                                    //
-  // ------------------------------------------------------------------ //
+  // ---------- inline SVG icons (24×24, stroke=currentColor) ---------- //
+  function iconGlobe() {
+    return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<circle cx="12" cy="12" r="10"/>'
+      + '<line x1="2" y1="12" x2="22" y2="12"/>'
+      + '<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'
+      + '</svg>';
+  }
+
+  function iconMap() {
+    return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>'
+      + '<line x1="8" y1="2" x2="8" y2="18"/>'
+      + '<line x1="16" y1="6" x2="16" y2="22"/>'
+      + '</svg>';
+  }
+
+  function iconReceipt() {
+    return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 2V2z"/>'
+      + '<line x1="8" y1="8" x2="16" y2="8"/>'
+      + '<line x1="8" y1="12" x2="16" y2="12"/>'
+      + '<line x1="8" y1="16" x2="13" y2="16"/>'
+      + '</svg>';
+  }
+
   function iconChart() {
     return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
       + '<line x1="18" y1="20" x2="18" y2="10"/>'
@@ -144,9 +185,6 @@
       + '</svg>';
   }
 
-  // ------------------------------------------------------------------ //
-  // Helpers                                                             //
-  // ------------------------------------------------------------------ //
   function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')

@@ -116,6 +116,23 @@
   line-height: 1.5;
 }
 
+.dashboard-card-arrow {
+  flex-shrink: 0;
+  color: #9ca3af;
+  align-self: center;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.dashboard-card:hover .dashboard-card-arrow,
+.dashboard-card:focus-visible .dashboard-card-arrow {
+  color: #4f46e5;
+  transform: translateX(3px);
+}
+
+.dashboard-card-body {
+  flex: 1 1 auto;
+}
+
 /* ------------------------------------------------------------------ */
 /* Responsive                                                          */
 /* ------------------------------------------------------------------ */
