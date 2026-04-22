@@ -9,18 +9,40 @@ html {
   font-family: var(--font-family-base);
 }
 
-body,
+body {
+  font-family: inherit;
+}
+
+/* Enforce Kanit across the full rendered DOM so headings, labels, table cells,
+   pseudo-elements, and browser-default descendants do not fall back to a
+   system sans font in isolated spots. */
+body *,
+body *::before,
+body *::after {
+  font-family: inherit;
+}
+
 button,
 input,
 select,
 textarea,
-option {
-  font-family: var(--font-family-base);
+option,
+optgroup {
+  font: inherit;
+  font-family: inherit;
+}
+
+::placeholder {
+  font-family: inherit;
 }
 
 code,
 pre,
 kbd,
-samp {
+samp,
+code *,
+pre *,
+kbd *,
+samp * {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 }
