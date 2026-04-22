@@ -46,3 +46,11 @@ simple-test.html
 console_log.txt
 .vercel
 .env*.local
+
+# Node / Playwright (test dev-deps only — NFR10 exception)
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+blob-report/
+.env

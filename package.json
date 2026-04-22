@@ -1,0 +1,29 @@
+{
+  "name": "finance-backoffice-report",
+  "version": "1.0.0",
+  "description": "Finance Backoffice Report — vanilla JS static web app. package.json is scoped to DEV-ONLY test tooling; no runtime bundle or production dependencies (NFR10 compliant).",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:unit": "playwright test --project=unit",
+    "test:component": "playwright test --project=component",
+    "test:api": "playwright test --project=api",
+    "test:e2e": "playwright test --project=e2e-chromium",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:p0": "playwright test --grep @p0",
+    "test:p1": "playwright test --grep @p1",
+    "test:install-browsers": "playwright install --with-deps",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
