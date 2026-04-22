@@ -25,7 +25,7 @@
   padding: 0;
   margin: 0;
   min-height: 400px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 /* View Mode Tabs */
@@ -52,7 +52,7 @@
   color: var(--color-text-muted);
   font-size: 15px;
   font-weight: 500;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   cursor: pointer;
   transition: all 0.2s ease;
   flex: 1;
@@ -112,7 +112,7 @@
   margin-top: 12px;
   font-size: 16px;
   color: var(--color-text-muted);
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 @keyframes spin {
@@ -142,7 +142,7 @@
   margin-top: 16px;
   font-size: 17px;
   color: var(--color-text-muted);
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 /* Time Granularity Control - Sticky */
@@ -159,7 +159,7 @@
   top: 0;
   z-index: 50;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .time-granularity-label {
@@ -181,7 +181,7 @@
   color: #1f2937;
   font-size: 16px;
   font-weight: 500;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -587,7 +587,7 @@
   border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   width: 280px;
   color: #1f2937;
   background: white;
@@ -611,7 +611,7 @@
   background: white;
   color: var(--color-text);
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1094,7 +1094,7 @@
 .dropdown-confirm-btn {
   padding: 8px 16px;
   border-radius: 6px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -1145,7 +1145,7 @@
   padding: 8px 12px;
   border: 1px solid var(--color-border-strong);
   border-radius: 6px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   font-size: 14px;
   outline: none;
   box-sizing: border-box;

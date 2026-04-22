@@ -92,7 +92,7 @@
   border: none;
   border-radius: 6px;
   font-size: 13px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s;
@@ -145,7 +145,7 @@
   color: #6b7280;
   cursor: pointer;
   transition: color 0.15s;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .sc-table-card .shared-sort-btn:hover { color: #374151; }

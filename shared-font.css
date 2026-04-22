@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-family-base: 'Kanit', sans-serif;
+  --font-family: var(--font-family-base);
+}
+
+html {
+  font-family: var(--font-family-base);
+}
+
+body,
+button,
+input,
+select,
+textarea,
+option {
+  font-family: var(--font-family-base);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}

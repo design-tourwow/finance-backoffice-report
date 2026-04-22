@@ -20,7 +20,7 @@
   --color-bg-hover       : #f3f4f6;
   --radius-card          : 8px;
   --shadow-card          : 0 1px 3px rgba(0, 0, 0, 0.04);
-  --font-family          : 'Kanit', sans-serif;
+  --font-family          : var(--font-family-base);
 }
 
 /* .time-granularity-control is the legacy name owned by sales-by-country.css.

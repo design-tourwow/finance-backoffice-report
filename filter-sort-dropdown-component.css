@@ -20,7 +20,7 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 14px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #374151;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -90,7 +90,7 @@
   border: none;
   background: white;
   font-size: 14px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #374151;
   cursor: pointer;
   transition: all 0.2s ease;

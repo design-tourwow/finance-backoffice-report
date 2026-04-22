@@ -1,9 +1,12 @@
 // shared-chart.js — Shared Chart.js bar-chart wrapper.
-// Destroy-and-redraw safe. Extracted from discount-sales.js / supplier-commission.js /
-// request-discount.js patterns where every page manually calls chart.destroy() before
-// recreating the same canvas.
+// Mirrors the visual pattern used by wholesale-destinations.js +
+// sales-by-country.js (the original system) so every bar chart across the
+// app shares one look: Kanit font, dark tooltip with blue border,
+// subtle grid lines, rounded bars, ChartDataLabels enabled.
 //
 // Assumes Chart.js (window.Chart) is loaded via CDN in the page HTML.
+// ChartDataLabels plugin is optional — if loaded (window.ChartDataLabels)
+// it's enabled automatically.
 // Exposes window.SharedChart (IIFE).
 
 (function () {
@@ -11,6 +14,10 @@
 
   function hasChart() {
     return typeof window.Chart !== 'undefined';
+  }
+
+  function hasDataLabels() {
+    return typeof window.ChartDataLabels !== 'undefined';
   }
 
   // Chart.js renders labels / legend / tooltip in a <canvas> — CSS font-family
@@ -28,8 +35,11 @@
     return Number(v).toLocaleString();
   }
 
+  function formatNumber(v) {
+    return Number(v).toLocaleString();
+  }
+
   // Deep merge small-config objects (one level is enough for Chart.js options).
-  // Destination wins when both sides have the same primitive; objects merge recursively.
   function mergeOptions(base, override) {
     if (!override) return base;
     if (!base) return override;
@@ -52,31 +62,89 @@
     return out;
   }
 
-  // Default bar-chart options mirroring the existing pages' look-and-feel.
-  function defaultBarOptions() {
-    return {
+  // Canonical bar-chart options — mirrors wholesale-destinations.js +
+  // sales-by-country.js pattern.
+  function defaultBarOptions(opts) {
+    opts = opts || {};
+    var horizontal = opts.indexAxis === 'y';
+
+    var base = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' }
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#fff',
+          bodyColor: 'rgba(255, 255, 255, 0.9)',
+          borderColor: 'rgba(74, 123, 167, 0.5)',
+          borderWidth: 1,
+          padding: 12,
+          titleFont: { family: 'Kanit', size: 16, weight: '600' },
+          bodyFont: { family: 'Kanit', size: 15 }
+        }
       },
       scales: {
         x: {
+          grid: horizontal ? { color: 'rgba(0, 0, 0, 0.05)' } : { display: false },
+          beginAtZero: horizontal ? true : undefined,
           ticks: {
-            maxRotation: 45,
-            minRotation: 30,
-            font: { family: 'Kanit, sans-serif', size: 11 }
+            color: '#6b7280',
+            font: { family: 'Kanit', size: 13 },
+            maxRotation: horizontal ? 0 : 45,
+            minRotation: horizontal ? 0 : 0,
+            callback: horizontal
+              ? function (val) { return '฿' + formatCurrency(val); }
+              : undefined
           }
         },
         y: {
-          beginAtZero: true,
+          grid: horizontal ? { display: false } : { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
+          beginAtZero: horizontal ? undefined : true,
           ticks: {
-            callback: function (val) { return '฿' + formatCurrency(val); },
-            font: { family: 'Kanit, sans-serif', size: 11 }
+            color: '#6b7280',
+            font: { family: 'Kanit', size: 13 },
+            callback: horizontal
+              ? undefined
+              : function (val) { return '฿' + formatCurrency(val); }
           }
         }
       }
     };
+
+    // Enable datalabels if the plugin is loaded.
+    if (hasDataLabels()) {
+      base.plugins.datalabels = {
+        anchor: 'end',
+        align: horizontal ? 'end' : 'top',
+        offset: horizontal ? 4 : 4,
+        color: '#374151',
+        font: { family: 'Kanit', size: 13, weight: '600' },
+        formatter: function (value) { return formatNumber(value); }
+      };
+    }
+
+    if (horizontal) base.indexAxis = 'y';
+    return base;
+  }
+
+  // Merge canonical dataset defaults into caller-provided datasets so each
+  // bar gets the branded look (blue primary, rounded corners, thin border)
+  // unless the caller explicitly overrides.
+  function enrichDatasets(datasets) {
+    if (!Array.isArray(datasets)) return datasets;
+    return datasets.map(function (ds) {
+      var merged = {
+        backgroundColor: '#4a7ba7',
+        borderColor: '#3b6490',
+        borderWidth: 1,
+        borderRadius: 4
+      };
+      for (var k in ds) {
+        if (Object.prototype.hasOwnProperty.call(ds, k)) merged[k] = ds[k];
+      }
+      return merged;
+    });
   }
 
   /**
@@ -84,9 +152,9 @@
    *
    * @param {Object} cfg
    * @param {HTMLCanvasElement} cfg.canvasEl - target canvas
-   * @param {string[]} cfg.labels - x-axis labels
+   * @param {string[]} cfg.labels - axis labels
    * @param {Array<Object>} cfg.datasets - Chart.js datasets array
-   * @param {Object} [cfg.options] - Chart.js options to merge over defaults
+   * @param {Object} [cfg.options] - Chart.js options to merge over canonical defaults
    * @param {Object} [cfg.previous] - optional previous chart instance to destroy first
    * @returns {Object|null} Chart instance or null on failure
    */
@@ -105,22 +173,25 @@
       return null;
     }
 
-    // Destroy prior instance if caller passed one, to make re-draw safe.
-    if (cfg.previous) {
-      destroy(cfg.previous);
+    if (cfg.previous) destroy(cfg.previous);
+
+    var callerOptions = cfg.options || {};
+    var options = mergeOptions(defaultBarOptions(callerOptions), callerOptions);
+    var datasets = enrichDatasets(cfg.datasets);
+
+    var chartCfg = {
+      type: 'bar',
+      data: { labels: cfg.labels, datasets: datasets },
+      options: options
+    };
+
+    // Register datalabels plugin per-chart if the library is present.
+    if (hasDataLabels()) {
+      chartCfg.plugins = [window.ChartDataLabels];
     }
 
-    var options = mergeOptions(defaultBarOptions(), cfg.options || {});
-
     try {
-      return new window.Chart(cfg.canvasEl, {
-        type: 'bar',
-        data: {
-          labels: cfg.labels,
-          datasets: cfg.datasets
-        },
-        options: options
-      });
+      return new window.Chart(cfg.canvasEl, chartCfg);
     } catch (err) {
       console.warn('[SharedChart] Chart construction failed:', err);
       return null;

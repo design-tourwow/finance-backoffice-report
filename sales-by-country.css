@@ -26,7 +26,7 @@
   color: #6b7280;
   font-size: 15px;
   font-weight: 500;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   cursor: pointer;
   transition: all 0.2s ease;
   flex: 1;
@@ -191,7 +191,7 @@
   color: #6b7280;
   font-size: 16px;
   font-weight: 500;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -342,7 +342,7 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #1f2937;
   background: white;
   transition: all 0.2s ease;
@@ -415,7 +415,7 @@
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #374151;
   background: white;
   cursor: pointer;
@@ -465,7 +465,7 @@
 .table-filter-option {
   padding: 10px 16px;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #374151;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -586,7 +586,7 @@ mark.search-highlight {
   margin-top: 12px;
   font-size: 16px;
   color: #6b7280;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 /* Initial Page Loading */
@@ -597,7 +597,7 @@ mark.search-highlight {
   justify-content: center;
   min-height: 400px;
   color: #6b7280;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .page-loading .spinner {
@@ -665,7 +665,7 @@ mark.search-highlight {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #1f2937;
   background: white;
   cursor: pointer;
@@ -688,7 +688,7 @@ mark.search-highlight {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #1f2937;
   background: white;
   transition: all 0.2s ease;
@@ -849,7 +849,7 @@ mark.search-highlight {
   padding: 0;
   margin: 0;
   min-height: 400px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 /* Time Granularity Control - Sticky */
@@ -866,7 +866,7 @@ mark.search-highlight {
   top: 0;
   z-index: 50;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .time-granularity-label {
@@ -888,7 +888,7 @@ mark.search-highlight {
   color: #1f2937;
   font-size: 16px;
   font-weight: 500;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1088,7 +1088,7 @@ mark.search-highlight {
 .dropdown-confirm-btn {
   padding: 8px 16px;
   border-radius: 6px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -1139,7 +1139,7 @@ mark.search-highlight {
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   font-size: 14px;
   outline: none;
   box-sizing: border-box;
@@ -1307,7 +1307,7 @@ mark.search-highlight {
   color: #6b7280;
   margin-bottom: 2px;
   font-weight: 500;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .kpi-value {
@@ -1318,14 +1318,14 @@ mark.search-highlight {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .kpi-subtext {
   font-size: 15px;
   color: #9ca3af;
   margin-top: 2px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .kpi-subtext.positive {
@@ -1688,7 +1688,7 @@ mark.search-highlight {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   color: #1f2937;
   background: white;
   transition: all 0.2s ease;
@@ -1721,7 +1721,7 @@ mark.search-highlight {
   background: white;
   color: #374151;
   font-size: 16px;
-  font-family: 'Kanit', sans-serif;
+  font-family: var(--font-family-base);
   cursor: pointer;
   display: flex;
   align-items: center;
