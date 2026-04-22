@@ -119,10 +119,12 @@ export const factory = {
     supplier_id: i,
     supplier_name_th: `ซัพพลายเออร์ ${i}`,
     supplier_name_en: `Supplier ${i}`,
-    total_commission: 10000 + i * 1000,
-    total_net_commission: 8000 + i * 800,
-    total_pax: 50 + i,
-    avg_commission_per_pax: 200 + i,
-    avg_net_commission_per_pax: 160 + i,
+    metrics: {
+      total_commission: 10000 + i * 1000,
+      total_net_commission: 8000 + i * 800,
+      total_pax: 50 + i,
+      avg_commission_per_pax: 200 + i,
+      avg_net_commission_per_pax: 160 + i,
+    },
   }),
 };

@@ -12,6 +12,8 @@ const EXISTING_PAGES = [
   '/wholesale-destinations',
   '/commission-report-plus',
   '/work-list',
+  // /order-report — has endpoints not covered by mock-backend; skip from regression
+  // until the mock can stub its specific API (out of scope for UI unification).
 ];
 
 test.describe('@p0 E12 Existing pages regression', () => {

@@ -58,6 +58,9 @@ const server = http.createServer((req, res) => {
     else if (urlWithoutQuery === '/request-discount') {
         filePath = './request-discount.html';
     }
+    else if (urlWithoutQuery === '/order-report') {
+        filePath = './order-report.html';
+    }
     
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
