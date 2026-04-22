@@ -26,7 +26,7 @@ _This file captures the non-obvious rules and implementation patterns that AI ag
 
 - Flat repository layout with page files, JS files, CSS files, and docs side by side at the root
 - Route-specific HTML entry points such as `index.html`, `auth.html`, `tour-image-manager.html`, `order-report.html`, `sales-by-country.html`, `wholesale-destinations.html`, `commission-report-plus.html`, and `work-list.html`
-- Shared modules are plain scripts, not imports, and are typically named by concern, such as `menu-component.js`, `date-picker-component.js`, `filter-sort-dropdown-component.js`, and `period-filter-component.js`
+- Shared modules are plain scripts, not imports, and are typically named by concern. Shell/component modules use the `*-component.js` suffix (`menu-component.js`, `date-picker-component.js`, `filter-sort-dropdown-component.js`, `period-filter-component.js`). Cross-page libraries use the `shared-*.js` prefix (`shared-auth-guard.js`, `shared-utils.js`, `shared-http.js`, `shared-filter-service.js`, `shared-ui.js`, `shared-chart.js`, `shared-table.js`, `shared-csv.js`, `shared-filter-panel.js` — renamed from `fe2-*.js` in Phase 2, 2026-04-22, commit `dd5db13`).
 - Bootstrapping code is commonly wrapped in IIFEs to keep the global scope clean
 - Application state is often kept in `localStorage` or `sessionStorage`
 - The UI mixes English docs with Thai-facing product copy
@@ -50,9 +50,10 @@ _This file captures the non-obvious rules and implementation patterns that AI ag
 
 ### Testing Rules
 
-- There is no formal unit-test framework in the repo snapshot, so verify changes through browser behavior and the existing local server flow
-- Check route behavior locally when modifying navigation, rewrites, or page entry points
-- If auth, storage, or menu rendering changes, validate the affected page end to end in the browser
+- Playwright test suite is present (added commit `97c3f9a`) with 4 projects: `unit`, `component`, `api`, `e2e-chromium` (+ `e2e-webkit` / `e2e-firefox` when browsers are installed). Run `npm run test:p0` for the P0 gate, `npm run test:unit` / `:component` / `:api` for the faster tiers.
+- All E2E tests mock the backend via `tests/fixtures/mock-backend.ts` — never let a test hit a real backend. If you add a new backend endpoint, route it there.
+- After any backend URL or shared-library rename, update the mock fixture and `tests/README.md` alongside the code change.
+- If auth, storage, or menu rendering changes, validate the affected page end to end in the browser AND add/update the corresponding Playwright spec.
 
 ### Code Quality & Style Rules
 
@@ -76,7 +77,7 @@ _This file captures the non-obvious rules and implementation patterns that AI ag
 - Preserve the auth bootstrap in [`index.html`](/Users/gap/finance-backoffice-report/index.html), including token capture, storage, URL cleanup, and redirect behavior for the `Gap` user
 - Do not break sidebar collapse state or mobile menu handling, which rely on `localStorage` and shared classes
 - Avoid changing shared menu rendering assumptions unless the task explicitly targets navigation
-- Do not assume npm-based tooling exists; there is no package manifest in this repo
+- `package.json` exists only to pin `@playwright/test` for the test suite; the production code still runs in the browser with no build step. Do not introduce runtime npm dependencies.
 - Keep custom UI behavior compatible with direct file loading from the browser or the local static server
 
 ## Notes For AI Agents

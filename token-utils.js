@@ -174,6 +174,13 @@ const TokenUtils = {
   }
 };
 
+// Classic <script> `const` declarations do not attach to `window`, so
+// expose TokenUtils explicitly — shared-http.js's 401 redirect guard
+// depends on `window.TokenUtils` being reachable.
+if (typeof window !== 'undefined') {
+  window.TokenUtils = TokenUtils;
+}
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = TokenUtils;

@@ -73,10 +73,11 @@ Initiative นี้รวมทุกหน้าเข้า `finance-backoffi
 - JWT Token auth ทำงานได้ทุกหน้าใหม่
 - Deploy และ verify บน Vercel production
 
-### Growth (Phase 2)
+### Growth (Phase 2) — ✅ Completed 2026-04-22
 
-- Retire fe-2-project เมื่อ Gap พร้อม
-- Refactor shared utilities ให้ใช้ร่วมกันระหว่างหน้าใหม่และหน้าเดิม
+- ✅ Retire fe-2-project (commit `1ce6825` — frontend swapped off `be-2-report.vercel.app` onto our own `finance-backoffice-report-api`)
+- ✅ Refactor shared utilities (commit `dd5db13` — `fe2-*.js` renamed to `shared-*.js`; new `shared-http.js` centralises Bearer/401 handling; `shared-ui.js` + `shared-chart.js` + `shared-table.js` + `shared-csv.js` + `shared-filter-panel.js` extracted for reuse across new and existing pages)
+- ✅ Playwright test suite added (commit `97c3f9a`) — 21 Chromium P0 scenarios green
 
 ### Vision (Phase 3)
 

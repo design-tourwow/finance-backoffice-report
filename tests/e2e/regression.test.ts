@@ -2,8 +2,8 @@ import { test, expect, seedToken } from '../support/test-base';
 
 /**
  * E12 — Zero regression on 5 existing pages (NFR6).
- * After menu-component.js change (added Dashboard) + refactors to 4 fe-2 pages,
- * the 5 legacy pages must still render identically.
+ * After menu-component.js change (added Dashboard) + refactors to the 4 report
+ * pages, the 5 legacy pages must still render identically.
  */
 
 const EXISTING_PAGES = [

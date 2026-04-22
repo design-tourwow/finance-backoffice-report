@@ -1,6 +1,5 @@
 // shared-csv.js — Shared CSV export utility with UTF-8 BOM for Thai in Excel.
-// Extracted from the 4 fe-2 pages' exportCSV() helpers (all structurally identical:
-// BOM + join + Blob + anchor click + revoke).
+// Standard flow: BOM + join + Blob + anchor click + revoke.
 //
 // Exposes window.SharedCSV (IIFE).
 

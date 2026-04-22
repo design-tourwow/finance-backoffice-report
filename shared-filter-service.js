@@ -1,4 +1,4 @@
-// shared-filter-service.js — Filter API service ported from fe-2-project-main
+// shared-filter-service.js — Filter-dropdown API service (countries, teams, job positions, users)
 // Exposes window.SharedFilterService (IIFE)
 // Depends on: window.SharedHttp (shared-http.js)
 
@@ -76,15 +76,14 @@
   }
 
   /**
-   * GET /api/users — returns all users, filtered client-side.
-   * Mirrors fe-2 getUsersFiltered logic.
+   * GET /api/agency-members — returns all users, filtered client-side.
    * @param {number} [teamId]
    * @param {string} [jobPositionId]
    * @returns {Promise<Array>}
    */
   async function getUsers(teamId, jobPositionId) {
-    // Note: our own backend exposes this at /api/agency-members (/api/users
-    // is already reserved for chat users). Semantics match fe-2's /api/users.
+    // Backend reserves /api/users for chat users, so the dropdown reads
+    // from /api/agency-members instead.
     var users = await safeGet('/api/agency-members', 'agency-members');
 
     if (teamId !== undefined && teamId !== null) {

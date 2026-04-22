@@ -3,6 +3,8 @@ stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 lastStep: 8
 status: 'complete'
 completedAt: '2026-04-21'
+phase2CompletedAt: '2026-04-22'
+phase2Commit: '1ce6825'
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/epics.md
@@ -67,12 +69,15 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 **External dependencies:**
 
-- `https://be-2-report.vercel.app` — fe-2 backend (hardcoded URL, not env-configured).
+- `https://finance-backoffice-report-api.vercel.app` (prod) / `https://staging-finance-backoffice-report-api.vercel.app` (staging) — our own backend, owned in `/Users/gap/finance-backoffice-report-api`. Resolved via hostname detection in each HTML shell.
+- `https://fin-api.tourwow.com` / `https://fin-api-staging2.tourwow.com` — legacy tour-image-manager backend (unchanged).
 - `https://fonts.googleapis.com/css2?family=Kanit` — Google Fonts CDN.
-- `https://cdn.jsdelivr.net/npm/chart.js` — Chart.js CDN (new pages only).
+- `https://cdn.jsdelivr.net/npm/chart.js` — Chart.js CDN (report pages).
 - Login redirect targets:
   - `financebackoffice.tourwow.com/login` (prod).
   - `financebackoffice-staging2.tourwow.com/login` (staging).
+
+_Historical note:_ `https://be-2-report.vercel.app` was the fe-2 backend used up to Phase 1. **Retired 2026-04-22 (commit `1ce6825`)** — all 5 report pages now hit `finance-backoffice-report-api`.
 
 **Project-specific constraints (from `project-context.md`):**
 
@@ -91,7 +96,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 | **Number / date formatting** | all 4 new pages | `shared-utils.js` (`formatCurrency`, `formatDateTH`, `getYear/Month/QuarterOptions`) |
 | **Menu rendering + active state** | all pages (old + new) | `menu-component.js` (`MENU_ITEMS`, `renderSidebarMenu`, `renderHeaderMenu`) |
 | **Error handling pattern** | all 4 new pages | Inline error banner + never-throw filter service |
-| **API base URL resolution** | all 4 new pages | `window.FE2_API_BASE_URL` set in each HTML shell |
+| **API base URL resolution** | all 5 report pages | `window.REPORT_API_BASE_URL = window.API_BASE_URL` (hostname-detected) in each HTML shell |
 | **Deployment gate** | whole repo | `ignore-build.sh` requires `[deploy]` tag OR manual `vercel --prod` |
 
 ### Key Architectural Tensions
@@ -99,7 +104,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 1. **"Ship the smallest thing" vs. "Zero regression"** — additive-only changes to `menu-component.js` and shared files to avoid touching existing pages.
 2. **"Feature parity with fe-2" vs. "No React"** — Chart.js replaces Recharts; plain DOM + closure state replaces React hooks; checkbox in-memory filter replaces `useEffect` pattern.
 3. **"No build tool" vs. "Code reuse"** — shared utilities via `window.*` globals and strict `<script>` load order instead of ES module imports.
-4. **"Hardcoded API base" vs. "Environment-aware config"** — `FE2_API_BASE_URL` hardcoded to production `be-2-report.vercel.app` (acceptable per PRD but flagged: no staging equivalent for fe-2 backend).
+4. **"Hostname-detected API base" vs. "Build-time env config"** — resolved in Phase 2: `window.API_BASE_URL` is derived from `window.location.hostname` in an inline IIFE, so staging and prod each point at their own `finance-backoffice-report-api` deployment without a build step.
 
 ## Starter Template Evaluation
 
@@ -164,24 +169,30 @@ touch {page-name}.html {page-name}.js {page-name}.css
 **Critical Decisions (already implemented & shipped):**
 
 - MPA over SPA; Vanilla JS over framework; JWT Bearer auth.
-- Two parallel backends in use (`be-2-report` for 4 new pages + `finance-backoffice-report-api` for existing pages).
+- **Single backend** (`finance-backoffice-report-api`) for all report pages (post-Phase 2, 2026-04-22). The legacy `tour-image-manager` page still points at `fin-api.tourwow.com` and is unrelated to this initiative.
 - Chart.js via CDN as the Recharts replacement.
-- `SharedFilterService` + `SharedUtils` as shared service layer exposed via `window.*` globals.
+- `SharedFilterService` + `SharedUtils` + `SharedHttp` as the shared service layer exposed via `window.*` globals.
 
 **Important Decisions (shape architecture):**
 
 - Per-page IIFE closure as the state container (no global store).
 - In-memory cache only on Request Discount (`allOrdersData`); other pages refetch on filter change.
-- Hardcoded API base URLs (no `.env` without a build step).
+- Hostname-detected API base URLs (no `.env` needed; inline IIFE branches on `window.location.hostname`).
 - Manual `vercel --prod --yes` as the primary deploy mechanism, not git-push auto-deploy (unreliable on this repo).
 
-**Deferred Decisions (post-MVP — to be revisited in Phase 2 per PRD Growth phase):**
+**Completed in Phase 2 (2026-04-22, commits `1ce6825` + `dd5db13`):**
+
+- **fe-2-project retirement** — all 5 report pages swapped off `be-2-report.vercel.app` onto `finance-backoffice-report-api`. External fe-2 dependency fully removed from runtime code.
+- **Staging backend parity** — staging deployment (`staging-finance-backoffice-report-api.vercel.app`) now exists alongside prod, removing the data-pollution risk that previously existed with the single be-2 host.
+- **`shared-*` rename** — `fe2-*.js` libs renamed to `shared-*.js`; `window.FE2_*` globals retired in favor of `SharedUtils`, `SharedFilterService`, `SharedHttp`, etc.
+- **`shared-http.js` extracted** — centralises Bearer-header injection, 401-redirect handling, and fixes the 401 hang bug reported in commit `dd5db13`.
+- **Formal test framework** — Playwright suite shipped in commit `97c3f9a` (21 Chromium P0 scenarios green; unit + component + api projects passing; CI wired via `.github/workflows/test.yml`).
+
+**Deferred Decisions (post-Phase 2):**
 
 - **CSP headers** in `vercel.json` to harden against token exfiltration via XSS.
-- **Staging fe-2 backend** — today both staging and production frontends hit the prod `be-2-report.vercel.app`, creating risk of staging writes polluting prod data.
 - **Error tracking / monitoring** — no Sentry / LogRocket / uptime monitor; failures in production are discovered via user complaints.
-- **Formal test framework** — no unit or E2E suite; verification is fully manual.
-- **fe-2-project retirement** once all pages reach feature parity (PRD Growth Phase 2).
+- **Cross-browser CI coverage** — WebKit + Firefox browsers not yet installed on the CI runner; only Chromium is gated today.
 
 ### Data Architecture
 
@@ -212,12 +223,12 @@ touch {page-name}.html {page-name}.js {page-name}.css
 |---|---|---|
 | Protocol | **REST over HTTPS** | Match existing fe-2 backend |
 | Serialization | JSON | Default |
-| API base URL resolution | Hardcoded per HTML shell: `window.FE2_API_BASE_URL = 'https://be-2-report.vercel.app'` and hostname-detected `window.API_BASE_URL` for this project's own API | Vanilla JS has no `.env` without build; hostname-based detection preserves flexibility for the project's own staging |
+| API base URL resolution | Hostname-detected in each HTML shell: `window.API_BASE_URL` → `staging-finance-backoffice-report-api.vercel.app` / `finance-backoffice-report-api.vercel.app` based on `window.location.hostname`. `window.REPORT_API_BASE_URL = window.API_BASE_URL` aliases it for report page APIs. | Vanilla JS has no `.env` without build; hostname detection covers staging and prod without a build step |
 | Parameter passing | Query string via `URLSearchParams` | Simple, cacheable, debuggable |
 | Error handling — filter service | **Never throws** — `getCountries / getTeams / getJobPositions / getUsers` return `[]` on any failure | Story 1.3 AC5: prevents dropdown-load errors from crashing the page |
 | Error handling — page APIs | **Throws Error** → page catches → renders inline error banner | NFR5: no blank page, clear message |
 | 401 handling | API modules intercept 401 → `TokenUtils.redirectToLogin()` | Uniform session-expiry UX |
-| Backend topology | Two backends in parallel: `be-2-report` (4 new pages) + `finance-backoffice-report-api` (old pages) | PRD decision — not a backend consolidation initiative |
+| Backend topology | **Single backend** (`finance-backoffice-report-api`) for all 5 report pages + 4 of the 5 legacy pages (sales-by-country, wholesale-destinations, commission-report-plus, work-list). `tour-image-manager` alone still points at the unrelated `fin-api.tourwow.com` backend. | Phase 2 consolidation completed 2026-04-22 (commit `1ce6825`); the fe-2 parallel backend `be-2-report.vercel.app` is retired. |
 
 ### Frontend Architecture
 
@@ -242,7 +253,7 @@ touch {page-name}.html {page-name}.js {page-name}.css
 | Deployment gate | `ignore-build.sh` — skips auto-deploy on `main` unless commit includes `[deploy]` tag | Existing convention; prevents accidental ship |
 | Deployment workflow | **Primary:** `npx vercel --prod --yes` manual from repo root. **Backup:** commit with `[deploy]` in message. | Git-push auto-deploy observed unreliable (4 consecutive "Canceled" states on 2026-04-21) |
 | Environment config | Hostname-based detection in inline `<script>` at top of HTML | No build-time env injection possible |
-| CI/CD tests | **None** — **DEFERRED to Phase 2** (consider Playwright for smoke E2E) | No test framework in repo; verification is manual browser testing |
+| CI/CD tests | **Playwright E2E suite** (commit `97c3f9a`) — 4 projects (unit / component / api / e2e-chromium) wired through `.github/workflows/test.yml`. Chromium P0 green; WebKit + Firefox not yet installed on runner. | Shipped alongside Phase 2. Replaces the earlier "no test framework" state. |
 | Monitoring / logging | **Client-side `console.*` only** — **DEFERRED to Phase 2** (e.g. Sentry) | No error-tracking, no uptime monitor |
 | Scaling | Vercel edge CDN delivers static assets; stateless client; no server session | Inherent from static-hosting model |
 | Backup / DR | GitHub as source of truth | No build artifacts other than source |
@@ -259,7 +270,7 @@ touch {page-name}.html {page-name}.js {page-name}.css
 
 **Cross-Component Dependencies:**
 
-- Every page depends on `window.FE2_API_BASE_URL` (set by HTML shell) + `window.TokenUtils` (from `token-utils.js`).
+- Every report page depends on `window.API_BASE_URL` / `window.REPORT_API_BASE_URL` (set by HTML shell) + `window.TokenUtils` (from `token-utils.js`).
 - Every page depends on `window.SharedFilterService` + `window.SharedUtils` for dropdowns and formatting.
 - `shared-auth-guard.js` must run **before** any other script that could trigger an API call — enforced by `<script>` load order in each HTML shell.
 - `menu-component.js` depends on the DOM containing `<nav class="nav-menu">` (sidebar) and `<ul class="navbar-list">` (topbar) — every page must preserve these placeholders.
@@ -280,7 +291,7 @@ touch {page-name}.html {page-name}.js {page-name}.css
 - Page triplet: `{page-name}.html`, `{page-name}.js`, `{page-name}.css`.
 - Optional per-page backend client: `{page-name}-api.js`.
 - URL path equals filename without extension: `/{page-name}` ↔ `{page-name}.html`.
-- Shared fe-2 ported modules: `fe2-{purpose}.js` (e.g., `shared-utils.js`, `shared-auth-guard.js`, `shared-filter-service.js`).
+- Shared modules (originally ported from fe-2, renamed in Phase 2): `shared-{purpose}.js` — `shared-auth-guard.js`, `shared-utils.js`, `shared-filter-service.js`, `shared-http.js`, `shared-ui.js` (+ `shared-ui.css`), `shared-chart.js`, `shared-table.js`, `shared-csv.js`, `shared-filter-panel.js`.
 - Kebab-case throughout for filenames and URLs.
 - ❌ **Anti-pattern:** nesting files in subdirectories (`pages/foo.html`).
 - ❌ **Anti-pattern:** camelCase or PascalCase filenames.
@@ -306,10 +317,10 @@ touch {page-name}.html {page-name}.js {page-name}.css
 
 **Window global namespace conventions:**
 
-- Utility library: `FE2*` (fe-2 ported).
+- Utility libraries: `Shared*` — `SharedUtils`, `SharedFilterService`, `SharedHttp`, `SharedUI`, `SharedChart`, `SharedTable`, `SharedCsv`, `SharedFilterPanel`.
 - Token / auth: `TokenUtils`.
 - Per-page API: `{PageName}API` (PascalCase suffix `API`).
-- Environment: `API_BASE_URL`, `FE2_API_BASE_URL`, `ENVIRONMENT`.
+- Environment: `API_BASE_URL`, `REPORT_API_BASE_URL` (alias), `ENVIRONMENT`. (`FE2_API_BASE_URL` retired in Phase 2.)
 
 ### Structure Patterns
 
@@ -329,26 +340,46 @@ touch {page-name}.html {page-name}.js {page-name}.css
   <!-- Fonts -->
   <link ... Kanit CDN ... />
 
-  <!-- Styles: shared shell first, then page-specific -->
+  <!-- Styles: shared shell first, then shared UI, then page-specific -->
   <link rel="stylesheet" href="tour-image-manager.css" />
+  <link rel="stylesheet" href="shared-ui.css" />
   <link rel="stylesheet" href="{page-name}.css" />
 
   <!-- Env config (inline IIFE) -->
   <script>
     (function(){
-      window.API_BASE_URL = /* hostname-based */;
-      window.FE2_API_BASE_URL = 'https://be-2-report.vercel.app';
-      window.ENVIRONMENT = /* 'staging' | 'production' | 'local' */;
+      const hostname = window.location.hostname;
+      if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+        window.API_BASE_URL = 'https://staging-finance-backoffice-report-api.vercel.app';
+        window.ENVIRONMENT = 'staging';
+      } else if (hostname === 'finance-backoffice-report.vercel.app') {
+        window.API_BASE_URL = 'https://finance-backoffice-report-api.vercel.app';
+        window.ENVIRONMENT = 'production';
+      } else {
+        const sessionEnv = sessionStorage.getItem('env') || 'staging';
+        window.ENVIRONMENT = sessionEnv;
+        window.API_BASE_URL = sessionEnv === 'staging'
+          ? 'https://staging-finance-backoffice-report-api.vercel.app'
+          : 'https://finance-backoffice-report-api.vercel.app';
+      }
+      // Report page APIs use this alias via SharedHttp.
+      window.REPORT_API_BASE_URL = window.API_BASE_URL;
     })();
   </script>
 
   <!-- Script load ORDER MATTERS -->
   <script src="token-utils.js"></script>
-  <script src="shared-auth-guard.js"></script>  <!-- runs immediately -->
+  <script src="shared-auth-guard.js"></script>          <!-- runs immediately -->
   <script src="shared-utils.js"></script>
-  <script src="shared-filter-service.js"></script>
+  <script src="shared-http.js"></script>                <!-- depends on TokenUtils -->
+  <script src="shared-filter-service.js"></script>      <!-- depends on SharedHttp -->
   <script src="menu-component.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- if page has charts -->
+  <script src="shared-ui.js"></script>
+  <script src="shared-chart.js"></script>               <!-- if page has charts -->
+  <script src="shared-table.js"></script>
+  <script src="shared-csv.js"></script>
+  <script src="shared-filter-panel.js"></script>
 </head>
 <body>
   <div class="app-wrapper">
@@ -526,10 +557,17 @@ finance-backoffice-report/
 ├── token-utils.js                     # ★ JWT lifecycle primitives (TokenUtils)
 ├── menu-component.js                  # ★ Shared nav (sidebar + topbar + MENU_ITEMS)
 │
-├── ─── FE-2 FOUNDATION (Epic 1) ─────────────────────────────────
+├── ─── SHARED FOUNDATION (Epic 1 + Phase 2) ────────────────────
 ├── shared-auth-guard.js                  # Self-running IIFE — URL capture + guard
 ├── shared-utils.js                       # SharedUtils — format/date/filter helpers
-├── shared-filter-service.js              # SharedFilterService — countries/teams/users/jps
+├── shared-filter-service.js              # SharedFilterService — countries/teams/agency-members/jps
+├── shared-http.js                        # SharedHttp — Bearer injection + 401 redirect (Phase 2)
+├── shared-ui.js                          # SharedUI — loading spinner + error banner (Phase 2)
+├── shared-ui.css                         # SharedUI styles (Phase 2)
+├── shared-chart.js                       # SharedChart — Chart.js wrapper (Phase 2)
+├── shared-table.js                       # SharedTable — sortable-table renderer (Phase 2)
+├── shared-csv.js                         # SharedCsv — UTF-8 BOM export helper (Phase 2)
+├── shared-filter-panel.js                # SharedFilterPanel — unified filter-panel renderer (Phase 2)
 │
 ├── ─── PAGE TRIPLETS ────────────────────────────────────────────
 ├── tour-image-manager.{html,js,css}   # [existing, untouched]
@@ -601,8 +639,10 @@ finance-backoffice-report/
 
 | Backend | Base URL | Used by |
 |---|---|---|
-| fe-2 Report API | `https://be-2-report.vercel.app` (hardcoded) | `supplier-commission-api.js`, `discount-sales-api.js`, `order-external-summary-api.js`, `request-discount-api.js`, `shared-filter-service.js` |
-| Finance Backoffice Report API | `window.API_BASE_URL` (hostname-detected) | `sales-by-country-api.js`, `wholesale-destinations-api.js`, `commission-report-plus-api.js`, `work-list-api.js`, `tour-image-manager-api.js` |
+| Finance Backoffice Report API (ours) | `window.API_BASE_URL` (hostname-detected) — `staging-finance-backoffice-report-api.vercel.app` / `finance-backoffice-report-api.vercel.app` | All 5 report pages (`supplier-commission-api.js`, `discount-sales-api.js`, `order-external-summary-api.js`, `request-discount-api.js`, `shared-filter-service.js`) + 4 legacy pages (`sales-by-country-api.js`, `wholesale-destinations-api.js`, `commission-report-plus-api.js`, `work-list-api.js`) |
+| Legacy `fin-api.tourwow.com` | `window.API_BASE_URL` (hostname-detected) — `fin-api-staging2.tourwow.com` / `fin-api.tourwow.com` | `tour-image-manager-api.js` only |
+
+_Retired:_ `https://be-2-report.vercel.app` (former fe-2 backend) — no longer called by any page as of commit `1ce6825` (2026-04-22).
 
 **Component Boundaries:**
 
@@ -655,8 +695,8 @@ finance-backoffice-report/
 |---|---|---|
 | `financebackoffice*.tourwow.com/login` | Outbound redirect | Auth flow entry / re-auth |
 | Finance Backoffice (upstream) | Inbound via `?token=` URL | JWT handoff |
-| `be-2-report.vercel.app` | Outbound REST (JSON + Bearer) | 4 new report data + filter lookups |
-| `finance-backoffice-report-api.vercel.app` | Outbound REST (JSON + Bearer) | Old report pages |
+| `finance-backoffice-report-api.vercel.app` (+ staging equivalent) | Outbound REST (JSON + Bearer) | All 5 report pages + 4 legacy pages |
+| `fin-api.tourwow.com` (+ staging equivalent) | Outbound REST (JSON + Bearer) | `tour-image-manager` only |
 | Google Fonts CDN | Outbound CSS | Kanit typeface |
 | jsDelivr CDN | Outbound JS | Chart.js |
 
@@ -665,14 +705,16 @@ finance-backoffice-report/
 ```
 User clicks Finance Backoffice "Report Plus"
   → Browser navigates to /supplier-commission?token=<jwt>
-  → HTML shell loads, inline script sets window.FE2_API_BASE_URL
+  → HTML shell loads, inline script hostname-detects window.API_BASE_URL
+     and aliases window.REPORT_API_BASE_URL = window.API_BASE_URL
   → token-utils.js defines TokenUtils
   → shared-auth-guard.js runs:
      • saves token to sessionStorage + localStorage
      • history.replaceState removes ?token from URL
-  → shared-utils.js + shared-filter-service.js + menu-component.js load
+  → shared-utils.js + shared-http.js + shared-filter-service.js + menu-component.js load
   → menu-component.js renders sidebar + topbar into DOM placeholders
-  → supplier-commission-api.js defines SupplierCommissionAPI
+  → shared-ui/chart/table/csv/filter-panel load
+  → supplier-commission-api.js defines SupplierCommissionAPI (via SharedHttp)
   → supplier-commission.js DOMContentLoaded handler:
      • renders filter panel
      • SharedFilterService.getCountries() / getTeams() → populate dropdowns
@@ -691,7 +733,7 @@ User clicks Finance Backoffice "Report Plus"
 **Source organization:**
 
 - **Flat root** for all page and module files.
-- Grouped implicitly by filename prefix (`{page-name}.*`, `fe2-*.js`, `{component}-component.{js,css}`).
+- Grouped implicitly by filename prefix (`{page-name}.*`, `shared-*.js`, `{component}-component.{js,css}`).
 
 **Test organization:**
 
@@ -735,13 +777,14 @@ git push origin main
 
 - All decisions compose cleanly: MPA + no-build + IIFE + `window.*` globals form a coherent stack.
 - Chart.js CDN is build-free and compatible with vanilla DOM — no React context leakage.
-- Dual-backend topology (`be-2-report` + `finance-backoffice-report-api`) does not conflict because each page's `-api.js` owns its own base URL.
-- JWT Bearer pattern is consistent across BOTH backends (verified via NFR8).
+- Single-backend topology (all report pages → `finance-backoffice-report-api`) simplifies deployment; the legacy `tour-image-manager` → `fin-api.tourwow.com` split is isolated to one page and unrelated to the report pipeline.
+- JWT Bearer pattern is consistent across both backends (verified via NFR8).
 
 **Pattern Consistency:**
 
 - Every new page follows the same file triplet (`.html` + `.js` + `.css`) + optional `-api.js`.
-- Every new page loads scripts in the same documented order.
+- Every new page loads scripts in the same doc
+umented order.
 - CSS class prefixes (`sc-*` / `ds-*` / `oes-*` / `rd-*`) are page-scoped with no documented collisions.
 - Error tiers (filter service → page API → page orchestrator) are applied uniformly across all 4 new pages.
 
@@ -781,12 +824,12 @@ git push origin main
 | NFR | Status | How addressed |
 |---|---|---|
 | NFR1 — Token cleaned from URL | ✅ | `history.replaceState` in `shared-auth-guard.js` |
-| NFR2 — HTTPS only | ✅ | Vercel-enforced; `be-2-report` is HTTPS |
+| NFR2 — HTTPS only | ✅ | Vercel-enforced on all backend hosts |
 | NFR3 — Token in header, not URL | ✅ | API modules set `Authorization: Bearer` header |
 | NFR4 — No sensitive data beyond JWT | ✅ | Only `authToken` key written to storage |
 | NFR5 — API failure never blanks page | ✅ | Three-tier error pattern; filter service returns `[]`; page APIs throw → orchestrator renders banner |
 | NFR6 — Zero regression on existing pages | ✅ | No edits to existing page files; `menu-component.js` only touched `MENU_ITEMS` data |
-| NFR7 — API contract unchanged | ✅ | Endpoints match fe-2-project; no backend edits |
+| NFR7 — API contract owned by us | ✅ (reframed in Phase 2) | Original constraint ("unchanged from fe-2") retired on 2026-04-22. Current rule: `finance-backoffice-report-api` is the source of truth; contract changes require a coordinated FE+BE deploy. Staging equivalent (`staging-finance-backoffice-report-api.vercel.app`) covers pre-prod testing. |
 | NFR8 — Authorization header format | ✅ | `Bearer <jwt>` verified in each `-api.js` |
 | NFR9 — 3-file pattern per page | ✅ | All 4 new pages conform (+ `-api.js` addition) |
 | NFR10 — No build tool | ✅ | Zero build step; no `package.json`; browser runs code directly |
@@ -805,15 +848,15 @@ git push origin main
 
 **Important Gaps (deferred, not blocking):**
 
-1. **No automated tests** — regression on any future change is user-discovered. Recommend adding a minimal Playwright smoke test per page in Phase 2.
+1. ~~**No automated tests**~~ — ✅ **Resolved Phase 2** (Playwright suite, commit `97c3f9a`; Chromium P0 green). Remaining gap: WebKit + Firefox not installed on CI runner — Chromium-only gate today.
 2. **No monitoring / error tracking** — production errors are invisible until users complain. Sentry or similar recommended before onboarding non-pilot users.
 3. **No CSP in `vercel.json`** — current policy allows any inline script, mitigatable attack surface for JWT exfiltration if a future XSS is introduced.
-4. **No staging equivalent of `be-2-report` backend** — staging frontend hits prod backend, creating data-pollution risk during QA.
+4. ~~**No staging equivalent of `be-2-report` backend**~~ — ✅ **Resolved Phase 2** (we now own the backend and have `staging-finance-backoffice-report-api.vercel.app` alongside prod).
 
 **Nice-to-Have Gaps:**
 
-1. Consolidating the three `fe2-*.js` into a single shared "FE2" namespace could reduce script-tag noise — deferred; current separation is fine.
-2. A shared `error-banner-component.js` could normalize the inline error UI across pages — optional.
+1. ~~Consolidating the three `fe2-*.js` into a single shared namespace~~ — Phase 2 expanded to nine `shared-*.js` modules with clear per-concern separation; consolidation is no longer desirable.
+2. A shared `error-banner-component.js` could normalize the inline error UI across pages — partially resolved: `SharedUI.showError` now exists (Phase 2); per-page CSS still owns styling.
 3. `.vercelignore` to formally exclude `_bmad*/` and `.claude/` from deploys — cosmetic; they're small.
 
 ### Architecture Completeness Checklist
@@ -852,15 +895,15 @@ git push origin main
 
 - Zero-build footprint preserves simplicity and aligns with the NFR10 constraint.
 - Clean separation between shell, shared services, and per-page modules makes adding a new page a mechanical exercise.
-- Dual-backend topology insulates fe-2 migration from this project's own legacy pages.
+- Single-backend topology (post-Phase 2) simplifies ops and removes dependency on an external third-party service.
 - Deploy mechanism (manual `vercel --prod --yes`) is reliable once the `ignore-build.sh` trap is known.
 
 **Areas for Future Enhancement:**
 
 - Observability (Sentry, uptime, CSP headers).
-- QA automation (Playwright smoke tests).
-- Retire fe-2-project once parity is confirmed (PRD Phase 2).
-- Consider introducing a tiny fetch wrapper (`shared-http.js`) to centralize the 401-redirect and auth-header injection currently duplicated per `-api.js`.
+- Cross-browser CI coverage (install WebKit + Firefox on runner).
+- ~~Retire fe-2-project once parity is confirmed~~ — done 2026-04-22.
+- ~~Introduce a tiny fetch wrapper (`shared-http.js`)~~ — shipped in Phase 2; now the single owner of Bearer injection + 401 redirect.
 
 ### Implementation Handoff
 
@@ -873,4 +916,27 @@ git push origin main
 
 **First Implementation Priority (for the NEXT initiative beyond current scope):**
 
-Nothing — current scope is shipped. Next logical step is **Epic 7 (recommended)**: observability + CSP hardening, or **Epic 7 (alternative)**: fe-2-project retirement. To be prioritized separately via PRD update.
+Phase 2 (fe-2-project retirement + shared-http extraction + Playwright suite) shipped 2026-04-22. Next logical step: **Epic 7 — Observability & Hardening** (Sentry + CSP headers + cross-browser CI). To be prioritized separately via PRD update.
+
+## Phase 2 Retrospective (2026-04-22)
+
+**Delivered:**
+
+| Area | Commit(s) | Outcome |
+|---|---|---|
+| Backend swap | `1ce6825` | All 5 report pages now call `finance-backoffice-report-api` (own backend) instead of `be-2-report.vercel.app`. External fe-2 dependency fully retired. |
+| Library rename | `dd5db13` | `fe2-*.js` renamed to `shared-*.js`; `window.FE2_*` globals replaced with `window.Shared*`; `FE2_API_BASE_URL` replaced with `REPORT_API_BASE_URL = API_BASE_URL` alias. |
+| Shared HTTP client | `dd5db13` | New `shared-http.js` centralises Bearer header injection + 401 redirect. Fixes prior 401 hang bug. |
+| Staging parity | continuous | `staging-finance-backoffice-report-api.vercel.app` now exists alongside prod; staging frontends no longer pollute prod data. |
+| Test framework | `97c3f9a` + follow-up `mock-backend.ts` fix | Playwright suite: 21 Chromium P0 scenarios green + unit/component/api projects green. |
+
+**NFR Delta:**
+
+- **NFR7 reframed.** Original text: "API contract UNCHANGED from fe-2-project." Current text: contract is owned by `finance-backoffice-report-api`; schema / route changes require a coordinated FE + BE deploy. No external party can break the contract.
+- **Gap #1 (no automated tests) and Gap #4 (no staging be-2 backend)** from the original Gap Analysis are **resolved**.
+
+**Carry-forward risks (not blocking but worth tracking):**
+
+- CI gate currently runs Chromium only; WebKit + Firefox fail with "Executable doesn't exist" on the runner. Either install them via `playwright install` on the runner or scope CI explicitly to `--project=e2e-chromium`.
+- `mock-backend.ts` had to be patched alongside Phase 2 (it still pointed at the retired be-2 host); any future backend URL change must also update the test fixture. Consider a shared constants module.
+- `tour-image-manager` remains on `fin-api.tourwow.com`. It is outside the report pipeline but still deployed from this repo; any future "one backend to rule them all" initiative should track it.

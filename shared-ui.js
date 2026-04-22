@@ -1,7 +1,5 @@
-// shared-ui.js — Shared loading spinner + error banner utilities
-// Extracted VERBATIM (structurally) from supplier-commission.js / discount-sales.js /
-// order-external-summary.js / request-discount.js so that all 4 fe-2 pages can share
-// one implementation in Phase B.
+// shared-ui.js — Shared loading spinner + error banner utilities.
+// Consumed by all 4 report pages for consistent feedback UX.
 //
 // Exposes window.SharedUI (IIFE — no build tools, no ES modules).
 // Assumes styles from shared-ui.css are loaded on the page.

@@ -1,9 +1,11 @@
 import type { Page, Route } from '@playwright/test';
 
 /**
- * Central helper to stub all backend endpoints used by fe-2 pages +
- * existing project pages. Prevents R11 (prod pollution) — tests never
- * hit real backends.
+ * Central helper to stub backend endpoints for both report pages and
+ * existing project pages. After Phase 2 (commit 1ce6825) every page hits
+ * our own finance-backoffice-report-api; the external be-2-report host
+ * is retired. Routes are registered against both staging and prod bases
+ * because localhost uses hostname detection to pick either one.
  *
  * Usage:
  *   import { mockBackend } from '../fixtures/mock-backend';
@@ -36,9 +38,16 @@ export interface MockBackendOptions {
   slowMs?: number;
 }
 
-const REPORT_API_BASE = 'https://be-2-report.vercel.app';
-const FBR_BASE_STAGING = 'https://staging-finance-backoffice-report-api.vercel.app';
-const FBR_BASE_PROD = 'https://finance-backoffice-report-api.vercel.app';
+const FBR_BASES = [
+  'https://staging-finance-backoffice-report-api.vercel.app',
+  'https://finance-backoffice-report-api.vercel.app',
+] as const;
+
+// tour-image-manager is the only legacy page pointing at a different backend.
+const LEGACY_BASES = [
+  'https://fin-api.tourwow.com',
+  'https://fin-api-staging2.tourwow.com',
+] as const;
 
 async function respond(route: Route, body: unknown, opts: MockBackendOptions): Promise<void> {
   if (opts.slowMs) {
@@ -56,36 +65,46 @@ async function respond(route: Route, body: unknown, opts: MockBackendOptions): P
 }
 
 export async function mockBackend(page: Page, opts: MockBackendOptions = {}): Promise<void> {
-  // fe-2 filter-service endpoints
-  await page.route(`${REPORT_API_BASE}/api/countries*`, (r) =>
-    opts.failFilterService ? r.abort() : respond(r, opts.countries ?? [], opts)
-  );
-  await page.route(`${REPORT_API_BASE}/api/teams*`, (r) =>
-    opts.failFilterService ? r.abort() : respond(r, opts.teams ?? [], opts)
-  );
-  await page.route(`${REPORT_API_BASE}/api/job-positions*`, (r) =>
-    opts.failFilterService ? r.abort() : respond(r, opts.jobPositions ?? [], opts)
-  );
-  await page.route(`${REPORT_API_BASE}/api/users*`, (r) =>
-    opts.failFilterService ? r.abort() : respond(r, opts.users ?? [], opts)
-  );
+  for (const base of FBR_BASES) {
+    // Filter-service endpoints
+    await page.route(`${base}/api/countries*`, (r) =>
+      opts.failFilterService ? r.abort() : respond(r, opts.countries ?? [], opts)
+    );
+    await page.route(`${base}/api/teams*`, (r) =>
+      opts.failFilterService ? r.abort() : respond(r, opts.teams ?? [], opts)
+    );
+    await page.route(`${base}/api/job-positions*`, (r) =>
+      opts.failFilterService ? r.abort() : respond(r, opts.jobPositions ?? [], opts)
+    );
+    // shared-filter-service.js now calls /api/agency-members (our backend
+    // reserves /api/users for chat users). Semantics match fe-2 /api/users.
+    await page.route(`${base}/api/agency-members*`, (r) =>
+      opts.failFilterService ? r.abort() : respond(r, opts.users ?? [], opts)
+    );
 
-  // fe-2 report endpoints
-  await page.route(`${REPORT_API_BASE}/api/reports/supplier-performance*`, (r) =>
-    opts.failReport ? r.abort() : respond(r, opts.supplierReport ?? [], opts)
-  );
-  await page.route(`${REPORT_API_BASE}/api/reports/sales-discount*`, (r) =>
-    opts.failReport ? r.abort() : respond(r, opts.discountSalesReport ?? [], opts)
-  );
-  await page.route(`${REPORT_API_BASE}/api/reports/order-external-summary*`, (r) =>
-    opts.failReport ? r.abort() : respond(r, opts.orderExternalSummary ?? [], opts)
-  );
-  await page.route(`${REPORT_API_BASE}/api/reports/order-has-discount*`, (r) =>
-    opts.failReport ? r.abort() : respond(r, opts.orderHasDiscount ?? [], opts)
-  );
+    // Report endpoints
+    await page.route(`${base}/api/reports/supplier-performance*`, (r) =>
+      opts.failReport ? r.abort() : respond(r, opts.supplierReport ?? [], opts)
+    );
+    await page.route(`${base}/api/reports/sales-discount*`, (r) =>
+      opts.failReport ? r.abort() : respond(r, opts.discountSalesReport ?? [], opts)
+    );
+    await page.route(`${base}/api/reports/order-external-summary*`, (r) =>
+      opts.failReport ? r.abort() : respond(r, opts.orderExternalSummary ?? [], opts)
+    );
+    await page.route(`${base}/api/reports/order-has-discount*`, (r) =>
+      opts.failReport ? r.abort() : respond(r, opts.orderHasDiscount ?? [], opts)
+    );
 
-  // finance-backoffice-report-api (existing pages) — stub both staging + prod
-  for (const base of [FBR_BASE_STAGING, FBR_BASE_PROD]) {
+    // Fallback for any other FBR endpoint (existing-project pages,
+    // health-checks, unmocked routes). Honors opts.status* so auth/slow
+    // simulations still apply uniformly.
+    await page.route(`${base}/**`, (r) => respond(r, {}, opts));
+  }
+
+  // tour-image-manager hits the legacy fin-api host. Keep its traffic
+  // stubbed so regression tests don't leak to a real backend.
+  for (const base of LEGACY_BASES) {
     await page.route(`${base}/**`, (r) => respond(r, {}, opts));
   }
 }

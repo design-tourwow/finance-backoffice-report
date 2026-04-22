@@ -1,6 +1,5 @@
 // shared-filter-panel.js — Shared cascading filter-panel renderer.
-// Structurally extracted from supplier-commission.js (canonical) with dropdown
-// cascade logic (team → jobPos → user) mirroring all 4 fe-2 pages.
+// Dropdown cascade logic: team → jobPos → user (shared by all 4 report pages).
 //
 // Cascade rules (matching existing pages):
 //   - Changing "team" clears jobPosition and user, and filters the user list.

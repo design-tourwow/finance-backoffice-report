@@ -1,4 +1,4 @@
-// shared-utils.js — Shared utility functions ported from fe-2-project-main
+// shared-utils.js — Shared Thai-locale formatting + period helpers
 // Exposes window.SharedUtils (IIFE)
 
 (function () {
@@ -10,7 +10,6 @@
 
   /**
    * Format a numeric value as Thai-locale integer (no decimals).
-   * Matches fe-2-project formatCurrency output.
    * @param {number} value
    * @returns {string}
    */
@@ -54,7 +53,6 @@
 
   /**
    * Returns array of year numbers: current year + 4 previous years.
-   * Matches fe-2-project getYearOptions().
    * @returns {number[]}
    */
   function getYearOptions() {
@@ -89,7 +87,6 @@
 
   /**
    * Returns 4 quarter objects rolling back from current quarter.
-   * Matches fe-2-project getQuarterOptions().
    * @returns {Array<{label: string, year: number, quarter: number}>}
    */
   function getQuarterOptions() {
@@ -138,7 +135,6 @@
   /**
    * Filter job positions to only 'ts' and 'crm', adding a display_name.
    * Optionally filter further by teamId (if provided and item has team_number).
-   * Ported from fe-2-project filterAndDisplayJobPositions + team-filter logic.
    *
    * @param {Array<{job_position: string, [key: string]: any}>} jobPositions
    * @param {number|undefined} [teamId] - optional team filter
