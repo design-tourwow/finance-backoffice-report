@@ -38,8 +38,8 @@
 /* ------------------------------------------------------------------ */
 .sc-chart-card {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
   padding: 20px 24px;
   margin-bottom: 20px;
 }
@@ -61,8 +61,8 @@
 /* ------------------------------------------------------------------ */
 .sc-table-card {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
   overflow: hidden;
   margin-bottom: 20px;
 }

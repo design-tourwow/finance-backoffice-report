@@ -186,6 +186,28 @@
     var options = mergeOptions(defaultBarOptions(callerOptions), callerOptions);
     var datasets = enrichDatasets(cfg.datasets);
 
+    // Give the value axis 15% headroom so datalabels positioned above the
+    // tallest bar (align:'top') don't clip outside the canvas. Matches
+    // sales-by-country.js pattern. Only applied when caller didn't already
+    // set a max on the value axis.
+    var horizontal = callerOptions.indexAxis === 'y';
+    var maxValue = 0;
+    for (var i = 0; i < cfg.datasets.length; i++) {
+      var data = cfg.datasets[i] && cfg.datasets[i].data;
+      if (!Array.isArray(data)) continue;
+      for (var j = 0; j < data.length; j++) {
+        var v = Number(data[j]);
+        if (!isNaN(v) && v > maxValue) maxValue = v;
+      }
+    }
+    if (maxValue > 0) {
+      var suggestedMax = maxValue * 1.15;
+      var valueAxis = horizontal ? options.scales.x : options.scales.y;
+      if (valueAxis && valueAxis.suggestedMax == null && valueAxis.max == null) {
+        valueAxis.suggestedMax = suggestedMax;
+      }
+    }
+
     var chartCfg = {
       type: 'bar',
       data: { labels: cfg.labels, datasets: datasets },
