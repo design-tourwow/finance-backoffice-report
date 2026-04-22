@@ -34,12 +34,25 @@ const FilterSortDropdownComponent = (function() {
     const btnId = `${containerId}Btn`;
     const menuId = `${containerId}Menu`;
 
+    function findOptionByValue(value) {
+      return options.find(function (opt) {
+        return String(opt.value) === String(value);
+      }) || null;
+    }
+
+    function iconMarkup(iconHtml) {
+      return iconHtml ? iconHtml : '';
+    }
+
+    var activeOption = options.find(function (opt) { return !!opt.active; }) || options[0] || null;
+    var initialIcon = activeOption && activeOption.icon ? activeOption.icon : defaultIcon;
+
     // Create dropdown HTML
     container.innerHTML = `
       <div class="filter-sort-dropdown">
         <button type="button" class="filter-sort-btn" id="${btnId}">
           <div class="filter-sort-btn-content">
-            ${defaultIcon || `
+            ${iconMarkup(initialIcon) || `
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 6h18M7 12h10M11 18h2"></path>
               </svg>
@@ -53,6 +66,7 @@ const FilterSortDropdownComponent = (function() {
         <div class="filter-sort-menu" id="${menuId}">
           ${options.map(opt => `
             <button type="button" class="filter-sort-option ${opt.active ? 'active' : ''}" data-value="${opt.value}">
+              ${iconMarkup(opt.icon)}
               <span class="filter-sort-option-label">${opt.label}</span>
             </button>
           `).join('')}
@@ -95,13 +109,13 @@ const FilterSortDropdownComponent = (function() {
 
     // Handle option selection
     const dropdownOptions = menu.querySelectorAll('.filter-sort-option');
-    // The trigger button's icon stays constant across selections — options no
-    // longer carry their own icons, so capture the initial default once and
-    // re-use it when rebuilding the button content after a selection.
-    const triggerIconHTML = (() => {
-      const initial = btn.querySelector('.filter-sort-btn-content svg');
+    function getTriggerIconHTML(optionValue) {
+      var selected = findOptionByValue(optionValue);
+      if (selected && selected.icon) return selected.icon;
+      if (defaultIcon) return defaultIcon;
+      var initial = btn.querySelector('.filter-sort-btn-content svg, .filter-sort-btn-content img');
       return initial ? initial.outerHTML : '';
-    })();
+    }
 
     dropdownOptions.forEach(option => {
       option.addEventListener('click', function(e) {
@@ -122,7 +136,7 @@ const FilterSortDropdownComponent = (function() {
 
         if (currentBtnContent) {
           currentBtnContent.innerHTML = `
-            ${triggerIconHTML}
+            ${getTriggerIconHTML(value)}
             <span class="filter-sort-btn-text">${labelText}</span>
           `;
         }

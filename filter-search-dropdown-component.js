@@ -71,12 +71,18 @@
     var listEl = document.getElementById(listId);
     var btnContent = btn.querySelector('.filter-sort-btn-content');
 
-    // Capture the trigger icon once and re-use it when selections change.
-    // Options in the list render label-only — icons stay in the trigger.
-    var triggerIconHTML = (function () {
-      var initial = btn.querySelector('.filter-sort-btn-content svg');
-      return initial ? initial.outerHTML : (cfg.defaultIcon || '');
-    })();
+    function findOptionByValue(value) {
+      for (var i = 0; i < cfg.options.length; i++) {
+        if (String(cfg.options[i].value) === String(value)) return cfg.options[i];
+      }
+      return null;
+    }
+
+    function getTriggerIconHTML(value) {
+      var selected = findOptionByValue(value);
+      if (selected && selected.icon) return selected.icon;
+      return cfg.defaultIcon || '';
+    }
 
     function renderList(query) {
       var q = (query || '').toLowerCase();
@@ -90,9 +96,6 @@
       }
 
       listEl.innerHTML = filtered.map(function (o) {
-        // Per-option icon (e.g. country flag) — opt-in: only rendered when
-        // the caller supplies it on the option itself. Empty otherwise so
-        // generic dropdowns stay label-only.
         var optIcon = o.icon ? o.icon : '';
         return '<button type="button" class="filter-search-dd-option' +
           (String(o.value) === String(currentValue) ? ' active' : '') +
@@ -108,7 +111,7 @@
           var val = this.getAttribute('data-value');
           var lbl = this.getAttribute('data-label');
           currentValue = val;
-          btnContent.innerHTML = triggerIconHTML +
+          btnContent.innerHTML = getTriggerIconHTML(val) +
             '<span class="filter-sort-btn-text">' + escHtml(lbl) + '</span>';
           menu.classList.remove('open');
           btn.classList.remove('open');
