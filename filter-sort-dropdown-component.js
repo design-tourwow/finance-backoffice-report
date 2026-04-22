@@ -2,6 +2,7 @@
 // Single-select dropdown for filtering and sorting
 const FilterSortDropdownComponent = (function() {
   'use strict';
+  const CLOSE_OVERLAY_EVENT = 'app:close-dropdown-overlays';
 
   console.log('🔧 FilterSortDropdownComponent loaded - Version 2.0 with label span fix');
 
@@ -79,31 +80,33 @@ const FilterSortDropdownComponent = (function() {
     const btnText = btn.querySelector('.filter-sort-btn-text');
     const btnContent = btn.querySelector('.filter-sort-btn-content');
 
+    function closeMenu() {
+      menu.classList.remove('open');
+      btn.classList.remove('open');
+    }
+
     // Toggle dropdown
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
       const isOpen = menu.classList.contains('open');
-      
-      // Close all other dropdowns
-      document.querySelectorAll('.filter-sort-menu.open').forEach(m => {
-        if (m !== menu) m.classList.remove('open');
-      });
-      document.querySelectorAll('.filter-sort-btn.open').forEach(b => {
-        if (b !== btn) b.classList.remove('open');
-      });
-      
+
+      if (!isOpen) {
+        document.dispatchEvent(new CustomEvent(CLOSE_OVERLAY_EVENT));
+      }
+
       // Toggle this dropdown
-      menu.classList.toggle('open');
-      btn.classList.toggle('open');
+      menu.classList.toggle('open', !isOpen);
+      btn.classList.toggle('open', !isOpen);
       
       console.log('🔘 Dropdown toggled:', !isOpen);
     });
 
+    document.addEventListener(CLOSE_OVERLAY_EVENT, closeMenu);
+
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
       if (!container.contains(e.target)) {
-        menu.classList.remove('open');
-        btn.classList.remove('open');
+        closeMenu();
       }
     });
 
@@ -142,8 +145,7 @@ const FilterSortDropdownComponent = (function() {
         }
         
         // Close dropdown
-        menu.classList.remove('open');
-        btn.classList.remove('open');
+        closeMenu();
         
         // Trigger callback
         if (onChange && typeof onChange === 'function') {
@@ -172,6 +174,7 @@ const FilterSortDropdownComponent = (function() {
         }
       },
       destroy: function() {
+        document.removeEventListener(CLOSE_OVERLAY_EVENT, closeMenu);
         container.innerHTML = '';
       }
     };

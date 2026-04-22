@@ -7,6 +7,7 @@
 const DatePickerComponent = {
   // Track all open pickers to close them when opening a new one
   _openPickers: [],
+  _closeOverlayEvent: 'app:close-dropdown-overlays',
   
   /**
    * Close all open date pickers
@@ -62,10 +63,7 @@ const DatePickerComponent = {
       
       // Close all other pickers first (but not this one if it's already open)
       if (!isVisible) {
-        DatePickerComponent.closeAllPickers();
-        if (typeof SearchableDropdownComponent !== 'undefined') {
-          SearchableDropdownComponent.closeAllDropdowns();
-        }
+        document.dispatchEvent(new CustomEvent(DatePickerComponent._closeOverlayEvent));
       }
       
       dropdown.style.display = isVisible ? 'none' : 'block';
@@ -91,6 +89,8 @@ const DatePickerComponent = {
     dropdown.addEventListener('click', function (e) {
       e.stopPropagation();
     });
+
+    document.addEventListener(DatePickerComponent._closeOverlayEvent, closeCalendar);
 
     // Close calendar when clicking outside
     document.addEventListener('click', function (e) {
@@ -452,10 +452,7 @@ const DatePickerComponent = {
       
       // Close all other pickers first (but not this one if it's already open)
       if (!isVisible) {
-        DatePickerComponent.closeAllPickers();
-        if (typeof SearchableDropdownComponent !== 'undefined') {
-          SearchableDropdownComponent.closeAllDropdowns();
-        }
+        document.dispatchEvent(new CustomEvent(DatePickerComponent._closeOverlayEvent));
       }
       
       dropdown.style.display = isVisible ? 'none' : 'block';
@@ -472,6 +469,8 @@ const DatePickerComponent = {
         closeCalendar();
       }
     });
+
+    document.addEventListener(DatePickerComponent._closeOverlayEvent, closeCalendar);
 
     function closeCalendar() {
       dropdown.style.display = 'none';

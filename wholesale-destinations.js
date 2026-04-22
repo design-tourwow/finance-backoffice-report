@@ -2,6 +2,17 @@
 (function () {
   'use strict';
 
+  const CLOSE_OVERLAY_EVENT = 'app:close-dropdown-overlays';
+  function requestCloseOverlayDropdowns() {
+    document.dispatchEvent(new CustomEvent(CLOSE_OVERLAY_EVENT));
+  }
+  function closeLegacyDropdowns() {
+    document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+      menu.classList.remove('show');
+    });
+  }
+  document.addEventListener(CLOSE_OVERLAY_EVENT, closeLegacyDropdowns);
+
   const APP_FONT = window.AppFont;
   const APP_FONT_CSS_FAMILY = APP_FONT.cssFamily();
   const APP_FONT_CHART_FAMILY = APP_FONT.chartFamily();
@@ -541,6 +552,9 @@
 
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
+        const isOpen = dropdown.classList.contains('show');
+
+        if (!isOpen) requestCloseOverlayDropdowns();
 
         // Close other dropdowns
         document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
@@ -548,7 +562,7 @@
         });
 
         // Toggle this dropdown
-        dropdown.classList.toggle('show');
+        dropdown.classList.toggle('show', !isOpen);
       });
     });
 
@@ -570,6 +584,9 @@
     // Toggle dropdown on button click
     periodTypeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      const isOpen = periodTypeDropdown.classList.contains('show');
+
+      if (!isOpen) requestCloseOverlayDropdowns();
 
       // Close other dropdowns
       document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
@@ -577,7 +594,7 @@
       });
 
       // Toggle this dropdown
-      periodTypeDropdown.classList.toggle('show');
+      periodTypeDropdown.classList.toggle('show', !isOpen);
     });
 
     // Handle period type selection
@@ -991,6 +1008,9 @@
     // Toggle dropdown
     wholesaleBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      const isOpen = wholesaleDropdown.classList.contains('show');
+
+      if (!isOpen) requestCloseOverlayDropdowns();
 
       // Close other dropdowns
       document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
@@ -998,10 +1018,10 @@
       });
 
       // Toggle this dropdown
-      wholesaleDropdown.classList.toggle('show');
+      wholesaleDropdown.classList.toggle('show', !isOpen);
 
       // Focus search input when opened
-      if (wholesaleDropdown.classList.contains('show') && wholesaleSearchInput) {
+      if (!isOpen && wholesaleDropdown.classList.contains('show') && wholesaleSearchInput) {
         wholesaleSearchInput.value = '';
         renderWholesaleItems(availableWholesales);
         wholesaleSearchInput.focus();

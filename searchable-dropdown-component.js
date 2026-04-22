@@ -6,6 +6,7 @@
 const SearchableDropdownComponent = {
   // Track all open dropdowns to close them when opening a new one
   _openDropdowns: [],
+  _closeOverlayEvent: 'app:close-dropdown-overlays',
   
   /**
    * Close all open dropdowns
@@ -70,10 +71,7 @@ const SearchableDropdownComponent = {
       
       // Close all other dropdowns and date pickers first
       if (!isCurrentlyOpen) {
-        SearchableDropdownComponent.closeAllDropdowns();
-        if (typeof DatePickerComponent !== 'undefined') {
-          DatePickerComponent.closeAllPickers();
-        }
+        document.dispatchEvent(new CustomEvent(SearchableDropdownComponent._closeOverlayEvent));
       }
       
       toggleDropdown();
@@ -96,6 +94,8 @@ const SearchableDropdownComponent = {
         closeDropdown();
       }
     });
+
+    document.addEventListener(SearchableDropdownComponent._closeOverlayEvent, closeDropdown);
 
     // Prevent closing when clicking inside menu
     menu.addEventListener('click', function(e) {
@@ -264,10 +264,7 @@ const SearchableDropdownComponent = {
       
       // Close all other dropdowns and date pickers first
       if (!isCurrentlyOpen) {
-        SearchableDropdownComponent.closeAllDropdowns();
-        if (typeof DatePickerComponent !== 'undefined') {
-          DatePickerComponent.closeAllPickers();
-        }
+        document.dispatchEvent(new CustomEvent(SearchableDropdownComponent._closeOverlayEvent));
       }
       
       toggleDropdown();
@@ -300,6 +297,8 @@ const SearchableDropdownComponent = {
         closeDropdown();
       }
     });
+
+    document.addEventListener(SearchableDropdownComponent._closeOverlayEvent, closeDropdown);
 
     // Prevent closing when clicking inside menu
     menu.addEventListener('click', function(e) {
@@ -477,21 +476,11 @@ const SearchableDropdownComponent = {
     // Toggle dropdown (same as tour-image-manager)
     const toggleDropdown = () => {
       const isOpen = dropdown.classList.contains('open');
-      
-      // Close all other dropdowns
-      document.querySelectorAll('.multi-select-dropdown.open').forEach(d => {
-        if (d !== dropdown) {
-          d.classList.remove('open');
-          d.previousElementSibling.classList.remove('open');
-          d.previousElementSibling.setAttribute('aria-expanded', 'false');
-        }
-      });
-      
-      // Close date pickers
-      if (typeof DatePickerComponent !== 'undefined') {
-        DatePickerComponent.closeAllPickers();
+
+      if (!isOpen) {
+        document.dispatchEvent(new CustomEvent(SearchableDropdownComponent._closeOverlayEvent));
       }
-      
+
       if (isOpen) {
         dropdown.classList.remove('open');
         trigger.classList.remove('open');
@@ -633,6 +622,12 @@ const SearchableDropdownComponent = {
         trigger.classList.remove('open');
         trigger.setAttribute('aria-expanded', 'false');
       }
+    });
+
+    document.addEventListener(SearchableDropdownComponent._closeOverlayEvent, () => {
+      dropdown.classList.remove('open');
+      trigger.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
     });
 
     // Public API

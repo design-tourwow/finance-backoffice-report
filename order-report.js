@@ -2,6 +2,11 @@
 (function () {
   'use strict';
 
+  const CLOSE_OVERLAY_EVENT = 'app:close-dropdown-overlays';
+  function requestCloseOverlayDropdowns() {
+    document.dispatchEvent(new CustomEvent(CLOSE_OVERLAY_EVENT));
+  }
+
   const APP_FONT = window.AppFont;
   const APP_FONT_CSS_FAMILY = APP_FONT.cssFamily();
   const APP_FONT_CHART_FAMILY = APP_FONT.chartFamily();
@@ -1534,6 +1539,12 @@
       allOption.classList.add('active');
     }
     
+    function closeLeadTimeFilterMenu() {
+      filterMenu.classList.remove('show');
+    }
+
+    document.addEventListener(CLOSE_OVERLAY_EVENT, closeLeadTimeFilterMenu);
+
     // Remove old button listener by cloning
     const newFilterBtn = filterBtn.cloneNode(true);
     filterBtn.parentNode.replaceChild(newFilterBtn, filterBtn);
@@ -1541,14 +1552,16 @@
     // Toggle dropdown when clicking button
     newFilterBtn.addEventListener('click', function(e) {
       e.stopPropagation();
-      filterMenu.classList.toggle('show');
+      const isOpen = filterMenu.classList.contains('show');
+      if (!isOpen) requestCloseOverlayDropdowns();
+      filterMenu.classList.toggle('show', !isOpen);
       console.log('🔘 Dropdown toggled:', filterMenu.classList.contains('show'));
     });
     
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
       if (!newFilterBtn.contains(e.target) && !filterMenu.contains(e.target)) {
-        filterMenu.classList.remove('show');
+        closeLeadTimeFilterMenu();
       }
     });
     
@@ -1596,7 +1609,7 @@
         }
         
         // Close dropdown
-        filterMenu.classList.remove('show');
+        closeLeadTimeFilterMenu();
       });
     });
     

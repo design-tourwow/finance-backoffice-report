@@ -33,12 +33,8 @@
 }
 
 /* ─── Summary Cards ────────────────────────────────────────────────── */
-.ds-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
+/* Grid rule for .ds-summary-grid provided by kpi-card.css (shared
+   4-up layout with tablet/mobile breakpoints). */
 
 .ds-card {
   background: #fff;

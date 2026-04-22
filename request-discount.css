@@ -88,12 +88,8 @@
    KPI Summary Cards
    ----------------------------------------------------------------------- */
 
-.rd-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
+/* Grid rule for .rd-kpi-grid provided by kpi-card.css (shared
+   4-up layout with tablet/mobile breakpoints). */
 
 .rd-kpi-card {
   background: #fff;
@@ -427,8 +423,10 @@
    Responsive
    ----------------------------------------------------------------------- */
 
+/* .rd-kpi-grid breakpoints now live in kpi-card.css so every kpi grid on
+   the site collapses at the same widths. */
+
 @media (max-width: 1200px) {
-  .rd-kpi-grid    { grid-template-columns: repeat(2, 1fr); }
   .rd-charts-grid { grid-template-columns: 1fr; }
 }
 
@@ -437,8 +435,4 @@
   .rd-card-header-row { flex-direction: column; }
   .rd-table-footer    { flex-direction: column; align-items: flex-start; }
   .rd-pagination      { flex-direction: column; align-items: flex-start; }
-}
-
-@media (max-width: 480px) {
-  .rd-kpi-grid { grid-template-columns: 1fr; }
 }

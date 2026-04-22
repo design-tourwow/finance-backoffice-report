@@ -6,7 +6,13 @@
    Consumes design tokens from filter-panel.css.
    ======================================== */
 
-.dashboard-kpi-cards {
+/* Canonical 4-up KPI grid. Aliases list the fe-2 page-specific grid class
+   names so they share one grid definition — equal-width columns, matching
+   gap — instead of each page setting its own template. */
+.dashboard-kpi-cards,
+.ds-summary-grid,
+.oes-summary-cards,
+.rd-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
@@ -120,13 +126,19 @@
 
 /* Responsive: stack to 2 columns on tablet, 1 on mobile */
 @media (max-width: 900px) {
-  .dashboard-kpi-cards {
+  .dashboard-kpi-cards,
+  .ds-summary-grid,
+  .oes-summary-cards,
+  .rd-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 560px) {
-  .dashboard-kpi-cards {
+  .dashboard-kpi-cards,
+  .ds-summary-grid,
+  .oes-summary-cards,
+  .rd-kpi-grid {
     grid-template-columns: 1fr;
   }
   .kpi-value {

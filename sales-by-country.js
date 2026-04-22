@@ -2,6 +2,17 @@
 (function () {
   'use strict';
 
+  const CLOSE_OVERLAY_EVENT = 'app:close-dropdown-overlays';
+  function requestCloseOverlayDropdowns() {
+    document.dispatchEvent(new CustomEvent(CLOSE_OVERLAY_EVENT));
+  }
+  function closeLegacyDropdowns() {
+    document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
+      menu.classList.remove('show');
+    });
+  }
+  document.addEventListener(CLOSE_OVERLAY_EVENT, closeLegacyDropdowns);
+
   const APP_FONT = window.AppFont;
   const APP_FONT_CSS_FAMILY = APP_FONT.cssFamily();
   const APP_FONT_CHART_FAMILY = APP_FONT.chartFamily();
@@ -1182,6 +1193,9 @@
 
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
+        const isOpen = dropdown.classList.contains('show');
+
+        if (!isOpen) requestCloseOverlayDropdowns();
 
         // Close other dropdowns
         document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
@@ -1189,7 +1203,7 @@
         });
 
         // Toggle this dropdown
-        dropdown.classList.toggle('show');
+        dropdown.classList.toggle('show', !isOpen);
       });
     });
 
@@ -1215,6 +1229,9 @@
     // Toggle dropdown on button click
     periodTypeBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      const isOpen = periodTypeDropdown.classList.contains('show');
+
+      if (!isOpen) requestCloseOverlayDropdowns();
 
       // Close other dropdowns
       document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
@@ -1222,7 +1239,7 @@
       });
 
       // Toggle this dropdown
-      periodTypeDropdown.classList.toggle('show');
+      periodTypeDropdown.classList.toggle('show', !isOpen);
     });
 
     // Handle period type selection
@@ -1849,11 +1866,13 @@
     // Toggle dropdown
     countryBtn.addEventListener('click', function(e) {
       e.stopPropagation();
+      const isOpen = countryDropdown.classList.contains('show');
+      if (!isOpen) requestCloseOverlayDropdowns();
       document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
         if (menu !== countryDropdown) menu.classList.remove('show');
       });
-      countryDropdown.classList.toggle('show');
-      if (countryDropdown.classList.contains('show')) {
+      countryDropdown.classList.toggle('show', !isOpen);
+      if (!isOpen && countryDropdown.classList.contains('show')) {
         countrySearchInput.focus();
       }
     });
