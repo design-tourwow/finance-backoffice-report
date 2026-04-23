@@ -10,7 +10,10 @@
   max-width: 280px;
 }
 
-.shared-search-input {
+/* Use .shared-search-wrap .shared-search-input (specificity 0,2,0) so the
+   shared styling wins against page-level broad selectors like
+   .form-group input (0,1,1) — seen on /tour-image-manager. */
+.shared-search-wrap .shared-search-input {
   width: 100%;
   padding: 10px 40px 10px 40px;  /* room for icon left + clear right */
   border: 1px solid var(--color-border-strong);
@@ -23,11 +26,12 @@
   box-sizing: border-box;
 }
 
-.shared-search-input::placeholder {
+.shared-search-wrap .shared-search-input::placeholder {
   color: var(--color-text-faint);
+  opacity: 1;
 }
 
-.shared-search-input:focus {
+.shared-search-wrap .shared-search-input:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
