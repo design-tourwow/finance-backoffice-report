@@ -132,7 +132,9 @@
 .shared-sort-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
   background: none;
   border: none;
   padding: 0;
@@ -145,15 +147,19 @@
 
 .shared-sort-btn:hover { color: var(--color-text); }
 
-.shared-th--sort-active,
-.shared-th--sort-active .shared-sort-btn {
-  color: var(--color-primary);
+.shared-cell-right .shared-sort-btn {
+  justify-content: flex-end;
 }
 
-.shared-sort-icon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
+.shared-cell-center .shared-sort-btn {
+  justify-content: center;
+}
+
+.shared-th.sort-asc,
+.shared-th.sort-desc,
+.shared-th.sort-asc .shared-sort-btn,
+.shared-th.sort-desc .shared-sort-btn {
+  color: var(--color-primary);
 }
 
 .dashboard-table tbody tr,
@@ -197,8 +203,62 @@
 }
 
 .dashboard-table tbody tr:last-child td,
-.shared-table tbody tr:last-child td {
+.shared-table tbody tr:last-child td,
+.rd-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.dashboard-table th[data-sort],
+.shared-table thead th[data-sort-key],
+.shared-th[data-sort-key],
+.rd-table thead th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: 24px;
+}
+
+.dashboard-table th:not([data-sort]),
+.rd-table thead th:not([data-sort]) {
+  padding-right: 16px;
+}
+
+.dashboard-table th .sort-icon,
+.shared-table thead th .sort-icon,
+.shared-th .sort-icon,
+.rd-table thead th .sort-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.dashboard-table th:hover .sort-icon,
+.shared-table thead th:hover .sort-icon,
+.shared-th:hover .sort-icon,
+.rd-table thead th:hover .sort-icon {
+  opacity: 0.7;
+}
+
+.dashboard-table th.sort-asc .sort-icon,
+.dashboard-table th.sort-desc .sort-icon,
+.shared-table thead th.sort-asc .sort-icon,
+.shared-table thead th.sort-desc .sort-icon,
+.shared-th.sort-asc .sort-icon,
+.shared-th.sort-desc .sort-icon,
+.rd-table thead th.sort-asc .sort-icon,
+.rd-table thead th.sort-desc .sort-icon {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.dashboard-table th.sort-asc .sort-icon svg,
+.shared-table thead th.sort-asc .sort-icon svg,
+.shared-th.sort-asc .sort-icon svg,
+.rd-table thead th.sort-asc .sort-icon svg {
+  transform: rotate(180deg);
 }
 
 /* Search input — sits inside the header row */

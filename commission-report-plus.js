@@ -20,6 +20,12 @@
   let selectedSellerId = '';
   let selectedOrderStatus = 'not_canceled';
   let selectedTravelerFilter = 'all';
+  let mainTableQuery = '';
+  let mainTableSort = { key: null, direction: 'desc' };
+  let sellerSummarySort = {
+    ts: { key: 'net_commission', direction: 'desc' },
+    crm: { key: 'net_commission', direction: 'desc' }
+  };
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -122,6 +128,86 @@
 
   function escHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function compareSortValues(a, b, direction) {
+    const dir = direction === 'asc' ? 1 : -1;
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    if (a < b) return -1 * dir;
+    if (a > b) return 1 * dir;
+    return 0;
+  }
+
+  function resolveOrderSortValue(order, key) {
+    switch (key) {
+      case 'seller':
+        return String(order.seller_nick_name || '').toLowerCase();
+      case 'order_code':
+        return String(order.order_code || '').toLowerCase();
+      case 'created_at':
+        return new Date(order.created_at || 0).getTime();
+      case 'customer_name':
+        return String(order.customer_name || '').toLowerCase();
+      case 'country_name':
+        return String(order.country_name_th || '').toLowerCase();
+      case 'travel_period':
+        return String(order.product_period_snapshot || '').toLowerCase();
+      case 'net_amount':
+        return parseFloat(order.net_amount || 0);
+      case 'room_quantity':
+        return parseFloat(order.room_quantity || 0);
+      case 'first_paid_at':
+        return new Date(order.first_paid_at || 0).getTime();
+      case 'supplier_commission':
+        return parseFloat(order.supplier_commission || 0);
+      case 'net_commission':
+        return parseFloat(order.supplier_commission || 0) - parseFloat(order.discount || 0);
+      case 'discount':
+        return parseFloat(order.discount || 0);
+      default:
+        return null;
+    }
+  }
+
+  function getVisibleOrders(orders) {
+    const q = mainTableQuery;
+    const filtered = q
+      ? orders.filter(o =>
+          (o.order_code || '').toLowerCase().includes(q) ||
+          (o.customer_name || '').toLowerCase().includes(q)
+        )
+      : orders.slice();
+
+    if (!mainTableSort.key) return filtered;
+
+    return filtered.slice().sort((a, b) => {
+      return compareSortValues(
+        resolveOrderSortValue(a, mainTableSort.key),
+        resolveOrderSortValue(b, mainTableSort.key),
+        mainTableSort.direction
+      );
+    });
+  }
+
+  function buildSellerAggregate(orders) {
+    const map = new Map();
+    orders.forEach(o => {
+      const name = o.seller_nick_name || '-';
+      if (!map.has(name)) map.set(name, { seller: name, orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
+      const s = map.get(name);
+      s.orders += 1;
+      s.net_amount += parseFloat(o.net_amount || 0);
+      s.discount += parseFloat(o.discount || 0);
+      s.net_commission += (parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0));
+    });
+    return Array.from(map.values());
+  }
+
+  function sortSellerAggregate(rows, groupClass) {
+    const state = sellerSummarySort[groupClass] || { key: 'net_commission', direction: 'desc' };
+    return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
   }
 
   // ---- Sellers ----
@@ -415,6 +501,7 @@
     showLoading();
     const filters = buildFilters();
     currentData = null;
+    mainTableQuery = '';
     try {
       const res = await CommissionReportPlusAPI.getReport(filters);
       if (res && res.success && res.data) {
@@ -490,6 +577,41 @@
     document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
     document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
 
+    if (window.SharedSortableHeader) {
+      const mainTable = results.querySelector('.crp-table');
+      if (mainTable) {
+        window.SharedSortableHeader.bindTable(mainTable, {
+          headerSelector  : '.col-row th[data-sort]',
+          sortKey         : mainTableSort.key,
+          sortDir         : mainTableSort.direction,
+          defaultDirection: 'desc',
+          sortInDom       : false,
+          onSort: function (sortState) {
+            mainTableSort = { key: sortState.key, direction: sortState.direction };
+            renderResults(currentData);
+            return false;
+          }
+        });
+      }
+
+      results.querySelectorAll('.crp-summary-table').forEach(table => {
+        const group = table.getAttribute('data-group');
+        const state = sellerSummarySort[group] || { key: 'net_commission', direction: 'desc' };
+        window.SharedSortableHeader.bindTable(table, {
+          headerSelector  : 'thead th[data-sort]',
+          sortKey         : state.key,
+          sortDir         : state.direction,
+          defaultDirection: 'desc',
+          sortInDom       : false,
+          onSort: function (sortState) {
+            sellerSummarySort[group] = { key: sortState.key, direction: sortState.direction };
+            renderResults(currentData);
+            return false;
+          }
+        });
+      });
+    }
+
     // Scroll hint: gradient fades when scrolled to end
     const tableScroll = document.querySelector('.crp-table-scroll');
     const hintWrapper = document.querySelector('.crp-scroll-hint-wrapper');
@@ -506,34 +628,11 @@
     // into #crp-table-search-host and calls onInput on debounced typing.
     window.SharedTableSearch.init({
       containerId: 'crp-table-search-host',
+      value: mainTableQuery,
       placeholder: 'ค้นหารหัส Order หรือชื่อลูกค้า...',
       onInput: function (raw) {
-        const q = String(raw || '').toLowerCase().trim();
-        const filtered = q
-          ? orders.filter(o =>
-              (o.order_code || '').toLowerCase().includes(q) ||
-              (o.customer_name || '').toLowerCase().includes(q)
-            )
-          : orders;
-        document.getElementById('crp-table-count').textContent = `แสดง ${formatNumber(filtered.length, 0)} รายการ`;
-      document.querySelector('.crp-table tbody').innerHTML = filtered.map(o => {
-        const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
-        return `
-          <tr>
-            <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
-            <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
-            <td>${formatDate(o.created_at)}</td>
-            <td>${escHtml(o.customer_name || '-')}</td>
-            <td>${escHtml(o.country_name_th || '-')}</td>
-            <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
-            <td class="right group-start">${formatNumber(o.net_amount)}</td>
-            <td class="center">${o.room_quantity || 0}</td>
-            <td class="center">${formatDate(o.first_paid_at)}</td>
-            <td class="right group-start">${formatNumber(o.supplier_commission)}</td>
-            <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom)}</td>
-            <td class="right group-start">${formatNumber(o.discount)}</td>
-          </tr>`;
-      }).join('') || `<tr><td colspan="12"><div class="dashboard-table-empty"><img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom:16px;opacity:0.8;"/><h3 style="margin:0 0 8px 0;font-size:18px;color:#374151;">ไม่พบข้อมูล</h3><p style="margin:0;font-size:15px;color:#6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p></div></td></tr>`;
+        mainTableQuery = String(raw || '').toLowerCase().trim();
+        renderResults(currentData);
       }
     });
   }
@@ -593,17 +692,9 @@
     if (!isAdmin()) return '';
 
     function buildGroupTable(title, groupClass, groupOrders) {
-      const sellerMap = {};
-      groupOrders.forEach(o => {
-        const name = o.seller_nick_name || '-';
-        if (!sellerMap[name]) sellerMap[name] = { orders: 0, net_amount: 0, discount: 0, net_commission: 0 };
-        sellerMap[name].orders++;
-        sellerMap[name].net_amount     += parseFloat(o.net_amount || 0);
-        sellerMap[name].discount       += parseFloat(o.discount || 0);
-        sellerMap[name].net_commission += parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
-      });
-      const sorted = Object.entries(sellerMap).sort((a, b) => b[1].net_amount - a[1].net_amount);
-      const rows = sorted.map(([name, s], i) => {
+      const sorted = sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass);
+      const rows = sorted.map((s, i) => {
+        const name = s.seller;
         const rank = i + 1;
         const rankClass = rank <= 3 ? ` crp-summary-rank--${rank}` : '';
         const trophyPalette = {
@@ -635,14 +726,14 @@
             <span class="crp-summary-group-title">${escHtml(title)}</span>
             <span class="crp-summary-group-count">${sorted.length} คน · ${formatNumber(groupOrders.length, 0)} orders</span>
           </div>
-          <table class="crp-summary-table">
+          <table class="crp-summary-table" data-group="${groupClass}">
             <thead>
               <tr>
-                <th>เซลล์</th>
-                <th class="right">ออเดอร์</th>
-                <th class="right">ยอดจอง</th>
-                <th class="right">ส่วนลด</th>
-                <th class="right">คอมสุทธิ</th>
+                <th data-sort="seller" data-type="string">เซลล์</th>
+                <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
+                <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
+                <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
+                <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
             </thead>
             <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
@@ -665,7 +756,8 @@
 
   // ---- Table ----
   function renderTableSection(orders) {
-    const rows = orders.map(o => {
+    const visibleOrders = getVisibleOrders(orders);
+    const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return `
         <tr>
@@ -682,13 +774,13 @@
           <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom)}</td>
           <td class="right group-start">${formatNumber(o.discount)}</td>
         </tr>`;
-    }).join('');
+    }).join('') || '<tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
 
     return `
       <div class="dashboard-table-header">
         <div class="dashboard-table-title">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-          <span id="crp-table-count">แสดง ${formatNumber(orders.length, 0)} รายการ</span>
+          <span id="crp-table-count">แสดง ${formatNumber(visibleOrders.length, 0)} รายการ</span>
         </div>
         <div class="dashboard-table-actions">
           <div id="crp-table-search-host"></div>
@@ -711,18 +803,18 @@
               <th class="group-header">ส่วนลด</th>
             </tr>
             <tr class="col-row">
-              <th>เซลล์</th>
-              <th class="group-start">รหัส Order</th>
-              <th>จองวันที่</th>
-              <th>ลูกค้า</th>
-              <th>ประเทศ</th>
-              <th>เดินทาง</th>
-              <th class="right group-start">ยอดจอง</th>
-              <th class="center">ผู้เดินทาง</th>
-              <th class="center">วันชำระงวด 1</th>
-              <th class="right group-start">คอมรวม</th>
-              <th class="right">คอม (หักส่วนลด)</th>
-              <th class="right group-start">ส่วนลดรวม</th>
+              <th data-sort="seller" data-type="string">เซลล์</th>
+              <th class="group-start" data-sort="order_code" data-type="string">รหัส Order</th>
+              <th data-sort="created_at" data-type="date">จองวันที่</th>
+              <th data-sort="customer_name" data-type="string">ลูกค้า</th>
+              <th data-sort="country_name" data-type="string">ประเทศ</th>
+              <th data-sort="travel_period" data-type="string">เดินทาง</th>
+              <th class="right group-start" data-sort="net_amount" data-type="number">ยอดจอง</th>
+              <th class="center" data-sort="room_quantity" data-type="number">ผู้เดินทาง</th>
+              <th class="center" data-sort="first_paid_at" data-type="date">วันชำระงวด 1</th>
+              <th class="right group-start" data-sort="supplier_commission" data-type="number">คอมรวม</th>
+              <th class="right" data-sort="net_commission" data-type="number">คอม (หักส่วนลด)</th>
+              <th class="right group-start" data-sort="discount" data-type="number">ส่วนลดรวม</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>

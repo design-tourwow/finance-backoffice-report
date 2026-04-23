@@ -27,6 +27,8 @@
   let availableWholesales = []; // List of wholesales from API
   let selectedWholesales = []; // Array for multi-select: [{ id, name }]
   let currentViewMode = 'sales'; // 'sales' or 'travelers'
+  let dashboardSortState = { key: null, direction: 'desc' };
+  let dashboardSortInstance = null;
 
   document.addEventListener('DOMContentLoaded', function () {
     initWholesaleDestinations();
@@ -1937,30 +1939,23 @@
   // Initialize table sorting
   function initTableSorting(wholesales, totalBookings, countries) {
     const table = document.getElementById('dashboardTable');
-    if (!table) return;
+    if (!table || !window.SharedSortableHeader) return;
+    if (dashboardSortInstance && dashboardSortInstance.destroy) {
+      dashboardSortInstance.destroy();
+    }
 
-    const headers = table.querySelectorAll('th[data-sort]');
-    let currentSort = { field: null, direction: 'asc' };
+    dashboardSortInstance = window.SharedSortableHeader.bindTable(table, {
+      headerSelector  : 'th[data-sort]',
+      sortKey         : dashboardSortState.key,
+      sortDir         : dashboardSortState.direction,
+      defaultDirection: 'desc',
+      injectIcon      : false,
+      sortInDom       : false,
+      onSort: function (sortState) {
+        const field = sortState.key;
+        const country = sortState.header.getAttribute('data-country');
+        dashboardSortState = { key: field, direction: sortState.direction };
 
-    headers.forEach(header => {
-      // Remove old event listeners by replacing the element
-      const newHeader = header.cloneNode(true);
-      header.parentNode.replaceChild(newHeader, header);
-
-      newHeader.addEventListener('click', function() {
-        const field = this.dataset.sort;
-        const type = this.dataset.type;
-        const country = this.dataset.country;
-
-        // Toggle direction
-        if (currentSort.field === field) {
-          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-        } else {
-          currentSort.field = field;
-          currentSort.direction = 'desc';
-        }
-
-        // Sort data
         const sorted = [...wholesales].sort((a, b) => {
           let valA, valB;
 
@@ -1970,7 +1965,7 @@
           } else if (field === 'total') {
             valA = a.total;
             valB = b.total;
-          } else if (field.startsWith('country-') && country) {
+          } else if (field.indexOf('country-') === 0 && country) {
             valA = a.countries[country] || 0;
             valB = b.countries[country] || 0;
           } else {
@@ -1978,23 +1973,18 @@
             valB = b.total;
           }
 
-          if (currentSort.direction === 'asc') {
+          if (sortState.direction === 'asc') {
             return valA > valB ? 1 : -1;
-          } else {
-            return valA < valB ? 1 : -1;
           }
+          return valA < valB ? 1 : -1;
         });
 
-        // Update table
         const tableBody = document.getElementById('dashboardTableBody');
         if (tableBody) {
           tableBody.innerHTML = renderTableRows(sorted, totalBookings, countries);
         }
-
-        // Update header styles
-        table.querySelectorAll('th[data-sort]').forEach(h => h.classList.remove('sorted', 'sort-asc', 'sort-desc'));
-        this.classList.add('sorted', currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
-      });
+        return false;
+      }
     });
   }
 

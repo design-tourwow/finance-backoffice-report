@@ -24,6 +24,8 @@
   let currentTableData = [];
   let currentFilterInstance = null;
   let currentTabData = [];
+  let dashboardSortState = { key: null, direction: 'desc' };
+  let dashboardSortInstance = null;
 
   // Country dashboard charts
   let countryDashboardChart = null;
@@ -2489,31 +2491,23 @@
   // Initialize table sorting
   function initTableSorting(data) {
     const table = document.getElementById('dashboardTable');
-    if (!table) return;
+    if (!table || !window.SharedSortableHeader) return;
+    if (dashboardSortInstance && dashboardSortInstance.destroy) {
+      dashboardSortInstance.destroy();
+    }
 
-    const headers = table.querySelectorAll('thead th[data-sort]');
-    let currentSort = { column: null, direction: 'asc' };
+    dashboardSortInstance = window.SharedSortableHeader.bindTable(table, {
+      headerSelector  : 'thead th[data-sort]',
+      sortKey         : dashboardSortState.key,
+      sortDir         : dashboardSortState.direction,
+      defaultDirection: 'desc',
+      injectIcon      : false,
+      sortInDom       : false,
+      onSort: function (sortState) {
+        const sortKey = sortState.key;
+        const sortType = sortState.type || 'string';
+        dashboardSortState = { key: sortKey, direction: sortState.direction };
 
-    headers.forEach(header => {
-      header.addEventListener('click', function() {
-        const sortKey = this.dataset.sort;
-        const sortType = this.dataset.type || 'string';
-
-        // Toggle direction if same column
-        if (currentSort.column === sortKey) {
-          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-        } else {
-          currentSort.column = sortKey;
-          currentSort.direction = 'desc'; // Default to descending for numbers
-        }
-
-        // Update header styles
-        headers.forEach(h => {
-          h.classList.remove('sort-asc', 'sort-desc');
-        });
-        this.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
-
-        // Sort data
         const sortedData = [...currentTabData].sort((a, b) => {
           let aVal = a[sortKey];
           let bVal = b[sortKey];
@@ -2526,17 +2520,17 @@
             bVal = (bVal || '').toString().toLowerCase();
           }
 
-          if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
-          if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+          if (aVal < bVal) return sortState.direction === 'asc' ? -1 : 1;
+          if (aVal > bVal) return sortState.direction === 'asc' ? 1 : -1;
           return 0;
         });
 
-        // Re-render table body
         const tableBody = document.getElementById('dashboardTableBody');
         if (tableBody) {
           tableBody.innerHTML = renderDashboardTableRows(sortedData);
         }
-      });
+        return false;
+      }
     });
   }
 

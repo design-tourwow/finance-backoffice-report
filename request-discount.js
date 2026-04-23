@@ -35,6 +35,8 @@
 
   var sortKey = 'created_at';
   var sortDir = 'desc';
+  var summarySortKey = 'total_discount';
+  var summarySortDir = 'desc';
 
   var currentPage  = 1;
   var ITEMS_PER_PAGE = 50;
@@ -165,6 +167,21 @@
         }
       };
     }).sort(function (a, b) { return b.total_discount - a.total_discount; });
+  }
+
+  function sortedSalesSummary(summary) {
+    var dir = summarySortDir === 'asc' ? 1 : -1;
+    return summary.slice().sort(function (a, b) {
+      var va = a[summarySortKey];
+      var vb = b[summarySortKey];
+      if (summarySortKey === 'seller_name') {
+        va = String(va || '').toLowerCase();
+        vb = String(vb || '').toLowerCase();
+      }
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -299,8 +316,9 @@
 
   function renderSalesSummary(summary) {
     if (summary.length === 0) return '';
+    var sortedSummary = sortedSalesSummary(summary);
 
-    var rows = summary.map(function (s, i) {
+    var rows = sortedSummary.map(function (s, i) {
       var rowClass  = i === 0 ? 'rd-rank-1' : i === 1 ? 'rd-rank-2' : i === 2 ? 'rd-rank-3' : '';
       var badgeClass = i < 3 ? 'rd-rank-badge top' : 'rd-rank-badge';
       var flame     = i === 0 ? ' <span style="color:#dc2626">&#128162;</span>' : '';
@@ -338,11 +356,11 @@
         '<table class="rd-table">' +
           '<thead><tr>' +
             '<th>อันดับ</th>' +
-            '<th>เซลล์</th>' +
+            '<th data-sort="seller_name" data-type="string">เซลล์</th>' +
             '<th class="center">สัดส่วน % ส่วนลด</th>' +
-            '<th class="center">Order มีส่วนลด / ทั้งหมด</th>' +
-            '<th class="right">% เฉลี่ยส่วนลด</th>' +
-            '<th class="right">ส่วนลดรวม</th>' +
+            '<th class="center" data-sort="order_count" data-type="number">Order มีส่วนลด / ทั้งหมด</th>' +
+            '<th class="right" data-sort="avg_discount_percent" data-type="number">% เฉลี่ยส่วนลด</th>' +
+            '<th class="right" data-sort="total_discount" data-type="number">ส่วนลดรวม</th>' +
           '</tr></thead>' +
           '<tbody>' + rows + '</tbody>' +
         '</table>' +
@@ -567,7 +585,7 @@
           sortDir = sortDir === 'asc' ? 'desc' : 'asc';
         } else {
           sortKey = key;
-          sortDir = 'asc';
+          sortDir = 'desc';
         }
         currentPage = 1;
         renderContent();
@@ -691,8 +709,6 @@
       });
     }
 
-    // Scroll-hint fade on the Top-Sales summary table (hand-rolled markup,
-    // not SharedTable — SharedTable wires this up itself in shared-table.js).
     var rdWrap = document.querySelector('#rd-content .rd-table-wrap');
     if (rdWrap) {
       var updateRdHint = function () {
@@ -703,6 +719,25 @@
       rdWrap.addEventListener('scroll', updateRdHint);
       window.addEventListener('resize', updateRdHint);
       setTimeout(updateRdHint, 0);
+    }
+
+    if (window.SharedSortableHeader) {
+      var summaryTable = document.querySelector('#rd-content .rd-table');
+      if (summaryTable) {
+        window.SharedSortableHeader.bindTable(summaryTable, {
+          headerSelector  : 'thead th[data-sort]',
+          sortKey         : summarySortKey,
+          sortDir         : summarySortDir,
+          defaultDirection: 'desc',
+          sortInDom       : false,
+          onSort: function (sortState) {
+            summarySortKey = sortState.key;
+            summarySortDir = sortState.direction;
+            renderContent();
+            return false;
+          }
+        });
+      }
     }
   }
 

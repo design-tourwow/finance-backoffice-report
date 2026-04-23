@@ -271,6 +271,7 @@
   text-align: left;
   border-bottom: 1px solid #f1f5f9;
   white-space: nowrap;
+  position: relative;
 }
 
 .crp-summary-group--ts .crp-summary-table thead th {
@@ -282,6 +283,40 @@
 }
 
 .crp-summary-table thead th.right { text-align: right; }
+
+.crp-summary-table thead th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+  padding-right: 28px;
+}
+
+.crp-summary-table thead th .sort-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.crp-summary-table thead th:hover .sort-icon {
+  opacity: 0.7;
+}
+
+.crp-summary-table thead th.sort-asc,
+.crp-summary-table thead th.sort-desc {
+  color: #4a7ba7;
+}
+
+.crp-summary-table thead th.sort-asc .sort-icon,
+.crp-summary-table thead th.sort-desc .sort-icon {
+  opacity: 1;
+  color: #4a7ba7;
+}
+
+.crp-summary-table thead th.sort-asc .sort-icon svg {
+  transform: rotate(180deg);
+}
 
 .crp-summary-table tbody tr {
   border-bottom: 1px solid #f9fafb;

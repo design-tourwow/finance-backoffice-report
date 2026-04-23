@@ -37,6 +37,13 @@ const TableSortingComponent = {
       columns: columns
     };
 
+    function sortIconHTML() {
+      if (window.SharedSortableHeader && typeof window.SharedSortableHeader.getSortIconHTML === 'function') {
+        return window.SharedSortableHeader.getSortIconHTML();
+      }
+      return '<span class="sort-icon" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>';
+    }
+
     function renderHeaders() {
       thead.innerHTML = '';
       const headerRow = document.createElement('tr');
@@ -48,6 +55,8 @@ const TableSortingComponent = {
         if (column.sortable !== false) {
           th.classList.add('sortable');
           th.setAttribute('data-column', index);
+          th.setAttribute('data-sort', column.key);
+          th.setAttribute('data-type', column.type || 'string');
           th.setAttribute('role', 'button');
           th.setAttribute('tabindex', '0');
           
@@ -59,37 +68,17 @@ const TableSortingComponent = {
           headerContent.appendChild(label);
           
           const sortIcon = document.createElement('span');
-          sortIcon.className = 'sort-icon';
-          sortIcon.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path class="sort-default" d="M7 15l5 5 5-5M7 9l5-5 5 5" opacity="0.3"/>
-              <path class="sort-asc-arrow" d="M7 9l5-5 5 5" opacity="0" stroke="#4a7ba7"/>
-              <path class="sort-desc-arrow" d="M7 15l5 5 5-5" opacity="0" stroke="#4a7ba7"/>
-            </svg>
-            <span class="sort-label"></span>
-          `;
+          sortIcon.innerHTML = sortIconHTML();
           headerContent.appendChild(sortIcon);
-          
-          // Update sort label
-          const sortLabel = sortIcon.querySelector('.sort-label');
-          if (state.sortColumn === index) {
-            if (state.sortDirection === 'asc') {
-              const topChar = column.type === 'number' || column.type === 'currency' ? '1' : 'A';
-              const bottomChar = column.type === 'number' || column.type === 'currency' ? '9' : 'Z';
-              sortLabel.innerHTML = `<span class="sort-top">${topChar}</span><span class="sort-bottom">${bottomChar}</span>`;
-            } else if (state.sortDirection === 'desc') {
-              const topChar = column.type === 'number' || column.type === 'currency' ? '9' : 'Z';
-              const bottomChar = column.type === 'number' || column.type === 'currency' ? '1' : 'A';
-              sortLabel.innerHTML = `<span class="sort-top">${topChar}</span><span class="sort-bottom">${bottomChar}</span>`;
-            }
-          }
           
           th.appendChild(headerContent);
           
           // Update active state
           if (state.sortColumn === index) {
-            th.classList.add('sorted');
-            th.classList.add(state.sortDirection);
+            th.classList.add(state.sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+            th.setAttribute('aria-sort', state.sortDirection === 'asc' ? 'ascending' : 'descending');
+          } else {
+            th.setAttribute('aria-sort', 'none');
           }
           
           // Click handler
@@ -150,51 +139,42 @@ const TableSortingComponent = {
       });
     }
 
-    function sortByColumn(columnIndex) {
+    function sortDataForColumn(columnIndex) {
       const column = columns[columnIndex];
-      
+      state.data = [...state.data].sort((a, b) => {
+        let aVal = a[column.key];
+        let bVal = b[column.key];
+        
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        
+        if (column.type === 'number' || column.type === 'currency') {
+          aVal = parseFloat(aVal) || 0;
+          bVal = parseFloat(bVal) || 0;
+        } else {
+          aVal = String(aVal).toLowerCase();
+          bVal = String(bVal).toLowerCase();
+        }
+        
+        let comparison = 0;
+        if (aVal > bVal) comparison = 1;
+        if (aVal < bVal) comparison = -1;
+        
+        return state.sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    function sortByColumn(columnIndex) {
       // Toggle sort direction
       if (state.sortColumn === columnIndex) {
-        if (state.sortDirection === 'asc') {
-          state.sortDirection = 'desc';
-        } else if (state.sortDirection === 'desc') {
-          // Reset to default
-          state.sortColumn = null;
-          state.sortDirection = null;
-          state.data = [...data]; // Reset to original order
-        }
+        state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
       } else {
         state.sortColumn = columnIndex;
-        state.sortDirection = 'asc';
+        state.sortDirection = 'desc';
       }
       
-      // Sort data if direction is set
-      if (state.sortDirection) {
-        state.data.sort((a, b) => {
-          let aVal = a[column.key];
-          let bVal = b[column.key];
-          
-          // Handle null/undefined
-          if (aVal == null) return 1;
-          if (bVal == null) return -1;
-          
-          // Convert to numbers for numeric columns
-          if (column.type === 'number' || column.type === 'currency') {
-            aVal = parseFloat(aVal) || 0;
-            bVal = parseFloat(bVal) || 0;
-          } else {
-            // String comparison
-            aVal = String(aVal).toLowerCase();
-            bVal = String(bVal).toLowerCase();
-          }
-          
-          let comparison = 0;
-          if (aVal > bVal) comparison = 1;
-          if (aVal < bVal) comparison = -1;
-          
-          return state.sortDirection === 'asc' ? comparison : -comparison;
-        });
-      }
+      state.data = [...data];
+      sortDataForColumn(columnIndex);
       
       renderHeaders();
       renderRows();
@@ -227,8 +207,9 @@ const TableSortingComponent = {
     return {
       updateData: (newData) => {
         state.data = [...newData];
-        state.sortColumn = null;
-        state.sortDirection = null;
+        if (state.sortColumn != null) {
+          sortDataForColumn(state.sortColumn);
+        }
         renderHeaders();
         renderRows();
       },

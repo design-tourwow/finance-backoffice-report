@@ -9,6 +9,8 @@
   let selectedTaskTypeId = '';
   let selectedSellerId = '';
   let tableQuery = '';
+  let tableSortState = { key: null, direction: 'desc' };
+  let tableSortInstance = null;
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -359,21 +361,21 @@
           <table class="dashboard-table work-list-table">
             <thead>
               <tr>
-                <th>ลำดับ</th>
-                <th>วันที่ต้องทำ</th>
-                <th>งานที่ต้องทำ</th>
-                <th>รายละเอียด Order</th>
-                <th>วันที่จอง</th>
-                <th>ผู้ดูแล</th>
+                <th data-sort="seq" data-type="number">ลำดับ</th>
+                <th data-sort="task_date" data-type="date">วันที่ต้องทำ</th>
+                <th data-sort="task_type_name" data-type="string">งานที่ต้องทำ</th>
+                <th data-sort="order_details" data-type="string">รายละเอียด Order</th>
+                <th data-sort="order_created_at" data-type="date">วันที่จอง</th>
+                <th data-sort="owner" data-type="string">ผู้ดูแล</th>
               </tr>
             </thead>
             <tbody>
               ${tasks.map(task => `
                 <tr>
-                  <td>${task.seq}</td>
-                  <td>${escHtml(task.task_date)}</td>
-                  <td><div class="work-list-task-name">${escHtml(task.task_type_name)}</div></td>
-                  <td>
+                  <td data-sort-value="${escHtml(task.seq)}">${task.seq}</td>
+                  <td data-sort-value="${escHtml(task.task_date)}">${escHtml(task.task_date)}</td>
+                  <td data-sort-value="${escHtml(task.task_type_name)}"><div class="work-list-task-name">${escHtml(task.task_type_name)}</div></td>
+                  <td data-sort-value="${escHtml([task.order_code, task.customer_name, task.customer_phone_number, task.travel_period_text, task.traveler_count].join(' '))}">
                     <div class="work-list-order-main">
                       <div class="work-list-order-title"><span class="work-list-order-code">${escHtml(task.order_code)}</span> ลูกค้า : ${escHtml(task.customer_name)} โทร. ${escHtml(task.customer_phone_number)}</div>
                       <div class="work-list-order-meta">${escHtml(task.travel_period_text)} ผู้เดินทาง ${escHtml(task.traveler_count)}</div>
@@ -383,8 +385,8 @@
                       </div>
                     </div>
                   </td>
-                  <td>${escHtml(task.order_created_at)}</td>
-                  <td>
+                  <td data-sort-value="${escHtml(task.order_created_at)}">${escHtml(task.order_created_at)}</td>
+                  <td data-sort-value="${escHtml([task.seller_nick_name, task.crm_nick_name].join(' '))}">
                     <div class="work-list-owner">
                       <div class="work-list-owner-line"><strong>เซลล์</strong><span class="work-list-owner-badge">${escHtml(task.seller_nick_name)}</span></div>
                       <div class="work-list-owner-line"><strong>crm</strong><span class="work-list-owner-badge work-list-owner-badge-muted">${escHtml(task.crm_nick_name)}</span></div>
@@ -411,6 +413,21 @@
 
     results.innerHTML = renderTable(tasks);
     updateSummary(tasks.length);
+    if (window.SharedSortableHeader) {
+      const tableEl = results.querySelector('.work-list-table');
+      if (tableSortInstance && tableSortInstance.destroy) tableSortInstance.destroy();
+      if (tableEl) {
+        tableSortInstance = window.SharedSortableHeader.bindTable(tableEl, {
+          headerSelector  : 'thead th[data-sort]',
+          sortKey         : tableSortState.key,
+          sortDir         : tableSortState.direction,
+          defaultDirection: 'desc',
+          onSort: function (sortState) {
+            tableSortState = { key: sortState.key, direction: sortState.direction };
+          }
+        });
+      }
+    }
     if (window.SharedTableSearch && document.getElementById('wl-table-search-host')) {
       window.SharedTableSearch.init({
         containerId: 'wl-table-search-host',

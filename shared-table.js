@@ -19,16 +19,11 @@
     return el && typeof el === 'object' && typeof el.appendChild === 'function';
   }
 
-  // Sort-icon SVG reuses the same three-state design from supplier-commission.js /
-  // discount-sales.js: neutral double-arrow, active-desc down-arrow, active-asc up-arrow.
-  function sortIconSVG(columnKey, sortKey, sortDir) {
-    if (sortKey !== columnKey) {
-      return '<svg class="shared-sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>';
+  function sortIconHTML() {
+    if (window.SharedSortableHeader && typeof window.SharedSortableHeader.getSortIconHTML === 'function') {
+      return window.SharedSortableHeader.getSortIconHTML();
     }
-    if (sortDir === 'desc') {
-      return '<svg class="shared-sort-icon shared-sort-icon--active" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>';
-    }
-    return '<svg class="shared-sort-icon shared-sort-icon--active" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>';
+    return '<span class="sort-icon" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span>';
   }
 
   function alignClass(align) {
@@ -47,11 +42,11 @@
       var cls = 'shared-th ' + alignClass(col.align);
       var sortable = col.sortable !== false; // default sortable unless explicitly false
       if (sortable) {
-        var active = sortKey === col.key ? ' shared-th--sort-active' : '';
+        var active = sortKey === col.key ? (' ' + (sortDir === 'asc' ? 'sort-asc' : 'sort-desc')) : '';
         return '<th class="' + cls + active + '" data-sort-key="' + escapeHtml(col.key) + '" aria-sort="' + ariaSort(col.key, sortKey, sortDir) + '">'
           + '<button type="button" class="shared-sort-btn" data-sort-key="' + escapeHtml(col.key) + '">'
           + '<span class="shared-th-label">' + escapeHtml(col.label) + '</span>'
-          + sortIconSVG(col.key, sortKey, sortDir)
+          + sortIconHTML()
           + '</button>'
           + '</th>';
       }
