@@ -77,7 +77,7 @@
   }
 
   // ---- Helpers ----
-  function formatNumber(val, decimals = 2) {
+  function formatNumber(val, decimals = 0) {
     return (parseFloat(val) || 0).toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   }
 
@@ -832,9 +832,9 @@
       return [
         o.seller_nick_name || '', o.order_code || '', formatDate(o.created_at), o.customer_name || '',
         o.country_name_th || '', o.product_period_snapshot || '',
-        parseFloat(o.net_amount || 0).toFixed(2), o.room_quantity || 0,
-        formatDate(o.first_paid_at), parseFloat(o.supplier_commission || 0).toFixed(2),
-        netCom.toFixed(2), parseFloat(o.discount || 0).toFixed(2),
+        formatNumber(o.net_amount, 0), o.room_quantity || 0,
+        formatDate(o.first_paid_at), formatNumber(o.supplier_commission, 0),
+        formatNumber(netCom, 0), formatNumber(o.discount, 0),
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
     });
 
@@ -1039,19 +1039,19 @@
       <div class="crp-print-summary">
         <div class="crp-print-card">
           <span class="crp-print-card-label">ยอดจองรวม</span>
-          <span class="crp-print-card-value">฿${formatNumber(summary.total_net_amount)}</span>
+          <span class="crp-print-card-value">${formatNumber(summary.total_net_amount)}</span>
         </div>
         <div class="crp-print-card">
           <span class="crp-print-card-label">คอมรวม</span>
-          <span class="crp-print-card-value">฿${formatNumber(summary.total_commission)}</span>
+          <span class="crp-print-card-value">${formatNumber(summary.total_commission)}</span>
         </div>
         <div class="crp-print-card">
           <span class="crp-print-card-label">คอม (หักส่วนลด)</span>
-          <span class="crp-print-card-value">฿${formatNumber(netCommission)}</span>
+          <span class="crp-print-card-value">${formatNumber(netCommission)}</span>
         </div>
         <div class="crp-print-card">
           <span class="crp-print-card-label">ส่วนลดรวม</span>
-          <span class="crp-print-card-value">฿${formatNumber(summary.total_discount)}</span>
+          <span class="crp-print-card-value">${formatNumber(summary.total_discount)}</span>
         </div>
       </div>
 
@@ -1188,12 +1188,12 @@
       footer.innerHTML = `
         <td colspan="4" style="text-align:center;color:#243b53;border-top:2px solid #9fb6cc;">รวม ${escHtml(countText || '')}</td>
         <td style="border-top:2px solid #9fb6cc;"></td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
         <td style="border-top:2px solid #9fb6cc;"></td>
         <td style="border-top:2px solid #9fb6cc;"></td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
-        <td style="text-align:right;color:#16a34a;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(netCommission || 0))}</td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">฿${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
+        <td style="text-align:right;color:#16a34a;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(netCommission || 0))}</td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
       `;
       tbody.appendChild(footer);
     }

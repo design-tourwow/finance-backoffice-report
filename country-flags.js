@@ -21,15 +21,32 @@
     'thailand': 'th',
     'japan': 'jp',
     'south korea': 'kr',
+    'south korea republic of korea': 'kr',
     'korea': 'kr',
     'korea, republic of': 'kr',
     'republic of korea': 'kr',
+    'rok': 'kr',
     'north korea': 'kp',
     'china': 'cn',
+    'people s republic of china': 'cn',
+    'peoples republic of china': 'cn',
+    'prc': 'cn',
+    'mainland china': 'cn',
     'hong kong': 'hk',
+    'hong kong sar': 'hk',
+    'hong kong s a r': 'hk',
     'taiwan': 'tw',
+    'republic of china': 'tw',
+    'roc': 'tw',
+    'taipei': 'tw',
+    'macao': 'mo',
+    'macau': 'mo',
+    'macao sar': 'mo',
+    'macau sar': 'mo',
     'singapore': 'sg',
     'malaysia': 'my',
+    'brunei': 'bn',
+    'brunei darussalam': 'bn',
     'vietnam': 'vn',
     'viet nam': 'vn',
     'indonesia': 'id',
@@ -53,6 +70,9 @@
     'kyrgyzstan': 'kg',
     'tajikistan': 'tj',
     'turkmenistan': 'tm',
+    'georgia': 'ge',
+    'armenia': 'am',
+    'azerbaijan': 'az',
     'united states': 'us',
     'united states of america': 'us',
     'usa': 'us',
@@ -159,7 +179,12 @@
     'el salvador': 'sv',
     'nicaragua': 'ni',
     'costa rica': 'cr',
-    'panama': 'pa'
+    'panama': 'pa',
+    'andorra': 'ad',
+    'monaco': 'mc',
+    'liechtenstein': 'li',
+    'malta': 'mt',
+    'cyprus': 'cy'
   };
 
   // Thai name → ISO alpha-2 for the most common destinations.
@@ -174,9 +199,15 @@
     'เกาหลีเหนือ': 'kp',
     'จีน': 'cn',
     'ฮ่องกง': 'hk',
+    'ฮ่องกง จีน': 'hk',
     'ไต้หวัน': 'tw',
+    'ไทเป': 'tw',
+    'มาเก๊า': 'mo',
+    'มาคาว': 'mo',
     'สิงคโปร์': 'sg',
     'มาเลเซีย': 'my',
+    'บรูไน': 'bn',
+    'บรูไนดารุสซาลาม': 'bn',
     'เวียดนาม': 'vn',
     'อินโดนีเซีย': 'id',
     'ฟิลิปปินส์': 'ph',
@@ -236,6 +267,9 @@
     'ตุรกี': 'tr',
     'อิสราเอล': 'il',
     'จอร์แดน': 'jo',
+    'จอร์เจีย': 'ge',
+    'อาร์เมเนีย': 'am',
+    'อาเซอร์ไบจาน': 'az',
     'เลบานอน': 'lb',
     'อิรัก': 'iq',
     'อิหร่าน': 'ir',
@@ -278,33 +312,95 @@
     'โดมินิกัน': 'do',
     'เฮติ': 'ht',
     'จาไมกา': 'jm',
-    'ปานามา': 'pa'
+    'ปานามา': 'pa',
+    'อันดอร์รา': 'ad',
+    'โมนาโก': 'mc',
+    'ลิกเตนสไตน์': 'li',
+    'มอลตา': 'mt',
+    'ไซปรัส': 'cy'
   };
 
   function normalise(s) {
     if (s == null) return '';
-    return String(s).trim().toLowerCase().replace(/\s+/g, ' ');
+    return String(s)
+      .trim()
+      .toLowerCase()
+      .replace(/[’']/g, '')
+      .replace(/[.&]/g, ' ')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
+  }
+
+  function uniquePush(list, value) {
+    if (value && list.indexOf(value) === -1) list.push(value);
+  }
+
+  function candidateKeys(value, isThai) {
+    var raw = String(value || '').trim();
+    if (!raw) return [];
+
+    var candidates = [];
+    var variants = [
+      raw,
+      raw.replace(/\s*\([^)]*\)\s*/g, ' '),
+      raw.replace(/\s*\[[^\]]*\]\s*/g, ' '),
+      raw.replace(/\s*\/.*$/, ' '),
+      raw.replace(/\s*,.*$/, ' ')
+    ];
+
+    variants.forEach(function (variant) {
+      var normalised = normalise(variant);
+      uniquePush(candidates, normalised);
+      uniquePush(candidates, normalise(variant.replace(/^the\s+/i, '')));
+      if (isThai) uniquePush(candidates, normalise(variant.replace(/^ประเทศ\s*/, '')));
+      uniquePush(candidates, normalise(variant.replace(/^country of\s+/i, '')));
+      uniquePush(candidates, normalise(variant.replace(/^republic of\s+/i, '')));
+      uniquePush(candidates, normalise(variant.replace(/^สาธารณรัฐ\s*/, '')));
+    });
+
+    return candidates;
+  }
+
+  function directCodeFor(country) {
+    var direct = country.iso_code || country.iso || country.code || country.country_code || country.alpha2 || country.alpha_2;
+    if (typeof direct !== 'string') return null;
+    var cleaned = direct.trim();
+    if (!/^[A-Za-z]{2,3}$/.test(cleaned)) return null;
+    return cleaned.slice(0, 2).toLowerCase();
   }
 
   function codeFor(country) {
     if (!country) return null;
 
     // 1. If the backend already hands us a code, trust it.
-    var direct = country.iso_code || country.iso || country.code || country.country_code;
-    if (typeof direct === 'string' && direct.length >= 2) {
-      return direct.slice(0, 2).toLowerCase();
-    }
+    var direct = directCodeFor(country);
+    if (direct) return direct;
 
     // 2. Try the English name.
-    var en = normalise(country.name_en);
-    if (en && EN_MAP[en]) return EN_MAP[en];
+    var enFields = [
+      country.name_en,
+      country.country_name_en,
+      country.country_name,
+      country.name
+    ];
+    for (var i = 0; i < enFields.length; i += 1) {
+      var enCandidates = candidateKeys(enFields[i], false);
+      for (var j = 0; j < enCandidates.length; j += 1) {
+        if (EN_MAP[enCandidates[j]]) return EN_MAP[enCandidates[j]];
+      }
+    }
 
     // 3. Try the Thai name (exact first, then without the "ประเทศ" prefix).
-    var th = String(country.name_th || '').trim();
-    if (th && TH_MAP[th]) return TH_MAP[th];
-    if (th.indexOf('ประเทศ') === 0) {
-      var stripped = th.replace(/^ประเทศ\s*/, '');
-      if (TH_MAP[stripped]) return TH_MAP[stripped];
+    var thFields = [
+      country.name_th,
+      country.country_name_th,
+      country.country_th
+    ];
+    for (var k = 0; k < thFields.length; k += 1) {
+      var thCandidates = candidateKeys(thFields[k], true);
+      for (var m = 0; m < thCandidates.length; m += 1) {
+        if (TH_MAP[thCandidates[m]]) return TH_MAP[thCandidates[m]];
+      }
     }
 
     return null;
