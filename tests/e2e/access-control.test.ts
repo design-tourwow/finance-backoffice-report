@@ -41,6 +41,7 @@ test.describe('@p0 access control by job_position', () => {
 
     await expect(page).toHaveURL(/\/403$/);
     await expect(page.getByText('คุณไม่มีสิทธิ์เข้าถึงหน้านี้')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'กลับไปที่หน้าหลัก' })).toHaveAttribute('href', '/dashboard');
   });
 
   test('unauthenticated user is redirected to 401 page', async ({ page }) => {
@@ -48,6 +49,7 @@ test.describe('@p0 access control by job_position', () => {
 
     await expect(page).toHaveURL(/\/401$/);
     await expect(page.getByText('คุณยังไม่มีสิทธิ์เข้าใช้งานหน้านี้ กรุณาเข้าสู่ระบบใหม่ หรือกลับไปยังหน้าแรกของระบบ')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'กลับไปที่หน้าหลัก' })).toHaveAttribute('href', '/dashboard');
   });
 
   test('custom 404 page renders', async ({ page }) => {
@@ -56,5 +58,6 @@ test.describe('@p0 access control by job_position', () => {
     expect(response?.status(), 'HTTP status for /404').toBeLessThan(400);
     await expect(page.getByText('404 Not Found')).toBeVisible();
     await expect(page.getByText('ไม่พบหน้าที่คุณต้องการ อาจถูกย้าย ลบออก หรือพิมพ์ URL ไม่ถูกต้อง')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'กลับไปที่หน้าหลัก' })).toHaveAttribute('href', '/dashboard');
   });
 });
