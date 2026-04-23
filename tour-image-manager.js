@@ -23,7 +23,6 @@
     initMobileMenu();
     initSidebarToggle();
     initDateRangePicker();
-    initMultiSelect();
     initFormHandler();
     initShowAllButtons();
     initAccessibility();
@@ -158,177 +157,24 @@
     });
   }
 
-  // Multi-Select Dropdown
-  function initMultiSelect() {
-    const multiSelects = document.querySelectorAll('.multi-select-wrapper');
-    
-    multiSelects.forEach((wrapper) => {
-      const trigger = wrapper.querySelector('.multi-select-trigger');
-      const dropdown = wrapper.querySelector('.multi-select-dropdown');
-      const searchInput = wrapper.querySelector('.multi-select-search input');
-      const selectAllBtn = wrapper.querySelector('.select-all');
-      const deselectAllBtn = wrapper.querySelector('.deselect-all');
-      const optionsContainer = wrapper.querySelector('.multi-select-options');
-      const hiddenInput = wrapper.nextElementSibling;
-      const selectedText = trigger.querySelector('.selected-text');
-      
-      let selectedValues = [];
-      
-      // Toggle dropdown
-      const toggleDropdown = () => {
-        const isOpen = dropdown.classList.contains('open');
-        
-        // Close all other dropdowns
-        document.querySelectorAll('.multi-select-dropdown.open').forEach(d => {
-          if (d !== dropdown) {
-            d.classList.remove('open');
-            d.previousElementSibling.classList.remove('open');
-            d.previousElementSibling.setAttribute('aria-expanded', 'false');
-          }
-        });
-        
-        if (isOpen) {
-          dropdown.classList.remove('open');
-          trigger.classList.remove('open');
-          trigger.setAttribute('aria-expanded', 'false');
-        } else {
-          dropdown.classList.add('open');
-          trigger.classList.add('open');
-          trigger.setAttribute('aria-expanded', 'true');
-          searchInput.focus();
-        }
-      };
-      
-      // Update selected text
-      const updateSelectedText = () => {
-        const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
-        const count = checkboxes.length;
-        
-        if (count === 0) {
-          selectedText.textContent = trigger.dataset.placeholder || 'เลือก';
-          trigger.classList.add('placeholder');
-        } else {
-          // Show all selected items as comma-separated text
-          const labels = Array.from(checkboxes).map(cb => cb.nextElementSibling.textContent);
-          const fullText = labels.join(', ');
-          selectedText.textContent = fullText;
-          trigger.classList.remove('placeholder');
-        }
-        
-        // Update hidden input
-        selectedValues = Array.from(checkboxes).map(cb => cb.value);
-        hiddenInput.value = selectedValues.join(',');
-      };
-      
-      // Search functionality
-      const filterOptions = () => {
-        const searchTerm = searchInput.value.toLowerCase();
-        const options = optionsContainer.querySelectorAll('.multi-select-option');
-        let hasResults = false;
-        
-        options.forEach(option => {
-          const label = option.querySelector('label').textContent.toLowerCase();
-          if (label.includes(searchTerm)) {
-            option.style.display = 'flex';
-            hasResults = true;
-          } else {
-            option.style.display = 'none';
-          }
-        });
-        
-        // Show/hide no results message
-        let noResults = optionsContainer.querySelector('.multi-select-no-results');
-        if (!hasResults) {
-          if (!noResults) {
-            noResults = document.createElement('div');
-            noResults.className = 'multi-select-no-results';
-            noResults.textContent = 'ไม่พบผลลัพธ์';
-            optionsContainer.appendChild(noResults);
-          }
-          noResults.style.display = 'block';
-        } else if (noResults) {
-          noResults.style.display = 'none';
-        }
-      };
-      
-      // Select all
-      const selectAll = () => {
-        const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
-          .filter(opt => opt.style.display !== 'none')
-          .map(opt => opt.querySelector('input[type="checkbox"]'));
-        
-        visibleCheckboxes.forEach(cb => {
-          cb.checked = true;
-          cb.closest('.multi-select-option').classList.add('selected');
-        });
-        updateSelectedText();
-      };
-      
-      // Deselect all
-      const deselectAll = () => {
-        const visibleCheckboxes = Array.from(optionsContainer.querySelectorAll('.multi-select-option'))
-          .filter(opt => opt.style.display !== 'none')
-          .map(opt => opt.querySelector('input[type="checkbox"]'));
-        
-        visibleCheckboxes.forEach(cb => {
-          cb.checked = false;
-          cb.closest('.multi-select-option').classList.remove('selected');
-        });
-        updateSelectedText();
-      };
-      
-      // Event listeners
-      trigger.addEventListener('click', toggleDropdown);
-      trigger.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          toggleDropdown();
-        }
-      });
-      
-      searchInput.addEventListener('input', filterOptions);
-      searchInput.addEventListener('click', (e) => e.stopPropagation());
-      
-      selectAllBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectAll();
-      });
-      
-      deselectAllBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deselectAll();
-      });
-      
-      // Handle option clicks
-      optionsContainer.addEventListener('click', (e) => {
-        const option = e.target.closest('.multi-select-option');
-        if (option) {
-          const checkbox = option.querySelector('input[type="checkbox"]');
-          if (e.target !== checkbox) {
-            checkbox.checked = !checkbox.checked;
-          }
-          
-          if (checkbox.checked) {
-            option.classList.add('selected');
-          } else {
-            option.classList.remove('selected');
-          }
-          
-          updateSelectedText();
-        }
-      });
-      
-      // Close on outside click
-      document.addEventListener('click', (e) => {
-        if (!wrapper.contains(e.target)) {
-          dropdown.classList.remove('open');
-          trigger.classList.remove('open');
-          trigger.setAttribute('aria-expanded', 'false');
-        }
-      });
-      
-      // Store placeholder
-      trigger.dataset.placeholder = selectedText.textContent;
+  // Wholesale + Country use the shared FilterSearchDropdown (multi-select).
+  // loadSuppliers / loadCountries feed options into the component once the
+  // API response arrives; the hidden inputs (#wholesale / #country) are kept
+  // in sync via each dropdown's onChange so the submit + API glue code
+  // upstream doesn't have to change.
+  function mountMultiSelect(containerId, hiddenInputId, defaultLabel, groupLabel, options) {
+    if (!window.FilterSearchDropdown) return;
+    window.FilterSearchDropdown.init({
+      containerId : containerId,
+      defaultLabel: defaultLabel,
+      options     : options,
+      placeholder : 'ค้นหา...',
+      multiSelect : true,
+      groupLabel  : groupLabel,
+      onChange    : function (csvValue) {
+        var hidden = document.getElementById(hiddenInputId);
+        if (hidden) hidden.value = csvValue || '';
+      }
     });
   }
 
@@ -634,24 +480,15 @@ function initFormHandler() {
       }
     });
     
-    // Reset multi-select dropdowns
-    document.querySelectorAll('.multi-select-wrapper').forEach(wrapper => {
-      const checkboxes = wrapper.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach(cb => {
-        cb.checked = false;
-        cb.closest('.multi-select-option')?.classList.remove('selected');
-      });
-      
-      const trigger = wrapper.querySelector('.multi-select-trigger');
-      const selectedText = trigger?.querySelector('.selected-text');
-      if (selectedText && trigger) {
-        selectedText.textContent = trigger.dataset.placeholder || 'เลือก';
-        trigger.classList.add('placeholder');
-      }
-      
-      const hiddenInput = wrapper.nextElementSibling;
-      if (hiddenInput) hiddenInput.value = '';
+    // Reset the shared FilterSearchDropdown mounts by re-initialising them
+    // with no active options. The hidden inputs are cleared so the submit
+    // handler sees empty strings.
+    ['wholesale', 'country'].forEach(function (id) {
+      var hidden = document.getElementById(id);
+      if (hidden) hidden.value = '';
     });
+    if (typeof loadSuppliers === 'function') loadSuppliers();
+    if (typeof loadCountries === 'function') loadCountries();
     
     // Close autocomplete dropdown
     const autocompleteDropdown = document.getElementById('imageNameAutocomplete');
@@ -1269,56 +1106,28 @@ function initShowAllButtons() {
     }
   }
 
-  // Load suppliers (wholesale) into dropdown
+  // Load suppliers (wholesale) and mount shared FilterSearchDropdown.
   async function loadSuppliers() {
-    // Get suppliers from API
     const response = await TourImageAPI.getSuppliers();
-    const wholesaleOptions = document.querySelector('#wholesaleMultiSelect .multi-select-options');
-    
-    if (response && response.status === 'success' && response.data && wholesaleOptions) {
-      // Clear existing options
-      wholesaleOptions.innerHTML = '';
-      
-      // Add suppliers from API response
-      response.data.forEach(supplier => {
-        const optionDiv = document.createElement('div');
-        optionDiv.className = 'multi-select-option';
-        optionDiv.dataset.value = supplier.id;
-        optionDiv.innerHTML = `
-          <input type="checkbox" id="wholesale-${supplier.id}" value="${supplier.id}">
-          <label for="wholesale-${supplier.id}">${supplier.name_en} (${supplier.name_th})</label>
-        `;
-        wholesaleOptions.appendChild(optionDiv);
-      });
-      
-      console.log('✅ Loaded suppliers:', response.data.length);
-    }
+    if (!response || response.status !== 'success' || !response.data) return;
+
+    var opts = response.data.map(function (s) {
+      return { value: String(s.id), label: s.name_en + ' (' + s.name_th + ')' };
+    });
+    mountMultiSelect('wholesaleMultiSelect', 'wholesale', 'เลือก Wholesale', 'Wholesale', opts);
+    console.log('✅ Loaded suppliers:', response.data.length);
   }
 
-  // Load countries into dropdown
+  // Load countries and mount shared FilterSearchDropdown.
   async function loadCountries() {
-    // Get countries from API
     const response = await TourImageAPI.getCountries('country_name_th_by_asc');
-    const countryOptions = document.getElementById('countryOptions');
-    
-    if (response && response.status === 'success' && response.data && countryOptions) {
-      // Clear existing options
-      countryOptions.innerHTML = '';
-      
-      // Add countries from API response
-      response.data.forEach(country => {
-        const optionDiv = document.createElement('div');
-        optionDiv.className = 'multi-select-option';
-        optionDiv.dataset.value = country.id;
-        optionDiv.innerHTML = `
-          <input type="checkbox" id="country-${country.id}" value="${country.id}">
-          <label for="country-${country.id}">${country.name_th} (${country.name_en})</label>
-        `;
-        countryOptions.appendChild(optionDiv);
-      });
-      
-      console.log('✅ Loaded countries:', response.data.length);
-    }
+    if (!response || response.status !== 'success' || !response.data) return;
+
+    var opts = response.data.map(function (c) {
+      return { value: String(c.id), label: c.name_th + ' (' + c.name_en + ')' };
+    });
+    mountMultiSelect('countryMultiSelect', 'country', 'เลือกประเทศ', 'ประเทศ', opts);
+    console.log('✅ Loaded countries:', response.data.length);
   }
 
   // Load images

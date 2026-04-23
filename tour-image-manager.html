@@ -26,6 +26,7 @@
     <!-- Styles -->
     <link rel="stylesheet" href="tour-image-manager.css" />
     <link rel="stylesheet" href="date-picker-component.css" />
+    <link rel="stylesheet" href="filter-panel.css" />
     
     <!-- Configuration -->
     <!-- CRITICAL: Set API URL based on hostname BEFORE loading any other scripts -->
@@ -57,6 +58,7 @@
     <script src="token-utils.js?v=20250128"></script>
     <script src="tour-image-manager-api.js?v=20241222-5"></script>
     <script src="date-picker-component.js"></script>
+    <script src="filter-search-dropdown-component.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Authentication Handler -->
@@ -172,57 +174,12 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="wholesale">Wholesale</label>
-                  <div class="multi-select-wrapper" id="wholesaleMultiSelect">
-                    <div class="multi-select-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
-                      <span class="selected-text">เลือก Wholesale</span>
-                      <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                    <div class="multi-select-dropdown" role="listbox">
-                      <div class="multi-select-search">
-                        <input type="text" placeholder="ค้นหา..." aria-label="ค้นหา Wholesale">
-                        <div class="multi-select-actions">
-                          <button type="button" class="multi-select-action-btn select-all">เลือกทั้งหมด</button>
-                          <button type="button" class="multi-select-action-btn deselect-all">ล้างทั้งหมด</button>
-                        </div>
-                      </div>
-                      <div class="multi-select-options">
-                        <div class="multi-select-option" data-value="ttn">
-                          <input type="checkbox" id="wholesale-ttn" value="ttn">
-                          <label for="wholesale-ttn">TTN PLUS</label>
-                        </div>
-                        <div class="multi-select-option" data-value="zego">
-                          <input type="checkbox" id="wholesale-zego" value="zego">
-                          <label for="wholesale-zego">ZEGO TRAVEL CO.,LTD.</label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <div id="wholesaleMultiSelect" class="tim-filter-dropdown"></div>
                   <input type="hidden" id="wholesale" name="wholesale" value="">
                 </div>
                 <div class="form-group">
                   <label for="country">ประเทศ</label>
-                  <div class="multi-select-wrapper" id="countryMultiSelect">
-                    <div class="multi-select-trigger placeholder" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
-                      <span class="selected-text">เลือกประเทศ</span>
-                      <svg class="arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                    <div class="multi-select-dropdown" role="listbox">
-                      <div class="multi-select-search">
-                        <input type="text" placeholder="ค้นหา..." aria-label="ค้นหาประเทศ">
-                        <div class="multi-select-actions">
-                          <button type="button" class="multi-select-action-btn select-all">เลือกทั้งหมด</button>
-                          <button type="button" class="multi-select-action-btn deselect-all">ล้างทั้งหมด</button>
-                        </div>
-                      </div>
-                      <div class="multi-select-options" id="countryOptions">
-                        <!-- Options will be loaded dynamically -->
-                      </div>
-                    </div>
-                  </div>
+                  <div id="countryMultiSelect" class="tim-filter-dropdown"></div>
                   <input type="hidden" id="country" name="country" value="">
                 </div>
                 <div class="form-group">
