@@ -99,7 +99,7 @@
     if (filterState.mode !== 'all')       filters.year    = filterState.year;
     if (filterState.mode === 'quarterly') filters.quarter = filterState.quarter;
     if (filterState.mode === 'monthly')   filters.month   = filterState.month;
-    if (filterState.country_id)   filters.country_id   = parseInt(filterState.country_id, 10);
+    if (filterState.country_id)   filters.country_id   = filterState.country_id;
     if (filterState.job_position) filters.job_position = filterState.job_position;
     if (filterState.team_number)  filters.team_number  = parseInt(filterState.team_number, 10);
     if (filterState.user_id)      filters.user_id      = parseInt(filterState.user_id, 10);

@@ -353,29 +353,36 @@
         try { countries = utils.sortCountriesByThai(countries); } catch (e) { /* noop */ }
       }
       var flags = window.CountryFlags;
-      var opts = [{ value: '', label: 'ทุกประเทศ', icon: ICONS.globe, active: state.country_id == null }]
-        .concat(countries.map(function (c) {
-          return {
-            value : String(c.id),
-            label : c.name_th || c.name_en || ('#' + c.id),
-            // Per-option flag in the list. The trigger keeps the globe icon
-            // from current.icon below unless a country is selected — in which
-            // case the selected option's flag replaces it.
-            icon  : flags ? flags.iconFor(c, { size: 18 }) : '',
-            active: state.country_id != null && Number(c.id) === Number(state.country_id)
-          };
-        }));
-      var current = findActive(opts) || opts[0];
+      // Normalise state.country_id: null / scalar / csv string / number[]
+      // → a Set of id strings for active-option marking.
+      var activeSet = {};
+      if (state.country_id != null && state.country_id !== '') {
+        var selectedIds = Array.isArray(state.country_id)
+          ? state.country_id
+          : String(state.country_id).split(',');
+        selectedIds.forEach(function (id) {
+          var s = String(id).trim();
+          if (s) activeSet[s] = true;
+        });
+      }
+      var opts = countries.map(function (c) {
+        return {
+          value : String(c.id),
+          label : c.name_th || c.name_en || ('#' + c.id),
+          icon  : flags ? flags.iconFor(c, { size: 18 }) : '',
+          active: !!activeSet[String(c.id)]
+        };
+      });
       window.FilterSearchDropdown.init({
         containerId : ids.country,
-        defaultLabel: current.label,
-        // Trigger icon: globe when no country is selected, the country's flag
-        // when one is active.
-        defaultIcon : current.icon || ICONS.globe,
+        defaultLabel: 'ทุกประเทศ',
+        defaultIcon : ICONS.globe,
         options     : opts,
         placeholder : 'ค้นหาประเทศ...',
-        onChange    : function (val) {
-          state.country_id = val ? parseInt(val, 10) : null;
+        multiSelect : true,
+        groupLabel  : 'ประเทศ',
+        onChange    : function (csvValue) {
+          state.country_id = csvValue || null;
         }
       });
     }

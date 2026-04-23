@@ -12,7 +12,7 @@
    * @param {number}  [filters.year]
    * @param {number}  [filters.quarter]
    * @param {number}  [filters.month]
-   * @param {number}  [filters.country_id]
+   * @param {number|string} [filters.country_id] — one id, or csv "1,2,3"
    * @param {string}  [filters.job_position]
    * @param {number}  [filters.team_number]
    * @param {number}  [filters.user_id]
@@ -25,7 +25,7 @@
       year: filters.filterMode !== 'all' ? filters.year : null,
       quarter: filters.filterMode === 'quarterly' ? filters.quarter : null,
       month: filters.filterMode === 'monthly' ? filters.month : null,
-      country_id: filters.country_id && filters.country_id > 0 ? filters.country_id : null,
+      country_id: filters.country_id ? filters.country_id : null,
       job_position: filters.job_position,
       team_number: filters.team_number,
       user_id: filters.user_id
