@@ -224,12 +224,12 @@
   justify-content: space-between;
 }
 
-.table-search-input-wrapper {
-  position: relative;
-  flex: 0 1 auto;
-  min-width: 250px;
-  max-width: 400px;
-}
+/* .table-search-input-wrapper / .table-search-input / .search-icon /
+   .clear-search-btn rules deleted — the search input is now rendered by
+   SharedTableSearch (.shared-search-* classes live in
+   shared-table-search.css). .table-search-wrapper above stays because
+   order-report.html still uses it as the outer flex row that hosts the
+   search input + tab filter + export button. */
 
 /* Tab Filter Container - align to right */
 #tabFilterContainer {
@@ -261,59 +261,6 @@
 .export-csv-btn svg {
   width: 16px;
   height: 16px;
-}
-
-.table-search-input-wrapper .search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  pointer-events: none;
-}
-
-.table-search-input {
-  width: 100%;
-  padding: 10px 40px 10px 40px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: var(--font-family-base);
-  color: #1f2937;
-  background: white;
-  transition: all 0.2s ease;
-}
-
-.table-search-input:hover {
-  border-color: #9ca3af;
-}
-
-.table-search-input:focus {
-  outline: none;
-  border-color: #4a7ba7;
-  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
-}
-
-.clear-search-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  padding: 6px;
-  cursor: pointer;
-  color: #9ca3af;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.clear-search-btn:hover {
-  background: #f3f4f6;
-  color: #4b5563;
 }
 
 .table-search-results {
