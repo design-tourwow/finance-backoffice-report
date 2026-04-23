@@ -1,4 +1,8 @@
-// Commission Report Plus - Main JavaScript
+// Canceled Orders - Main JavaScript
+// Fork of commission-report-plus.js — reuses the same summary/table/PDF
+// rendering but pins order_status='canceled' and filters by canceled_at
+// instead of created_at. Backend enforces first-installment-paid via the
+// INNER JOIN on v_Xqc7k7_customer_order_installments.
 (function () {
   'use strict';
 
@@ -10,20 +14,14 @@
   let currentUser = null;
   let currentData = null;
   let sellers = [];
-  let availablePeriods = { years: [] };
 
-  // Period selector state (mode + year/quarter/month). One for "วันที่สร้าง
-  // Order" (created_at), one for "วันชำระงวด 1" (paid_at). Both use
-  // SharedPeriodSelector single-select mode; buildFilters() converts them to
-  // date ranges via SharedPeriodSelector.toDateRange.
-  let createdPeriodState = { mode: 'all' };
-  let paidPeriodState    = { mode: 'all' };
+  // Period selector state — replaces the canceled_at date-picker. Converts
+  // to canceled_at_from/to in buildFilters() via SharedPeriodSelector.toDateRange.
+  let availablePeriods = { years: [] };
+  let canceledPeriodState = { mode: 'all' };
 
   // Selected values from FilterSortDropdown instances
-  let selectedJobPosition = 'admin';
   let selectedSellerId = '';
-  let selectedOrderStatus = 'not_canceled';
-  let selectedTravelerFilter = 'all';
   let mainTableQuery = '';
   let mainTableSort = { key: null, direction: 'desc' };
   let sellerSummarySort = {
@@ -81,7 +79,7 @@
   }
 
   // ---- Helpers ----
-  function formatNumber(val, decimals = 0) {
+  function formatNumber(val, decimals = 2) {
     return (parseFloat(val) || 0).toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   }
 
@@ -164,6 +162,8 @@
         return parseFloat(order.room_quantity || 0);
       case 'first_paid_at':
         return new Date(order.first_paid_at || 0).getTime();
+      case 'canceled_at':
+        return new Date(order.canceled_at || 0).getTime();
       case 'supplier_commission':
         return parseFloat(order.supplier_commission || 0);
       case 'net_commission':
@@ -235,53 +235,26 @@
         <!-- Filter Bar -->
         <div class="filter-wrap filter-wrap-stacked">
 
-          <!-- แถว 1: วันที่สร้าง Order (period selector) -->
+          <!-- แถว 1: วันที่ยกเลิก Order (period selector) -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">วันที่สร้าง Order</span>
-              <div class="crp-filter-control" id="crp-created-mode-host"></div>
-              <div class="crp-filter-control" id="crp-created-value-host"></div>
-            </div>
-          </div>
-
-          <!-- แถว 2: วันชำระงวด 1 (period selector) -->
-          <div class="filter-row crp-filter-row">
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">วันชำระงวด 1</span>
-              <div class="crp-filter-control" id="crp-paid-mode-host"></div>
-              <div class="crp-filter-control" id="crp-paid-value-host"></div>
+              <span class="time-granularity-label crp-filter-label">วันที่ยกเลิก Order</span>
+              <div class="crp-filter-control" id="co-canceled-mode-host"></div>
+              <div class="crp-filter-control" id="co-canceled-value-host"></div>
             </div>
           </div>
 
           <div class="filter-row-divider"></div>
 
-          <!-- แถว 2: Dropdown Pair 1 -->
+          <!-- แถว 2: Seller -->
           <div class="filter-row crp-filter-row">
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">ตำแหน่ง</span>
-              <div class="crp-filter-control" id="crp-dd-position"></div>
-            </div>
-
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">เซลล์ผู้จอง</span>
               <div class="crp-filter-control" id="crp-dd-seller"></div>
             </div>
           </div>
 
-          <!-- แถว 3: Dropdown Pair 2 -->
-          <div class="filter-row crp-filter-row">
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">สถานะ Order</span>
-              <div class="crp-filter-control" id="crp-dd-status"></div>
-            </div>
-
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">จำนวนผู้เดินทาง</span>
-              <div class="crp-filter-control" id="crp-dd-travelers"></div>
-            </div>
-          </div>
-
-          <!-- แถว 4: Action buttons — SharedFilterActions renders the
+          <!-- แถว 3: Action buttons — SharedFilterActions renders the
                ค้นหา + เริ่มใหม่ pair into #crp-filter-actions-host. -->
           <div class="filter-row crp-filter-actions-row">
             <div id="crp-filter-actions-host"></div>
@@ -297,68 +270,31 @@
 
   // ---- Init Filters ----
   function initFilters() {
-    const jobPos  = currentUser ? currentUser.job_position : 'admin';
     const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const from = firstDayOfMonth();
+    const to   = today();
 
-    // Init two period selectors — one per date field. Default to current
-    // month so the report loads with the usual monthly view on first paint.
+    // Canceled-at period selector — default to current month.
     const nowYear    = new Date().getFullYear();
     const nowMonth   = new Date().getMonth() + 1;
     const nowQuarter = Math.ceil(nowMonth / 3);
-
-    createdPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
-    paidPeriodState    = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
+    canceledPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
 
     window.SharedPeriodSelector.mount({
-      modeContainerId : 'crp-created-mode-host',
-      valueContainerId: 'crp-created-value-host',
+      modeContainerId : 'co-canceled-mode-host',
+      valueContainerId: 'co-canceled-value-host',
       availablePeriods: availablePeriods,
       multiSelect     : false,
       modes           : ['all', 'yearly', 'quarterly', 'monthly'],
-      initialState    : createdPeriodState,
-      onChange        : function (s) { createdPeriodState = s; }
+      initialState    : canceledPeriodState,
+      onChange        : function (s) { canceledPeriodState = s; }
     });
 
-    window.SharedPeriodSelector.mount({
-      modeContainerId : 'crp-paid-mode-host',
-      valueContainerId: 'crp-paid-value-host',
-      availablePeriods: availablePeriods,
-      multiSelect     : false,
-      modes           : ['all', 'yearly', 'quarterly', 'monthly'],
-      initialState    : paidPeriodState,
-      onChange        : function (s) { paidPeriodState = s; }
-    });
+    // Non-admin users are locked to their own seller id; admins see the
+    // searchable dropdown.
+    selectedSellerId = isAdmin() ? '' : sellerId;
 
-    // Set state defaults
-    selectedJobPosition  = jobPos;
-    selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
-
-    // ---- ตำแหน่ง dropdown ----
-    const jobPositionOptions = [
-      { value: 'ts',    label: 'เซลล์', icon: getPersonIcon() },
-      { value: 'crm',   label: 'CRM',   icon: getPersonIcon() },
-      { value: 'admin', label: 'Admin', icon: getPersonIcon() },
-    ].map(o => ({ ...o, active: o.value === jobPos }));
-
-    if (isAdmin()) {
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-position',
-        defaultLabel: labelOfJobPosition(jobPos),
-        defaultIcon: getPersonIcon(),
-        options: jobPositionOptions,
-        onChange: function (val, label) {
-          selectedJobPosition = val;
-        }
-      });
-    } else {
-      document.getElementById('crp-dd-position').innerHTML =
-        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
-           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${labelOfJobPosition(jobPos)}</span></div>
-         </button>`;
-    }
-
-    // ---- เซลล์ผู้จอง dropdown ----
+    // ---- เซลล์ผู้จอง dropdown (same search UX as commission-report-plus) ----
     if (isAdmin()) {
       const sellerOptions = [
         { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
@@ -388,46 +324,6 @@
            <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
          </button>`;
     }
-
-    // ---- สถานะ Order dropdown ----
-    const defaultStatus = isAdmin() ? 'all' : 'not_canceled';
-    const statusOptions = [
-      { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all') },
-      { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled') },
-      { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled') },
-    ].map(o => ({ ...o, active: o.value === defaultStatus }));
-
-    if (isAdmin()) {
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-status',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getStatusIcon('all'),
-        options: statusOptions,
-        onChange: function (val, label) {
-          selectedOrderStatus = val;
-        }
-      });
-    } else {
-      document.getElementById('crp-dd-status').innerHTML =
-        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
-           <div class="filter-sort-btn-content">${getStatusIcon('not_canceled')}<span class="filter-sort-btn-text">ไม่ยกเลิก</span></div>
-         </button>`;
-    }
-
-    // ---- จำนวนผู้เดินทาง dropdown ----
-    const travelerOptions = [
-      { value: 'all',          label: 'ทั้งหมด',   icon: getAllIcon(),              active: true },
-      { value: 'exclude_zero', label: 'ยกเว้น 0',  icon: getPersonIcon(),           active: false },
-    ];
-    FilterSortDropdownComponent.initDropdown({
-      containerId: 'crp-dd-travelers',
-      defaultLabel: 'ทั้งหมด',
-      defaultIcon: getAllIcon(),
-      options: travelerOptions,
-      onChange: function (val) {
-        selectedTravelerFilter = val;
-      }
-    });
 
     // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่ into
     // the host, wiring click handlers to the existing loadReport / reload
@@ -485,16 +381,16 @@
   }
 
   function buildFilters() {
-    const created = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
-    const paid    = window.SharedPeriodSelector.toDateRange(paidPeriodState,    availablePeriods);
+    const range = window.SharedPeriodSelector.toDateRange(canceledPeriodState, availablePeriods);
     return {
-      created_at_from: created.dateFrom || '',
-      created_at_to:   created.dateTo   || '',
-      paid_at_from:    paid.dateFrom    || '',
-      paid_at_to:      paid.dateTo      || '',
-      job_position:    selectedJobPosition,
-      seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
-      order_status:    selectedOrderStatus,
+      canceled_at_from: range.dateFrom || '',
+      canceled_at_to:   range.dateTo   || '',
+      seller_id:        isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
+      // Job position filter is not exposed on this page; 'admin' means "no
+      // is_old_customer filter" in the backend, matching CRP's default.
+      job_position:     'admin',
+      // Hardcoded: this page is only about canceled orders.
+      order_status:     'canceled',
     };
   }
 
@@ -523,10 +419,7 @@
   function renderResults(data) {
     const results = document.getElementById('crp-results');
     if (!results) return;
-    const { orders: rawOrders = [], summary = {} } = data;
-    const orders = selectedTravelerFilter === 'exclude_zero'
-      ? rawOrders.filter(o => parseInt(o.room_quantity || 0) >= 1)
-      : rawOrders;
+    const { orders = [], summary = {} } = data;
     if (!orders.length) { showEmpty(); return; }
 
     results.innerHTML = renderSummary(summary) + renderSellerSummary(orders) + renderTableSection(orders);
@@ -736,11 +629,12 @@
           <td class="right group-start">${formatNumber(o.net_amount, 0)}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
+          <td class="center">${formatDate(o.canceled_at)}</td>
           <td class="right group-start">${formatNumber(o.supplier_commission, 0)}</td>
           <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom, 0)}</td>
           <td class="right group-start">${formatNumber(o.discount, 0)}</td>
         </tr>`;
-    }).join('') || '<tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
+    }).join('') || '<tr><td colspan="13" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
 
     return `
       <div class="dashboard-table-header">
@@ -764,7 +658,7 @@
             <tr class="group-row">
               <th class="group-header">เซลล์</th>
               <th colspan="5" class="group-header">Order</th>
-              <th colspan="3" class="group-header">ยอดจอง</th>
+              <th colspan="4" class="group-header">ยอดจอง</th>
               <th colspan="2" class="group-header">คอมมิชชั่น</th>
               <th class="group-header">ส่วนลด</th>
             </tr>
@@ -778,6 +672,7 @@
               <th class="right group-start" data-sort="net_amount" data-type="number">ยอดจอง</th>
               <th class="center" data-sort="room_quantity" data-type="number">ผู้เดินทาง</th>
               <th class="center" data-sort="first_paid_at" data-type="date">วันชำระงวด 1</th>
+              <th class="center" data-sort="canceled_at" data-type="date">วันที่ยกเลิก</th>
               <th class="right group-start" data-sort="supplier_commission" data-type="number">คอมรวม</th>
               <th class="right" data-sort="net_commission" data-type="number">คอม (หักส่วนลด)</th>
               <th class="right group-start" data-sort="discount" data-type="number">ส่วนลดรวม</th>
@@ -791,15 +686,16 @@
 
   // ---- Export CSV ----
   function exportCSV(orders) {
-    const headers = ['เซลล์','รหัส Order','จองวันที่','ลูกค้า','ประเทศ','เดินทาง','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
+    const headers = ['เซลล์','รหัส Order','จองวันที่','ลูกค้า','ประเทศ','เดินทาง','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','วันที่ยกเลิก','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
     const rows = orders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return [
         o.seller_nick_name || '', o.order_code || '', formatDate(o.created_at), o.customer_name || '',
         o.country_name_th || '', o.product_period_snapshot || '',
-        formatNumber(o.net_amount, 0), o.room_quantity || 0,
-        formatDate(o.first_paid_at), formatNumber(o.supplier_commission, 0),
-        formatNumber(netCom, 0), formatNumber(o.discount, 0),
+        parseFloat(o.net_amount || 0).toFixed(2), o.room_quantity || 0,
+        formatDate(o.first_paid_at), formatDate(o.canceled_at),
+        parseFloat(o.supplier_commission || 0).toFixed(2),
+        netCom.toFixed(2), parseFloat(o.discount || 0).toFixed(2),
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
     });
 
@@ -807,7 +703,7 @@
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'Commission Report.csv'; a.click();
+    a.href = url; a.download = 'Canceled Orders Report.csv'; a.click();
     URL.revokeObjectURL(url);
   }
 
@@ -818,22 +714,12 @@
     return seller ? (seller.nick_name || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || String(seller.id)) : 'ทั้งหมด';
   }
 
-  function getSelectedStatusLabel() {
-    return {
-      all: 'ทั้งหมด',
-      not_canceled: 'ไม่ยกเลิก',
-      canceled: 'ยกเลิก',
-    }[selectedOrderStatus] || selectedOrderStatus;
-  }
-
   function buildPrintFilters() {
     const filters = buildFilters();
     return [
-      { label: 'วันที่สร้าง Order', value: [formatDate(filters.created_at_from), formatDate(filters.created_at_to)].join(' - ') },
-      { label: 'วันชำระงวด 1', value: [formatDate(filters.paid_at_from), formatDate(filters.paid_at_to)].join(' - ') },
-      { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
+      { label: 'วันที่ยกเลิก Order', value: [formatDate(filters.canceled_at_from), formatDate(filters.canceled_at_to)].join(' - ') },
       { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
-      { label: 'สถานะ Order', value: getSelectedStatusLabel() },
+      { label: 'สถานะ Order', value: 'ยกเลิก' },
     ];
   }
 
@@ -850,7 +736,7 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <title>Sales Report</title>
+    <title>Canceled Orders Report</title>
     ${APP_FONT_STYLESHEET_TAG}
     <style>
       @page { size: A4 landscape; margin: 10mm; }
@@ -995,7 +881,7 @@
     <div class="crp-print-shell">
       <div class="crp-print-header">
         <div>
-          <h1 class="crp-print-title">Sales Report</h1>
+          <h1 class="crp-print-title">Canceled Orders Report</h1>
           <p class="crp-print-subtitle">พิมพ์เมื่อ ${escHtml(new Date().toLocaleString('th-TH'))}</p>
         </div>
         <div class="crp-print-count">${escHtml(countText || '')}</div>
@@ -1032,13 +918,13 @@
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
-    return `sales-report-${yyyy}${mm}${dd}.pdf`;
+    return `canceled-orders-report-${yyyy}${mm}${dd}.pdf`;
   }
 
   function getVisibleTableRows() {
     return Array.from(document.querySelectorAll('.crp-table tbody tr'))
       .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.innerText.replace(/\s+/g, ' ').trim()))
-      .filter(row => row.length === 12);
+      .filter(row => row.length === 13);
   }
 
   function createPdfSourceNode(countText) {
@@ -1068,7 +954,7 @@
     title.style.borderBottom = '2px solid #335f8a';
     title.innerHTML = `
       <div>
-        <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Sales Report</div>
+        <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Canceled Orders Report</div>
       </div>
       <div style="font-size:14px;color:#1f2937;font-weight:600;">พิมพ์วันที่: ${escHtml(new Date().toLocaleString('th-TH'))}</div>
     `;
@@ -1151,9 +1037,10 @@
       footer.style.background = '#d7e4f1';
       footer.style.fontWeight = '700';
       footer.innerHTML = `
-        <td colspan="4" style="text-align:center;color:#243b53;border-top:2px solid #9fb6cc;">รวม ${escHtml(countText || '')}</td>
+        <td colspan="5" style="text-align:center;color:#243b53;border-top:2px solid #9fb6cc;">รวม ${escHtml(countText || '')}</td>
         <td style="border-top:2px solid #9fb6cc;"></td>
         <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
+        <td style="border-top:2px solid #9fb6cc;"></td>
         <td style="border-top:2px solid #9fb6cc;"></td>
         <td style="border-top:2px solid #9fb6cc;"></td>
         <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
@@ -1222,7 +1109,7 @@
     const sourceRows = Array.from(sourceNode.querySelectorAll('.crp-table tbody tr'));
     if (!sourceTableWrapper || !sourceRows.length) return [sourceNode];
 
-    const footerRow = sourceRows[sourceRows.length - 1] && sourceRows[sourceRows.length - 1].querySelector('td[colspan="4"]')
+    const footerRow = sourceRows[sourceRows.length - 1] && sourceRows[sourceRows.length - 1].querySelector('td[colspan="5"]')
       ? sourceRows[sourceRows.length - 1]
       : null;
     const bodyRows = footerRow ? sourceRows.slice(0, -1) : sourceRows.slice();

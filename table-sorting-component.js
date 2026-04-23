@@ -192,8 +192,6 @@ const TableSortingComponent = {
     function formatCurrency(num) {
       if (num === null || num === undefined) return '-';
       return new Intl.NumberFormat('th-TH', {
-        style: 'currency',
-        currency: 'THB',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
       }).format(num);

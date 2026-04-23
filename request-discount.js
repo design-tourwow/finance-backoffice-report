@@ -19,7 +19,7 @@
   var displayData   = [];
 
   var filterState = {
-    filterMode    : 'quarterly',
+    filterMode    : 'monthly',
     year          : SharedUtils.getCurrentYear(),
     quarter       : SharedUtils.getCurrentQuarter(),
     month         : new Date().getMonth() + 1,
@@ -292,10 +292,10 @@
         'Total Orders', metrics.orders.toLocaleString()) +
       kpiCard('red',
         '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>',
-        'ส่วนลดรวม', '฿' + fmt(metrics.discount)) +
+        'ส่วนลดรวม', fmt(metrics.discount)) +
       kpiCard('green',
         '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
-        'ยอดสุทธิ', '฿' + fmt(metrics.netAmount)) +
+        'ยอดสุทธิ', fmt(metrics.netAmount)) +
       kpiCard('purple',
         '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
         '% ส่วนลดเฉลี่ย', Math.round(metrics.avgDiscountPct) + '%') +
@@ -343,7 +343,7 @@
           '<div style="font-size:.72rem;color:#6b7280">(' + discRatio + '% มีส่วนลด)</div>' +
         '</td>' +
         '<td class="right" style="color:#ea580c;font-weight:600">' + Math.round(s.avg_discount_percent) + '%</td>' +
-        '<td class="right" style="color:#dc2626;font-weight:600">฿' + fmt(s.total_discount) + '</td>' +
+        '<td class="right" style="color:#dc2626;font-weight:600">' + fmt(s.total_discount) + '</td>' +
       '</tr>';
     }).join('');
 
@@ -398,7 +398,7 @@
         previous: chartAmount,
         labels  : amountData.map(function (s) { return truncate(s.seller_name); }),
         datasets: [{
-          label: 'ส่วนลด (฿)',
+          label: 'ส่วนลด',
           data : amountData.map(function (s) { return s.total_discount; }),
           backgroundColor: '#EF4444',
           borderWidth: 0
@@ -410,7 +410,7 @@
                 label: function (ctx) {
                   var s = amountData[ctx.dataIndex];
                   return [
-                    'ส่วนลด: ฿' + fmt(ctx.raw),
+                    'ส่วนลด: ' + fmt(ctx.raw),
                     'Orders: ' + s.order_count,
                     'เฉลี่ย: ' + Math.round(s.avg_discount_percent) + '%'
                   ];
@@ -452,7 +452,7 @@
                   var s = pctData[ctx.dataIndex];
                   return [
                     'ส่วนลด: ' + Math.round(ctx.raw) + '%',
-                    'จำนวนเงิน: ฿' + fmt(s.total_discount),
+                    'จำนวนเงิน: ' + fmt(s.total_discount),
                     'Orders: ' + s.order_count
                   ];
                 }
@@ -489,15 +489,15 @@
       } },
     { key: 'net_amount',   label: 'ยอดสุทธิ',      align: 'right',
       format: function (_, o) {
-        return '<span style="font-weight:500">฿' + fmt(o.financial_metrics.net_amount) + '</span>';
+        return '<span style="font-weight:500">' + fmt(o.financial_metrics.net_amount) + '</span>';
       } },
     { key: 'commission',   label: 'คอมมิชชั่น',    align: 'right',
       format: function (_, o) {
-        return '<span style="color:#2563eb">฿' + fmt(o.financial_metrics.supplier_commission) + '</span>';
+        return '<span style="color:#2563eb">' + fmt(o.financial_metrics.supplier_commission) + '</span>';
       } },
     { key: 'discount',     label: 'ส่วนลด',        align: 'right',
       format: function (_, o) {
-        return '<span style="font-weight:600;color:#dc2626">฿' + fmt(o.financial_metrics.discount) + '</span>';
+        return '<span style="font-weight:600;color:#dc2626">' + fmt(o.financial_metrics.discount) + '</span>';
       } },
     { key: 'discount_pct', label: '% ส่วนลด',      align: 'right',
       format: function (_, o) {
@@ -524,8 +524,8 @@
     var page   = sorted.slice(start, end);
 
     var subtitleMap = {
-      'both'  : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ ฿1 และยังไม่ชำระเงิน',
-      'disc'  : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ ฿1',
+      'both'  : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ 1 และยังไม่ชำระเงิน',
+      'disc'  : 'แสดงเฉพาะ Order ที่มีส่วนลด ≥ 1',
       'unpaid': 'แสดงเฉพาะ Order ที่ยังไม่ชำระเงิน',
       'all'   : 'แสดง Order ทั้งหมด'
     };
@@ -560,9 +560,9 @@
         '<div class="rd-table-footer">' +
           '<span>แสดง ' + (total === 0 ? 0 : start + 1) + '-' + end + ' จาก ' + total + ' รายการ</span>' +
           '<div class="rd-table-footer-amounts">' +
-            '<span>ยอดสุทธิรวม: <b>฿' + fmt(metrics.netAmount) + '</b></span>' +
-            '<span>ส่วนลดรวม: <b style="color:#dc2626">฿' + fmt(metrics.discount) + '</b></span>' +
-            '<span>คอมมิชชั่นรวม: <b style="color:#2563eb">฿' + fmt(metrics.commission) + '</b></span>' +
+            '<span>ยอดสุทธิรวม: <b>' + fmt(metrics.netAmount) + '</b></span>' +
+            '<span>ส่วนลดรวม: <b style="color:#dc2626">' + fmt(metrics.discount) + '</b></span>' +
+            '<span>คอมมิชชั่นรวม: <b style="color:#2563eb">' + fmt(metrics.commission) + '</b></span>' +
           '</div>' +
         '</div>' +
         renderPagination(total) +
@@ -748,7 +748,7 @@
   function exportCSV() {
     var headers = [
       'Order Code', 'วันที่สร้าง', 'ลูกค้า', 'เซลล์', 'CRM',
-      'ยอดสุทธิ (฿)', 'คอมมิชชั่น (฿)', 'ส่วนลด (฿)', 'เปอร์เซ็นต์ส่วนลด (%)',
+      'ยอดสุทธิ', 'คอมมิชชั่น', 'ส่วนลด', 'เปอร์เซ็นต์ส่วนลด (%)',
       'การชำระเงิน (งวด)', 'สถานะการชำระ'
     ];
 

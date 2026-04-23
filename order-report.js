@@ -24,8 +24,8 @@
   let bookingDatePickerInstance = null;
   
   // Dropdown instances
-  let countryDropdownInstance = null;
-  let supplierDropdownInstance = null;
+  // (legacy countryDropdownInstance / supplierDropdownInstance removed —
+  // shared FilterSearchDropdown manages its own DOM state.)
 
   document.addEventListener('DOMContentLoaded', function () {
     initOrderReport();
@@ -153,71 +153,82 @@
     await loadTabData(tabName);
   }
 
+  // Cached option lists so Reset can re-init dropdowns without re-fetching.
+  let countryOptionsCache  = [];
+  let supplierOptionsCache = [];
+
+  const GLOBE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+  const SUPPLIER_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v6"/></svg>';
+
+  function mountCountryDropdown(options) {
+    if (!window.FilterSearchDropdown) return;
+    window.FilterSearchDropdown.init({
+      containerId : 'countryDropdownWrapper',
+      defaultLabel: 'ทุกประเทศ',
+      defaultIcon : GLOBE_ICON,
+      options     : options,
+      placeholder : 'ค้นหาประเทศ...',
+      multiSelect : true,
+      groupLabel  : 'ประเทศ',
+      onChange    : function (csvValue) {
+        const hidden = document.getElementById('filterCountry');
+        if (hidden) hidden.value = csvValue || '';
+      }
+    });
+  }
+
+  function mountSupplierDropdown(options) {
+    if (!window.FilterSearchDropdown) return;
+    window.FilterSearchDropdown.init({
+      containerId : 'supplierDropdownWrapper',
+      defaultLabel: 'ทุก Supplier',
+      defaultIcon : SUPPLIER_ICON,
+      options     : options,
+      placeholder : 'ค้นหา Supplier...',
+      multiSelect : true,
+      groupLabel  : 'Supplier',
+      onChange    : function (csvValue) {
+        const hidden = document.getElementById('filterSupplier');
+        if (hidden) hidden.value = csvValue || '';
+      }
+    });
+  }
+
   // Initialize filters
   async function initFilters() {
     console.log('🔧 Initializing filters...');
-    
+
     try {
-      // Initialize country dropdown (Multi-select like tour-image-manager)
-      console.log('📍 Creating country dropdown...');
-      countryDropdownInstance = SearchableDropdownComponent.initMultiSelect({
-        wrapperId: 'countryDropdownWrapper',
-        placeholder: 'เลือกประเทศ',
-        options: [],
-        onChange: (values, labels) => {
-          document.getElementById('filterCountry').value = values.join(',');
-          console.log('Countries selected:', values, labels);
-        }
-      });
-      
-      if (!countryDropdownInstance) {
-        console.error('❌ Failed to create country dropdown');
-      } else {
-        console.log('✅ Country dropdown created');
-      }
-
-      // Initialize supplier dropdown (Multi-select like tour-image-manager)
-      console.log('🏢 Creating supplier dropdown...');
-      supplierDropdownInstance = SearchableDropdownComponent.initMultiSelect({
-        wrapperId: 'supplierDropdownWrapper',
-        placeholder: 'เลือก Supplier',
-        options: [],
-        onChange: (values, labels) => {
-          document.getElementById('filterSupplier').value = values.join(',');
-          console.log('Suppliers selected:', values, labels);
-        }
-      });
-      
-      if (!supplierDropdownInstance) {
-        console.error('❌ Failed to create supplier dropdown');
-      } else {
-        console.log('✅ Supplier dropdown created');
-      }
-
-      // Load countries
+      // Country — load first, then mount with flags via shared CountryFlags.
       console.log('🌍 Loading countries...');
       const countriesResponse = await OrderReportAPI.getCountries();
       if (countriesResponse && countriesResponse.success && countriesResponse.data) {
-        const countryOptions = countriesResponse.data.map(country => ({
-          value: country.id,
-          label: `${country.name_th} (${country.name_en})`
+        const flags = window.CountryFlags;
+        let list = countriesResponse.data.slice();
+        if (window.SharedUtils && window.SharedUtils.sortCountriesByThai) {
+          try { list = window.SharedUtils.sortCountriesByThai(list); } catch (e) { /* noop */ }
+        }
+        countryOptionsCache = list.map(country => ({
+          value: String(country.id),
+          label: country.name_th || country.name_en || ('#' + country.id),
+          icon : flags ? flags.iconFor(country, { size: 18 }) : ''
         }));
-        countryDropdownInstance.updateOptions(countryOptions);
-        console.log('✅ Countries loaded:', countryOptions.length);
+        console.log('✅ Countries loaded:', countryOptionsCache.length);
       }
+      mountCountryDropdown(countryOptionsCache);
 
-      // Load suppliers
+      // Supplier — same pattern.
       console.log('🏢 Loading suppliers...');
       const suppliersResponse = await OrderReportAPI.getSuppliers();
       if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
-        const supplierOptions = suppliersResponse.data.map(supplier => ({
-          value: supplier.id,
+        supplierOptionsCache = suppliersResponse.data.map(supplier => ({
+          value: String(supplier.id),
           label: `${supplier.name_th} (${supplier.name_en})`
         }));
-        supplierDropdownInstance.updateOptions(supplierOptions);
-        console.log('✅ Suppliers loaded:', supplierOptions.length);
+        console.log('✅ Suppliers loaded:', supplierOptionsCache.length);
       }
-      
+      mountSupplierDropdown(supplierOptionsCache);
+
       console.log('✅ Filters initialized successfully');
     } catch (error) {
       console.error('❌ Failed to load filters:', error);
@@ -322,9 +333,9 @@
       document.getElementById('filterCountry').value = '';
       document.getElementById('filterSupplier').value = '';
       
-      // Clear multi-select dropdowns
-      if (countryDropdownInstance) countryDropdownInstance.clear();
-      if (supplierDropdownInstance) supplierDropdownInstance.clear();
+      // Re-mount shared dropdowns with no options marked active.
+      mountCountryDropdown(countryOptionsCache);
+      mountSupplierDropdown(supplierOptionsCache);
       
       console.log('✅ Form reset - filters cleared (no reload)');
     });
@@ -1987,12 +1998,10 @@
     return new Intl.NumberFormat('th-TH').format(num);
   }
 
-  // Format currency
+  // Format currency (number only, no baht symbol)
   function formatCurrency(num) {
     if (num === null || num === undefined) return '-';
     return new Intl.NumberFormat('th-TH', {
-      style: 'currency',
-      currency: 'THB',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(num);

@@ -38,18 +38,8 @@
           if (!storedToken) return;
           const parts = storedToken.split('.');
           if (parts.length !== 3) return;
-          const payload = JSON.parse(atob(parts[1]));
-          const member = (payload && payload.user && payload.user.agency_member) || {};
-          const candidateNames = [
-            member.nick_name,
-            member.first_name,
-            member.last_name,
-            member.name
-          ].filter(Boolean).map(value => String(value).trim().toLowerCase());
-
-          if (candidateNames.includes('gap')) {
-            window.location.replace('/work-list');
-          }
+          // Default landing page for every authenticated role
+          window.location.replace('/dashboard');
         } catch (error) {
           console.warn('[Index] Failed to resolve default route:', error);
         }

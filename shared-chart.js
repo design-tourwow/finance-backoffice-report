@@ -115,7 +115,7 @@
             maxRotation: horizontal ? 0 : 45,
             minRotation: horizontal ? 0 : 0,
             callback: horizontal
-              ? function (val) { return '฿' + formatCurrency(val); }
+              ? function (val) { return formatCurrency(val); }
               : undefined
           }
         },
@@ -127,7 +127,7 @@
             font: { family: CHART_FONT_FAMILY, size: 13 },
             callback: horizontal
               ? undefined
-              : function (val) { return '฿' + formatCurrency(val); }
+              : function (val) { return formatCurrency(val); }
           }
         }
       }

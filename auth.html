@@ -153,8 +153,8 @@
             const storedLocalToken = localStorage.getItem('authToken');
 
             if (storedSessionToken === token && storedLocalToken === token) {
-              // Redirect to main page (clean URL)
-              const redirectUrl = window.location.origin + '/tour-image-manager';
+              // Redirect to dashboard (default landing page for all roles)
+              const redirectUrl = window.location.origin + '/dashboard';
               window.location.replace(redirectUrl);
             } else {
               throw new Error('Token verification failed - stored token does not match');

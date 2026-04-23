@@ -11,13 +11,15 @@ const CommissionReportPlusAPI = {
 
   buildQueryString(filters = {}) {
     const params = new URLSearchParams()
-    if (filters.created_at_from) params.append('created_at_from', filters.created_at_from)
-    if (filters.created_at_to)   params.append('created_at_to',   filters.created_at_to)
-    if (filters.paid_at_from)    params.append('paid_at_from',    filters.paid_at_from)
-    if (filters.paid_at_to)      params.append('paid_at_to',      filters.paid_at_to)
-    if (filters.job_position)    params.append('job_position',    filters.job_position)
-    if (filters.seller_id)       params.append('seller_id',       filters.seller_id)
-    if (filters.order_status)    params.append('order_status',    filters.order_status)
+    if (filters.created_at_from)  params.append('created_at_from',  filters.created_at_from)
+    if (filters.created_at_to)    params.append('created_at_to',    filters.created_at_to)
+    if (filters.paid_at_from)     params.append('paid_at_from',     filters.paid_at_from)
+    if (filters.paid_at_to)       params.append('paid_at_to',       filters.paid_at_to)
+    if (filters.canceled_at_from) params.append('canceled_at_from', filters.canceled_at_from)
+    if (filters.canceled_at_to)   params.append('canceled_at_to',   filters.canceled_at_to)
+    if (filters.job_position)     params.append('job_position',     filters.job_position)
+    if (filters.seller_id)        params.append('seller_id',        filters.seller_id)
+    if (filters.order_status)     params.append('order_status',     filters.order_status)
     const qs = params.toString()
     return qs ? `?${qs}` : ''
   },

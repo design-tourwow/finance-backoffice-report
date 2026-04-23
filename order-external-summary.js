@@ -160,21 +160,21 @@
       '  <div class="oes-card-icon green">',
       '    <svg width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
       '  </div>',
-      '  <div class="oes-card-body"><p class="label">ยอดสุทธิรวม</p><p class="value">฿' + fmt(totals.net) + '</p></div>',
+      '  <div class="oes-card-body"><p class="label">ยอดสุทธิรวม</p><p class="value">' + fmt(totals.net) + '</p></div>',
       '</div>',
 
       '<div class="oes-card">',
       '  <div class="oes-card-icon purple">',
       '    <svg width="18" height="18" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
       '  </div>',
-      '  <div class="oes-card-body"><p class="label">ค่าคอมมิชชั่นรวม</p><p class="value">฿' + fmt(totals.commission) + '</p></div>',
+      '  <div class="oes-card-body"><p class="label">ค่าคอมมิชชั่นรวม</p><p class="value">' + fmt(totals.commission) + '</p></div>',
       '</div>',
 
       '<div class="oes-card">',
       '  <div class="oes-card-icon red">',
       '    <svg width="18" height="18" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>',
       '  </div>',
-      '  <div class="oes-card-body"><p class="label">ส่วนลดรวม</p><p class="value">฿' + fmt(totals.discount) + '</p></div>',
+      '  <div class="oes-card-body"><p class="label">ส่วนลดรวม</p><p class="value">' + fmt(totals.discount) + '</p></div>',
       '</div>',
 
       '</div>'
@@ -208,13 +208,13 @@
     return val ? escapeHtml(SharedUtils.formatDateTH(val)) : '';
   }
   function fmtBaht(val) {
-    return '฿' + SharedUtils.formatCurrency(val || 0);
+    return SharedUtils.formatCurrency(val || 0);
   }
   function fmtBahtCommission(val) {
-    return '<span class="oes-commission">฿' + SharedUtils.formatCurrency(val || 0) + '</span>';
+    return '<span class="oes-commission">' + SharedUtils.formatCurrency(val || 0) + '</span>';
   }
   function fmtBahtDiscount(val) {
-    return '<span class="oes-discount">฿' + SharedUtils.formatCurrency(val || 0) + '</span>';
+    return '<span class="oes-discount">' + SharedUtils.formatCurrency(val || 0) + '</span>';
   }
   function fmtSeller(val) {
     return escapeHtml(val || '-');
@@ -296,9 +296,9 @@
       'รหัส Order',
       'วันที่สร้าง Order',
       'ชื่อลูกค้า',
-      'ยอดสุทธิ (฿)',
-      'ค่าคอมมิชชั่น (฿)',
-      'ส่วนลด (฿)',
+      'ยอดสุทธิ',
+      'ค่าคอมมิชชั่น',
+      'ส่วนลด',
       'วันที่ชำระเงิน',
       'เซลล์ที่ทำ Order'
     ];

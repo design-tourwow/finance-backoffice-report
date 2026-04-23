@@ -17,7 +17,7 @@
   var filterQuery   = '';
 
   var filterState = {
-    mode        : 'quarterly',
+    mode        : 'monthly',
     year        : utils.getCurrentYear(),
     quarter     : utils.getCurrentQuarter(),
     month       : new Date().getMonth() + 1,
@@ -190,9 +190,9 @@
     var fc = utils.formatCurrency;
     return [
       '<div class="ds-summary-grid">',
-        card('blue',   iconMoney(), 'ค่าคอมรวม',       '฿' + fc(t.sales)),
-        card('red',    iconTag(),   'ส่วนลดรวม',        '฿' + fc(t.discount)),
-        card('green',  iconCalc(),  'ยอดสุทธิ',         '฿' + fc(t.net)),
+        card('blue',   iconMoney(), 'ค่าคอมรวม',       fc(t.sales)),
+        card('red',    iconTag(),   'ส่วนลดรวม',        fc(t.discount)),
+        card('green',  iconCalc(),  'ยอดสุทธิ',         fc(t.net)),
         card('purple', iconChart(), '% ส่วนลดเฉลี่ย',  Math.round(t.avgPct) + '%'),
       '</div>'
     ].join('');
@@ -223,15 +223,15 @@
         if (!item) return '';
         if (primary === 'amount') {
           return [
-            'ส่วนลด: ฿' + fc(item.metrics.total_discount),
-            'คอมมิชชั่น: ฿' + fc(item.metrics.total_commission),
+            'ส่วนลด: ' + fc(item.metrics.total_discount),
+            'คอมมิชชั่น: ' + fc(item.metrics.total_commission),
             'เปอร์เซ็นต์: ' + Math.round(item.metrics.discount_percentage) + '%'
           ];
         }
         return [
           'ส่วนลด: ' + Math.round(item.metrics.discount_percentage) + '%',
-          'จำนวนเงิน: ฿' + fc(item.metrics.total_discount),
-          'คอมมิชชั่น: ฿' + fc(item.metrics.total_commission)
+          'จำนวนเงิน: ' + fc(item.metrics.total_discount),
+          'คอมมิชชั่น: ' + fc(item.metrics.total_commission)
         ];
       }
     };
@@ -247,7 +247,7 @@
       previous: chartAmount,
       labels  : amountData.map(function (d) { return truncate(d.nickname || d.sales_name, 15); }),
       datasets: [{
-        label: 'ส่วนลด (฿)',
+        label: 'ส่วนลด',
         data : amountData.map(function (d) { return d.metrics.total_discount; }),
         backgroundColor: '#EF4444',
         borderWidth: 0
@@ -288,11 +288,11 @@
       },
       {
         key: 'total_commission', label: 'Total Commission', align: 'right',
-        format: function (_v, row) { return '฿' + fc(row.metrics.total_commission); }
+        format: function (_v, row) { return fc(row.metrics.total_commission); }
       },
       {
         key: 'total_discount', label: 'Total Discount', align: 'right',
-        format: function (_v, row) { return '<span class="ds-cell-red">฿' + fc(row.metrics.total_discount) + '</span>'; }
+        format: function (_v, row) { return '<span class="ds-cell-red">' + fc(row.metrics.total_discount) + '</span>'; }
       },
       {
         key: 'discount_percentage', label: 'Discount %', align: 'right',
@@ -304,7 +304,7 @@
       },
       {
         key: 'net_commission', label: 'Net Commission', align: 'right',
-        format: function (_v, row) { return '<span class="ds-cell-green">฿' + fc(row.metrics.net_commission) + '</span>'; }
+        format: function (_v, row) { return '<span class="ds-cell-green">' + fc(row.metrics.net_commission) + '</span>'; }
       }
     ];
   })();
@@ -348,7 +348,7 @@
   // ── Export CSV ─────────────────────────────────────────────────────────────
   function exportToCSV() {
     var fc = utils.formatCurrency;
-    var headers = ['ชื่อเล่น', 'ค่าคอมรวม (฿)', 'ส่วนลดรวม (฿)', 'เปอร์เซ็นต์ส่วนลด (%)', 'จำนวน Orders', 'ยอดสุทธิ (฿)'];
+    var headers = ['ชื่อเล่น', 'ค่าคอมรวม', 'ส่วนลดรวม', 'เปอร์เซ็นต์ส่วนลด (%)', 'จำนวน Orders', 'ยอดสุทธิ'];
 
     var rows = allData.map(function (item) {
       return [

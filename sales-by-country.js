@@ -730,63 +730,13 @@
       <div class="country-dashboard">
         <!-- Time Granularity Control with Dropdowns -->
         <div class="time-granularity-control">
-          <div class="filter-inline-field filter-inline-field--grow">
+          <div class="filter-inline-field">
             <span class="time-granularity-label">เลือกช่วงเวลา</span>
             <div class="filter-period-controls">
-              <div class="time-dropdown-wrapper">
-                <button class="time-btn period-type-btn" id="periodTypeBtn">
-                  <span class="time-btn-text">ทั้งหมด</span>
-                  <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </button>
-                <div class="time-dropdown-menu" id="periodTypeDropdown">
-                  <div class="time-dropdown-item" data-period-type="yearly">
-                    <span class="dropdown-item-label">รายปี</span>
-                  </div>
-                  <div class="time-dropdown-item" data-period-type="quarterly">
-                    <span class="dropdown-item-label">รายไตรมาส</span>
-                  </div>
-                  <div class="time-dropdown-item" data-period-type="monthly">
-                    <span class="dropdown-item-label">รายเดือน</span>
-                  </div>
-                </div>
-              </div>
-              <div class="time-granularity-buttons" id="periodValueButtons">
-                <div class="time-dropdown-wrapper" data-type="yearly" style="display: none;">
-                  <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
-                    <span class="time-btn-text">เลือกปี</span>
-                    <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </button>
-                  <div class="time-dropdown-menu" id="yearlyDropdown"></div>
-                </div>
-                <div class="time-dropdown-wrapper" data-type="quarterly" style="display: none;">
-                  <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
-                    <span class="time-btn-text">เลือกไตรมาส</span>
-                    <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </button>
-                  <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
-                </div>
-                <div class="time-dropdown-wrapper" data-type="monthly" style="display: none;">
-                  <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
-                    <span class="time-btn-text">เลือกเดือน</span>
-                    <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </button>
-                  <div class="time-dropdown-menu" id="monthlyDropdown"></div>
-                </div>
-              </div>
+              <div id="sc-period-mode-host"></div>
+              <div id="sc-period-value-host"></div>
             </div>
           </div>
-          <div class="selected-period-badge" id="selectedPeriodBadge" style="display: none;"></div>
-
-          <!-- Separator -->
-          <div class="filter-separator"></div>
 
           <!-- Country Filter -->
           <div class="filter-inline-field">
@@ -1183,44 +1133,45 @@
       }
     }
 
-    // Populate dropdowns
-    populateTimeDropdowns();
+    if (!window.SharedPeriodSelector || !window.SharedPeriodSelector.mount) {
+      console.error('[SalesByCountry] SharedPeriodSelector missing — add shared-period-selector.js to the HTML');
+      return;
+    }
 
-    // Initialize period type selector (master dropdown)
-    initPeriodTypeSelector();
+    // Default to current month so the dashboard loads with data immediately
+    // instead of the empty-state. Overwrites any stale selection from an
+    // earlier tab switch.
+    const now = new Date();
+    const nowYear  = now.getFullYear();
+    const nowMonth = now.getMonth() + 1;
+    const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    currentTimeGranularity = 'monthly';
+    selectedPeriods = [{
+      type : 'monthly',
+      year : nowYear,
+      quarter: null,
+      month: nowMonth,
+      label: monthNames[nowMonth - 1] + ' ' + (nowYear + 543)
+    }];
 
-    // Initialize dropdown click handlers for period value dropdowns
-    const dropdownWrappers = document.querySelectorAll('#periodValueButtons .time-dropdown-wrapper');
-    dropdownWrappers.forEach(wrapper => {
-      const btn = wrapper.querySelector('.time-btn');
-      const dropdown = wrapper.querySelector('.time-dropdown-menu');
-      if (!btn || !dropdown) return;
-
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const isOpen = dropdown.classList.contains('show');
-
-        if (!isOpen) requestCloseOverlayDropdowns();
-
-        // Close other dropdowns
-        document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
-          if (menu !== dropdown) menu.classList.remove('show');
-        });
-
-        // Toggle this dropdown
-        dropdown.classList.toggle('show', !isOpen);
-      });
+    window.SharedPeriodSelector.mount({
+      modeContainerId : 'sc-period-mode-host',
+      valueContainerId: 'sc-period-value-host',
+      availablePeriods: availablePeriods || { years: [] },
+      multiSelect     : true,
+      modes           : ['all', 'yearly', 'quarterly', 'monthly'],
+      initialState    : {
+        mode   : currentTimeGranularity,
+        periods: selectedPeriods.slice()
+      },
+      onChange        : function (state) {
+        currentTimeGranularity = state.mode;
+        selectedPeriods = Array.isArray(state.periods) ? state.periods.slice() : [];
+        if (typeof applyAllFilters === 'function') applyAllFilters();
+      }
     });
 
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function() {
-      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
-        menu.classList.remove('show');
-      });
-    });
-
-    // No default selection - show all data
-    // User must click dropdown to filter by period
+    // Singular state var retained for backward-compat with any stale callers.
     selectedPeriod = { type: null, year: null, quarter: null, month: null };
   }
 

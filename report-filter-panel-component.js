@@ -55,131 +55,10 @@
     return full || ('User ' + (u.ID != null ? u.ID : ''));
   }
 
-  function periodYears(periods) {
-    return periods && Array.isArray(periods.years) ? periods.years : [];
-  }
-
-  function buildYearLabel(entry) {
-    if (!entry || entry.year_ce == null) return '';
-    if (entry.label != null && entry.label !== '') {
-      return 'พ.ศ. ' + entry.label + ' (' + entry.year_ce + ')';
-    }
-    return String(entry.year_ce);
-  }
-
-  function buildYearOptionsFromPeriods(periods, utils) {
-    var years = periodYears(periods);
-    if (!years.length) {
-      return (utils.getYearOptions() || []).map(function (y) {
-        var val = (y && typeof y === 'object') ? y.value : y;
-        var lbl = (y && typeof y === 'object') ? (y.label || String(y.value)) : String(y);
-        return { value: String(val), label: lbl };
-      });
-    }
-    return years.map(function (entry) {
-      return { value: String(entry.year_ce), label: buildYearLabel(entry) };
-    });
-  }
-
-  function buildQuarterOptionsFromPeriods(periods, utils) {
-    var years = periodYears(periods);
-    if (!years.length) {
-      return (utils.getQuarterOptions() || []).map(function (q) {
-        return {
-          value: q.year + '-' + q.quarter,
-          label: q.label,
-          year: Number(q.year),
-          quarter: Number(q.quarter)
-        };
-      });
-    }
-    var items = [];
-    years.forEach(function (entry) {
-      (entry.quarters || []).forEach(function (quarter) {
-        items.push({
-          value: entry.year_ce + '-' + quarter.quarter,
-          label: (quarter.label || ('Q' + quarter.quarter)) + ' ' + (entry.label || entry.year_ce),
-          year: Number(entry.year_ce),
-          quarter: Number(quarter.quarter)
-        });
-      });
-    });
-    return items;
-  }
-
-  function buildMonthOptionsFromPeriods(periods, selectedYear, utils) {
-    var years = periodYears(periods);
-    if (!years.length) {
-      return (utils.getMonthOptions() || []).map(function (m) {
-        return { value: String(m.value), label: m.label, month: Number(m.value) };
-      });
-    }
-
-    var activeYear = null;
-    years.forEach(function (entry) {
-      if (Number(entry.year_ce) === Number(selectedYear)) activeYear = entry;
-    });
-    if (!activeYear) activeYear = years[0];
-
-    return (activeYear.months || []).map(function (month) {
-      return {
-        value: String(month.month),
-        label: month.label_short || month.label || ('เดือน ' + month.month),
-        month: Number(month.month)
-      };
-    });
-  }
-
-  // Combined month+year options so monthly mode can render a single
-  // dropdown (matches the quarterly UX — values shaped "YYYY-M").
-  function buildMonthYearOptionsFromPeriods(periods, utils) {
-    var years = periodYears(periods);
-    if (!years.length) {
-      var currentYear = utils.getCurrentYear ? utils.getCurrentYear() : new Date().getFullYear();
-      var monthFallback = (utils.getMonthOptions() || []).map(function (m) {
-        return {
-          value: currentYear + '-' + m.value,
-          label: m.label + ' ' + currentYear,
-          year : Number(currentYear),
-          month: Number(m.value)
-        };
-      });
-      return monthFallback;
-    }
-    var items = [];
-    years.forEach(function (entry) {
-      (entry.months || []).forEach(function (month) {
-        items.push({
-          value: entry.year_ce + '-' + month.month,
-          label: (month.label_short || month.label || ('เดือน ' + month.month)) +
-                 ' ' + (entry.label || entry.year_ce),
-          year : Number(entry.year_ce),
-          month: Number(month.month)
-        });
-      });
-    });
-    return items;
-  }
-
-  function applyActiveOption(options, currentValue, onMatched) {
-    var matched = null;
-    for (var i = 0; i < options.length; i++) {
-      if (String(options[i].value) === String(currentValue)) {
-        matched = options[i];
-        break;
-      }
-    }
-    if (!matched && options.length) matched = options[0];
-    if (!matched) return [];
-
-    if (typeof onMatched === 'function') onMatched(matched);
-
-    return options.map(function (opt) {
-      return Object.assign({}, opt, {
-        active: String(opt.value) === String(matched.value)
-      });
-    });
-  }
+  // Period helpers (buildYearOptionsFromPeriods, buildQuarterOptionsFromPeriods,
+  // buildMonthYearOptionsFromPeriods, applyActiveOption) moved into
+  // shared-period-selector.js. This file keeps only helpers used by
+  // country/team/jobpos/user dropdowns.
 
   function init(cfg) {
     var container = document.getElementById(cfg.containerId);
@@ -196,7 +75,7 @@
     var utils   = window.SharedUtils;
 
     // Defaults so partial state objects still render.
-    if (state.mode == null)    state.mode    = 'quarterly';
+    if (state.mode == null)    state.mode    = 'monthly';
     if (state.year == null)    state.year    = utils.getCurrentYear();
     if (state.quarter == null) state.quarter = utils.getCurrentQuarter();
     if (state.month == null)   state.month   = new Date().getMonth() + 1;
@@ -221,8 +100,7 @@
       ? renderPairedGridLayout(ids)
       : renderStackedLayout(ids);
 
-    initModeDropdown();
-    initPeriodControls();
+    initPeriodSelector();
     initCountryDropdown();
     initTeamDropdown();
     initJobPosDropdown();
@@ -233,7 +111,7 @@
     // haven't added the <script> tag yet.
     function onSearchClick() { onApply(state); }
     function onResetClick() {
-      state.mode         = 'quarterly';
+      state.mode         = 'monthly';
       state.year         = utils.getCurrentYear();
       state.quarter      = utils.getCurrentQuarter();
       state.month        = new Date().getMonth() + 1;
@@ -262,105 +140,47 @@
 
     // ── Dropdown initializers ──────────────────────────────────────────────
 
-    function initModeDropdown() {
-      var opts = [
-        { value: 'all',       label: 'ทั้งหมด',    icon: ICONS.all      },
-        { value: 'quarterly', label: 'รายไตรมาส',  icon: ICONS.calendar },
-        { value: 'monthly',   label: 'รายเดือน',   icon: ICONS.calendar },
-        { value: 'yearly',    label: 'รายปี',       icon: ICONS.calendar }
-      ].map(function (o) { return Object.assign({}, o, { active: o.value === state.mode }); });
-      var current = findActive(opts) || opts[0];
-      window.FilterSortDropdownComponent.initDropdown({
-        containerId : ids.mode,
-        defaultLabel: current.label,
-        defaultIcon : current.icon,
-        options     : opts,
-        onChange    : function (val) {
-          state.mode    = val;
-          state.year    = utils.getCurrentYear();
-          state.quarter = utils.getCurrentQuarter();
-          state.month   = new Date().getMonth() + 1;
-          initPeriodControls();
-        }
-      });
-    }
-
-    function initPeriodControls() {
-      var host  = document.getElementById(ids.period);
+    // Period selector (mode + value) — delegates to SharedPeriodSelector so
+    // every page gets the same dropdown look, and the only mode/year/quarter/
+    // month logic lives in one place. The period-label toggling (hidden when
+    // mode === 'all') is still handled here because the label element is
+    // owned by this panel's layout.
+    function initPeriodSelector() {
       var label = document.getElementById(ids.periodL);
-      var periods = options.availablePeriods || { years: [] };
-      if (!host || !label) return;
+      var host  = document.getElementById(ids.period);
 
-      if (state.mode === 'all') {
-        host.innerHTML = '';
-        label.style.display = 'none';
-        host.style.display = 'none';
+      if (!window.SharedPeriodSelector || !window.SharedPeriodSelector.mount) {
+        console.error('[ReportFilterPanel] SharedPeriodSelector missing — load shared-period-selector.js');
         return;
       }
-      label.style.display = '';
-      host.style.display = 'flex';
-      host.className = 'filter-period-controls filter-period-controls--' + state.mode;
 
-      if (state.mode === 'quarterly') {
-        host.innerHTML = '<div id="' + ids.quarter + '"></div>';
-        var quarterBase = buildQuarterOptionsFromPeriods(periods, utils);
-        var quarters = applyActiveOption(quarterBase, state.year + '-' + state.quarter, function (active) {
-          state.year = Number(active.year != null ? active.year : String(active.value).split('-')[0]);
-          state.quarter = Number(active.quarter != null ? active.quarter : String(active.value).split('-')[1]);
-        });
-        var active = findActive(quarters) || quarters[0];
-        window.FilterSortDropdownComponent.initDropdown({
-          containerId : ids.quarter,
-          defaultLabel: active ? active.label : 'เลือกไตรมาส',
-          defaultIcon : ICONS.calendar,
-          options     : quarters,
-          onChange    : function (val) {
-            var parts = String(val).split('-');
-            if (parts.length === 2) {
-              state.year    = parseInt(parts[0], 10);
-              state.quarter = parseInt(parts[1], 10);
-            }
-          }
-        });
-      } else if (state.mode === 'monthly') {
-        host.innerHTML = '<div id="' + ids.month + '"></div>';
-        var monthYearBase = buildMonthYearOptionsFromPeriods(periods, utils);
-        var activeVal = state.year + '-' + state.month;
-        var monthYears = applyActiveOption(monthYearBase, activeVal, function (active) {
-          state.year  = Number(active.year);
-          state.month = Number(active.month);
-        });
-        var activeMY = findActive(monthYears) || monthYears[0];
-        window.FilterSortDropdownComponent.initDropdown({
-          containerId : ids.month,
-          defaultLabel: activeMY ? activeMY.label : 'เลือกเดือน',
-          defaultIcon : ICONS.calendar,
-          options     : monthYears,
-          onChange    : function (val) {
-            var parts = String(val).split('-');
-            if (parts.length === 2) {
-              state.year  = parseInt(parts[0], 10);
-              state.month = parseInt(parts[1], 10);
-            }
-          }
-        });
-      } else if (state.mode === 'yearly') {
-        host.innerHTML = '<div id="' + ids.year + '"></div>';
-        initYearDropdown();
+      function applyLabelVisibility() {
+        if (!label || !host) return;
+        var hidden = state.mode === 'all';
+        label.style.display = hidden ? 'none' : '';
       }
-    }
 
-    function initYearDropdown() {
-      var years = applyActiveOption(buildYearOptionsFromPeriods(options.availablePeriods, utils), state.year, function (active) {
-        state.year = parseInt(active.value, 10);
-      });
-      var active = findActive(years) || years[0];
-      window.FilterSortDropdownComponent.initDropdown({
-        containerId : ids.year,
-        defaultLabel: active ? active.label : 'เลือกปี',
-        defaultIcon : ICONS.calendar,
-        options     : years,
-        onChange    : function (val) { state.year = parseInt(val, 10); }
+      applyLabelVisibility();
+
+      window.SharedPeriodSelector.mount({
+        modeContainerId : ids.mode,
+        valueContainerId: ids.period,
+        availablePeriods: options.availablePeriods || { years: [] },
+        multiSelect     : false,
+        modes           : ['all', 'quarterly', 'monthly', 'yearly'],
+        initialState    : {
+          mode   : state.mode,
+          year   : state.year,
+          quarter: state.quarter,
+          month  : state.month
+        },
+        onChange        : function (s) {
+          state.mode    = s.mode;
+          state.year    = s.year;
+          state.quarter = s.quarter;
+          state.month   = s.month;
+          applyLabelVisibility();
+        }
       });
     }
 
@@ -526,17 +346,15 @@
   function renderPairedGridLayout(ids) {
     return '' +
       '<div class="filter-wrap filter-wrap-stacked filter-wrap-paired-grid">' +
-        '<div class="filter-grid">' +
-          '<div class="filter-grid-main">' +
-            renderField('รูปแบบ', '<div id="' + ids.mode + '"></div>') +
-            renderField('ช่วงเวลา', '<div class="filter-period-controls" id="' + ids.period + '"></div>', ids.periodL, 'filter-field-period') +
-            renderField('ประเทศ', '<div id="' + ids.country + '"></div>') +
-            renderField('ทีม', '<div id="' + ids.team + '"></div>') +
-            renderField('ตำแหน่ง', '<div id="' + ids.jobpos + '"></div>') +
-            renderField('ผู้ใช้', '<div id="' + ids.user + '"></div>') +
-          '</div>' +
-          '<div class="filter-actions" id="' + ids.actions + '"></div>' +
+        '<div class="filter-grid-main">' +
+          renderField('รูปแบบ', '<div id="' + ids.mode + '"></div>') +
+          renderField('ช่วงเวลา', '<div class="filter-period-controls" id="' + ids.period + '"></div>', ids.periodL, 'filter-field-period') +
+          renderField('ประเทศ', '<div id="' + ids.country + '"></div>') +
+          renderField('ทีม', '<div id="' + ids.team + '"></div>') +
+          renderField('ตำแหน่ง', '<div id="' + ids.jobpos + '"></div>') +
+          renderField('ผู้ใช้', '<div id="' + ids.user + '"></div>') +
         '</div>' +
+        '<div class="filter-actions" id="' + ids.actions + '"></div>' +
       '</div>';
   }
 

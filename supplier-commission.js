@@ -23,7 +23,7 @@
   var filterQuery   = '';
 
   var filterState = {
-    mode         : 'quarterly',
+    mode         : 'monthly',
     year         : null,
     quarter      : null,
     month        : new Date().getMonth() + 1,
@@ -217,7 +217,7 @@
           tooltip: {
             callbacks: {
               title: function (items) { return fullNames[items[0].dataIndex] || labels[items[0].dataIndex]; },
-              label: function (item)  { return item.dataset.label + ': ฿' + window.SharedUtils.formatCurrency(item.parsed.y); }
+              label: function (item)  { return item.dataset.label + ': ' + window.SharedUtils.formatCurrency(item.parsed.y); }
             }
           }
         }
@@ -287,7 +287,7 @@
                   : key === 'avg_commission_per_pax' ? ' sc-avg-value'
                   : '';
     return function (_v, row) {
-      return '<span class="' + cellClass.trim() + '">฿' +
+      return '<span class="' + cellClass.trim() + '">' +
         window.SharedUtils.formatCurrency(row.metrics[key]) + '</span>';
     };
   }

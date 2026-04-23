@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Sales Report - Tourwow" />
-    <title>Sales Report - Tourwow</title>
+    <meta name="description" content="Canceled Orders Report - Tourwow" />
+    <title>Canceled Orders Report - Tourwow</title>
 
     <!-- Fonts -->
     <link rel="stylesheet" href="shared-font.css" />
 
-    <!-- Styles -->
+    <!-- Styles — reuse the commission-report-plus stylesheet so this page
+         inherits the same summary cards, seller summary, and table styling. -->
     <link rel="stylesheet" href="tour-image-manager.css" />
     <link rel="stylesheet" href="shared-export-button.css" />
     <link rel="stylesheet" href="filter-panel.css" />
@@ -43,6 +44,9 @@
     <script src="shared-font.js"></script>
     <script src="token-utils.js?v=20250128"></script>
     <script src="tour-image-manager-api.js"></script>
+    <!-- Reuse the commission-plus API client — canceled-orders hits the
+         same /api/reports/commission-plus endpoint, just with
+         order_status=canceled and canceled_at_from/to. -->
     <script src="commission-report-plus-api.js"></script>
     <script src="filter-sort-dropdown-component.js"></script>
     <script src="filter-search-dropdown-component.js"></script>
@@ -74,7 +78,6 @@
       @media print {
         @page { size: A4 landscape; margin: 10mm; }
 
-        /* Hide everything except the table */
         .sidebar, .top-bar, .mobile-menu-toggle,
         .breadcrumb, .page-header,
         .filter-wrap,
@@ -82,19 +85,16 @@
         .dashboard-table-actions,
         .skip-link { display: none !important; }
 
-        /* Reset layout */
         .app-wrapper, .main-content { display: block !important; margin: 0 !important; padding: 0 !important; }
         .content-area { padding: 0 !important; background: white !important; }
         .report-content-section { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
         .crp-wrapper { gap: 0 !important; }
 
-        /* Table full width, no scroll clip */
         .crp-table-scroll { overflow: visible !important; max-height: none !important; }
         .dashboard-table { width: 100% !important; font-size: 10pt !important; }
         .dashboard-table thead th { padding: 5px 6px !important; font-size: 10pt !important; }
         .dashboard-table tbody td { padding: 4px 6px !important; }
 
-        /* Keep sticky off for print */
         .crp-table thead tr.group-row th,
         .crp-table thead tr.col-row th { position: static !important; }
       }
@@ -108,7 +108,6 @@
         <span class="hamburger-icon"><span></span><span></span><span></span></span>
       </button>
 
-      <!-- Sidebar -->
       <aside class="sidebar" id="sidebar" role="navigation" aria-label="เมนูหลัก">
         <div class="logo">
           <img src="https://financebackoffice-staging2.tourwow.com/assets/images/tourwow-logo.png" alt="Tourwow Logo" />
@@ -122,7 +121,6 @@
         </button>
       </aside>
 
-      <!-- Main Content -->
       <main class="main-content" id="main-content" role="main">
         <nav class="top-bar" role="banner">
           <div class="top-bar-container">
@@ -135,17 +133,17 @@
             <ol>
               <li><a href="#">หน้าแรก</a></li>
               <li><a href="#">Report</a></li>
-              <li aria-current="page">Sales Report</li>
+              <li aria-current="page">Canceled Orders Report</li>
             </ol>
           </nav>
 
           <header class="page-header">
             <svg class="page-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M6 8h4M6 11h8M6 14h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <h1>Sales Report</h1>
+            <h1>Canceled Orders Report</h1>
           </header>
 
           <section class="report-content-section" id="reportContentSection">
@@ -155,6 +153,6 @@
       </main>
     </div>
 
-    <script src="commission-report-plus.js"></script>
+    <script src="canceled-orders.js"></script>
   </body>
 </html>

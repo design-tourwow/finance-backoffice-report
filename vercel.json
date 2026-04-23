@@ -59,6 +59,10 @@
     {
       "source": "/request-discount",
       "destination": "/request-discount.html"
+    },
+    {
+      "source": "/canceled-orders",
+      "destination": "/canceled-orders.html"
     }
   ],
   "headers": [

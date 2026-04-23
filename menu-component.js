@@ -21,6 +21,7 @@ function handleExternalLink(e, url) {
       '/sales-by-country': true,
       '/wholesale-destinations': true,
       '/sales-report': true,
+      '/canceled-orders': true,
       '/work-list': true,
       '/supplier-commission': true,
       '/discount-sales': true,
@@ -37,6 +38,7 @@ function handleExternalLink(e, url) {
       '/sales-by-country': false,
       '/wholesale-destinations': false,
       '/sales-report': true,
+      '/canceled-orders': true,
       '/work-list': false,
       '/supplier-commission': false,
       '/discount-sales': false,
@@ -53,6 +55,7 @@ function handleExternalLink(e, url) {
       '/sales-by-country': false,
       '/wholesale-destinations': false,
       '/sales-report': true,
+      '/canceled-orders': true,
       '/work-list': false,
       '/supplier-commission': false,
       '/discount-sales': false,
@@ -98,6 +101,12 @@ function handleExternalLink(e, url) {
           id: 'sales-report',
           label: 'Sales Report',
           url: '/sales-report',
+          requireAuth: true
+        },
+        {
+          id: 'canceled-orders',
+          label: 'Canceled Orders',
+          url: '/canceled-orders',
           requireAuth: true
         }
       ]
