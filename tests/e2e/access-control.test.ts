@@ -2,7 +2,7 @@ import { test, expect, seedToken } from '../support/test-base';
 import { makeMockJwt } from '../fixtures/mock-token';
 
 test.describe('@p0 access control by job_position', () => {
-  test('ts sees only dashboard + commission menu entries', async ({ page, mockedBackend }) => {
+  test('ts sees only dashboard + sales report menu entries', async ({ page, mockedBackend }) => {
     const tsToken = makeMockJwt({
       agencyMember: {
         id: 2,
@@ -17,11 +17,11 @@ test.describe('@p0 access control by job_position', () => {
 
     await expect(page.locator('.nav-menu .nav-item')).toHaveCount(2);
     await expect(page.locator('.nav-menu .nav-item', { hasText: 'Dashboard' })).toBeVisible();
-    await expect(page.locator('.nav-menu .nav-item', { hasText: 'Commission Report Plus' })).toBeVisible();
+    await expect(page.locator('.nav-menu .nav-item', { hasText: 'Sales Report' })).toBeVisible();
     await expect(page.locator('.nav-menu .nav-item', { hasText: 'Tour Image Manager' })).toHaveCount(0);
     await expect(page.locator('.nav-menu .nav-item', { hasText: 'Sales by Country' })).toHaveCount(0);
 
-    await expect(page.locator('.dashboard-card', { hasText: 'Commission Report Plus' })).toBeVisible();
+    await expect(page.locator('.dashboard-card', { hasText: 'Sales Report' })).toBeVisible();
     await expect(page.locator('.dashboard-card', { hasText: 'Sales by Country' })).toHaveCount(0);
     await expect(page.locator('.dashboard-card', { hasText: 'Supplier Commission' })).toHaveCount(0);
   });

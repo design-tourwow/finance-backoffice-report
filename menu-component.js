@@ -96,7 +96,7 @@ function handleExternalLink(e, url) {
         },
         {
           id: 'sales-report',
-          label: 'Commission Report Plus',
+          label: 'Sales Report',
           url: '/sales-report',
           requireAuth: true
         }

@@ -885,7 +885,7 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <title>Commission Report Plus</title>
+    <title>Sales Report</title>
     ${APP_FONT_STYLESHEET_TAG}
     <style>
       @page { size: A4 landscape; margin: 10mm; }
@@ -1030,7 +1030,7 @@
     <div class="crp-print-shell">
       <div class="crp-print-header">
         <div>
-          <h1 class="crp-print-title">Commission Report Plus</h1>
+          <h1 class="crp-print-title">Sales Report</h1>
           <p class="crp-print-subtitle">พิมพ์เมื่อ ${escHtml(new Date().toLocaleString('th-TH'))}</p>
         </div>
         <div class="crp-print-count">${escHtml(countText || '')}</div>
@@ -1067,7 +1067,7 @@
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
-    return `commission-report-plus-${yyyy}${mm}${dd}.pdf`;
+    return `sales-report-${yyyy}${mm}${dd}.pdf`;
   }
 
   function getVisibleTableRows() {
@@ -1103,7 +1103,7 @@
     title.style.borderBottom = '2px solid #335f8a';
     title.innerHTML = `
       <div>
-        <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Commission Report +</div>
+        <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Sales Report</div>
       </div>
       <div style="font-size:14px;color:#1f2937;font-weight:600;">พิมพ์วันที่: ${escHtml(new Date().toLocaleString('th-TH'))}</div>
     `;

@@ -21,8 +21,8 @@
     },
     {
       href: '/sales-report',
-      title: 'Commission Report Plus',
-      description: 'รายงานคอมมิชชั่นระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
+      title: 'Sales Report',
+      description: 'รายงานยอดขายระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
       icon: iconReceipt()
     },
     {
