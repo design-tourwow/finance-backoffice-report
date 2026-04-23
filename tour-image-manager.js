@@ -30,8 +30,7 @@
     initImagePreviewModal();
     initExportImport();
     initSorting();
-    initImageNameAutocomplete();
-    initTourCodeAutocomplete();
+    initFilterTextSearch();
     initBanner1Filter();
     initTimTableSearch();
     checkTokenAndLoadData();
@@ -919,296 +918,71 @@ function initShowAllButtons() {
     };
   }
 
-  // Highlight matching text in autocomplete suggestions
-  function highlightMatch(text, query) {
-    if (!query) return text;
-    
-    // Escape special regex characters
-    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    
-    return text.replace(regex, '<mark class="autocomplete-highlight">$1</mark>');
-  }
+  // Filter-box text search — ชื่อรูป + รหัสทัวร์ use the shared
+  // SharedFilterSearchInput component (autocomplete mode). Each mount
+  // keeps the legacy hidden <input name="tourCode" | "imageName"> in
+  // sync so the existing form-submit handler (FormData.get) still works
+  // without any change. fetchFn preserves the previous semantics: 1s
+  // artificial delay + TourImageAPI call + dedupe/sort, but cancellation
+  // + debounce + spinner + keyboard nav + highlight live in the shared
+  // component instead of being re-written per field.
+  function initFilterTextSearch() {
+    if (!window.SharedFilterSearchInput) return;
 
-  // Image Name Autocomplete
-  function initImageNameAutocomplete() {
-    const input = document.getElementById('imageName');
-    const dropdown = document.getElementById('imageNameAutocomplete');
-    const wrapper = input?.closest('.autocomplete-wrapper');
-    const spinner = wrapper?.querySelector('.autocomplete-spinner');
-    
-    if (!input || !dropdown || !spinner) return;
+    function localeSort(a, b) { return String(a).localeCompare(String(b), ['en', 'th']); }
 
-    let currentRequest = null;
-    let selectedIndex = -1;
-
-    // Debounced search function
-    const searchImages = debounce(async (query) => {
-      if (query.length < 3) {
-        dropdown.style.display = 'none';
-        spinner.style.display = 'none';
-        return;
+    // Image name — server-side filter via ?name=query
+    window.SharedFilterSearchInput.init({
+      containerId: 'imageNameHost',
+      placeholder: 'กรอกชื่อรูป',
+      minChars   : 3,
+      debounceMs : 300,
+      fetchFn    : async function (query) {
+        await new Promise(function (r) { setTimeout(r, 1000); });
+        var response = await TourImageAPI.getPreProductFileReports({ name: query });
+        if (!response || response.status !== 'success' || !Array.isArray(response.data)) return [];
+        var names = Array.from(new Set(response.data.map(function (i) { return i.name; }).filter(Boolean))).sort(localeSort);
+        return names;
+      },
+      onInput : function (value) {
+        var hidden = document.getElementById('imageName');
+        if (hidden) hidden.value = value || '';
+      },
+      onSelect: function (value) {
+        var hidden = document.getElementById('imageName');
+        if (hidden) hidden.value = value || '';
       }
+    });
 
-      // Show spinner
-      spinner.style.display = 'block';
-      dropdown.style.display = 'none';
-
-      try {
-        // Cancel previous request if exists
-        if (currentRequest) {
-          currentRequest = null;
-        }
-
-        // Wait 1 second before making request
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Call API with name filter
-        const response = await TourImageAPI.getPreProductFileReports({ name: query });
-
-        // Hide spinner
-        spinner.style.display = 'none';
-
-        if (response && response.status === 'success' && response.data && response.data.length > 0) {
-          // Get unique names and sort
-          const names = [...new Set(response.data.map(item => item.name))].sort((a, b) => {
-            return a.localeCompare(b, ['en', 'th']);
-          });
-
-          // Show dropdown with results (with highlighted query)
-          dropdown.innerHTML = names.map(name => 
-            `<div class="autocomplete-item" data-value="${name}">${highlightMatch(name, query)}</div>`
-          ).join('');
-          
-          dropdown.style.display = 'block';
-          selectedIndex = -1;
-
-          // Add click handlers
-          dropdown.querySelectorAll('.autocomplete-item').forEach((item, index) => {
-            item.addEventListener('click', () => {
-              input.value = item.dataset.value;
-              dropdown.style.display = 'none';
-              selectedIndex = -1;
+    // Tour code — API returns unfiltered; filter client-side by query
+    window.SharedFilterSearchInput.init({
+      containerId: 'tourCodeHost',
+      placeholder: 'กรอกรหัสทัวร์',
+      minChars   : 3,
+      debounceMs : 300,
+      fetchFn    : async function (query) {
+        await new Promise(function (r) { setTimeout(r, 1000); });
+        var response = await TourImageAPI.getPreProductFileReports({});
+        if (!response || response.status !== 'success' || !Array.isArray(response.data)) return [];
+        var codes = new Set();
+        var q = String(query || '').toLowerCase();
+        response.data.forEach(function (item) {
+          if (Array.isArray(item.pre_product_files)) {
+            item.pre_product_files.forEach(function (file) {
+              var c = file.pre_product && file.pre_product.product_tour_code;
+              if (c && c.toLowerCase().indexOf(q) !== -1) codes.add(c);
             });
-          });
-        } else {
-          dropdown.innerHTML = '<div class="autocomplete-no-results">ไม่พบผลลัพธ์</div>';
-          dropdown.style.display = 'block';
-        }
-      } catch (error) {
-        console.error('Autocomplete error:', error);
-        spinner.style.display = 'none';
-        dropdown.style.display = 'none';
-      }
-    }, 300);
-
-    // Input event
-    input.addEventListener('input', (e) => {
-      searchImages(e.target.value.trim());
-    });
-
-    // Keyboard navigation
-    input.addEventListener('keydown', (e) => {
-      const items = dropdown.querySelectorAll('.autocomplete-item');
-      
-      if (dropdown.style.display === 'none' || items.length === 0) return;
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-        updateSelection(items);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = Math.max(selectedIndex - 1, -1);
-        updateSelection(items);
-      } else if (e.key === 'Enter' && selectedIndex >= 0) {
-        e.preventDefault();
-        items[selectedIndex].click();
-      } else if (e.key === 'Escape') {
-        dropdown.style.display = 'none';
-        selectedIndex = -1;
-      }
-    });
-
-    // Update selection highlight
-    function updateSelection(items) {
-      items.forEach((item, index) => {
-        if (index === selectedIndex) {
-          item.classList.add('active');
-          item.scrollIntoView({ block: 'nearest' });
-        } else {
-          item.classList.remove('active');
-        }
-      });
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.style.display = 'none';
-        selectedIndex = -1;
-      }
-    });
-
-    // Focus event
-    input.addEventListener('focus', () => {
-      if (input.value.length >= 3 && dropdown.innerHTML) {
-        dropdown.style.display = 'block';
-      }
-    });
-  }
-
-  // Tour Code Autocomplete
-  function initTourCodeAutocomplete() {
-    const input = document.getElementById('tourCode');
-    const dropdown = document.getElementById('tourCodeAutocomplete');
-    const wrapper = input?.closest('.autocomplete-wrapper');
-    const spinner = wrapper?.querySelector('.autocomplete-spinner');
-    
-    if (!input || !dropdown || !spinner) return;
-
-    let currentRequest = null;
-    let selectedIndex = -1;
-
-    // Debounced search function
-    const searchTourCodes = debounce(async (query) => {
-      if (query.length < 3) {
-        dropdown.style.display = 'none';
-        spinner.style.display = 'none';
-        return;
-      }
-
-      // Show spinner
-      spinner.style.display = 'block';
-      dropdown.style.display = 'none';
-
-      try {
-        // Cancel previous request if exists
-        if (currentRequest) {
-          currentRequest = null;
-        }
-
-        // Wait 1 second before making request
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Call API without filter to get all data, then filter client-side
-        const response = await TourImageAPI.getPreProductFileReports({});
-        
-        console.log('🔍 Tour Code Autocomplete - Query:', query);
-        console.log('📦 API Response:', response);
-
-        // Hide spinner
-        spinner.style.display = 'none';
-
-        if (response && response.status === 'success' && response.data && response.data.length > 0) {
-          console.log('✅ Found', response.data.length, 'total items');
-          
-          // Extract unique tour codes from pre_product_files and filter by query
-          const tourCodes = new Set();
-          response.data.forEach(item => {
-            if (item.pre_product_files && Array.isArray(item.pre_product_files)) {
-              item.pre_product_files.forEach(file => {
-                const tourCode = file.pre_product?.product_tour_code;
-                // Filter by query (case-insensitive)
-                if (tourCode && tourCode.toLowerCase().includes(query.toLowerCase())) {
-                  tourCodes.add(tourCode);
-                  console.log('  ➕ Added tour code:', tourCode);
-                }
-              });
-            }
-          });
-          
-          console.log('📋 Filtered tour codes:', [...tourCodes]);
-
-          // Convert to array and sort
-          const sortedCodes = [...tourCodes].sort((a, b) => {
-            return a.localeCompare(b, ['en', 'th']);
-          });
-
-          if (sortedCodes.length > 0) {
-            // Show dropdown with results (with highlighted query)
-            dropdown.innerHTML = sortedCodes.map(code => 
-              `<div class="autocomplete-item" data-value="${code}">${highlightMatch(code, query)}</div>`
-            ).join('');
-            
-            dropdown.style.display = 'block';
-            selectedIndex = -1;
-
-            // Add click handlers
-            dropdown.querySelectorAll('.autocomplete-item').forEach((item, index) => {
-              item.addEventListener('click', () => {
-                input.value = item.dataset.value;
-                dropdown.style.display = 'none';
-                selectedIndex = -1;
-              });
-            });
-          } else {
-            dropdown.innerHTML = '<div class="autocomplete-no-results">ไม่พบผลลัพธ์</div>';
-            dropdown.style.display = 'block';
           }
-        } else {
-          dropdown.innerHTML = '<div class="autocomplete-no-results">ไม่พบผลลัพธ์</div>';
-          dropdown.style.display = 'block';
-        }
-      } catch (error) {
-        console.error('Tour code autocomplete error:', error);
-        spinner.style.display = 'none';
-        dropdown.style.display = 'none';
-      }
-    }, 300);
-
-    // Input event
-    input.addEventListener('input', (e) => {
-      searchTourCodes(e.target.value.trim());
-    });
-
-    // Keyboard navigation
-    input.addEventListener('keydown', (e) => {
-      const items = dropdown.querySelectorAll('.autocomplete-item');
-      
-      if (dropdown.style.display === 'none' || items.length === 0) return;
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-        updateSelection(items);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = Math.max(selectedIndex - 1, -1);
-        updateSelection(items);
-      } else if (e.key === 'Enter' && selectedIndex >= 0) {
-        e.preventDefault();
-        items[selectedIndex].click();
-      } else if (e.key === 'Escape') {
-        dropdown.style.display = 'none';
-        selectedIndex = -1;
-      }
-    });
-
-    // Update selection highlight
-    function updateSelection(items) {
-      items.forEach((item, index) => {
-        if (index === selectedIndex) {
-          item.classList.add('active');
-          item.scrollIntoView({ block: 'nearest' });
-        } else {
-          item.classList.remove('active');
-        }
-      });
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.style.display = 'none';
-        selectedIndex = -1;
-      }
-    });
-
-    // Focus event
-    input.addEventListener('focus', () => {
-      if (input.value.length >= 3 && dropdown.innerHTML) {
-        dropdown.style.display = 'block';
+        });
+        return Array.from(codes).sort(localeSort);
+      },
+      onInput : function (value) {
+        var hidden = document.getElementById('tourCode');
+        if (hidden) hidden.value = value || '';
+      },
+      onSelect: function (value) {
+        var hidden = document.getElementById('tourCode');
+        if (hidden) hidden.value = value || '';
       }
     });
   }

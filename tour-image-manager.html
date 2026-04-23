@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="filter-panel.css" />
     <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
     <link rel="stylesheet" href="shared-table-search.css" />
+    <link rel="stylesheet" href="shared-filter-search-input.css" />
     
     <!-- Configuration -->
     <!-- CRITICAL: Set API URL based on hostname BEFORE loading any other scripts -->
@@ -64,6 +65,7 @@
     <script src="country-flags.js"></script>
     <script src="filter-search-dropdown-component.js"></script>
     <script src="shared-table-search.js"></script>
+    <script src="shared-filter-search-input.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Authentication Handler -->
@@ -208,13 +210,8 @@
                 </div>
                 <div class="form-group">
                   <label for="tourCode">รหัสทัวร์</label>
-                  <div class="autocomplete-wrapper">
-                    <input type="text" id="tourCode" name="tourCode" placeholder="กรอกรหัสทัวร์" aria-label="กรอกรหัสทัวร์" autocomplete="off" />
-                    <div class="autocomplete-spinner" style="display: none;">
-                      <div class="spinner"></div>
-                    </div>
-                    <div class="autocomplete-dropdown" id="tourCodeAutocomplete" style="display: none;"></div>
-                  </div>
+                  <div id="tourCodeHost" class="tim-filter-dropdown"></div>
+                  <input type="hidden" id="tourCode" name="tourCode" value="">
                   <span class="error-message" role="alert"></span>
                 </div>
               </div>
@@ -223,13 +220,8 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="imageName">ชื่อรูป</label>
-                  <div class="autocomplete-wrapper">
-                    <input type="text" id="imageName" name="imageName" placeholder="กรอกชื่อรูป" aria-label="กรอกชื่อรูป" autocomplete="off" />
-                    <div class="autocomplete-spinner" style="display: none;">
-                      <div class="spinner"></div>
-                    </div>
-                    <div class="autocomplete-dropdown" id="imageNameAutocomplete" style="display: none;"></div>
-                  </div>
+                  <div id="imageNameHost" class="tim-filter-dropdown"></div>
+                  <input type="hidden" id="imageName" name="imageName" value="">
                   <span class="error-message" role="alert"></span>
                 </div>
                 <div class="form-group">
