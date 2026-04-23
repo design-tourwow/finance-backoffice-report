@@ -157,18 +157,38 @@
     });
   }
 
-  // Country uses the shared FilterSearchDropdown (multi-select). Wholesale
-  // renders the .time-btn / .time-dropdown-menu pattern to match the
-  // wholesale-destinations page visually; loadSuppliers populates the item
-  // list, and confirm writes the csv into #wholesale so the existing submit
-  // + reset handlers keep working as-is.
-  function mountCountryMultiSelect(options) {
+  // Country dropdown — same FilterSearchDropdown config the ReportFilterPanel
+  // uses for #sc-dd-country on /supplier-commission: globe trigger icon,
+  // per-option country flag, Thai-sorted list, multi-select with
+  // "ทุกประเทศ" default and "ประเทศ (N)" count badge. Hidden input #country
+  // stays as the csv handoff to the page's existing submit logic.
+  var GLOBE_ICON_HTML =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+      '<circle cx="12" cy="12" r="10"/>' +
+      '<line x1="2" y1="12" x2="22" y2="12"/>' +
+      '<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>' +
+    '</svg>';
+
+  function mountCountryMultiSelect(countries) {
     if (!window.FilterSearchDropdown) return;
+    var list = Array.isArray(countries) ? countries.slice() : [];
+    if (window.SharedUtils && window.SharedUtils.sortCountriesByThai) {
+      try { list = window.SharedUtils.sortCountriesByThai(list); } catch (e) { /* noop */ }
+    }
+    var flags = window.CountryFlags;
+    var options = list.map(function (c) {
+      return {
+        value: String(c.id),
+        label: c.name_th || c.name_en || ('#' + c.id),
+        icon : flags ? flags.iconFor(c, { size: 18 }) : ''
+      };
+    });
     window.FilterSearchDropdown.init({
       containerId : 'countryMultiSelect',
-      defaultLabel: 'เลือกประเทศ',
+      defaultLabel: 'ทุกประเทศ',
+      defaultIcon : GLOBE_ICON_HTML,
       options     : options,
-      placeholder : 'ค้นหา...',
+      placeholder : 'ค้นหาประเทศ...',
       multiSelect : true,
       groupLabel  : 'ประเทศ',
       onChange    : function (csvValue) {
@@ -1286,15 +1306,13 @@ function initShowAllButtons() {
     console.log('✅ Loaded suppliers:', response.data.length);
   }
 
-  // Load countries and mount shared FilterSearchDropdown.
+  // Load countries and mount the shared FilterSearchDropdown — same
+  // configuration used by ReportFilterPanel for #sc-dd-country.
   async function loadCountries() {
     const response = await TourImageAPI.getCountries('country_name_th_by_asc');
     if (!response || response.status !== 'success' || !response.data) return;
 
-    var opts = response.data.map(function (c) {
-      return { value: String(c.id), label: c.name_th + ' (' + c.name_en + ')' };
-    });
-    mountCountryMultiSelect(opts);
+    mountCountryMultiSelect(response.data);
     console.log('✅ Loaded countries:', response.data.length);
   }
 
