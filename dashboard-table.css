@@ -75,7 +75,7 @@
 .rd-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 /* Horizontal-scroll hint: dense tables overflow the card. Show a subtle

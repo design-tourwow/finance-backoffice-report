@@ -657,7 +657,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .dashboard-table th {
@@ -768,7 +768,7 @@
 
 .dashboard-table th.country-sub-header {
   text-align: center;
-  font-size: 13px;
+  font-size: 14px;
   padding: 8px 24px 8px 12px;
   white-space: nowrap;
   width: auto;
@@ -797,7 +797,7 @@
 /* Country Cell Styles */
 .dashboard-table td.country-cell {
   text-align: center;
-  font-size: 15px;
+  font-size: 14px;
   padding: 12px;
   white-space: nowrap;
   border-left: 1px solid var(--color-bg-hover);

@@ -509,7 +509,7 @@ mark.search-highlight {
 .report-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .report-table tbody tr:hover {
@@ -775,7 +775,7 @@ mark.search-highlight {
   }
 
   .report-table {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .report-table th,
@@ -1623,7 +1623,7 @@ mark.search-highlight {
 .dashboard-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .dashboard-table thead th {
@@ -1671,7 +1671,7 @@ mark.search-highlight {
 }
 
 .sparkline-value {
-  font-size: 15px;
+  font-size: 14px;
   color: #6b7280;
   min-width: 50px;
 }
