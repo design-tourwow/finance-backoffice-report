@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="order-report.css" />
     <link rel="stylesheet" href="shared-export-button.css" />
     <link rel="stylesheet" href="shared-table-search.css" />
+    <link rel="stylesheet" href="shared-filter-actions.css" />
 
     <!-- Configuration -->
     <script>
@@ -55,6 +56,7 @@
     <script src="filter-sort-dropdown-component.js"></script>
     <script src="shared-export-button.js"></script>
     <script src="shared-table-search.js"></script>
+    <script src="shared-filter-actions.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Load sidebar state -->
@@ -206,15 +208,10 @@
                 </div>
               </div>
 
-              <!-- Row 3: Buttons -->
+              <!-- Row 3: Buttons — SharedFilterActions mounts ค้นหา +
+                   เริ่มใหม่ here (searchType=submit / resetType=reset). -->
               <div class="form-row form-row-actions">
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary" aria-label="ค้นหาข้อมูล">
-                    <span class="btn-text">ค้นหา</span>
-                    <span class="btn-loader" aria-hidden="true"></span>
-                  </button>
-                  <button type="reset" class="btn btn-secondary" aria-label="รีเซ็ตฟอร์ม">รีเซ็ต</button>
-                </div>
+                <div class="form-actions" id="orFilterActionsHost"></div>
               </div>
             </form>
           </section>

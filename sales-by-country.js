@@ -287,8 +287,21 @@
   // Initialize form handler
   function initFormHandler() {
     const form = document.getElementById('reportFilterForm');
+
+    // Mount the shared ค้นหา + เริ่มใหม่ buttons (searchType=submit /
+    // resetType=reset so the existing form 'submit' / 'reset' listeners
+    // below fire naturally when the buttons are clicked).
+    if (window.SharedFilterActions && document.getElementById('sbcFilterActionsHost')) {
+      window.SharedFilterActions.mount({
+        containerId: 'sbcFilterActionsHost',
+        searchType : 'submit',
+        resetType  : 'reset',
+        resetLabel : 'รีเซ็ต'
+      });
+    }
+
     const submitBtn = form.querySelector('button[type="submit"]');
-    
+
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
 

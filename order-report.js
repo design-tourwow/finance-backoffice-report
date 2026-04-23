@@ -227,8 +227,20 @@
   // Initialize form handler
   function initFormHandler() {
     const form = document.getElementById('reportFilterForm');
+
+    // Mount shared ค้นหา + เริ่มใหม่ (searchType=submit/resetType=reset
+    // so the form's existing 'submit'/'reset' listeners fire naturally).
+    if (window.SharedFilterActions && document.getElementById('orFilterActionsHost')) {
+      window.SharedFilterActions.mount({
+        containerId: 'orFilterActionsHost',
+        searchType : 'submit',
+        resetType  : 'reset',
+        resetLabel : 'รีเซ็ต'
+      });
+    }
+
     const submitBtn = form.querySelector('button[type="submit"]');
-    
+
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
 

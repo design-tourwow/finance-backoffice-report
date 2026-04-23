@@ -213,7 +213,8 @@
       jobpos  : prefix + '-dd-jobpos',
       user    : prefix + '-dd-user',
       apply   : prefix + '-btn-apply',
-      reset   : prefix + '-btn-reset'
+      reset   : prefix + '-btn-reset',
+      actions : prefix + '-filter-actions-host'
     };
 
     container.innerHTML = layout === 'paired-grid'
@@ -227,10 +228,11 @@
     initJobPosDropdown();
     initUserDropdown();
 
-    document.getElementById(ids.apply).addEventListener('click', function () {
-      onApply(state);
-    });
-    document.getElementById(ids.reset).addEventListener('click', function () {
+    // Action buttons — delegate to the shared SharedFilterActions component
+    // if loaded; fall back to direct button wiring for legacy pages that
+    // haven't added the <script> tag yet.
+    function onSearchClick() { onApply(state); }
+    function onResetClick() {
       state.mode         = 'quarterly';
       state.year         = utils.getCurrentYear();
       state.quarter      = utils.getCurrentQuarter();
@@ -241,7 +243,22 @@
       state.user_id      = null;
       init(cfg);
       onApply(state);
-    });
+    }
+
+    if (window.SharedFilterActions && document.getElementById(ids.actions)) {
+      window.SharedFilterActions.mount({
+        containerId: ids.actions,
+        searchId   : ids.apply,
+        resetId    : ids.reset,
+        onSearch   : onSearchClick,
+        onReset    : onResetClick
+      });
+    } else {
+      var applyBtn = document.getElementById(ids.apply);
+      var resetBtn = document.getElementById(ids.reset);
+      if (applyBtn) applyBtn.addEventListener('click', onSearchClick);
+      if (resetBtn) resetBtn.addEventListener('click', onResetClick);
+    }
 
     // ── Dropdown initializers ──────────────────────────────────────────────
 
@@ -501,12 +518,7 @@
           '<div class="filter-separator"></div>' +
           '<span class="filter-label">ผู้ใช้</span>' +
           '<div id="' + ids.user + '"></div>' +
-          '<button type="button" class="filter-btn-search" id="' + ids.apply + '">' +
-            ICONS.search + 'ค้นหา' +
-          '</button>' +
-          '<button type="button" class="filter-btn-reset" id="' + ids.reset + '">' +
-            ICONS.reset + 'เริ่มใหม่' +
-          '</button>' +
+          '<div id="' + ids.actions + '"></div>' +
         '</div>' +
       '</div>';
   }
@@ -523,14 +535,7 @@
             renderField('ตำแหน่ง', '<div id="' + ids.jobpos + '"></div>') +
             renderField('ผู้ใช้', '<div id="' + ids.user + '"></div>') +
           '</div>' +
-          '<div class="filter-actions">' +
-            '<button type="button" class="filter-btn-search" id="' + ids.apply + '">' +
-              ICONS.search + 'ค้นหา' +
-            '</button>' +
-            '<button type="button" class="filter-btn-reset" id="' + ids.reset + '">' +
-              ICONS.reset + 'เริ่มใหม่' +
-            '</button>' +
-          '</div>' +
+          '<div class="filter-actions" id="' + ids.actions + '"></div>' +
         '</div>' +
       '</div>';
   }

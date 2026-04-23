@@ -292,21 +292,10 @@
             </div>
           </div>
 
-          <!-- แถว 4: Action buttons — right-aligned on their own row
-               (same layout as /tour-image-manager) so the 4 dropdowns
-               on rows 2+3 split their columns evenly without being
-               squeezed by the button group. -->
+          <!-- แถว 4: Action buttons — SharedFilterActions renders the
+               ค้นหา + เริ่มใหม่ pair into #crp-filter-actions-host. -->
           <div class="filter-row crp-filter-actions-row">
-            <div class="crp-filter-actions">
-              <button class="filter-btn-search" id="crp-btn-search">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                ค้นหา
-              </button>
-              <button class="filter-btn-reset" id="crp-btn-reset">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
-                เริ่มใหม่
-              </button>
-            </div>
+            <div id="crp-filter-actions-host"></div>
           </div>
 
         </div>
@@ -445,13 +434,19 @@
     // Ez Search buttons
     initEzSearch();
 
-    // Search button
-    document.getElementById('crp-btn-search').addEventListener('click', loadReport);
-
-    // Reset button
-    document.getElementById('crp-btn-reset').addEventListener('click', function () {
-      window.location.reload();
-    });
+    // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่ into
+    // the host, wiring click handlers to the existing loadReport / reload
+    // flow. The rendered buttons keep id="crp-btn-search" / "crp-btn-reset"
+    // for continuity with any other code that still queries them.
+    if (window.SharedFilterActions) {
+      window.SharedFilterActions.mount({
+        containerId: 'crp-filter-actions-host',
+        searchId   : 'crp-btn-search',
+        resetId    : 'crp-btn-reset',
+        onSearch   : loadReport,
+        onReset    : function () { window.location.reload(); }
+      });
+    }
   }
 
   function initEzSearch() {

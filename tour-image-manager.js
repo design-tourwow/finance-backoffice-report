@@ -32,6 +32,7 @@
     initSorting();
     initFilterTextSearch();
     initUsageCountInput();
+    initFilterActions();
     initBanner1Filter();
     initTimTableSearch();
     checkTokenAndLoadData();
@@ -917,6 +918,19 @@ function initShowAllButtons() {
         observer.observe(infiniteLoader);
       }
     };
+  }
+
+  // Filter action buttons — SharedFilterActions renders ค้นหา + เริ่มใหม่
+  // with searchType=submit / resetType=reset so the existing
+  // filterForm.addEventListener('submit' | 'reset') handlers keep working.
+  function initFilterActions() {
+    if (!window.SharedFilterActions) return;
+    window.SharedFilterActions.mount({
+      containerId: 'timFilterActionsHost',
+      searchType : 'submit',
+      resetType  : 'reset',
+      resetLabel : 'รีเซ็ต'
+    });
   }
 
   // Usage-count numeric filter — SharedTableSearch in numeric mode so the

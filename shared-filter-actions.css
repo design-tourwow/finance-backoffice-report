@@ -1,0 +1,29 @@
+/* shared-filter-actions.css — layout for the SharedFilterActions button
+   pair. The button visuals themselves (.filter-btn-search primary blue,
+   .filter-btn-reset white + border) already live in filter-panel.css and
+   are reused here untouched. */
+
+.shared-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.shared-filter-actions .filter-btn-search,
+.shared-filter-actions .filter-btn-reset {
+  /* gap between the SVG icon and the text label */
+  gap: 6px;
+}
+
+@media (max-width: 768px) {
+  .shared-filter-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  .shared-filter-actions .filter-btn-search,
+  .shared-filter-actions .filter-btn-reset {
+    width: 100%;
+    justify-content: center;
+  }
+}
