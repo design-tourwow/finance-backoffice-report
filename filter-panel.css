@@ -171,6 +171,12 @@
   font-weight: 400;
 }
 
+.time-dropdown-wrapper > .time-btn .time-btn-icon {
+  flex-shrink: 0;
+  margin-right: 10px;
+  color: #6b7280;
+}
+
 .time-dropdown-wrapper > .time-btn .time-btn-arrow {
   flex-shrink: 0;
   margin-left: 12px;
