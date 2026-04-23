@@ -10,13 +10,25 @@ function base64UrlEncode(obj: Record<string, unknown>): string {
     .replace(/\//g, '_');
 }
 
-export function makeMockJwt(overrides: { exp?: number; sub?: string; iat?: number } = {}): string {
+export function makeMockJwt(overrides: {
+  exp?: number;
+  sub?: string;
+  iat?: number;
+  agencyMember?: Record<string, unknown>;
+} = {}): string {
   const now = Math.floor(Date.now() / 1000);
   const header = base64UrlEncode({ alg: 'HS256', typ: 'JWT' });
   const payload = base64UrlEncode({
     sub: overrides.sub ?? 'test-user',
     iat: overrides.iat ?? now,
     exp: overrides.exp ?? now + 24 * 3600,
+    user: {
+      agency_member: Object.assign({
+        id: 1,
+        nick_name: 'Test User',
+        job_position: 'admin'
+      }, overrides.agencyMember || {})
+    }
   });
   const signature = 'mock-signature';
   return `${header}.${payload}.${signature}`;

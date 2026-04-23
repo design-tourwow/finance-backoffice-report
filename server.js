@@ -30,6 +30,12 @@ const server = http.createServer((req, res) => {
     else if (urlWithoutQuery === '/dashboard') {
         filePath = './dashboard.html';
     }
+    else if (urlWithoutQuery === '/401') {
+        filePath = './401.html';
+    }
+    else if (urlWithoutQuery === '/403') {
+        filePath = './403.html';
+    }
     // Route /tour-image-manager to tour-image-manager.html
     else if (urlWithoutQuery === '/tour-image-manager') {
         filePath = './tour-image-manager.html';
@@ -85,5 +91,7 @@ server.listen(PORT, () => {
     console.log(`\n🚀 Server running at http://localhost:${PORT}\n`);
     console.log(`📄 Available routes:`);
     console.log(`   - http://localhost:${PORT}/`);
+    console.log(`   - http://localhost:${PORT}/401`);
+    console.log(`   - http://localhost:${PORT}/403`);
     console.log(`   - http://localhost:${PORT}/tour-image-manager\n`);
 });

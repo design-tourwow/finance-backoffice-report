@@ -11,6 +11,57 @@ function handleExternalLink(e, url) {
 (function() {
   'use strict';
 
+  const ROLE_ACCESS = {
+    admin: {
+      '/401': true,
+      '/403': true,
+      '/': true,
+      '/dashboard': true,
+      '/tour-image-manager': true,
+      '/sales-by-country': true,
+      '/wholesale-destinations': true,
+      '/commission-report-plus': true,
+      '/work-list': true,
+      '/supplier-commission': true,
+      '/discount-sales': true,
+      '/order-external-summary': true,
+      '/request-discount': true,
+      '/order-report': true
+    },
+    ts: {
+      '/401': true,
+      '/403': true,
+      '/': true,
+      '/dashboard': true,
+      '/tour-image-manager': false,
+      '/sales-by-country': false,
+      '/wholesale-destinations': false,
+      '/commission-report-plus': true,
+      '/work-list': false,
+      '/supplier-commission': false,
+      '/discount-sales': false,
+      '/order-external-summary': false,
+      '/request-discount': false,
+      '/order-report': false
+    },
+    crm: {
+      '/401': true,
+      '/403': true,
+      '/': true,
+      '/dashboard': true,
+      '/tour-image-manager': false,
+      '/sales-by-country': false,
+      '/wholesale-destinations': false,
+      '/commission-report-plus': true,
+      '/work-list': false,
+      '/supplier-commission': false,
+      '/discount-sales': false,
+      '/order-external-summary': false,
+      '/request-discount': false,
+      '/order-report': false
+    }
+  };
+
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   const MENU_ITEMS = [
@@ -91,16 +142,78 @@ function handleExternalLink(e, url) {
     }
   ];
 
-  function getVisibleMenuItems() {
-    return MENU_ITEMS;
+  function normalizePath(path) {
+    if (!path) return '/';
+    var clean = String(path).split('?')[0].split('#')[0] || '/';
+    clean = clean.replace(/\/index\.html$/i, '/');
+    clean = clean.replace(/\.html$/i, '');
+    clean = clean.replace(/\/+$/, '') || '/';
+    return clean;
+  }
+
+  function decodeTokenPayload(token) {
+    if (!token) return null;
+    if (typeof TokenUtils !== 'undefined' && TokenUtils.decodeToken) {
+      return TokenUtils.decodeToken(token);
+    }
+    try {
+      var parts = String(token).split('.');
+      if (parts.length !== 3) return null;
+      return JSON.parse(atob(parts[1]));
+    } catch (error) {
+      console.warn('[MenuComponent] Failed to decode token payload:', error);
+      return null;
+    }
+  }
+
+  function getCurrentUserRole() {
+    var token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+    if (!token) return null;
+    var payload = decodeTokenPayload(token);
+    var member = payload && payload.user && payload.user.agency_member ? payload.user.agency_member : {};
+    var role = member && member.job_position ? String(member.job_position).toLowerCase() : '';
+    if (role === 'admin' || role === 'ts' || role === 'crm') return role;
+    return 'admin';
+  }
+
+  function canAccessPath(path, role) {
+    var normalizedPath = normalizePath(path);
+    var effectiveRole = role || getCurrentUserRole();
+    if (!effectiveRole) return true;
+    var roleAccess = ROLE_ACCESS[effectiveRole] || ROLE_ACCESS.admin;
+    if (Object.prototype.hasOwnProperty.call(roleAccess, normalizedPath)) {
+      return roleAccess[normalizedPath] !== false;
+    }
+    return true;
+  }
+
+  function filterMenuItems(items, role) {
+    return items.reduce(function (acc, item) {
+      if (item.submenu && item.submenu.length) {
+        var visibleSubmenu = filterMenuItems(item.submenu, role);
+        if (visibleSubmenu.length) {
+          acc.push(Object.assign({}, item, { submenu: visibleSubmenu }));
+        }
+        return acc;
+      }
+      if (!item.url || canAccessPath(item.url, role)) {
+        acc.push(item);
+      }
+      return acc;
+    }, []);
+  }
+
+  function getVisibleMenuItems(role) {
+    return filterMenuItems(MENU_ITEMS, role || getCurrentUserRole());
   }
 
   // Flatten MENU_ITEMS so every entry is a leaf with a url. Parents
   // that only exist as submenu containers (no url of their own) are
   // dropped; each of their children gets promoted to the top level.
   function getFlatMenuItems() {
+    var visibleMenuItems = getVisibleMenuItems();
     var flat = [];
-    MENU_ITEMS.forEach(function (item) {
+    visibleMenuItems.forEach(function (item) {
       if (item.submenu && item.submenu.length) {
         item.submenu.forEach(function (sub) {
           if (sub && sub.url) flat.push(sub);
@@ -114,7 +227,7 @@ function handleExternalLink(e, url) {
 
   // Get current page path
   function getCurrentPath() {
-    return window.location.pathname;
+    return normalizePath(window.location.pathname);
   }
 
   // Check if menu item is active
@@ -176,63 +289,27 @@ function handleExternalLink(e, url) {
     return !!(sessionStorage.getItem('authToken') || localStorage.getItem('authToken'));
   }
 
-  // Show custom modal
-  function showAuthModal() {
-    // Check if modal already exists
-    let modal = document.getElementById('authModal');
-    
-    if (!modal) {
-      // Create modal
-      modal = document.createElement('div');
-      modal.id = 'authModal';
-      modal.className = 'auth-modal';
-      modal.innerHTML = `
-        <div class="auth-modal-overlay"></div>
-        <div class="auth-modal-content">
-          <div class="auth-modal-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 8v4M12 16h.01"/>
-            </svg>
-          </div>
-          <div class="auth-modal-header">
-            <h3>ไม่พบ Token หรือ Token หมดอายุ</h3>
-          </div>
-          <div class="auth-modal-body">
-            <p>กรุณาเข้าสู่ระบบใหม่อีกครั้ง</p>
-          </div>
-          <div class="auth-modal-footer">
-            <button type="button" class="btn btn-primary" id="authModalOk">ตกลง</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-
-      // Add event listener
-      document.getElementById('authModalOk').addEventListener('click', function() {
-        redirectToLogin();
-      });
-
-      // Close on overlay click
-      modal.querySelector('.auth-modal-overlay').addEventListener('click', function() {
-        redirectToLogin();
-      });
-
-      // Close on Escape key
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modal.style.display === 'flex') {
-          redirectToLogin();
-        }
-      });
+  function redirectToUnauthorizedPage() {
+    if (typeof TokenUtils !== 'undefined' && TokenUtils.redirectToUnauthorizedPage) {
+      TokenUtils.redirectToUnauthorizedPage();
+      return;
     }
+    sessionStorage.removeItem('authToken');
+    localStorage.removeItem('authToken');
+    window.location.href = '/401';
+  }
 
-    // Show modal
-    modal.style.display = 'flex';
-    
-    // Focus on OK button
-    setTimeout(() => {
-      document.getElementById('authModalOk').focus();
-    }, 100);
+  function redirectToForbiddenPage() {
+    if (typeof TokenUtils !== 'undefined' && TokenUtils.redirectToForbiddenPage) {
+      TokenUtils.redirectToForbiddenPage();
+      return;
+    }
+    window.location.href = '/403';
+  }
+
+  // Legacy name kept for compatibility with page modules that already call it.
+  function showAuthModal() {
+    redirectToUnauthorizedPage();
   }
 
   // Redirect to login
@@ -267,8 +344,8 @@ function handleExternalLink(e, url) {
     
     if (requireAuth && !checkAuth()) {
       e.preventDefault();
-      console.log('❌ No token found - showing auth modal');
-      showAuthModal();
+      console.log('❌ No token found - redirecting to /401');
+      redirectToUnauthorizedPage();
       return false;
     }
   }
@@ -276,6 +353,12 @@ function handleExternalLink(e, url) {
   // Initialize menu component
   function initMenuComponent() {
     console.log('🎯 Initializing Menu Component...');
+
+    if (checkAuth() && !canAccessPath(getCurrentPath())) {
+      console.warn('[MenuComponent] Access denied for current route, redirecting to /403');
+      redirectToForbiddenPage();
+      return;
+    }
     
     // Render menus
     renderSidebarMenu();
@@ -300,7 +383,12 @@ function handleExternalLink(e, url) {
       renderSidebarMenu();
       renderHeaderMenu();
     },
+    canAccessPath: canAccessPath,
+    getCurrentUserRole: getCurrentUserRole,
+    getVisibleMenuItems: getVisibleMenuItems,
     checkAuth: checkAuth,
+    redirectToForbiddenPage: redirectToForbiddenPage,
+    redirectToUnauthorizedPage: redirectToUnauthorizedPage,
     showAuthModal: showAuthModal
   };
 

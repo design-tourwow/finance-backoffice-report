@@ -26,8 +26,14 @@
   var token = TokenUtils.getToken();
 
   if (!token) {
-    console.warn('[SharedAuthGuard] No token found — redirecting to login');
-    TokenUtils.redirectToLogin('กรุณาเข้าสู่ระบบก่อนใช้งาน');
+    console.warn('[SharedAuthGuard] No token found — redirecting to /401');
+    TokenUtils.redirectToUnauthorizedPage();
+    return; // stop execution; redirect is in-flight
+  }
+
+  if (TokenUtils.isTokenExpired(token)) {
+    console.warn('[SharedAuthGuard] Token expired — redirecting to /401');
+    TokenUtils.redirectToUnauthorizedPage();
     return; // stop execution; redirect is in-flight
   }
 

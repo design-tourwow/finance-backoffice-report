@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>401 Unauthorized - Tourwow</title>
+    <link rel="stylesheet" href="shared-font.css" />
+    <script src="shared-font.js"></script>
+    <style>
+      :root {
+        --error-bg: #f5f7fb;
+        --error-card: #ffffff;
+        --error-text: #16324f;
+        --error-muted: #64748b;
+        --error-primary: #4a7ba7;
+        --error-primary-dark: #365d80;
+        --error-border: rgba(74, 123, 167, 0.18);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at top left, rgba(74, 123, 167, 0.16), transparent 38%),
+          radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.12), transparent 34%),
+          var(--error-bg);
+        font-family: var(--font-family, "Sarabun", sans-serif);
+        color: var(--error-text);
+      }
+
+      .error-shell {
+        width: min(100%, 960px);
+        background: var(--error-card);
+        border: 1px solid var(--error-border);
+        border-radius: 28px;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+      }
+
+      .error-layout {
+        display: grid;
+        grid-template-columns: minmax(300px, 380px) 1fr;
+      }
+
+      .error-visual {
+        padding: 40px 28px;
+        background: linear-gradient(180deg, rgba(74, 123, 167, 0.1), rgba(74, 123, 167, 0.02));
+        display: grid;
+        place-items: center;
+      }
+
+      .error-visual img {
+        width: min(100%, 280px);
+        height: auto;
+      }
+
+      .error-content {
+        padding: 52px 52px 48px;
+      }
+
+      .error-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(74, 123, 167, 0.1);
+        color: var(--error-primary);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      h1 {
+        margin: 18px 0 12px;
+        font-size: clamp(34px, 5vw, 52px);
+        line-height: 1.05;
+      }
+
+      p {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.7;
+        color: var(--error-muted);
+      }
+
+      .error-actions {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-top: 28px;
+      }
+
+      .error-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-width: 170px;
+        padding: 14px 20px;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      }
+
+      .error-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .error-btn-primary {
+        background: var(--error-primary);
+        color: #fff;
+        box-shadow: 0 12px 30px rgba(74, 123, 167, 0.24);
+      }
+
+      .error-btn-primary:hover {
+        background: var(--error-primary-dark);
+      }
+
+      .error-btn-secondary {
+        border: 1px solid var(--error-border);
+        color: var(--error-text);
+        background: #fff;
+      }
+
+      .error-btn-secondary:hover {
+        background: #f8fafc;
+      }
+
+      @media (max-width: 820px) {
+        .error-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .error-visual {
+          padding: 32px 24px 12px;
+        }
+
+        .error-content {
+          padding: 24px 24px 32px;
+        }
+
+        .error-actions {
+          flex-direction: column;
+        }
+
+        .error-btn {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="error-shell">
+      <section class="error-layout">
+        <div class="error-visual">
+          <img src="/assets/images/401-error-unauthorized.svg" alt="401 Unauthorized" />
+        </div>
+        <div class="error-content">
+          <div class="error-chip">401 Unauthorized</div>
+          <h1>คุณยังไม่มีสิทธิ์เข้าใช้งานหน้านี้</h1>
+          <p>กรุณาเข้าสู่ระบบใหม่อีกครั้ง หรือกลับไปยังหน้าแรกของระบบเพื่อเริ่มต้นใช้งานใหม่</p>
+          <div class="error-actions">
+            <a class="error-btn error-btn-primary" href="/">กลับไปหน้าแรก</a>
+            <a class="error-btn error-btn-secondary" href="https://financebackoffice.tourwow.com/login">เข้าสู่ระบบใหม่</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

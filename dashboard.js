@@ -81,10 +81,17 @@
   }
 
   function renderCards() {
+    var cards = CARDS.filter(function (card) {
+      if (!window.MenuComponent || typeof window.MenuComponent.canAccessPath !== 'function') {
+        return true;
+      }
+      return window.MenuComponent.canAccessPath(card.href);
+    });
+
     return [
       '<section class="dashboard-cards" aria-label="เมนูรายงาน">',
       '  <div class="dashboard-card-grid">',
-      CARDS.map(renderCard).join('\n'),
+      cards.map(renderCard).join('\n'),
       '  </div>',
       '</section>'
     ].join('\n');

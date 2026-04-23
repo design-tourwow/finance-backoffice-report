@@ -9,6 +9,14 @@
       "destination": "/dashboard.html"
     },
     {
+      "source": "/401",
+      "destination": "/401.html"
+    },
+    {
+      "source": "/403",
+      "destination": "/403.html"
+    },
+    {
       "source": "/tour-image-manager",
       "destination": "/tour-image-manager.html"
     },

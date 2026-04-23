@@ -121,6 +121,26 @@ const TokenUtils = {
     return 'https://financebackoffice.tourwow.com/login';
   },
 
+  getErrorPageUrl(code) {
+    var targetCode = String(code || '401');
+    return '/' + targetCode;
+  },
+
+  redirectToErrorPage(code) {
+    var errorUrl = this.getErrorPageUrl(code);
+    console.log('[TokenUtils] Redirecting to error page:', errorUrl);
+    window.location.href = errorUrl;
+  },
+
+  redirectToUnauthorizedPage() {
+    this.clearToken();
+    this.redirectToErrorPage('401');
+  },
+
+  redirectToForbiddenPage() {
+    this.redirectToErrorPage('403');
+  },
+
   /**
    * Redirect to login page
    * @param {string} message - Optional message to show before redirect
@@ -146,12 +166,10 @@ const TokenUtils = {
   validateTokenOrRedirect(showAlert = true) {
     if (this.isTokenExpired()) {
       console.error('[TokenUtils] Token expired or invalid - redirecting to login');
-
-      const message = showAlert
-        ? 'Token หมดอายุหรือไม่ถูกต้อง\nกรุณาเข้าสู่ระบบใหม่อีกครั้ง'
-        : null;
-
-      this.redirectToLogin(message);
+      if (showAlert) {
+        console.warn('[TokenUtils] Token invalid - redirecting to /401');
+      }
+      this.redirectToUnauthorizedPage();
       return false;
     }
 
