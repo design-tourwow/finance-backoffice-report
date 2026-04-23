@@ -40,13 +40,21 @@ test.describe('@p0 access control by job_position', () => {
     await page.goto('/sales-by-country', { waitUntil: 'domcontentloaded' });
 
     await expect(page).toHaveURL(/\/403$/);
-    await expect(page.locator('h1')).toContainText('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+    await expect(page.getByText('คุณไม่มีสิทธิ์เข้าถึงหน้านี้')).toBeVisible();
   });
 
   test('unauthenticated user is redirected to 401 page', async ({ page }) => {
     await page.goto('/request-discount', { waitUntil: 'domcontentloaded' });
 
     await expect(page).toHaveURL(/\/401$/);
-    await expect(page.locator('h1')).toContainText('คุณยังไม่มีสิทธิ์เข้าใช้งานหน้านี้');
+    await expect(page.getByText('คุณยังไม่มีสิทธิ์เข้าใช้งานหน้านี้ กรุณาเข้าสู่ระบบใหม่ หรือกลับไปยังหน้าแรกของระบบ')).toBeVisible();
+  });
+
+  test('custom 404 page renders', async ({ page }) => {
+    const response = await page.goto('/404', { waitUntil: 'domcontentloaded' });
+
+    expect(response?.status(), 'HTTP status for /404').toBeLessThan(400);
+    await expect(page.getByText('404 Not Found')).toBeVisible();
+    await expect(page.getByText('ไม่พบหน้าที่คุณต้องการ อาจถูกย้าย ลบออก หรือพิมพ์ URL ไม่ถูกต้อง')).toBeVisible();
   });
 });

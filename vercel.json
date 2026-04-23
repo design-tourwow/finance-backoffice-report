@@ -17,6 +17,10 @@
       "destination": "/403.html"
     },
     {
+      "source": "/404",
+      "destination": "/404.html"
+    },
+    {
       "source": "/tour-image-manager",
       "destination": "/tour-image-manager.html"
     },
