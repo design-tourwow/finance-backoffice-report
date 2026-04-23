@@ -1470,41 +1470,42 @@
       return;
     }
 
-    // Calculate date range from selected periods
-    let allDateFrom = null;
-    let allDateTo = null;
-    selectedPeriods.forEach(period => {
-      const { dateFrom, dateTo } = getPeriodDateRange(period);
-      if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
-      if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
-    });
-
     try {
-      // Fetch data with period filter to get available countries
-      const response = await SalesByCountryAPI.getReportByCountry({
-        booking_date_from: allDateFrom,
-        booking_date_to: allDateTo
+      // Fan out one request per period so non-contiguous periods (e.g. Q1 +
+      // Q3) don't end up including an un-selected interval. The list of
+      // "countries that have data" is the union of country_ids returned by
+      // each period's response.
+      const periodFilters = selectedPeriods.map(function (period) {
+        const range = getPeriodDateRange(period);
+        return { booking_date_from: range.dateFrom, booking_date_to: range.dateTo };
+      });
+      const responses = await Promise.all(periodFilters.map(function (f) {
+        return SalesByCountryAPI.getReportByCountry(f);
+      }));
+
+      const countryIdsWithData = [];
+      const seen = new Set();
+      responses.forEach(function (resp) {
+        if (!resp || !resp.success || !Array.isArray(resp.data)) return;
+        resp.data.forEach(function (item) {
+          if (!seen.has(item.country_id)) {
+            seen.add(item.country_id);
+            countryIdsWithData.push(item.country_id);
+          }
+        });
       });
 
-      if (response && response.success && response.data) {
-        // Get country IDs that have data in this period
-        const countryIdsWithData = response.data.map(item => item.country_id);
-
-        // Filter available countries
-        const filteredCountries = availableCountries.filter(c =>
-          countryIdsWithData.includes(c.id)
-        );
-
-        // Clear previously selected countries that are no longer available
-        selectedCountries = selectedCountries.filter(sc =>
-          countryIdsWithData.includes(sc.id)
-        );
-
-        // Update country dropdown
-        renderCountryItems(filteredCountries);
-        updateCountryButtonText();
-        updateSelectedCountryBadge();
-      }
+      // Filter available countries to the union of countries with data in
+      // any of the selected periods.
+      const filteredCountries = availableCountries.filter(c =>
+        countryIdsWithData.includes(c.id)
+      );
+      selectedCountries = selectedCountries.filter(sc =>
+        countryIdsWithData.includes(sc.id)
+      );
+      renderCountryItems(filteredCountries);
+      updateCountryButtonText();
+      updateSelectedCountryBadge();
     } catch (error) {
       console.error('❌ Failed to filter countries by period:', error);
     }
@@ -2041,40 +2042,76 @@
     applyAllFilters();
   };
 
+  // Build one filter object per selected period. Flattening N periods to
+  // min(from) → max(to) would pull in un-selected intervening periods
+  // (e.g. selecting Q1 + Q3 would include Q2). Each period becomes its own
+  // API call; results are merged client-side in mergeByCountry below.
+  function buildPeriodFilters(baseFilters) {
+    if (!selectedPeriods || selectedPeriods.length === 0) {
+      return [Object.assign({}, baseFilters)];
+    }
+    return selectedPeriods.map(function (period) {
+      const range = getPeriodDateRange(period);
+      return Object.assign({}, baseFilters, {
+        booking_date_from: range.dateFrom,
+        booking_date_to:   range.dateTo
+      });
+    });
+  }
+
+  // Sum numeric aggregates per country across N period responses; recompute
+  // the average (avg_net_amount) after summing since it isn't additive.
+  function mergeByCountry(responses) {
+    const map = new Map();
+    (responses || []).forEach(function (resp) {
+      if (!resp || !resp.success || !Array.isArray(resp.data)) return;
+      resp.data.forEach(function (row) {
+        const key = row.country_id;
+        const existing = map.get(key);
+        if (!existing) {
+          map.set(key, Object.assign({}, row));
+        } else {
+          existing.total_orders     = (existing.total_orders || 0)     + (row.total_orders || 0);
+          existing.total_customers  = (existing.total_customers || 0)  + (row.total_customers || 0);
+          existing.total_net_amount = (existing.total_net_amount || 0) + (row.total_net_amount || 0);
+          existing.net_commission   = (existing.net_commission || 0)   + (row.net_commission || 0);
+        }
+      });
+    });
+    const merged = Array.from(map.values()).map(function (row) {
+      row.avg_net_amount = row.total_orders > 0 ? row.total_net_amount / row.total_orders : 0;
+      return row;
+    });
+    merged.sort(function (a, b) { return (b.total_orders || 0) - (a.total_orders || 0); });
+    return merged;
+  }
+
   // Apply all filters (period + country)
   async function applyAllFilters() {
-    const filters = { ...currentFilters };
+    const baseFilters = Object.assign({}, currentFilters);
 
-    // Add period filter
-    if (selectedPeriods.length > 0) {
-      let allDateFrom = null;
-      let allDateTo = null;
-      selectedPeriods.forEach(period => {
-        const { dateFrom, dateTo } = getPeriodDateRange(period);
-        if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
-        if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
-      });
-      filters.booking_date_from = allDateFrom;
-      filters.booking_date_to = allDateTo;
-    }
-
-    // Add country filter
+    // Country filter (csv)
     if (selectedCountries.length > 0) {
-      filters.country_id = selectedCountries.map(c => c.id).join(',');
+      baseFilters.country_id = selectedCountries.map(c => c.id).join(',');
     }
 
-    // Add view mode
-    filters.view_mode = currentViewMode;
+    // View mode
+    baseFilters.view_mode = currentViewMode;
 
-    console.log('📅 Applying filters:', filters);
+    const periodFilters = buildPeriodFilters(baseFilters);
+    console.log('📅 Applying filters:', periodFilters);
 
     try {
       showDashboardLoading();
-      const response = await SalesByCountryAPI.getReportByCountry(filters);
+      const responses = await Promise.all(periodFilters.map(function (f) {
+        return SalesByCountryAPI.getReportByCountry(f);
+      }));
       hideDashboardLoading();
 
-      if (response && response.success && response.data) {
-        renderCountryDashboardContent(response.data);
+      const merged = mergeByCountry(responses);
+
+      if (merged && merged.length > 0) {
+        renderCountryDashboardContent(merged);
       } else {
         const tableBody = document.getElementById('dashboardTableBody');
         if (tableBody) {

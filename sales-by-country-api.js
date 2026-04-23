@@ -243,14 +243,19 @@ const SalesByCountryAPI = {
   },
 
   /**
-   * Get Available Time Periods (years, quarters, months from database)
+   * Get Available Time Periods (years, quarters, months from database).
+   *
+   * @param {Object}  [filters]
+   * @param {string|number} [filters.country_id]   — single id or csv "1,2,3"
+   * @param {string|number} [filters.supplier_id]  — single id or csv "1,2,3"
    * @returns {Promise<Object>}
    */
-  async getAvailablePeriods() {
+  async getAvailablePeriods(filters = {}) {
     try {
-      console.log('🔄 Fetching Available Time Periods');
+      console.log('🔄 Fetching Available Time Periods', filters);
 
-      const result = await this.fetchAPI('/api/reports/available-periods');
+      const queryString = this.buildQueryString(filters);
+      const result = await this.fetchAPI(`/api/reports/available-periods${queryString}`);
 
       return result;
     } catch (error) {
