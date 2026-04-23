@@ -33,9 +33,12 @@
   width: 100%;
 }
 
-.crp-filter-row--actions {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-  align-items: end;
+/* Action row sits on its own line (no grid columns), right-aligned —
+   mirrors /tour-image-manager so the 4 dropdowns above split their
+   columns evenly without being squeezed by the button group. */
+.crp-filter-actions-row {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .crp-filter-field {
@@ -69,7 +72,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  justify-self: end;
 }
 
 /* ========= Table Scroll + Sticky Header ========= */
@@ -336,20 +338,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 1280px) {
-  .crp-filter-row--actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .crp-filter-actions {
-    grid-column: 1 / -1;
-    justify-self: end;
-  }
-}
-
 @media (max-width: 768px) {
-  .crp-filter-row,
-  .crp-filter-row--actions {
+  .crp-filter-row {
     grid-template-columns: 1fr;
   }
 
@@ -363,10 +353,13 @@
     flex: none;
   }
 
+  .crp-filter-actions-row {
+    justify-content: stretch;
+  }
+
   .crp-filter-actions {
     width: 100%;
     flex-direction: column;
-    justify-self: stretch;
   }
 
   .crp-filter-actions .filter-btn-search,

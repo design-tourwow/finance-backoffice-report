@@ -279,8 +279,8 @@
             </div>
           </div>
 
-          <!-- แถว 3: Dropdown Pair 2 + Actions -->
-          <div class="filter-row crp-filter-row crp-filter-row--actions">
+          <!-- แถว 3: Dropdown Pair 2 -->
+          <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">สถานะ Order</span>
               <div class="crp-filter-control" id="crp-dd-status"></div>
@@ -290,7 +290,13 @@
               <span class="time-granularity-label crp-filter-label">จำนวนผู้เดินทาง</span>
               <div class="crp-filter-control" id="crp-dd-travelers"></div>
             </div>
+          </div>
 
+          <!-- แถว 4: Action buttons — right-aligned on their own row
+               (same layout as /tour-image-manager) so the 4 dropdowns
+               on rows 2+3 split their columns evenly without being
+               squeezed by the button group. -->
+          <div class="filter-row crp-filter-actions-row">
             <div class="crp-filter-actions">
               <button class="filter-btn-search" id="crp-btn-search">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

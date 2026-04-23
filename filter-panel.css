@@ -627,20 +627,28 @@
 
 /* Fluid width when the shared dropdowns sit inside a .form-group (as on
    /tour-image-manager). Without this the trigger sticks at the component's
-   default 200px min-width and the trigger label wraps awkwardly. */
+   default 200px min-width and the trigger label wraps awkwardly. Also
+   covers the hand-rolled .time-btn used by the Wholesale filter so every
+   filter in the row shares the same column width. */
 .form-group .filter-search-dd,
-.form-group .filter-sort-dropdown {
+.form-group .filter-sort-dropdown,
+.form-group .time-dropdown-wrapper {
   display: block;
   width: 100%;
 }
 .form-group .filter-search-dd .filter-sort-btn,
-.form-group .filter-sort-dropdown .filter-sort-btn {
+.form-group .filter-sort-dropdown .filter-sort-btn,
+.form-group .time-btn {
   width: 100%;
   min-width: 0;
   justify-content: space-between;
 }
 .form-group .filter-search-dd-menu {
   min-width: 100%;
+}
+.form-group .time-dropdown-menu {
+  width: 100%;
+  min-width: 0;
 }
 
 .filter-wrap.filter-wrap-paired-grid .filter-field .filter-search-dd-menu {
