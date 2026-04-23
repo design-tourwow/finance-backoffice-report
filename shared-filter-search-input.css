@@ -1,0 +1,92 @@
+/* shared-filter-search-input.css — additions on top of shared-table-search.css
+   that only apply to the filter-box variant (autocomplete mode). Consumers
+   must load BOTH stylesheets; the base .shared-search-wrap / .shared-search-input
+   come from shared-table-search.css. */
+
+.shared-filter-search .shared-search-spinner {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.shared-filter-search .shared-search-spinner-ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: shared-search-spin 0.8s linear infinite;
+}
+
+@keyframes shared-search-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* The clear button + spinner share the right edge. When both render, the
+   spinner sits in place of the clear button; the component renders only one
+   at a time (spinner during fetch, clear button at rest) so no overlap. */
+.shared-filter-search .shared-search-spinner + .shared-search-clear[hidden] {
+  display: none;
+}
+
+.shared-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  padding: 4px 0;
+}
+
+.shared-search-dropdown[hidden] {
+  display: none;
+}
+
+.shared-search-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.shared-search-item:hover,
+.shared-search-item.active {
+  background: var(--color-bg-hover);
+}
+
+.shared-search-item.active {
+  color: var(--color-primary);
+}
+
+.shared-search-highlight {
+  background: #fff59d;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+.shared-search-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 14px;
+}
