@@ -502,16 +502,20 @@
     tableScroll.addEventListener('scroll', updateScrollHint);
     updateScrollHint();
 
-    // Table search
-    document.getElementById('crp-table-search').addEventListener('input', function () {
-      const q = this.value.toLowerCase().trim();
-      const filtered = q
-        ? orders.filter(o =>
-            (o.order_code || '').toLowerCase().includes(q) ||
-            (o.customer_name || '').toLowerCase().includes(q)
-          )
-        : orders;
-      document.getElementById('crp-table-count').textContent = `แสดง ${formatNumber(filtered.length, 0)} รายการ`;
+    // Table search — shared SharedTableSearch component renders the input
+    // into #crp-table-search-host and calls onInput on debounced typing.
+    window.SharedTableSearch.init({
+      containerId: 'crp-table-search-host',
+      placeholder: 'ค้นหารหัส Order หรือชื่อลูกค้า...',
+      onInput: function (raw) {
+        const q = String(raw || '').toLowerCase().trim();
+        const filtered = q
+          ? orders.filter(o =>
+              (o.order_code || '').toLowerCase().includes(q) ||
+              (o.customer_name || '').toLowerCase().includes(q)
+            )
+          : orders;
+        document.getElementById('crp-table-count').textContent = `แสดง ${formatNumber(filtered.length, 0)} รายการ`;
       document.querySelector('.crp-table tbody').innerHTML = filtered.map(o => {
         const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
         return `
@@ -530,6 +534,7 @@
             <td class="right group-start">${formatNumber(o.discount)}</td>
           </tr>`;
       }).join('') || `<tr><td colspan="12"><div class="dashboard-table-empty"><img src="/assets/images/empty-state.svg" alt="ไม่พบข้อมูล" width="200" height="200" style="margin-bottom:16px;opacity:0.8;"/><h3 style="margin:0 0 8px 0;font-size:18px;color:#374151;">ไม่พบข้อมูล</h3><p style="margin:0;font-size:15px;color:#6b7280;">ลองปรับเงื่อนไขการค้นหาใหม่</p></div></td></tr>`;
+      }
     });
   }
 
@@ -686,13 +691,7 @@
           <span id="crp-table-count">แสดง ${formatNumber(orders.length, 0)} รายการ</span>
         </div>
         <div class="dashboard-table-actions">
-          <div class="dashboard-search-wrapper">
-            <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="M21 21l-4.35-4.35"></path>
-            </svg>
-            <input type="text" class="dashboard-search-input" id="crp-table-search" placeholder="ค้นหารหัส Order หรือชื่อลูกค้า...">
-          </div>
+          <div id="crp-table-search-host"></div>
           ${window.SharedExportButton.render({ id: 'crp-btn-export' })}
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>

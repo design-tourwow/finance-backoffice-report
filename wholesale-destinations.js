@@ -458,13 +458,7 @@
               รายละเอียด Wholesale
             </div>
             <div class="dashboard-table-actions">
-              <div class="dashboard-search-wrapper">
-                <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="M21 21l-4.35-4.35"/>
-                </svg>
-                <input type="text" class="dashboard-search-input" id="dashboardSearchInput" placeholder="ค้นหา Wholesale...">
-              </div>
+              <div id="wd-table-search-host"></div>
               ${window.SharedExportButton.render({ id: 'dashboardExportBtn' })}
             </div>
           </div>
@@ -1873,24 +1867,21 @@
     });
   }
 
-  // Initialize search
+  // Initialize search — SharedTableSearch renders the input into
+  // #wd-table-search-host; each render cycle re-inits the component so the
+  // onInput closure captures the fresh wholesales/countries list.
   function initSearch(wholesales, totalBookings, countries) {
-    const searchInput = document.getElementById('dashboardSearchInput');
-    if (!searchInput) return;
-
-    // Remove old event listeners by replacing the element
-    const newSearchInput = searchInput.cloneNode(true);
-    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-
-    newSearchInput.addEventListener('input', function() {
-      const query = this.value.toLowerCase().trim();
-      const filtered = wholesales.filter(w =>
-        w.name.toLowerCase().includes(query)
-      );
-
-      const tableBody = document.getElementById('dashboardTableBody');
-      if (tableBody) {
-        tableBody.innerHTML = renderTableRows(filtered, totalBookings, countries);
+    if (!window.SharedTableSearch || !document.getElementById('wd-table-search-host')) return;
+    window.SharedTableSearch.init({
+      containerId: 'wd-table-search-host',
+      placeholder: 'ค้นหา Wholesale...',
+      onInput: function (raw) {
+        const query = String(raw || '').toLowerCase().trim();
+        const filtered = wholesales.filter(w => w.name.toLowerCase().includes(query));
+        const tableBody = document.getElementById('dashboardTableBody');
+        if (tableBody) {
+          tableBody.innerHTML = renderTableRows(filtered, totalBookings, countries);
+        }
       }
     });
   }

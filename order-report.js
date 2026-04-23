@@ -339,86 +339,22 @@
     });
   }
 
-  // Initialize table search
+  // Initialize table search — SharedTableSearch renders the input + built-in
+  // × clear button into #or-table-search-host. We keep the existing
+  // <mark class="search-highlight"> in-row highlighting + result-count
+  // banner logic that the old hand-rolled wiring handled.
+  let tableSearchInstance = null;
   function initTableSearch() {
-    const searchInput = document.getElementById('tableSearchInput');
-    const clearBtn = document.getElementById('clearTableSearch');
+    const host = document.getElementById('or-table-search-host');
     const resultsDiv = document.getElementById('tableSearchResults');
     const resultCount = document.getElementById('searchResultCount');
+    if (!host || !window.SharedTableSearch) return;
 
-    if (!searchInput || !clearBtn) return;
-
-    // Search input handler
-    searchInput.addEventListener('input', function(e) {
-      const searchTerm = e.target.value.toLowerCase().trim();
-      
-      // Show/hide clear button
-      clearBtn.style.display = searchTerm ? 'flex' : 'none';
-      
-      if (!searchTerm) {
-        // Reset all rows - remove highlights
-        const rows = document.querySelectorAll('#reportTableBody tr');
-        rows.forEach(row => {
-          row.classList.remove('search-hidden');
-          // Remove all highlight marks
-          row.querySelectorAll('mark').forEach(mark => {
-            mark.replaceWith(mark.textContent);
-          });
-        });
-        resultsDiv.style.display = 'none';
-        return;
-      }
-
-      // Filter rows
-      const rows = document.querySelectorAll('#reportTableBody tr');
-      let matchCount = 0;
-
-      rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        let rowMatches = false;
-        
-        cells.forEach(cell => {
-          const originalText = cell.textContent;
-          const lowerText = originalText.toLowerCase();
-          
-          if (lowerText.includes(searchTerm)) {
-            rowMatches = true;
-            
-            // Highlight matching text
-            const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
-            const highlightedText = originalText.replace(regex, '<mark class="search-highlight">$1</mark>');
-            cell.innerHTML = highlightedText;
-          } else {
-            // Remove any existing highlights
-            cell.querySelectorAll('mark').forEach(mark => {
-              mark.replaceWith(mark.textContent);
-            });
-          }
-        });
-        
-        if (rowMatches) {
-          row.classList.remove('search-hidden');
-          matchCount++;
-        } else {
-          row.classList.add('search-hidden');
-        }
-      });
-
-      // Show results
-      resultCount.textContent = matchCount;
-      resultsDiv.style.display = 'block';
-    });
-
-    // Helper function to escape regex special characters
     function escapeRegex(string) {
       return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    // Clear button handler
-    clearBtn.addEventListener('click', function() {
-      searchInput.value = '';
-      
-      // Remove all highlights
+    function resetHighlights() {
       const rows = document.querySelectorAll('#reportTableBody tr');
       rows.forEach(row => {
         row.classList.remove('search-hidden');
@@ -426,25 +362,47 @@
           mark.replaceWith(mark.textContent);
         });
       });
-      
-      clearBtn.style.display = 'none';
-      resultsDiv.style.display = 'none';
-      searchInput.focus();
+      if (resultsDiv) resultsDiv.style.display = 'none';
+    }
+
+    tableSearchInstance = window.SharedTableSearch.init({
+      containerId: 'or-table-search-host',
+      placeholder: 'ค้นหาในตาราง...',
+      onInput: function (raw) {
+        const searchTerm = String(raw || '').toLowerCase().trim();
+        if (!searchTerm) { resetHighlights(); return; }
+
+        const rows = document.querySelectorAll('#reportTableBody tr');
+        let matchCount = 0;
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          let rowMatches = false;
+          cells.forEach(cell => {
+            const originalText = cell.textContent;
+            if (originalText.toLowerCase().includes(searchTerm)) {
+              rowMatches = true;
+              const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+              cell.innerHTML = originalText.replace(regex, '<mark class="search-highlight">$1</mark>');
+            } else {
+              cell.querySelectorAll('mark').forEach(mark => {
+                mark.replaceWith(mark.textContent);
+              });
+            }
+          });
+          if (rowMatches) { row.classList.remove('search-hidden'); matchCount++; }
+          else { row.classList.add('search-hidden'); }
+        });
+
+        if (resultCount) resultCount.textContent = matchCount;
+        if (resultsDiv) resultsDiv.style.display = 'block';
+      }
     });
 
     // Clear search when switching tabs
     document.querySelectorAll('.report-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
-        searchInput.value = '';
-        clearBtn.style.display = 'none';
-        resultsDiv.style.display = 'none';
-        const rows = document.querySelectorAll('#reportTableBody tr');
-        rows.forEach(row => {
-          row.classList.remove('search-hidden');
-          row.querySelectorAll('mark').forEach(mark => {
-            mark.replaceWith(mark.textContent);
-          });
-        });
+      tab.addEventListener('click', function () {
+        if (tableSearchInstance) tableSearchInstance.setValue('');
+        resetHighlights();
       });
     });
   }
@@ -1985,24 +1943,19 @@
     // Store current data
     currentTableData = data;
     
-    // Clear search
-    const searchInput = document.getElementById('tableSearchInput');
-    if (searchInput) {
-      searchInput.value = '';
-      document.getElementById('clearTableSearch').style.display = 'none';
-      document.getElementById('tableSearchResults').style.display = 'none';
-      
-      // Remove any existing highlights
-      setTimeout(() => {
-        const rows = document.querySelectorAll('#reportTableBody tr');
-        rows.forEach(row => {
-          row.classList.remove('search-hidden');
-          row.querySelectorAll('mark').forEach(mark => {
-            mark.replaceWith(mark.textContent);
-          });
+    // Clear search — reset the SharedTableSearch instance + banner + marks
+    if (tableSearchInstance) tableSearchInstance.setValue('');
+    const resultsDiv = document.getElementById('tableSearchResults');
+    if (resultsDiv) resultsDiv.style.display = 'none';
+    setTimeout(() => {
+      const rows = document.querySelectorAll('#reportTableBody tr');
+      rows.forEach(row => {
+        row.classList.remove('search-hidden');
+        row.querySelectorAll('mark').forEach(mark => {
+          mark.replaceWith(mark.textContent);
         });
-      }, 100);
-    }
+      });
+    }, 100);
     
     // Initialize sortable table
     currentTableInstance = TableSortingComponent.initSortableTable({

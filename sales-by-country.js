@@ -962,13 +962,7 @@
               รายละเอียดตามประเทศ
             </div>
             <div class="dashboard-table-actions">
-            <div class="dashboard-search-wrapper">
-              <svg class="dashboard-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35"/>
-              </svg>
-              <input type="text" class="dashboard-search-input" id="dashboardSearchInput" placeholder="ค้นหาประเทศ...">
-            </div>
+              <div id="sbc-table-search-host"></div>
               ${window.SharedExportButton.render({ id: 'dashboardExportBtn' })}
             </div>
           </div>
@@ -2546,23 +2540,25 @@
     });
   }
 
-  // Initialize dashboard search
+  // Initialize dashboard search — shared SharedTableSearch component renders
+  // the input and fires onInput (debounced) whenever the user types.
   function initDashboardSearch(data) {
-    const searchInput = document.getElementById('dashboardSearchInput');
-    if (!searchInput) return;
-
-    searchInput.addEventListener('input', function(e) {
-      const searchTerm = e.target.value.toLowerCase().trim();
-      const rows = document.querySelectorAll('#dashboardTableBody tr');
-
-      rows.forEach(row => {
-        const countryName = row.dataset.country?.toLowerCase() || '';
-        if (!searchTerm || countryName.includes(searchTerm)) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
-      });
+    if (!window.SharedTableSearch || !document.getElementById('sbc-table-search-host')) return;
+    window.SharedTableSearch.init({
+      containerId: 'sbc-table-search-host',
+      placeholder: 'ค้นหาประเทศ...',
+      onInput: function (raw) {
+        const searchTerm = String(raw || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('#dashboardTableBody tr');
+        rows.forEach(row => {
+          const countryName = row.dataset.country?.toLowerCase() || '';
+          if (!searchTerm || countryName.includes(searchTerm)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      }
     });
   }
 
