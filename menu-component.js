@@ -20,7 +20,7 @@ function handleExternalLink(e, url) {
       '/tour-image-manager': true,
       '/sales-by-country': true,
       '/wholesale-destinations': true,
-      '/commission-report-plus': true,
+      '/sales-report': true,
       '/work-list': true,
       '/supplier-commission': true,
       '/discount-sales': true,
@@ -36,7 +36,7 @@ function handleExternalLink(e, url) {
       '/tour-image-manager': false,
       '/sales-by-country': false,
       '/wholesale-destinations': false,
-      '/commission-report-plus': true,
+      '/sales-report': true,
       '/work-list': false,
       '/supplier-commission': false,
       '/discount-sales': false,
@@ -52,7 +52,7 @@ function handleExternalLink(e, url) {
       '/tour-image-manager': false,
       '/sales-by-country': false,
       '/wholesale-destinations': false,
-      '/commission-report-plus': true,
+      '/sales-report': true,
       '/work-list': false,
       '/supplier-commission': false,
       '/discount-sales': false,
@@ -95,9 +95,9 @@ function handleExternalLink(e, url) {
           requireAuth: true
         },
         {
-          id: 'commission-report-plus',
+          id: 'sales-report',
           label: 'Commission Report Plus',
-          url: '/commission-report-plus',
+          url: '/sales-report',
           requireAuth: true
         }
       ]

@@ -13,7 +13,7 @@ const ROUTES = [
   '/tour-image-manager',
   '/sales-by-country',
   '/wholesale-destinations',
-  '/commission-report-plus',
+  '/sales-report',
   '/work-list',
   '/supplier-commission',
   '/discount-sales',

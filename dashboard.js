@@ -20,7 +20,7 @@
       icon: iconMap()
     },
     {
-      href: '/commission-report-plus',
+      href: '/sales-report',
       title: 'Commission Report Plus',
       description: 'รายงานคอมมิชชั่นระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
       icon: iconReceipt()

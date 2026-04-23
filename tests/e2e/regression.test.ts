@@ -10,7 +10,7 @@ const EXISTING_PAGES = [
   '/tour-image-manager',
   '/sales-by-country',
   '/wholesale-destinations',
-  '/commission-report-plus',
+  '/sales-report',
   '/work-list',
   // /order-report — has endpoints not covered by mock-backend; skip from regression
   // until the mock can stub its specific API (out of scope for UI unification).
