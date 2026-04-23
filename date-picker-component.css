@@ -23,12 +23,18 @@
   padding: 11px 16px 11px 44px !important;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: var(--font-family-base);
   color: #1f2937;
   background: white;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.date-input::placeholder {
+  color: #9ca3af;
+  font-size: 16px;
+  opacity: 1;
 }
 
 .date-input:hover {

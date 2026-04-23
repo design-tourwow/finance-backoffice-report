@@ -730,57 +730,57 @@
       <div class="country-dashboard">
         <!-- Time Granularity Control with Dropdowns -->
         <div class="time-granularity-control">
-          <span class="time-granularity-label">เลือกช่วงเวลา</span>
-
-          <!-- Period Type Selector (Master Dropdown) -->
-          <div class="time-dropdown-wrapper">
-            <button class="time-btn period-type-btn" id="periodTypeBtn">
-              <span class="time-btn-text">ทั้งหมด</span>
-              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div class="time-dropdown-menu" id="periodTypeDropdown">
-              <div class="time-dropdown-item" data-period-type="yearly">
-                <span class="dropdown-item-label">รายปี</span>
+          <div class="filter-inline-field filter-inline-field--grow">
+            <span class="time-granularity-label">เลือกช่วงเวลา</span>
+            <div class="filter-period-controls">
+              <div class="time-dropdown-wrapper">
+                <button class="time-btn period-type-btn" id="periodTypeBtn">
+                  <span class="time-btn-text">ทั้งหมด</span>
+                  <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div class="time-dropdown-menu" id="periodTypeDropdown">
+                  <div class="time-dropdown-item" data-period-type="yearly">
+                    <span class="dropdown-item-label">รายปี</span>
+                  </div>
+                  <div class="time-dropdown-item" data-period-type="quarterly">
+                    <span class="dropdown-item-label">รายไตรมาส</span>
+                  </div>
+                  <div class="time-dropdown-item" data-period-type="monthly">
+                    <span class="dropdown-item-label">รายเดือน</span>
+                  </div>
+                </div>
               </div>
-              <div class="time-dropdown-item" data-period-type="quarterly">
-                <span class="dropdown-item-label">รายไตรมาส</span>
+              <div class="time-granularity-buttons" id="periodValueButtons">
+                <div class="time-dropdown-wrapper" data-type="yearly" style="display: none;">
+                  <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
+                    <span class="time-btn-text">เลือกปี</span>
+                    <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+                  <div class="time-dropdown-menu" id="yearlyDropdown"></div>
+                </div>
+                <div class="time-dropdown-wrapper" data-type="quarterly" style="display: none;">
+                  <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
+                    <span class="time-btn-text">เลือกไตรมาส</span>
+                    <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+                  <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
+                </div>
+                <div class="time-dropdown-wrapper" data-type="monthly" style="display: none;">
+                  <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
+                    <span class="time-btn-text">เลือกเดือน</span>
+                    <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </button>
+                  <div class="time-dropdown-menu" id="monthlyDropdown"></div>
+                </div>
               </div>
-              <div class="time-dropdown-item" data-period-type="monthly">
-                <span class="dropdown-item-label">รายเดือน</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Period Value Dropdowns (shown based on selected type) -->
-          <div class="time-granularity-buttons" id="periodValueButtons">
-            <div class="time-dropdown-wrapper" data-type="yearly" style="display: none;">
-              <button class="time-btn" data-granularity="yearly" id="yearlyBtn">
-                <span class="time-btn-text">เลือกปี</span>
-                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <div class="time-dropdown-menu" id="yearlyDropdown"></div>
-            </div>
-            <div class="time-dropdown-wrapper" data-type="quarterly" style="display: none;">
-              <button class="time-btn" data-granularity="quarterly" id="quarterlyBtn">
-                <span class="time-btn-text">เลือกไตรมาส</span>
-                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <div class="time-dropdown-menu" id="quarterlyDropdown"></div>
-            </div>
-            <div class="time-dropdown-wrapper" data-type="monthly" style="display: none;">
-              <button class="time-btn" data-granularity="monthly" id="monthlyBtn">
-                <span class="time-btn-text">เลือกเดือน</span>
-                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <div class="time-dropdown-menu" id="monthlyDropdown"></div>
             </div>
           </div>
           <div class="selected-period-badge" id="selectedPeriodBadge" style="display: none;"></div>
@@ -789,24 +789,26 @@
           <div class="filter-separator"></div>
 
           <!-- Country Filter -->
-          <span class="time-granularity-label">ประเทศ</span>
-          <div class="time-dropdown-wrapper">
-            <button class="time-btn" id="countryFilterBtn">
-              <span class="time-btn-text">ประเทศทั้งหมด</span>
-              <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div class="time-dropdown-menu country-dropdown-menu" id="countryFilterDropdown">
-              <div class="dropdown-search-wrapper">
-                <input type="text" class="dropdown-search-input" id="countrySearchInput" placeholder="ค้นหาประเทศ..." />
-              </div>
-              <div class="dropdown-items-container" id="countryItemsContainer">
-                <!-- Countries will be populated here -->
-              </div>
-              <div class="dropdown-actions">
-                <button type="button" class="dropdown-clear-btn" id="countryFilterClearBtn">ล้าง</button>
-                <button type="button" class="dropdown-confirm-btn" id="countryFilterConfirmBtn">ยืนยัน</button>
+          <div class="filter-inline-field">
+            <span class="time-granularity-label">ประเทศ</span>
+            <div class="time-dropdown-wrapper">
+              <button class="time-btn" id="countryFilterBtn">
+                <span class="time-btn-text">ประเทศทั้งหมด</span>
+                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="time-dropdown-menu country-dropdown-menu" id="countryFilterDropdown">
+                <div class="dropdown-search-wrapper">
+                  <input type="text" class="dropdown-search-input" id="countrySearchInput" placeholder="ค้นหาประเทศ..." />
+                </div>
+                <div class="dropdown-items-container" id="countryItemsContainer">
+                  <!-- Countries will be populated here -->
+                </div>
+                <div class="dropdown-actions">
+                  <button type="button" class="dropdown-clear-btn" id="countryFilterClearBtn">ล้าง</button>
+                  <button type="button" class="dropdown-confirm-btn" id="countryFilterConfirmBtn">ยืนยัน</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1192,6 +1194,7 @@
     dropdownWrappers.forEach(wrapper => {
       const btn = wrapper.querySelector('.time-btn');
       const dropdown = wrapper.querySelector('.time-dropdown-menu');
+      if (!btn || !dropdown) return;
 
       btn.addEventListener('click', function(e) {
         e.stopPropagation();

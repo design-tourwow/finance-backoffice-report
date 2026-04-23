@@ -61,7 +61,7 @@
   background: transparent;
   font: inherit;
   font-family: var(--font-family);
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text);
   text-align: left;
   cursor: pointer;
@@ -88,5 +88,5 @@
   padding: 16px;
   text-align: center;
   color: var(--color-text-faint);
-  font-size: 14px;
+  font-size: 16px;
 }

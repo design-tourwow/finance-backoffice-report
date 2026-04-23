@@ -42,19 +42,23 @@
 }
 
 .crp-filter-field {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
   min-width: 0;
 }
 
 .crp-filter-label {
-  flex: 0 0 128px;
+  grid-column: 1 / -1;
 }
 
 .crp-filter-control {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.crp-filter-control:last-child:nth-child(2) {
+  grid-column: 1 / -1;
 }
 
 .crp-filter-control .filter-sort-dropdown,

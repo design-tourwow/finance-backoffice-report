@@ -19,7 +19,7 @@
   background: white;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   font-family: var(--font-family-base);
   color: #374151;
   cursor: pointer;
@@ -89,7 +89,7 @@
   padding: 12px 16px;
   border: none;
   background: white;
-  font-size: 14px;
+  font-size: 16px;
   font-family: var(--font-family-base);
   color: #374151;
   cursor: pointer;

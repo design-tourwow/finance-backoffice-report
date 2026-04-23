@@ -63,16 +63,24 @@
         <div class="time-granularity-control work-list-control">
           <div class="work-list-control-row">
             <div class="work-list-control-group">
-              <span class="time-granularity-label">กลุ่มงาน</span>
-              <div class="work-list-segment">
-                <button class="time-btn work-list-tab active" type="button" data-role-group="general">ทั่วไป</button>
-                <button class="time-btn work-list-tab" type="button" data-role-group="finance">เฉพาะ Finance</button>
+              <div class="filter-inline-field work-list-role-field">
+                <span class="time-granularity-label">กลุ่มงาน</span>
+                <div class="work-list-segment">
+                  <button class="time-btn work-list-tab active" type="button" data-role-group="general">ทั่วไป</button>
+                  <button class="time-btn work-list-tab" type="button" data-role-group="finance">เฉพาะ Finance</button>
+                </div>
               </div>
             </div>
 
             <div class="work-list-control-group work-list-filter-group">
-              <div class="filter-sort-dropdown work-list-filter" id="workListTaskTypeFilter"></div>
-              <div class="filter-sort-dropdown work-list-filter" id="workListSellerFilter"></div>
+              <div class="filter-inline-field work-list-filter-field">
+                <span class="time-granularity-label">ประเภทงาน</span>
+                <div class="filter-sort-dropdown work-list-filter" id="workListTaskTypeFilter"></div>
+              </div>
+              <div class="filter-inline-field work-list-filter-field">
+                <span class="time-granularity-label">เซลล์ดูแล</span>
+                <div class="filter-sort-dropdown work-list-filter" id="workListSellerFilter"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -145,7 +153,7 @@
     container.innerHTML = `
       <button type="button" class="filter-sort-btn" id="${buttonId}">
         <span class="filter-sort-btn-content">
-          <span class="filter-sort-btn-text">${escHtml(config.label)}: ${escHtml(selectedLabel)}</span>
+          <span class="filter-sort-btn-text">${escHtml(selectedLabel)}</span>
         </span>
         <svg class="filter-sort-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
