@@ -697,17 +697,24 @@ button, input, select, textarea, option {
   font-weight: 700;
 }
 
+/* Aligned with the canonical .shared-search-input look (radius 8px,
+   border-strong token, 16px font, 3px focus ring) so plain form fields
+   on this page — usageCount number input, date range picker input,
+   select — render the same visual style as the shared textbox
+   component sitting next to them. */
 .form-group select,
 .form-group input {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 14px;
+  padding: 10px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  font-size: 16px;
   font-family: inherit;
+  color: #1f2937;
   background: #fff;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
 .form-group select {
@@ -749,7 +756,8 @@ button, input, select, textarea, option {
 .form-group select:focus,
 .form-group input:focus {
   outline: none;
-  border-color: #4a7ba7;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 123, 167, 0.1);
 }
 
 .form-group input[readonly] {
