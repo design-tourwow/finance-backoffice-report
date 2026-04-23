@@ -8,6 +8,7 @@
   let currentData = null;
   let selectedTaskTypeId = '';
   let selectedSellerId = '';
+  let tableQuery = '';
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -317,12 +318,20 @@
 
   function getFilteredTasks() {
     const tasks = Array.isArray(currentData && currentData.tasks) ? currentData.tasks : [];
+    const q = (tableQuery || '').toLowerCase();
     const filtered = tasks.filter(task => {
       const taskTypeId = task.task_type_id != null ? String(task.task_type_id) : '';
       const sellerId = task.seller_agency_member_id != null ? String(task.seller_agency_member_id) : '';
 
       if (selectedTaskTypeId && taskTypeId !== selectedTaskTypeId) return false;
       if (selectedSellerId && sellerId !== selectedSellerId) return false;
+      if (q) {
+        const hay = [
+          task.order_code, task.customer_name, task.customer_phone_number,
+          task.seller_nick_name, task.crm_nick_name, task.task_type_name
+        ].map(v => String(v == null ? '' : v).toLowerCase()).join(' ');
+        if (hay.indexOf(q) === -1) return false;
+      }
       return true;
     });
 
@@ -340,6 +349,9 @@
               <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
             </svg>
             <span>แสดง ${tasks.length} รายการ</span>
+          </div>
+          <div class="dashboard-table-actions">
+            <div id="wl-table-search-host"></div>
           </div>
         </div>
 
@@ -399,6 +411,14 @@
 
     results.innerHTML = renderTable(tasks);
     updateSummary(tasks.length);
+    if (window.SharedTableSearch && document.getElementById('wl-table-search-host')) {
+      window.SharedTableSearch.init({
+        containerId: 'wl-table-search-host',
+        value      : tableQuery,
+        placeholder: 'ค้นหางาน / Order / ลูกค้า...',
+        onInput: function (raw) { tableQuery = String(raw || '').toLowerCase().trim(); renderResults(); }
+      });
+    }
   }
 
   async function loadWorkList() {

@@ -25,7 +25,8 @@
     availablePeriods: { years: [] }
   };
 
-  var lastData   = [];
+  var lastData    = [];
+  var filterQuery = '';
   var lastTotals = { orders: 0, net: 0, commission: 0, discount: 0 };
 
   var sortKey = null;
@@ -97,6 +98,7 @@
     SharedUI.hideError(elStatusHost);
     elSummaryHost.innerHTML = '';
     elTableHost.innerHTML   = '';
+    filterQuery             = '';
     SharedUI.showLoading(elStatusHost, 'กำลังโหลดข้อมูล Order แก้ย้อนหลัง...');
 
     try {
@@ -235,19 +237,43 @@
   }
 
   function renderTable() {
-    elTableHost.innerHTML =
-      '<div class="oes-table-section">' +
-      '  <div class="oes-table-header">' +
-      '    <h2>รายละเอียด Orders</h2>' +
-      '    ' + window.SharedExportButton.render({ id: 'oes-export-btn' }) +
-      '  </div>' +
-      '  <div id="oes-table-body"></div>' +
-      '</div>';
+    var firstMount = !document.getElementById('oes-table-body');
+    if (firstMount) {
+      elTableHost.innerHTML =
+        '<div class="oes-table-section">' +
+        '  <div class="oes-table-header">' +
+        '    <h2>รายละเอียด Orders</h2>' +
+        '    <div class="dashboard-table-actions">' +
+        '      <div id="oes-table-search-host"></div>' +
+        '      ' + window.SharedExportButton.render({ id: 'oes-export-btn' }) +
+        '    </div>' +
+        '  </div>' +
+        '  <div id="oes-table-body"></div>' +
+        '</div>';
+      if (window.SharedTableSearch) {
+        window.SharedTableSearch.init({
+          containerId: 'oes-table-search-host',
+          placeholder: 'ค้นหา Order...',
+          onInput: function (raw) { filterQuery = String(raw || '').toLowerCase().trim(); renderTable(); }
+        });
+      }
+      var btn = document.getElementById('oes-export-btn');
+      if (btn) btn.addEventListener('click', exportCSV);
+    }
+
+    var filtered = filterQuery
+      ? lastData.filter(function (r) {
+          return Object.keys(r).some(function (k) {
+            var v = r[k];
+            return v != null && String(v).toLowerCase().indexOf(filterQuery) !== -1;
+          });
+        })
+      : lastData;
 
     SharedTable.render({
       containerEl: document.getElementById('oes-table-body'),
       columns    : COLUMNS,
-      rows       : sortRows(lastData),
+      rows       : sortRows(filtered),
       sortKey    : sortKey,
       sortDir    : sortDir,
       onSort     : function (key) {
@@ -260,9 +286,6 @@
         renderTable();
       }
     });
-
-    var btn = document.getElementById('oes-export-btn');
-    if (btn) btn.addEventListener('click', exportCSV);
   }
 
   // ── CSV Export ────────────────────────────────────────────────────────────

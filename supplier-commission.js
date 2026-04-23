@@ -20,6 +20,7 @@
   var sortField     = 'total_commission';
   var sortDir       = 'desc';
   var chartInstance = null;
+  var filterQuery   = '';
 
   var filterState = {
     mode         : 'quarterly',
@@ -155,13 +156,24 @@
       '<div class="sc-table-card">' +
         '<div class="sc-table-header">' +
           '<h2>รายละเอียด Supplier</h2>' +
-          window.SharedExportButton.render({ id: 'sc-export-btn' }) +
+          '<div class="dashboard-table-actions">' +
+            '<div id="sc-table-search-host"></div>' +
+            window.SharedExportButton.render({ id: 'sc-export-btn' }) +
+          '</div>' +
         '</div>' +
         '<div id="sc-table-container"></div>' +
       '</div>';
 
     renderChart();
+    filterQuery = '';
     renderTable();
+    if (window.SharedTableSearch) {
+      window.SharedTableSearch.init({
+        containerId: 'sc-table-search-host',
+        placeholder: 'ค้นหา Supplier...',
+        onInput: function (raw) { filterQuery = String(raw || '').toLowerCase().trim(); renderTable(); }
+      });
+    }
     document.getElementById('sc-export-btn').addEventListener('click', exportCSV);
   }
 
@@ -238,10 +250,18 @@
       };
     }));
 
+    var rows = filterQuery
+      ? reportData.filter(function (r) {
+          var th = String(r.supplier_name_th || '').toLowerCase();
+          var en = String(r.supplier_name_en || '').toLowerCase();
+          return th.indexOf(filterQuery) !== -1 || en.indexOf(filterQuery) !== -1;
+        })
+      : reportData;
+
     window.SharedTable.render({
       containerEl: container,
       columns    : columns,
-      rows       : reportData,
+      rows       : rows,
       sortKey    : sortField,
       sortDir    : sortDir,
       onSort     : function (key) {

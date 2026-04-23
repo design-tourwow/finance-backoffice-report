@@ -31,6 +31,7 @@
 
   var showDiscountOnly = true;
   var showUnpaidOnly   = false;
+  var tableQuery       = '';
 
   var sortKey = 'created_at';
   var sortDir = 'desc';
@@ -93,6 +94,14 @@
     displayData = allOrdersData.filter(function (order) {
       if (showDiscountOnly && order.financial_metrics.discount < 1) return false;
       if (showUnpaidOnly && order.payment_details.status_list.toLowerCase().includes('paid')) return false;
+      if (tableQuery) {
+        var code = String(order.order_info.order_code || '').toLowerCase();
+        var customer = String(order.customer_info.customer_name || '').toLowerCase();
+        var seller = String(order.sales_crm.seller_name || '').toLowerCase();
+        if (code.indexOf(tableQuery) === -1 &&
+            customer.indexOf(tableQuery) === -1 &&
+            seller.indexOf(tableQuery) === -1) return false;
+      }
       return true;
     });
     currentPage = 1;
@@ -516,6 +525,7 @@
               '<p>' + subtitleMap[subtitleKey] + '</p>' +
             '</div>' +
             '<div class="rd-table-controls">' +
+              '<div id="rd-table-search-host"></div>' +
               window.SharedExportButton.render({ id: 'rd-export-btn' }) +
               '<label class="rd-checkbox-label">' +
                 '<input type="checkbox" id="rd-chk-discount"' + (showDiscountOnly ? ' checked' : '') + '>' +
@@ -666,6 +676,20 @@
 
     var exportBtn = el('rd-export-btn');
     if (exportBtn) exportBtn.addEventListener('click', exportCSV);
+
+    // Table search — client-filter on order_code / customer / seller.
+    if (window.SharedTableSearch && document.getElementById('rd-table-search-host')) {
+      window.SharedTableSearch.init({
+        containerId: 'rd-table-search-host',
+        value      : tableQuery,
+        placeholder: 'ค้นหา Order / ลูกค้า...',
+        onInput: function (raw) {
+          tableQuery = String(raw || '').toLowerCase().trim();
+          applyCheckboxFilters();
+          renderContent();
+        }
+      });
+    }
 
     // Scroll-hint fade on the Top-Sales summary table (hand-rolled markup,
     // not SharedTable — SharedTable wires this up itself in shared-table.js).

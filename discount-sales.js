@@ -14,6 +14,7 @@
   var allData       = [];
   var sortField     = null;   // 'total_commission' | 'total_discount' | 'discount_percentage' | 'order_count' | 'net_commission'
   var sortDirection = 'desc';
+  var filterQuery   = '';
 
   var filterState = {
     mode        : 'quarterly',
@@ -146,13 +147,25 @@
       '<div class="ds-table-card">' +
         '<div class="ds-table-header">' +
           '<h2>รายละเอียดส่วนลด</h2>' +
-          window.SharedExportButton.render({ id: 'ds-export-btn' }) +
+          '<div class="dashboard-table-actions">' +
+            '<div id="ds-table-search-host"></div>' +
+            window.SharedExportButton.render({ id: 'ds-export-btn' }) +
+          '</div>' +
         '</div>' +
         '<div id="ds-table-host"></div>' +
       '</div>';
 
+    filterQuery = '';
     renderTable();
     renderCharts();
+
+    if (window.SharedTableSearch) {
+      window.SharedTableSearch.init({
+        containerId: 'ds-table-search-host',
+        placeholder: 'ค้นหาพนักงานขาย...',
+        onInput: function (raw) { filterQuery = String(raw || '').toLowerCase().trim(); renderTable(); }
+      });
+    }
 
     var exportBtn = document.getElementById('ds-export-btn');
     if (exportBtn) exportBtn.addEventListener('click', exportToCSV);
@@ -299,10 +312,17 @@
   function renderTable() {
     var host = document.getElementById('ds-table-host');
     if (!host) return;
+    var rows = filterQuery
+      ? allData.filter(function (r) {
+          var name = String(r.sales_name || '').toLowerCase();
+          var nick = String(r.nickname || '').toLowerCase();
+          return name.indexOf(filterQuery) !== -1 || nick.indexOf(filterQuery) !== -1;
+        })
+      : allData;
     window.SharedTable.render({
       containerEl: host,
       columns    : TABLE_COLUMNS,
-      rows       : allData,
+      rows       : rows,
       sortKey    : sortField,
       sortDir    : sortDirection,
       onSort     : handleSort

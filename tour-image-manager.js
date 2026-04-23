@@ -33,8 +33,29 @@
     initImageNameAutocomplete();
     initTourCodeAutocomplete();
     initBanner1Filter();
+    initTimTableSearch();
     checkTokenAndLoadData();
   });
+
+  // Client-filter search across the already-loaded rows in the results
+  // table. Filters by concatenated textContent of each .table-row — useful
+  // after the user has fetched a large result set and wants to narrow down
+  // without triggering another API call.
+  function initTimTableSearch() {
+    if (!window.SharedTableSearch) return;
+    window.SharedTableSearch.init({
+      containerId: 'tim-table-search-host',
+      placeholder: 'ค้นหาในตาราง...',
+      onInput: function (raw) {
+        var q = String(raw || '').toLowerCase().trim();
+        var rows = document.querySelectorAll('#resultsTable .table-row');
+        rows.forEach(function (row) {
+          if (!q) { row.style.display = ''; return; }
+          row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+        });
+      }
+    });
+  }
 
   // Mobile Menu
   function initMobileMenu() {

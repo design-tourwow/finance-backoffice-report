@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="date-picker-component.css" />
     <link rel="stylesheet" href="filter-panel.css" />
     <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
+    <link rel="stylesheet" href="shared-table-search.css" />
     
     <!-- Configuration -->
     <!-- CRITICAL: Set API URL based on hostname BEFORE loading any other scripts -->
@@ -62,6 +63,7 @@
     <script src="shared-utils.js"></script>
     <script src="country-flags.js"></script>
     <script src="filter-search-dropdown-component.js"></script>
+    <script src="shared-table-search.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Authentication Handler -->
@@ -277,6 +279,7 @@
             <div class="results-header">
               <h2 id="resultsCount">ผลการค้นหาพบ : <span class="count">0</span> รูปภาพ</h2>
               <div class="results-actions">
+                <div id="tim-table-search-host"></div>
                 <div class="sort-dropdown">
                   <button type="button" class="btn btn-secondary sort-btn" id="sortBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
