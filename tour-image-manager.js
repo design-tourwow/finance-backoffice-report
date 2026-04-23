@@ -157,23 +157,189 @@
     });
   }
 
-  // Wholesale + Country use the shared FilterSearchDropdown (multi-select).
-  // loadSuppliers / loadCountries feed options into the component once the
-  // API response arrives; the hidden inputs (#wholesale / #country) are kept
-  // in sync via each dropdown's onChange so the submit + API glue code
-  // upstream doesn't have to change.
-  function mountMultiSelect(containerId, hiddenInputId, defaultLabel, groupLabel, options) {
+  // Country uses the shared FilterSearchDropdown (multi-select). Wholesale
+  // renders the .time-btn / .time-dropdown-menu pattern to match the
+  // wholesale-destinations page visually; loadSuppliers populates the item
+  // list, and confirm writes the csv into #wholesale so the existing submit
+  // + reset handlers keep working as-is.
+  function mountCountryMultiSelect(options) {
     if (!window.FilterSearchDropdown) return;
     window.FilterSearchDropdown.init({
-      containerId : containerId,
-      defaultLabel: defaultLabel,
+      containerId : 'countryMultiSelect',
+      defaultLabel: 'เลือกประเทศ',
       options     : options,
       placeholder : 'ค้นหา...',
       multiSelect : true,
-      groupLabel  : groupLabel,
+      groupLabel  : 'ประเทศ',
       onChange    : function (csvValue) {
-        var hidden = document.getElementById(hiddenInputId);
+        var hidden = document.getElementById('country');
         if (hidden) hidden.value = csvValue || '';
+      }
+    });
+  }
+
+  // Wholesale dropdown — hand-rolled to match wholesale-destinations' visual
+  // component. The items list is populated by loadSuppliers(); the user's
+  // checkbox state lives in the DOM (`.time-dropdown-item.selected`), and
+  // "ยืนยัน" commits the csv of selected ids into #wholesale.
+  var timWholesaleAll = [];          // full option list — used by search filter
+  function renderTimWholesaleItems(list) {
+    var container = document.getElementById('timWholesaleItems');
+    if (!container) return;
+    var selected = readTimWholesaleSelectedFromDOM(container);
+    container.innerHTML = list.map(function (w) {
+      var isSel = selected.has(String(w.id));
+      return (
+        '<div class="time-dropdown-item wholesale-item' + (isSel ? ' selected' : '') + '" ' +
+             'data-wholesale-id="' + w.id + '" data-wholesale-name="' + escapeAttr(w.name) + '">' +
+          '<label class="dropdown-checkbox">' +
+            '<input type="checkbox" class="wholesale-checkbox"' + (isSel ? ' checked' : '') + ' />' +
+            '<span class="checkbox-custom"></span>' +
+          '</label>' +
+          '<span class="dropdown-item-label">' + escapeHtmlText(w.name) + '</span>' +
+        '</div>'
+      );
+    }).join('');
+    attachTimWholesaleItemHandlers(container);
+  }
+
+  function escapeHtmlText(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function escapeAttr(s) {
+    return escapeHtmlText(s).replace(/"/g, '&quot;');
+  }
+
+  // Read which ids are currently checked from the hidden input — survives
+  // search-filter re-renders so a match re-appearing keeps its ✓.
+  function readTimWholesaleSelectedFromDOM(container) {
+    var set = new Set();
+    var hidden = document.getElementById('wholesale');
+    var pending = (container && container.dataset.pendingSelected) || (hidden && hidden.value) || '';
+    pending.split(',').forEach(function (v) { if (v) set.add(String(v).trim()); });
+    return set;
+  }
+
+  function writeTimWholesalePendingFromDOM() {
+    var container = document.getElementById('timWholesaleItems');
+    if (!container) return;
+    var ids = [];
+    container.querySelectorAll('.wholesale-item').forEach(function (item) {
+      var cb = item.querySelector('.wholesale-checkbox');
+      if (cb && cb.checked) ids.push(String(item.dataset.wholesaleId));
+    });
+    container.dataset.pendingSelected = ids.join(',');
+  }
+
+  function attachTimWholesaleItemHandlers(container) {
+    container.querySelectorAll('.wholesale-item').forEach(function (item) {
+      var cb = item.querySelector('.wholesale-checkbox');
+      item.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (cb && e.target !== cb && !e.target.closest('.dropdown-checkbox')) {
+          cb.checked = !cb.checked;
+        }
+        item.classList.toggle('selected', !!(cb && cb.checked));
+        writeTimWholesalePendingFromDOM();
+      });
+      if (cb) {
+        cb.addEventListener('change', function () {
+          item.classList.toggle('selected', cb.checked);
+          writeTimWholesalePendingFromDOM();
+        });
+      }
+    });
+  }
+
+  function updateTimWholesaleBtnText() {
+    var btn = document.getElementById('timWholesaleBtn');
+    var btnText = btn && btn.querySelector('.time-btn-text');
+    if (!btnText) return;
+    var hidden = document.getElementById('wholesale');
+    var ids = (hidden && hidden.value) ? hidden.value.split(',').filter(Boolean) : [];
+    if (ids.length === 0) {
+      btnText.textContent = 'เลือก Wholesale';
+      btn.classList.remove('active');
+    } else if (ids.length === 1) {
+      var one = timWholesaleAll.find(function (w) { return String(w.id) === ids[0]; });
+      btnText.textContent = one ? one.name : ids[0];
+      btn.classList.add('active');
+    } else {
+      btnText.textContent = 'Wholesale (' + ids.length + ')';
+      btn.classList.add('active');
+    }
+  }
+
+  function initTimWholesaleDropdown() {
+    var btn = document.getElementById('timWholesaleBtn');
+    var menu = document.getElementById('timWholesaleDropdown');
+    var searchInput = document.getElementById('timWholesaleSearch');
+    var confirmBtn = document.getElementById('timWholesaleConfirmBtn');
+    var clearBtn = document.getElementById('timWholesaleClearBtn');
+    if (!btn || !menu) return;
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = menu.classList.contains('show');
+      document.querySelectorAll('.time-dropdown-menu.show').forEach(function (m) {
+        if (m !== menu) m.classList.remove('show');
+      });
+      menu.classList.toggle('show', !isOpen);
+      if (!isOpen) {
+        // Seed pendingSelected from the current hidden input so opening the
+        // dropdown reflects the last confirmed state.
+        var container = document.getElementById('timWholesaleItems');
+        var hidden = document.getElementById('wholesale');
+        if (container) container.dataset.pendingSelected = (hidden && hidden.value) || '';
+        if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+        renderTimWholesaleItems(timWholesaleAll);
+      }
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        var q = this.value.toLowerCase();
+        renderTimWholesaleItems(timWholesaleAll.filter(function (w) {
+          return w.name.toLowerCase().indexOf(q) !== -1;
+        }));
+      });
+      searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
+    }
+
+    menu.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var container = document.getElementById('timWholesaleItems');
+        var csv = (container && container.dataset.pendingSelected) || '';
+        var hidden = document.getElementById('wholesale');
+        if (hidden) hidden.value = csv;
+        menu.classList.remove('show');
+        updateTimWholesaleBtnText();
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var container = document.getElementById('timWholesaleItems');
+        if (container) {
+          container.querySelectorAll('.wholesale-item').forEach(function (item) {
+            item.classList.remove('selected');
+            var cb = item.querySelector('.wholesale-checkbox');
+            if (cb) cb.checked = false;
+          });
+          container.dataset.pendingSelected = '';
+        }
+      });
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        menu.classList.remove('show');
       }
     });
   }
@@ -1106,15 +1272,17 @@ function initShowAllButtons() {
     }
   }
 
-  // Load suppliers (wholesale) and mount shared FilterSearchDropdown.
+  // Load suppliers (wholesale) — populate the shared .time-btn dropdown.
   async function loadSuppliers() {
     const response = await TourImageAPI.getSuppliers();
     if (!response || response.status !== 'success' || !response.data) return;
 
-    var opts = response.data.map(function (s) {
-      return { value: String(s.id), label: s.name_en + ' (' + s.name_th + ')' };
+    timWholesaleAll = response.data.map(function (s) {
+      return { id: String(s.id), name: s.name_en + ' (' + s.name_th + ')' };
     });
-    mountMultiSelect('wholesaleMultiSelect', 'wholesale', 'เลือก Wholesale', 'Wholesale', opts);
+    renderTimWholesaleItems(timWholesaleAll);
+    initTimWholesaleDropdown();
+    updateTimWholesaleBtnText();
     console.log('✅ Loaded suppliers:', response.data.length);
   }
 
@@ -1126,7 +1294,7 @@ function initShowAllButtons() {
     var opts = response.data.map(function (c) {
       return { value: String(c.id), label: c.name_th + ' (' + c.name_en + ')' };
     });
-    mountMultiSelect('countryMultiSelect', 'country', 'เลือกประเทศ', 'ประเทศ', opts);
+    mountCountryMultiSelect(opts);
     console.log('✅ Loaded countries:', response.data.length);
   }
 

@@ -174,7 +174,26 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="wholesale">Wholesale</label>
-                  <div id="wholesaleMultiSelect" class="tim-filter-dropdown"></div>
+                  <div class="time-dropdown-wrapper tim-wholesale-wrap">
+                    <button type="button" class="time-btn" id="timWholesaleBtn">
+                      <span class="time-btn-text">เลือก Wholesale</span>
+                      <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+                    <div class="time-dropdown-menu wholesale-dropdown-menu" id="timWholesaleDropdown">
+                      <div class="dropdown-search-wrapper">
+                        <input type="text" class="dropdown-search-input" id="timWholesaleSearch" placeholder="ค้นหา Wholesale..." aria-label="ค้นหา Wholesale" />
+                      </div>
+                      <div class="dropdown-items-container" id="timWholesaleItems">
+                        <!-- Items populated by loadSuppliers() -->
+                      </div>
+                      <div class="dropdown-actions">
+                        <button type="button" class="dropdown-clear-btn" id="timWholesaleClearBtn">ล้าง</button>
+                        <button type="button" class="dropdown-confirm-btn" id="timWholesaleConfirmBtn">ยืนยัน</button>
+                      </div>
+                    </div>
+                  </div>
                   <input type="hidden" id="wholesale" name="wholesale" value="">
                 </div>
                 <div class="form-group">
