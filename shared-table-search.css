@@ -71,3 +71,15 @@
 }
 
 .shared-search-clear[hidden] { display: none; }
+
+/* When the host opts out of the left search icon (e.g. number field in
+   a filter form) the input reclaims the left padding. */
+.shared-search-wrap--no-icon .shared-search-input {
+  padding-left: 16px;
+}
+
+/* Container widens to the column when sitting inside a .form-group
+   (same as the dropdowns) so the page's grid controls the field size. */
+.form-group .shared-search-wrap {
+  max-width: none;
+}

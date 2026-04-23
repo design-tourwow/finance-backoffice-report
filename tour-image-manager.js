@@ -31,6 +31,7 @@
     initExportImport();
     initSorting();
     initFilterTextSearch();
+    initUsageCountInput();
     initBanner1Filter();
     initTimTableSearch();
     checkTokenAndLoadData();
@@ -916,6 +917,24 @@ function initShowAllButtons() {
         observer.observe(infiniteLoader);
       }
     };
+  }
+
+  // Usage-count numeric filter — SharedTableSearch in numeric mode so the
+  // field shares the same canonical border / radius / focus-ring look as
+  // the other textbox components on this page. The rendered <input> keeps
+  // name="usageCount" so FormData.get('usageCount') still works in submit.
+  function initUsageCountInput() {
+    if (!window.SharedTableSearch) return;
+    window.SharedTableSearch.init({
+      containerId: 'usageCountHost',
+      placeholder: 'กรอกจำนวน',
+      type       : 'number',
+      name       : 'usageCount',
+      inputId    : 'usageCount',
+      min        : 0,
+      clearable  : false,
+      showIcon   : false
+    });
   }
 
   // Filter-box text search — ชื่อรูป + รหัสทัวร์ use the shared

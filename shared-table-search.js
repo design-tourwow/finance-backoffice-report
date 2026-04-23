@@ -10,6 +10,17 @@
 //     value      : '',                     // optional initial value
 //     debounceMs : 200,                    // default 200
 //     clearable  : true,                   // default true — show × when has value
+//     // Rendered <input> attributes — all optional. type defaults to 'text';
+//     // set 'number' to get a numeric filter field with the same visual
+//     // styling. name + inputId let the generated input participate in an
+//     // existing <form> (FormData.get(name) works) without needing a
+//     // separate hidden input to sync.
+//     type       : 'text' | 'number' | 'search',
+//     name       : 'fieldName',
+//     inputId    : 'myFieldId',
+//     min        : 0,                      // forwarded to number inputs
+//     max        : 999,                    // forwarded to number inputs
+//     showIcon   : true,                   // default true — set false for number
 //     onInput    : function (value) {},    // debounced fire during typing
 //     onChange   : function (value) {}     // on blur / clear
 //   });
@@ -48,14 +59,25 @@
     var debounceMs  = typeof cfg.debounceMs === 'number' ? cfg.debounceMs : 200;
     var clearable   = cfg.clearable !== false;
     var initialVal  = cfg.value || '';
+    var type        = cfg.type || 'text';
+    var showIcon    = cfg.showIcon !== false && type !== 'number'; // number inputs look wrong with a search icon
+    var inputName   = cfg.name || '';
+    var inputId     = cfg.inputId || '';
+    var minAttr     = cfg.min != null ? ' min="' + escapeAttr(cfg.min) + '"' : '';
+    var maxAttr     = cfg.max != null ? ' max="' + escapeAttr(cfg.max) + '"' : '';
+    var nameAttr    = inputName ? ' name="' + escapeAttr(inputName) + '"' : '';
+    var idAttr      = inputId   ? ' id="' + escapeAttr(inputId) + '"' : '';
+    var wrapClass   = 'shared-search-wrap' + (showIcon ? '' : ' shared-search-wrap--no-icon');
 
     container.innerHTML =
-      '<div class="shared-search-wrap">' +
-        '<svg class="shared-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-          '<circle cx="11" cy="11" r="8"/>' +
-          '<line x1="21" y1="21" x2="16.65" y2="16.65"/>' +
-        '</svg>' +
-        '<input type="text" class="shared-search-input" placeholder="' + escapeAttr(placeholder) + '" value="' + escapeAttr(initialVal) + '" autocomplete="off" />' +
+      '<div class="' + wrapClass + '">' +
+        (showIcon
+          ? '<svg class="shared-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<circle cx="11" cy="11" r="8"/>' +
+              '<line x1="21" y1="21" x2="16.65" y2="16.65"/>' +
+            '</svg>'
+          : '') +
+        '<input type="' + escapeAttr(type) + '"' + idAttr + nameAttr + minAttr + maxAttr + ' class="shared-search-input" placeholder="' + escapeAttr(placeholder) + '" value="' + escapeAttr(initialVal) + '" autocomplete="off" />' +
         (clearable
           ? '<button type="button" class="shared-search-clear" aria-label="ล้างการค้นหา"' + (initialVal ? '' : ' hidden') + '>' +
               '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
