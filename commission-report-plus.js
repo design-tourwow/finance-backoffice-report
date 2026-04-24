@@ -209,16 +209,6 @@
     return Array.from(map.values());
   }
 
-  function summarizeSellerAggregate(rows) {
-    return (rows || []).reduce(function (acc, row) {
-      acc.orders += parseFloat(row.orders || 0);
-      acc.net_amount += parseFloat(row.net_amount || 0);
-      acc.discount += parseFloat(row.discount || 0);
-      acc.net_commission += parseFloat(row.net_commission || 0);
-      return acc;
-    }, { orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
-  }
-
   function sortSellerAggregate(rows, groupClass) {
     const state = sellerSummarySort[groupClass] || { key: 'net_commission', direction: 'desc' };
     return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
@@ -863,8 +853,7 @@
     const groupOrders = orders.filter(function (order) {
       return String(order.seller_job_position || '').toLowerCase() === groupClass;
     });
-    const aggregateRows = buildSellerAggregate(groupOrders);
-    const sortedRows = sortSellerAggregate(aggregateRows, groupClass).map(function (row, index) {
+    return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
       return [
         index + 1,
         row.seller,
@@ -874,9 +863,6 @@
         row.net_commission
       ];
     });
-    const totals = summarizeSellerAggregate(aggregateRows);
-    sortedRows.push(['รวม', '', totals.orders, totals.net_amount, totals.discount, totals.net_commission]);
-    return sortedRows;
   }
 
   function buildWorksheetColumnWidths(headers, rows) {
