@@ -209,6 +209,16 @@
     return Array.from(map.values());
   }
 
+  function summarizeSellerAggregate(rows) {
+    return (rows || []).reduce(function (acc, row) {
+      acc.orders += parseFloat(row.orders || 0);
+      acc.net_amount += parseFloat(row.net_amount || 0);
+      acc.discount += parseFloat(row.discount || 0);
+      acc.net_commission += parseFloat(row.net_commission || 0);
+      return acc;
+    }, { orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
+  }
+
   function sortSellerAggregate(rows, groupClass) {
     const state = sellerSummarySort[groupClass] || { key: 'net_commission', direction: 'desc' };
     return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
@@ -664,7 +674,9 @@
     if (!isAdmin()) return '';
 
     function buildGroupTable(title, groupClass, groupOrders) {
-      const sorted = sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass);
+      const aggregateRows = buildSellerAggregate(groupOrders);
+      const sorted = sortSellerAggregate(aggregateRows, groupClass);
+      const totals = summarizeSellerAggregate(aggregateRows);
       const rows = sorted.map((s, i) => {
         const name = s.seller;
         const rank = i + 1;
@@ -692,6 +704,14 @@
             <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
       }).join('');
+      const summaryRow = `
+        <tr class="crp-summary-total-row">
+          <td><strong>รวม</strong></td>
+          <td class="right">${formatNumber(totals.orders, 0)}</td>
+          <td class="right">${formatNumber(totals.net_amount, 0)}</td>
+          <td class="right">${formatNumber(totals.discount, 0)}</td>
+          <td class="right ${totals.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(totals.net_commission, 0)}</td>
+        </tr>`;
       return `
         <div class="crp-summary-group crp-summary-group--${groupClass}">
           <div class="crp-summary-group-header">
@@ -709,6 +729,7 @@
               </tr>
             </thead>
             <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            <tfoot>${summaryRow}</tfoot>
           </table>
         </div>`;
     }
@@ -841,6 +862,7 @@
 
     worksheets.forEach(function (sheet) {
       const worksheet = window.XLSX.utils.aoa_to_sheet([sheet.headers].concat(sheet.rows));
+      worksheet['!cols'] = buildWorksheetColumnWidths(sheet.headers, sheet.rows);
       window.XLSX.utils.book_append_sheet(workbook, worksheet, sheet.name);
     });
 
@@ -851,8 +873,8 @@
     const groupOrders = orders.filter(function (order) {
       return String(order.seller_job_position || '').toLowerCase() === groupClass;
     });
-
-    return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
+    const aggregateRows = buildSellerAggregate(groupOrders);
+    const sortedRows = sortSellerAggregate(aggregateRows, groupClass).map(function (row, index) {
       return [
         index + 1,
         row.seller,
@@ -861,6 +883,26 @@
         row.discount,
         row.net_commission
       ];
+    });
+    const totals = summarizeSellerAggregate(aggregateRows);
+    sortedRows.push(['รวม', '', totals.orders, totals.net_amount, totals.discount, totals.net_commission]);
+    return sortedRows;
+  }
+
+  function buildWorksheetColumnWidths(headers, rows) {
+    const widths = [];
+    const allRows = [headers || []].concat(rows || []);
+
+    allRows.forEach(function (row) {
+      (row || []).forEach(function (value, index) {
+        const text = value == null ? '' : String(value);
+        const current = widths[index] || 0;
+        widths[index] = Math.max(current, text.length + 2);
+      });
+    });
+
+    return widths.map(function (width) {
+      return { wch: Math.min(Math.max(width, 10), 40) };
     });
   }
 
