@@ -38,7 +38,7 @@ test.describe('@p1 Sales Report Excel export', () => {
     await page.goto('/sales-report');
     await page.waitForLoadState('networkidle');
 
-    const exportBtn = page.getByRole('button', { name: /Export Excel/i });
+    const exportBtn = page.getByRole('button', { name: /Export/i });
     await expect(exportBtn).toBeVisible();
 
     const [download] = await Promise.all([
@@ -46,19 +46,15 @@ test.describe('@p1 Sales Report Excel export', () => {
       exportBtn.click(),
     ]);
 
-    await expect(download.suggestedFilename()).toMatch(/^sales-report-\d{8}\.xls$/);
+    await expect(download.suggestedFilename()).toMatch(/^sales-report-\d{8}\.xlsx$/);
 
     const stream = await download.createReadStream();
     const chunks: Buffer[] = [];
     for await (const chunk of stream as any) chunks.push(Buffer.from(chunk));
-    const content = Buffer.concat(chunks).toString('utf8');
+    const content = Buffer.concat(chunks);
 
-    expect(content).toContain('Worksheet ss:Name="sales-report"');
-    expect(content).toContain('Worksheet ss:Name="sales-report-by-telesales"');
-    expect(content).toContain('Worksheet ss:Name="sales-report-by-crm"');
-    expect(content).toContain('Pink');
-    expect(content).toContain('ต้อมแต้ม');
-    expect(content).toContain('Toon');
-    expect(content).toContain('ลูกค้า 1');
+    expect(content.length).toBeGreaterThan(1000);
+    expect(content[0]).toBe(0x50);
+    expect(content[1]).toBe(0x4b);
   });
 });

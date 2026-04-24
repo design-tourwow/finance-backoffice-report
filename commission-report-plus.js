@@ -756,7 +756,7 @@
         </div>
         <div class="dashboard-table-actions">
           <div id="crp-table-search-host"></div>
-          ${window.SharedExportButton.render({ id: 'crp-btn-export', label: 'Export Excel' })}
+          ${window.SharedExportButton.render({ id: 'crp-btn-export', label: 'Export' })}
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             Download PDF
@@ -797,6 +797,13 @@
 
   // ---- Export Excel Workbook ----
   function exportExcelWorkbook(orders) {
+    if (!window.XLSX || !window.XLSX.utils) {
+      console.error('[CRP] XLSX library is not available');
+      alert('ไม่สามารถสร้างไฟล์ Excel ได้ในขณะนี้');
+      return;
+    }
+
+    const workbook = window.XLSX.utils.book_new();
     const worksheets = [
       {
         name: 'sales-report',
@@ -832,7 +839,12 @@
       }
     ];
 
-    downloadExcelWorkbook(buildExcelWorkbookXml(worksheets), getExcelFileName());
+    worksheets.forEach(function (sheet) {
+      const worksheet = window.XLSX.utils.aoa_to_sheet([sheet.headers].concat(sheet.rows));
+      window.XLSX.utils.book_append_sheet(workbook, worksheet, sheet.name);
+    });
+
+    window.XLSX.writeFile(workbook, getExcelFileName(), { compression: true });
   }
 
   function getSellerSummaryExportRows(orders, groupClass) {
@@ -852,93 +864,12 @@
     });
   }
 
-  function buildExcelWorkbookXml(worksheets) {
-    const body = (worksheets || []).map(function (sheet) {
-      return buildExcelWorksheetXml(sheet.name, sheet.headers, sheet.rows);
-    }).join('');
-
-    return '' +
-      '<?xml version="1.0" encoding="UTF-8"?>' +
-      '<?mso-application progid="Excel.Sheet"?>' +
-      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
-        'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
-        'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
-        'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' +
-        'xmlns:html="http://www.w3.org/TR/REC-html40">' +
-        '<Styles>' +
-          '<Style ss:ID="header">' +
-            '<Font ss:Bold="1"/>' +
-            '<Interior ss:Color="#E8F0FB" ss:Pattern="Solid"/>' +
-          '</Style>' +
-          '<Style ss:ID="number">' +
-            '<NumberFormat ss:Format="#,##0"/>' +
-          '</Style>' +
-        '</Styles>' +
-        body +
-      '</Workbook>';
-  }
-
-  function buildExcelWorksheetXml(name, headers, rows) {
-    const headerRowXml = '<Row>' + (headers || []).map(function (header) {
-      return buildExcelCellXml(header, true);
-    }).join('') + '</Row>';
-
-    const rowXml = (rows || []).map(function (row) {
-      return '<Row>' + row.map(function (value) {
-        return buildExcelCellXml(value, false);
-      }).join('') + '</Row>';
-    }).join('');
-
-    return '' +
-      '<Worksheet ss:Name="' + escapeExcelXml(name || 'Sheet1') + '">' +
-        '<Table>' +
-          headerRowXml +
-          rowXml +
-        '</Table>' +
-      '</Worksheet>';
-  }
-
-  function buildExcelCellXml(value, isHeader) {
-    const isNumber = typeof value === 'number' && isFinite(value);
-    const styleId = isHeader ? 'header' : (isNumber ? 'number' : '');
-    const type = isNumber ? 'Number' : 'String';
-    const attrs = styleId ? ' ss:StyleID="' + styleId + '"' : '';
-    return '<Cell' + attrs + '><Data ss:Type="' + type + '">' + escapeExcelXml(value) + '</Data></Cell>';
-  }
-
-  function escapeExcelXml(value) {
-    return String(value == null ? '' : value)
-      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
-  }
-
-  function downloadExcelWorkbook(content, filename) {
-    const blob = new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(function () {
-      try { URL.revokeObjectURL(url); }
-      catch (e) { /* ignore */ }
-    }, 0);
-  }
-
   function getExcelFileName() {
     const now = new Date();
     const yyyy = now.getFullYear();
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
-    return `sales-report-${yyyy}${mm}${dd}.xls`;
+    return `sales-report-${yyyy}${mm}${dd}.xlsx`;
   }
 
   function getSelectedSellerLabel() {
