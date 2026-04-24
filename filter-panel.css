@@ -28,9 +28,6 @@
    cross-load to sales-by-country.css without losing the outer filter bar. */
 .filter-wrap,
 .time-granularity-control {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin-bottom: 20px;
   padding: 12px 16px;
   background: white;
@@ -44,6 +41,100 @@
   z-index: 50;
   box-shadow: var(--shadow-card);
   font-family: var(--font-family);
+}
+
+.filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Every filter bar uses a fixed 3-column grid so each filter cell is always
+   33.33% wide regardless of how many filters are present. Empty slots stay
+   empty — filters never stretch to fill the row. */
+.time-granularity-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 24px;
+  align-items: end;
+}
+
+/* Status badges live below the filter row, spanning full width. */
+.time-granularity-control > .selected-period-badge {
+  grid-column: 1 / -1;
+}
+
+/* ---------------------------------------------------------------------------
+   Shared period selector — "กำหนดเอง" (custom date range) mode
+   When users pick the last mode option, the value slot renders two native
+   <input type="date"> fields side by side. Visual weight matches the other
+   dropdowns on the row.
+   --------------------------------------------------------------------------- */
+.period-custom-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.period-custom-range .period-custom-input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-size: 16px;
+  color: #374151;
+  background: white;
+  box-sizing: border-box;
+}
+
+.period-custom-range .period-custom-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.period-custom-range .period-custom-sep {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+/* Visual divider before the "กำหนดเอง" option in the mode dropdown, so it
+   reads as a semantically different choice from the monthly/quarterly/yearly
+   presets above it. */
+.filter-sort-menu .filter-sort-option[data-value="custom"] {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+/* Period selector inside the static .form-row filter forms (sales-by-country,
+   order-report): the field spans 2 outer columns so each sub-dropdown
+   (mode + value) is 33.3% wide on the row. */
+.form-row > .form-group-period {
+  grid-column: span 2;
+}
+
+.form-group-period .filter-period-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px 24px;
+}
+
+.form-group-period .filter-period-controls > div {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .form-row > .form-group-period {
+    grid-column: auto;
+  }
+  .form-group-period .filter-period-controls {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Stacked variant: vertical stack of rows (use when panel has more than
@@ -622,14 +713,22 @@
   width: 100%;
 }
 
+/* A period selector exposes 2 sub-controls (mode + value). To keep every
+   dropdown on the row at 33.3% width, the .filter-inline-field that wraps a
+   period selector spans 2 outer grid cells. Its internal 2-col grid then
+   divides 66.6% into two 33.3% sub-cells, matching sibling filter cells. */
+.time-granularity-control > .filter-inline-field:has(.filter-period-controls) {
+  grid-column: span 2;
+}
+
 .time-granularity-control .filter-inline-field .filter-period-controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 8px;
+  gap: 8px 24px;
 }
 
 .time-granularity-control .filter-inline-field .filter-period-controls > div {
-  flex: 1 1 0;
   min-width: 0;
 }
 
@@ -788,6 +887,46 @@
   min-width: 0;
 }
 
+/* Period-pair field: single cell that spans 2 outer grid cells so
+   "เลือกช่วงเวลา" label sits above BOTH mode + value dropdowns. Inside, a
+   2-col grid splits the 66.6% width into two 33.3% sub-cells (matches the
+   other filter cells on the row). */
+.filter-wrap.filter-wrap-paired-grid .filter-field-period-pair {
+  grid-column: span 2;
+}
+
+.filter-wrap.filter-wrap-paired-grid .filter-field-period-pair .filter-period-pair-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 24px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-wrap.filter-wrap-paired-grid .filter-field-period-pair .filter-period-pair-controls > div {
+  min-width: 0;
+}
+
+.filter-wrap.filter-wrap-paired-grid .filter-field-period-pair .filter-period-controls {
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .filter-wrap.filter-wrap-paired-grid .filter-field-period-pair {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-wrap.filter-wrap-paired-grid .filter-field-period-pair {
+    grid-column: auto;
+  }
+  .filter-wrap.filter-wrap-paired-grid .filter-field-period-pair .filter-period-pair-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .filter-wrap.filter-wrap-paired-grid .filter-actions {
   display: flex;
@@ -816,6 +955,19 @@
 
   .filter-row {
     width: 100%;
+  }
+
+  .time-granularity-control {
+    grid-template-columns: 1fr;
+    position: static;
+  }
+
+  .time-granularity-control > .filter-inline-field:has(.filter-period-controls) {
+    grid-column: auto;
+  }
+
+  .time-granularity-control .filter-inline-field .filter-period-controls {
+    grid-template-columns: 1fr;
   }
 
   .time-granularity-control .filter-inline-field {

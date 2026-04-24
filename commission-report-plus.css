@@ -48,6 +48,13 @@
   min-width: 0;
 }
 
+/* A period-selector field (mode + value) spans 2 outer grid cells so each
+   sub-control renders at 33.3% of the row — matching sibling paired-field
+   dropdowns. */
+.crp-filter-row > .crp-filter-field:has(.crp-filter-control + .crp-filter-control) {
+  grid-column: span 2;
+}
+
 .crp-filter-label {
   grid-column: 1 / -1;
 }
@@ -345,6 +352,10 @@
 @media (max-width: 768px) {
   .crp-filter-row {
     grid-template-columns: 1fr;
+  }
+
+  .crp-filter-row > .crp-filter-field:has(.crp-filter-control + .crp-filter-control) {
+    grid-column: auto;
   }
 
   .crp-filter-field {

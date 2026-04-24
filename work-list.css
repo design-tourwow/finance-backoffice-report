@@ -7,35 +7,6 @@
 .work-list-control.time-granularity-control {
   position: static;
   margin-bottom: 4px;
-  justify-content: flex-start;
-}
-
-.work-list-control-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.work-list-control-group {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.work-list-filter-group {
-  justify-content: flex-end;
-}
-
-.work-list-role-field {
-  min-width: 220px;
-}
-
-.work-list-filter-field {
-  min-width: 220px;
 }
 
 .work-list-segment {
@@ -161,19 +132,8 @@
 }
 
 @media (max-width: 768px) {
-  .work-list-control.time-granularity-control {
-    align-items: stretch;
-  }
-
-  .work-list-control-row,
-  .work-list-control-group,
   .work-list-kpis {
     width: 100%;
-  }
-
-  .work-list-control-row,
-  .work-list-control-group {
-    align-items: stretch;
   }
 
   .work-list-segment {

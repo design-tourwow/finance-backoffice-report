@@ -156,6 +156,9 @@
 
       function applyLabelVisibility() {
         if (!label || !host) return;
+        // Legacy 'all' label hiding kept for defense-in-depth even though the
+        // mode was removed — if any stale caller state still emits 'all',
+        // hide the empty placeholder label.
         var hidden = state.mode === 'all';
         label.style.display = hidden ? 'none' : '';
       }
@@ -167,18 +170,22 @@
         valueContainerId: ids.period,
         availablePeriods: options.availablePeriods || { years: [] },
         multiSelect     : false,
-        modes           : ['all', 'quarterly', 'monthly', 'yearly'],
+        modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
         initialState    : {
-          mode   : state.mode,
-          year   : state.year,
-          quarter: state.quarter,
-          month  : state.month
+          mode      : state.mode,
+          year      : state.year,
+          quarter   : state.quarter,
+          month     : state.month,
+          customFrom: state.customFrom,
+          customTo  : state.customTo
         },
         onChange        : function (s) {
-          state.mode    = s.mode;
-          state.year    = s.year;
-          state.quarter = s.quarter;
-          state.month   = s.month;
+          state.mode       = s.mode;
+          state.year       = s.year;
+          state.quarter    = s.quarter;
+          state.month      = s.month;
+          state.customFrom = s.customFrom;
+          state.customTo   = s.customTo;
           applyLabelVisibility();
         }
       });
@@ -319,10 +326,10 @@
     return '' +
       '<div class="filter-wrap filter-wrap-stacked">' +
         '<div class="filter-row">' +
-          '<span class="filter-label">รูปแบบ</span>' +
+          '<span class="filter-label">เลือกช่วงเวลา</span>' +
           '<div id="' + ids.mode + '"></div>' +
           '<div class="filter-separator"></div>' +
-          '<span class="filter-label" id="' + ids.periodL + '">ช่วงเวลา</span>' +
+          '<span class="filter-label" id="' + ids.periodL + '" style="display:none"></span>' +
           '<div class="filter-period-controls" id="' + ids.period + '"></div>' +
           '<div class="filter-separator"></div>' +
           '<span class="filter-label">ประเทศ</span>' +
@@ -344,11 +351,22 @@
   }
 
   function renderPairedGridLayout(ids) {
+    // Period mode + value share one grid cell that spans 2 columns so the
+    // "เลือกช่วงเวลา" label sits above both dropdowns (one label for the
+    // logical unit), and the 2 inner dropdowns each end up at 33.3% of the
+    // row — matching every other filter cell.
+    var periodPairHtml = ''
+      + '<div class="filter-field filter-field-period-pair">'
+      +   '<span class="filter-label" id="' + ids.periodL + '">เลือกช่วงเวลา</span>'
+      +   '<div class="filter-period-pair-controls">'
+      +     '<div id="' + ids.mode + '"></div>'
+      +     '<div class="filter-period-controls" id="' + ids.period + '"></div>'
+      +   '</div>'
+      + '</div>';
     return '' +
       '<div class="filter-wrap filter-wrap-stacked filter-wrap-paired-grid">' +
         '<div class="filter-grid-main">' +
-          renderField('รูปแบบ', '<div id="' + ids.mode + '"></div>') +
-          renderField('ช่วงเวลา', '<div class="filter-period-controls" id="' + ids.period + '"></div>', ids.periodL, 'filter-field-period') +
+          periodPairHtml +
           renderField('ประเทศ', '<div id="' + ids.country + '"></div>') +
           renderField('ทีม', '<div id="' + ids.team + '"></div>') +
           renderField('ตำแหน่ง', '<div id="' + ids.jobpos + '"></div>') +

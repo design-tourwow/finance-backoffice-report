@@ -20,7 +20,7 @@
 
 .form-row {
   gap: 12px !important;
-  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-columns: repeat(3, 1fr) !important;
 }
 
 .form-group {

@@ -502,7 +502,7 @@
       valueContainerId: 'wd-period-value-host',
       availablePeriods: availablePeriods || { years: [] },
       multiSelect     : true,
-      modes           : ['all', 'yearly', 'quarterly', 'monthly'],
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : {
         mode   : currentTimeGranularity,
         periods: selectedPeriods.slice()

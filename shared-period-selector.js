@@ -1,12 +1,15 @@
-// shared-period-selector.js — Central period (ทั้งหมด / รายปี / รายไตรมาส / รายเดือน)
+// shared-period-selector.js — Central period (รายปี / รายไตรมาส / รายเดือน / กำหนดเอง)
 // picker built on top of the existing dropdown components so visual style
 // matches every other dropdown in the report pages.
 //
 // Composition:
 //   mode dropdown   → FilterSortDropdownComponent (single-select)
 //   value dropdown  →
-//     multiSelect: false → FilterSortDropdownComponent (single-select)
-//     multiSelect: true  → FilterSearchDropdown (checkbox list + confirm)
+//     mode = yearly/quarterly/monthly
+//       multiSelect: false → FilterSortDropdownComponent (single-select)
+//       multiSelect: true  → FilterSearchDropdown (checkbox list + confirm)
+//     mode = custom
+//       two native <input type="date"> fields (from + to)
 //
 // Exposes window.SharedPeriodSelector.
 //
@@ -16,8 +19,8 @@
 //     valueContainerId: 'host-for-value-dropdown',
 //     availablePeriods: { years: [...] },   // shape produced by backend getAvailablePeriods
 //     multiSelect     : false,               // default false — single value per mode
-//     modes           : ['all','yearly','quarterly','monthly'],  // default all four
-//     initialState    : { mode, year, quarter, month, periods },
+//     modes           : ['yearly','quarterly','monthly','custom'],  // default all four
+//     initialState    : { mode, year, quarter, month, periods, customFrom, customTo },
 //     onChange        : function (state) {}  // fired on every change
 //   });
 //
@@ -25,22 +28,37 @@
 //   instance.destroy();
 //
 // State shape emitted:
-//   single: { mode, year, quarter, month }
-//   multi : { mode, periods: [{year, quarter, month}, ...] }
+//   non-custom single: { mode, year, quarter, month }
+//   non-custom multi : { mode, periods: [{year, quarter, month}, ...] }
+//   custom           : { mode: 'custom', customFrom, customTo }  // YYYY-MM-DD
 
 (function () {
   'use strict';
 
   // ── Icons (SVG) ───────────────────────────────────────────────────────────
-  var ICON_ALL      = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>';
   var ICON_CALENDAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  var ICON_CUSTOM   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h2m4 0h2M8 18h2m4 0h2" stroke-dasharray="2 1"/></svg>';
 
   var MODE_LABELS = {
-    all      : 'ทั้งหมด',
     yearly   : 'รายปี',
     quarterly: 'รายไตรมาส',
-    monthly  : 'รายเดือน'
+    monthly  : 'รายเดือน',
+    custom   : 'กำหนดเอง'
   };
+
+  var DEFAULT_MODES = ['yearly', 'quarterly', 'monthly', 'custom'];
+
+  // Legacy 'all' mode was removed (2026-04-24). Callers that still pass
+  // 'all' in modes/initialState have it stripped and coerced to the first
+  // remaining mode so pages on stale state keep rendering.
+  function normalizeModes(arr) {
+    if (!Array.isArray(arr)) return DEFAULT_MODES.slice();
+    var filtered = arr.filter(function (m) { return m !== 'all' && MODE_LABELS[m]; });
+    return filtered.length ? filtered : DEFAULT_MODES.slice();
+  }
+  function normalizeMode(m, allowed) {
+    return allowed.indexOf(m) >= 0 ? m : allowed[0];
+  }
 
   // ── Utility ───────────────────────────────────────────────────────────────
   function utils() {
@@ -154,20 +172,26 @@
     }
 
     var multiSelect     = !!config.multiSelect;
-    var allowedModes    = config.modes || ['all', 'yearly', 'quarterly', 'monthly'];
+    var allowedModes    = normalizeModes(config.modes);
     var onChange        = typeof config.onChange === 'function' ? config.onChange : function () {};
     var availablePeriods = config.availablePeriods || { years: [] };
     var initial         = config.initialState || {};
 
     var state = {
-      mode   : allowedModes.indexOf(initial.mode) >= 0 ? initial.mode : allowedModes[0],
-      year   : initial.year    != null ? Number(initial.year)    : getCurrentYear(),
-      quarter: initial.quarter != null ? Number(initial.quarter) : getCurrentQuarter(),
-      month  : initial.month   != null ? Number(initial.month)   : getCurrentMonth(),
-      periods: Array.isArray(initial.periods) ? initial.periods.slice() : []
+      mode      : normalizeMode(initial.mode, allowedModes),
+      year      : initial.year    != null ? Number(initial.year)    : getCurrentYear(),
+      quarter   : initial.quarter != null ? Number(initial.quarter) : getCurrentQuarter(),
+      month     : initial.month   != null ? Number(initial.month)   : getCurrentMonth(),
+      periods   : Array.isArray(initial.periods) ? initial.periods.slice() : [],
+      customFrom: initial.customFrom || '',
+      customTo  : initial.customTo   || ''
     };
 
     function emit() {
+      if (state.mode === 'custom') {
+        onChange({ mode: 'custom', customFrom: state.customFrom, customTo: state.customTo });
+        return;
+      }
       if (multiSelect) {
         onChange({ mode: state.mode, periods: state.periods.slice() });
       } else {
@@ -181,7 +205,7 @@
         return {
           value : m,
           label : MODE_LABELS[m] || m,
-          icon  : m === 'all' ? ICON_ALL : ICON_CALENDAR,
+          icon  : m === 'custom' ? ICON_CUSTOM : ICON_CALENDAR,
           active: m === state.mode
         };
       });
@@ -215,12 +239,12 @@
     // ── Value dropdown (depends on mode + multiSelect flag) ──────────────
     function renderValueDropdown() {
       valueHost.innerHTML = '';
+      valueHost.style.display = '';
 
-      if (state.mode === 'all') {
-        valueHost.style.display = 'none';
+      if (state.mode === 'custom') {
+        renderCustomRange();
         return;
       }
-      valueHost.style.display = '';
 
       var options;
       if      (state.mode === 'yearly')    options = buildYearOptions(availablePeriods);
@@ -319,11 +343,74 @@
       return '';
     }
 
+    // Custom date-range mode: mount the existing DatePickerComponent inside
+    // the value slot so the Thai-locale calendar popup + single range input
+    // feel matches the rest of the app. Falls back to plain inputs only if
+    // DatePickerComponent is missing from the page bundle.
+    function renderCustomRange() {
+      var suffix = (config.valueContainerId || 'period') + '-custom';
+      var wrapperId  = suffix + '-wrapper';
+      var inputId    = suffix + '-input';
+      var dropdownId = suffix + '-dropdown';
+
+      if (!window.DatePickerComponent || !window.DatePickerComponent.initDateRangePicker) {
+        // Defensive fallback for pages that forgot to load the script.
+        valueHost.innerHTML = ''
+          + '<div class="period-custom-range">'
+          +   '<input type="date" class="period-custom-input period-custom-from" value="' + (state.customFrom || '') + '" aria-label="วันที่เริ่มต้น">'
+          +   '<span class="period-custom-sep">—</span>'
+          +   '<input type="date" class="period-custom-input period-custom-to" value="' + (state.customTo || '') + '" aria-label="วันที่สิ้นสุด">'
+          + '</div>';
+        var fromEl = valueHost.querySelector('.period-custom-from');
+        var toEl   = valueHost.querySelector('.period-custom-to');
+        if (fromEl) fromEl.addEventListener('change', function () { state.customFrom = fromEl.value; emit(); });
+        if (toEl)   toEl.addEventListener('change',   function () { state.customTo   = toEl.value;   emit(); });
+        return;
+      }
+
+      valueHost.innerHTML = ''
+        + '<div class="date-picker-wrapper period-custom-picker" id="' + wrapperId + '">'
+        +   '<div class="date-icon" aria-hidden="true">'
+        +     '<svg width="24" height="24" fill="none" viewBox="0 0 24 24">'
+        +       '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h16m-8-3V4M7 7V4m10 3V4M5 20h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>'
+        +     '</svg>'
+        +   '</div>'
+        +   '<input id="' + inputId + '" type="text" class="date-input" placeholder="เลือกช่วงเวลา" readonly aria-label="เลือกช่วงวันที่" />'
+        +   '<div id="' + dropdownId + '" class="calendar-dropdown" style="display: none;" role="dialog" aria-label="เลือกช่วงวันที่"></div>'
+        + '</div>';
+
+      var picker = window.DatePickerComponent.initDateRangePicker({
+        inputId   : inputId,
+        dropdownId: dropdownId,
+        wrapperId : wrapperId,
+        onChange  : function (startDate, endDate) {
+          if (startDate && endDate) {
+            state.customFrom = window.DatePickerComponent.formatDateToAPI(startDate);
+            state.customTo   = window.DatePickerComponent.formatDateToAPI(endDate);
+            emit();
+          }
+        }
+      });
+
+      // Re-apply previously-selected range after remount (e.g. mode switch
+      // back to custom keeps the user's last pick visible).
+      if (state.customFrom && state.customTo && picker && picker.setDates) {
+        try {
+          var f = new Date(state.customFrom);
+          var t = new Date(state.customTo);
+          if (!isNaN(f) && !isNaN(t)) picker.setDates(f, t);
+        } catch (e) { /* silent — best-effort restore */ }
+      }
+    }
+
     renderModeDropdown();
     renderValueDropdown();
 
     return {
       getState: function () {
+        if (state.mode === 'custom') {
+          return { mode: 'custom', customFrom: state.customFrom, customTo: state.customTo };
+        }
         return multiSelect
           ? { mode: state.mode, periods: state.periods.slice() }
           : { mode: state.mode, year: state.year, quarter: state.quarter, month: state.month };
@@ -340,16 +427,13 @@
   // to the API rather than (year, quarter, month) triples.
   function toDateRange(state, availablePeriods) {
     if (!state) return { dateFrom: '', dateTo: '' };
+    if (state.mode === 'custom') {
+      return { dateFrom: state.customFrom || '', dateTo: state.customTo || '' };
+    }
     if (state.mode === 'all') {
-      // Whole span of availablePeriods
-      var years = getPeriodYears(availablePeriods);
-      if (!years.length) return { dateFrom: '', dateTo: '' };
-      var earliest = years[years.length - 1];
-      var latest = years[0];
-      return {
-        dateFrom: earliest.year_ce + '-01-01',
-        dateTo  : latest.year_ce   + '-12-31'
-      };
+      // Legacy 'all' mode — removed from UI but still coerced here so any
+      // stale state blob in localStorage/caller memory maps to "no filter".
+      return { dateFrom: '', dateTo: '' };
     }
     // Multi: convert list of period objects → min(start) / max(end)
     if (state.periods) {

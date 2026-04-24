@@ -37,9 +37,13 @@
   let selectedCountries = []; // Array for multi-select: [{ id, name }]
   let currentViewMode = 'sales'; // 'sales', 'travelers', 'orders', 'net_commission'
   
-  // Date picker instances
-  let travelDatePickerInstance = null;
-  let bookingDatePickerInstance = null;
+  // Period selector instances (replaces legacy date range pickers).
+  // State is driven by SharedPeriodSelector — mode can be yearly/quarterly/
+  // monthly/custom. Default on load is current month (รายเดือน).
+  let travelPeriodInstance = null;
+  let bookingPeriodInstance = null;
+  let travelPeriodState = null;
+  let bookingPeriodState = null;
   
   // Dropdown instances
   let countryDropdownInstance = null;
@@ -337,23 +341,21 @@
         }
       }
       
-      // Travel dates
-      if (travelDatePickerInstance) {
-        const startDate = travelDatePickerInstance.getStartDate();
-        const endDate = travelDatePickerInstance.getEndDate();
-        if (startDate && endDate) {
-          currentFilters.travel_date_from = DatePickerComponent.formatDateToAPI(startDate);
-          currentFilters.travel_date_to = DatePickerComponent.formatDateToAPI(endDate);
+      // Travel dates (period selector → date range)
+      if (travelPeriodState && window.SharedPeriodSelector) {
+        const range = window.SharedPeriodSelector.toDateRange(travelPeriodState);
+        if (range.dateFrom && range.dateTo) {
+          currentFilters.travel_date_from = range.dateFrom;
+          currentFilters.travel_date_to   = range.dateTo;
         }
       }
-      
-      // Booking dates
-      if (bookingDatePickerInstance) {
-        const startDate = bookingDatePickerInstance.getStartDate();
-        const endDate = bookingDatePickerInstance.getEndDate();
-        if (startDate && endDate) {
-          currentFilters.booking_date_from = DatePickerComponent.formatDateToAPI(startDate);
-          currentFilters.booking_date_to = DatePickerComponent.formatDateToAPI(endDate);
+
+      // Booking dates (period selector → date range)
+      if (bookingPeriodState && window.SharedPeriodSelector) {
+        const range = window.SharedPeriodSelector.toDateRange(bookingPeriodState);
+        if (range.dateFrom && range.dateTo) {
+          currentFilters.booking_date_from = range.dateFrom;
+          currentFilters.booking_date_to   = range.dateTo;
         }
       }
       
@@ -375,9 +377,11 @@
       // Clear filters object
       currentFilters = {};
       
-      // Clear date pickers
-      if (travelDatePickerInstance) travelDatePickerInstance.clear();
-      if (bookingDatePickerInstance) bookingDatePickerInstance.clear();
+      // Reset period selectors back to default (monthly + current month).
+      // Reinitializing via initFilterPeriodSelectors() avoids needing a
+      // dedicated reset API on SharedPeriodSelector — it mounts fresh using
+      // the cached availablePeriods payload.
+      if (typeof initFilterPeriodSelectors === 'function') initFilterPeriodSelectors();
       
       // Clear hidden inputs
       document.getElementById('filterCountry').value = '';
@@ -391,24 +395,38 @@
     });
   }
 
-  // Initialize date pickers
-  function initDatePickers() {
-    travelDatePickerInstance = DatePickerComponent.initDateRangePicker({
-      inputId: 'travelDateRangePicker',
-      dropdownId: 'travelCalendarDropdown',
-      wrapperId: 'travelDatePicker',
-      onChange: (startDate, endDate) => {
-        console.log('Travel dates changed:', startDate, endDate);
-      }
+  // Initialize period selectors (replaces legacy date range pickers).
+  // Default mode = monthly, value = current month. "กำหนดเอง" option lets
+  // users fall back to an arbitrary date range when needed.
+  function initFilterPeriodSelectors() {
+    if (!window.SharedPeriodSelector || !window.SharedPeriodSelector.mount) {
+      console.warn('[sales-by-country] SharedPeriodSelector missing');
+      return;
+    }
+    const nowYear  = new Date().getFullYear();
+    const nowMonth = new Date().getMonth() + 1;
+    const nowQuarter = Math.ceil(nowMonth / 3);
+    const initial = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
+
+    travelPeriodState = Object.assign({}, initial);
+    bookingPeriodState = Object.assign({}, initial);
+
+    travelPeriodInstance = window.SharedPeriodSelector.mount({
+      modeContainerId : 'travelPeriodModeHost',
+      valueContainerId: 'travelPeriodValueHost',
+      availablePeriods: availablePeriods || { years: [] },
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+      initialState    : travelPeriodState,
+      onChange        : function (s) { travelPeriodState = s; }
     });
 
-    bookingDatePickerInstance = DatePickerComponent.initDateRangePicker({
-      inputId: 'bookingDateRangePicker',
-      dropdownId: 'bookingCalendarDropdown',
-      wrapperId: 'bookingDatePicker',
-      onChange: (startDate, endDate) => {
-        console.log('Booking dates changed:', startDate, endDate);
-      }
+    bookingPeriodInstance = window.SharedPeriodSelector.mount({
+      modeContainerId : 'bookingPeriodModeHost',
+      valueContainerId: 'bookingPeriodValueHost',
+      availablePeriods: availablePeriods || { years: [] },
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+      initialState    : bookingPeriodState,
+      onChange        : function (s) { bookingPeriodState = s; }
     });
   }
 
@@ -738,29 +756,12 @@
             </div>
           </div>
 
-          <!-- Country Filter -->
+          <!-- Country Filter — rendered by FilterSearchDropdown so the
+               dropdown shares the same searchable multi-select UI + country
+               flag icons used in /tour-image-manager. -->
           <div class="filter-inline-field">
             <span class="time-granularity-label">ประเทศ</span>
-            <div class="time-dropdown-wrapper">
-              <button class="time-btn" id="countryFilterBtn">
-                <span class="time-btn-text">ประเทศทั้งหมด</span>
-                <svg class="time-btn-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-              <div class="time-dropdown-menu country-dropdown-menu" id="countryFilterDropdown">
-                <div class="dropdown-search-wrapper">
-                  <input type="text" class="dropdown-search-input" id="countrySearchInput" placeholder="ค้นหาประเทศ..." />
-                </div>
-                <div class="dropdown-items-container" id="countryItemsContainer">
-                  <!-- Countries will be populated here -->
-                </div>
-                <div class="dropdown-actions">
-                  <button type="button" class="dropdown-clear-btn" id="countryFilterClearBtn">ล้าง</button>
-                  <button type="button" class="dropdown-confirm-btn" id="countryFilterConfirmBtn">ยืนยัน</button>
-                </div>
-              </div>
-            </div>
+            <div id="countryFilterHost"></div>
           </div>
           <div class="selected-period-badge" id="selectedCountryBadge" style="display: none;"></div>
         </div>
@@ -1159,7 +1160,7 @@
       valueContainerId: 'sc-period-value-host',
       availablePeriods: availablePeriods || { years: [] },
       multiSelect     : true,
-      modes           : ['all', 'yearly', 'quarterly', 'monthly'],
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : {
         mode   : currentTimeGranularity,
         periods: selectedPeriods.slice()
@@ -1171,8 +1172,6 @@
       }
     });
 
-    // Singular state var retained for backward-compat with any stale callers.
-    selectedPeriod = { type: null, year: null, quarter: null, month: null };
   }
 
   // Initialize period type selector (master dropdown)
@@ -1467,7 +1466,6 @@
         countryIdsWithData.includes(sc.id)
       );
       renderCountryItems(filteredCountries);
-      updateCountryButtonText();
       updateSelectedCountryBadge();
     } catch (error) {
       console.error('❌ Failed to filter countries by period:', error);
@@ -1800,66 +1798,77 @@
 
   // Initialize country filter dropdown
   async function initCountryFilter() {
-    const countryBtn = document.getElementById('countryFilterBtn');
-    const countryDropdown = document.getElementById('countryFilterDropdown');
-    const countrySearchInput = document.getElementById('countrySearchInput');
-    const countryItemsContainer = document.getElementById('countryItemsContainer');
-    const confirmBtn = document.getElementById('countryFilterConfirmBtn');
-    const clearBtn = document.getElementById('countryFilterClearBtn');
+    if (!document.getElementById('countryFilterHost')) return;
 
-    if (!countryBtn || !countryDropdown) return;
-
-    // Fetch countries from API
-    try {
-      const response = await SalesByCountryAPI.getCountries();
-      if (response && response.success && response.data) {
-        availableCountries = response.data;
-        renderCountryItems(availableCountries);
+    // Fetch countries from API on first init; subsequent re-renders skip
+    // the network call and just re-mount with the cached list.
+    if (!availableCountries || !availableCountries.length) {
+      try {
+        const response = await SalesByCountryAPI.getCountries();
+        if (response && response.success && response.data) {
+          availableCountries = response.data;
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch countries:', error);
       }
-    } catch (error) {
-      console.error('❌ Failed to fetch countries:', error);
     }
 
-    // Toggle dropdown
-    countryBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const isOpen = countryDropdown.classList.contains('show');
-      if (!isOpen) requestCloseOverlayDropdowns();
-      document.querySelectorAll('.time-dropdown-menu.show').forEach(menu => {
-        if (menu !== countryDropdown) menu.classList.remove('show');
+    renderCountryItems(availableCountries);
+  }
+
+  // Mount FilterSearchDropdown at #countryFilterHost with flag icons. Called
+  // both on initial load and whenever availableCountries changes (e.g. after
+  // switching tabs or view modes). onChange syncs selectedCountries and
+  // triggers the same downstream flow (badge + period refresh + applyAll).
+  function renderCountryItems(countries) {
+    const host = document.getElementById('countryFilterHost');
+    if (!host) {
+      console.warn('[SalesByCountry] countryFilterHost element missing — skipping country dropdown mount');
+      return;
+    }
+    if (!window.FilterSearchDropdown || !window.FilterSearchDropdown.init) {
+      console.error('[SalesByCountry] FilterSearchDropdown missing — ensure filter-search-dropdown-component.js is loaded');
+      return;
+    }
+
+    const flags = window.CountryFlags;
+    const selectedIds = new Set(selectedCountries.map(c => String(c.id)));
+
+    const options = (countries || []).map(c => ({
+      value : String(c.id),
+      label : c.name_th || c.name_en || ('#' + c.id),
+      icon  : flags && flags.iconFor ? flags.iconFor(c, { size: 18 }) : '',
+      active: selectedIds.has(String(c.id))
+    }));
+
+    try {
+      window.FilterSearchDropdown.init({
+        containerId : 'countryFilterHost',
+        defaultLabel: 'ประเทศทั้งหมด',
+        defaultIcon : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+        options     : options,
+        placeholder : 'ค้นหาประเทศ...',
+        multiSelect : true,
+        groupLabel  : 'ประเทศ',
+        onChange    : async function (_csv, values) {
+          const idSet = new Set((values || []).map(String));
+          selectedCountries = (availableCountries || [])
+            .filter(c => idSet.has(String(c.id)))
+            .map(c => ({ id: c.id, name: c.name_th || c.name_en }));
+
+          updateSelectedCountryBadge();
+          if (selectedCountries.length > 0) {
+            await updatePeriodDropdownsByCountry();
+          } else {
+            populateTimeDropdowns();
+          }
+          applyAllFilters();
+        }
       });
-      countryDropdown.classList.toggle('show', !isOpen);
-      if (!isOpen && countryDropdown.classList.contains('show')) {
-        countrySearchInput.focus();
-      }
-    });
-
-    // Search filter
-    countrySearchInput.addEventListener('input', function(e) {
-      const searchTerm = e.target.value.toLowerCase();
-      const filtered = availableCountries.filter(c =>
-        c.name_th.toLowerCase().includes(searchTerm) ||
-        c.name_en.toLowerCase().includes(searchTerm)
-      );
-      renderCountryItems(filtered);
-    });
-
-    // Prevent dropdown close when clicking inside
-    countryDropdown.addEventListener('click', function(e) {
-      e.stopPropagation();
-    });
-
-    // Confirm button
-    confirmBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      confirmCountrySelection();
-    });
-
-    // Clear button
-    clearBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      clearCountrySelection();
-    });
+      console.log('[SalesByCountry] country dropdown mounted:', options.length, 'options');
+    } catch (e) {
+      console.error('[SalesByCountry] Failed to mount country dropdown:', e);
+    }
   }
 
   // Render country items in dropdown
@@ -1904,50 +1913,12 @@
     });
   }
 
-  // Confirm country selection
-  async function confirmCountrySelection() {
-    const container = document.getElementById('countryItemsContainer');
-    if (!container) return;
-
-    selectedCountries = [];
-    container.querySelectorAll('.country-item.selected, .country-item:has(.country-checkbox:checked)').forEach(item => {
-      const id = parseInt(item.dataset.countryId);
-      const name = item.dataset.countryName;
-      selectedCountries.push({ id, name });
-    });
-
-    // Update button text
-    updateCountryButtonText();
-
-    // Close dropdown
-    document.getElementById('countryFilterDropdown')?.classList.remove('show');
-
-    // Update badge
-    updateSelectedCountryBadge();
-
-    // Filter periods based on selected countries
-    if (selectedCountries.length > 0) {
-      await updatePeriodDropdownsByCountry();
-    } else {
-      // Reset period dropdowns to show all
-      populateTimeDropdowns();
-    }
-
-    // Reload data with filter
-    applyAllFilters();
-  }
-
-  // Clear country selection
+  // Clear country selection (used by the in-badge × button). Resets
+  // selectedCountries and re-mounts the FilterSearchDropdown so the trigger
+  // label reverts to "ประเทศทั้งหมด" with no checkmarks.
   function clearCountrySelection() {
-    const container = document.getElementById('countryItemsContainer');
-    if (container) {
-      container.querySelectorAll('.country-item').forEach(item => {
-        item.classList.remove('selected');
-        const checkbox = item.querySelector('.country-checkbox');
-        if (checkbox) checkbox.checked = false;
-      });
-    }
     selectedCountries = [];
+    renderCountryItems(availableCountries);
   }
 
   // Update selected country badge
@@ -1979,29 +1950,14 @@
     badge.style.display = 'flex';
   }
 
-  // Clear country filter (called from badge)
+  // Clear country filter (called from the badge × button). Resets state,
+  // re-mounts the dropdown, refreshes period dropdowns, reloads data.
   window.clearCountryFilter = async function() {
     selectedCountries = [];
-
-    // Reset button
-    const btn = document.getElementById('countryFilterBtn');
-    if (btn) {
-      btn.classList.remove('active');
-      const btnText = btn.querySelector('.time-btn-text');
-      if (btnText) btnText.textContent = 'ประเทศทั้งหมด';
-    }
-
-    // Clear checkboxes
-    clearCountrySelection();
-
-    // Hide badge
+    renderCountryItems(availableCountries);
     const badge = document.getElementById('selectedCountryBadge');
     if (badge) badge.style.display = 'none';
-
-    // Reset period dropdowns to show all periods
     populateTimeDropdowns();
-
-    // Reload data
     applyAllFilters();
   };
 

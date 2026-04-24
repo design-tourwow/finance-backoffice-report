@@ -19,9 +19,17 @@
   let currentFilterInstance = null;
   let currentTabData = [];
   
-  // Date picker instances
-  let travelDatePickerInstance = null;
-  let bookingDatePickerInstance = null;
+  // Period selector instances (replaces legacy date range pickers).
+  // State follows SharedPeriodSelector shape: { mode, year, quarter, month }
+  // for presets or { mode: 'custom', customFrom, customTo } for custom range.
+  let travelPeriodInstance = null;
+  let bookingPeriodInstance = null;
+  let travelPeriodState = null;
+  let bookingPeriodState = null;
+
+  // availablePeriods is fetched once from the backend so year/quarter/month
+  // dropdowns inside the period selector only show valid entries.
+  let availablePeriods = { years: [] };
   
   // Dropdown instances
   // (legacy countryDropdownInstance / supplierDropdownInstance removed —
@@ -287,23 +295,21 @@
         }
       }
       
-      // Travel dates
-      if (travelDatePickerInstance) {
-        const startDate = travelDatePickerInstance.getStartDate();
-        const endDate = travelDatePickerInstance.getEndDate();
-        if (startDate && endDate) {
-          currentFilters.travel_date_from = DatePickerComponent.formatDateToAPI(startDate);
-          currentFilters.travel_date_to = DatePickerComponent.formatDateToAPI(endDate);
+      // Travel dates (period selector → date range)
+      if (travelPeriodState && window.SharedPeriodSelector) {
+        const range = window.SharedPeriodSelector.toDateRange(travelPeriodState);
+        if (range.dateFrom && range.dateTo) {
+          currentFilters.travel_date_from = range.dateFrom;
+          currentFilters.travel_date_to   = range.dateTo;
         }
       }
-      
-      // Booking dates
-      if (bookingDatePickerInstance) {
-        const startDate = bookingDatePickerInstance.getStartDate();
-        const endDate = bookingDatePickerInstance.getEndDate();
-        if (startDate && endDate) {
-          currentFilters.booking_date_from = DatePickerComponent.formatDateToAPI(startDate);
-          currentFilters.booking_date_to = DatePickerComponent.formatDateToAPI(endDate);
+
+      // Booking dates (period selector → date range)
+      if (bookingPeriodState && window.SharedPeriodSelector) {
+        const range = window.SharedPeriodSelector.toDateRange(bookingPeriodState);
+        if (range.dateFrom && range.dateTo) {
+          currentFilters.booking_date_from = range.dateFrom;
+          currentFilters.booking_date_to   = range.dateTo;
         }
       }
       
@@ -325,9 +331,9 @@
       // Clear filters object
       currentFilters = {};
       
-      // Clear date pickers
-      if (travelDatePickerInstance) travelDatePickerInstance.clear();
-      if (bookingDatePickerInstance) bookingDatePickerInstance.clear();
+      // Reset period selectors back to their defaults (monthly + current
+      // month). Re-mount via initDatePickers is the simplest clear path.
+      initDatePickers();
       
       // Clear hidden inputs
       document.getElementById('filterCountry').value = '';
@@ -341,24 +347,38 @@
     });
   }
 
-  // Initialize date pickers
+  // Initialize period selectors (replaces legacy date range pickers).
+  // Default mode = monthly, value = current month. "กำหนดเอง" lets users
+  // fall back to an arbitrary date range.
   function initDatePickers() {
-    travelDatePickerInstance = DatePickerComponent.initDateRangePicker({
-      inputId: 'travelDateRangePicker',
-      dropdownId: 'travelCalendarDropdown',
-      wrapperId: 'travelDatePicker',
-      onChange: (startDate, endDate) => {
-        console.log('Travel dates changed:', startDate, endDate);
-      }
+    if (!window.SharedPeriodSelector || !window.SharedPeriodSelector.mount) {
+      console.warn('[order-report] SharedPeriodSelector missing');
+      return;
+    }
+    const nowYear    = new Date().getFullYear();
+    const nowMonth   = new Date().getMonth() + 1;
+    const nowQuarter = Math.ceil(nowMonth / 3);
+    const initial = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
+
+    travelPeriodState = Object.assign({}, initial);
+    bookingPeriodState = Object.assign({}, initial);
+
+    travelPeriodInstance = window.SharedPeriodSelector.mount({
+      modeContainerId : 'travelPeriodModeHost',
+      valueContainerId: 'travelPeriodValueHost',
+      availablePeriods: availablePeriods,
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+      initialState    : travelPeriodState,
+      onChange        : function (s) { travelPeriodState = s; }
     });
 
-    bookingDatePickerInstance = DatePickerComponent.initDateRangePicker({
-      inputId: 'bookingDateRangePicker',
-      dropdownId: 'bookingCalendarDropdown',
-      wrapperId: 'bookingDatePicker',
-      onChange: (startDate, endDate) => {
-        console.log('Booking dates changed:', startDate, endDate);
-      }
+    bookingPeriodInstance = window.SharedPeriodSelector.mount({
+      modeContainerId : 'bookingPeriodModeHost',
+      valueContainerId: 'bookingPeriodValueHost',
+      availablePeriods: availablePeriods,
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+      initialState    : bookingPeriodState,
+      onChange        : function (s) { bookingPeriodState = s; }
     });
   }
 

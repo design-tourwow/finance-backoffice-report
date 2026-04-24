@@ -235,26 +235,22 @@
         <!-- Filter Bar -->
         <div class="filter-wrap filter-wrap-stacked">
 
-          <!-- แถว 1: วันที่ยกเลิก Order (period selector) -->
+          <!-- แถว 1: วันที่ยกเลิก Order (period selector spans 2 cells)
+               + Seller (1 cell) on the same outer row so all three dropdowns
+               sit at 33.3% each. -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">วันที่ยกเลิก Order</span>
               <div class="crp-filter-control" id="co-canceled-mode-host"></div>
               <div class="crp-filter-control" id="co-canceled-value-host"></div>
             </div>
-          </div>
-
-          <div class="filter-row-divider"></div>
-
-          <!-- แถว 2: Seller -->
-          <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">เซลล์ผู้จอง</span>
               <div class="crp-filter-control" id="crp-dd-seller"></div>
             </div>
           </div>
 
-          <!-- แถว 3: Action buttons — SharedFilterActions renders the
+          <!-- แถว 2: Action buttons — SharedFilterActions renders the
                ค้นหา + เริ่มใหม่ pair into #crp-filter-actions-host. -->
           <div class="filter-row crp-filter-actions-row">
             <div id="crp-filter-actions-host"></div>
@@ -285,7 +281,7 @@
       valueContainerId: 'co-canceled-value-host',
       availablePeriods: availablePeriods,
       multiSelect     : false,
-      modes           : ['all', 'yearly', 'quarterly', 'monthly'],
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : canceledPeriodState,
       onChange        : function (s) { canceledPeriodState = s; }
     });

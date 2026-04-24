@@ -504,18 +504,6 @@
     };
   }
 
-  // Adds `n` calendar days to a YYYY-MM-DD string, returning the same format.
-  // Returns '' when input is missing so empty filters stay empty.
-  function addDays(ymd, n) {
-    if (!ymd) return '';
-    const parts = String(ymd).split('-');
-    if (parts.length !== 3) return ymd;
-    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    d.setDate(d.getDate() + n);
-    const pad = (x) => String(x).padStart(2, '0');
-    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-  }
-
   // ---- Loading ----
   function showLoading() {
     const results = document.getElementById('crp-results');
