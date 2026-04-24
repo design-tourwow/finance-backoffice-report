@@ -1,0 +1,196 @@
+/* ========================================
+   Repeated Customer Report Styles
+   Page-specific layout only. Filter chrome, KPI cards, and table rules
+   come from shared CSS: filter-panel.css, kpi-card.css, dashboard-table.css.
+   ======================================== */
+
+.report-content-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  min-height: 400px;
+}
+
+/* Filter row — same 3-column paired-grid pattern used by commission-report-plus
+   so every control lands on the same 33.3% width regardless of whether its
+   label is a single-control (dropdown) or paired (period mode + value). */
+.rcr-filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 24px;
+  width: 100%;
+}
+
+.rcr-filter-field {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  min-width: 0;
+}
+
+.rcr-filter-row > .rcr-filter-field:has(.rcr-filter-control + .rcr-filter-control) {
+  grid-column: span 2;
+}
+
+/* Label uses the canonical .time-granularity-label font (filter-panel.css);
+   the .rcr-filter-label override is only for the grid placement — never
+   font/colour — so label typography matches every other report page. */
+.rcr-filter-label {
+  grid-column: 1 / -1;
+}
+
+.rcr-filter-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.rcr-filter-control:last-child:nth-child(2) {
+  grid-column: 1 / -1;
+}
+
+.rcr-filter-control .filter-sort-dropdown,
+.rcr-filter-control .filter-search-dd,
+.rcr-filter-control .filter-sort-btn,
+.rcr-filter-control .shared-search-wrap {
+  width: 100%;
+  min-width: 0;
+  /* Default .shared-search-wrap caps at max-width:280px for the table-search
+     use case; inside our filter-control slot we want it to fill the 33.3%
+     grid cell like every other filter input. */
+  max-width: none;
+}
+
+.rcr-filter-actions-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Level band — groups the KPI cards for a given summary level (L1 / L2) */
+.rcr-level-band {
+  margin-bottom: 24px;
+}
+
+.rcr-level-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-left: 4px solid #2563eb;
+  border-radius: 4px;
+}
+
+.rcr-level-header.rcr-level-l2 {
+  border-left-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.rcr-level-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.rcr-level-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* KPI rows use the shared .dashboard-kpi-cards grid from kpi-card.css —
+   no page-specific grid overrides needed. Mobile fallback is handled there. */
+@media (max-width: 700px) {
+  .rcr-filter-row { grid-template-columns: 1fr; }
+}
+
+/* Table — delegated to SharedTable.render (shared-table.js) with groupColumns.
+   dashboard-table.css supplies the base look; we only add the L1/L2 divider
+   and muted-row hook here. */
+.shared-table.rcr-table {
+  min-width: 1400px;
+}
+.shared-table.rcr-table .rcr-divider {
+  border-left: 2px solid var(--color-border, #e5e7eb);
+}
+.shared-table.rcr-table tbody tr.rcr-l2-muted-row td.rcr-l2-cell {
+  color: #9ca3af;
+}
+
+.rcr-positive { color: #16a34a; font-weight: 600; }
+.rcr-negative { color: #dc2626; font-weight: 600; }
+.rcr-muted    { color: #9ca3af; }
+
+.rcr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.rcr-toolbar-left {
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 420px;
+}
+
+.rcr-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.banner1-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.8125rem;
+  color: #374151;
+  white-space: nowrap;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.banner1-filter-checkbox:hover {
+  border-color: #4a7ba7;
+  background: #f0f7ff;
+}
+
+.banner1-filter-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #4a7ba7;
+  cursor: pointer;
+}
+
+.banner1-filter-checkbox input[type="checkbox"]:checked + .banner1-filter-text {
+  color: #3a6287;
+  font-weight: 500;
+}
+
+.banner1-filter-checkbox:has(input:checked) {
+  border-color: #4a7ba7;
+  background: #e8f0f7;
+}
+
+.rcr-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: #6b7280;
+}
+
+.rcr-empty img { width: 160px; height: 160px; opacity: 0.8; margin-bottom: 12px; }
+.rcr-empty h3 { margin: 0 0 8px 0; font-size: 18px; color: #374151; }
+.rcr-empty p  { margin: 0; font-size: 14px; }
