@@ -25,6 +25,8 @@ export interface MockBackendOptions {
   discountSalesReport?: unknown[];
   orderExternalSummary?: unknown[];
   orderHasDiscount?: unknown[];
+  commissionPlusReport?: unknown;
+  commissionPlusSellers?: unknown;
 
   // Existing-project-api endpoints (add as needed)
   salesByCountry?: unknown;
@@ -49,6 +51,10 @@ const LEGACY_BASES = [
   'https://fin-api.tourwow.com',
   'https://fin-api-staging2.tourwow.com',
 ] as const;
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 async function respond(route: Route, body: unknown, opts: MockBackendOptions): Promise<void> {
   if (opts.slowMs) {
@@ -103,6 +109,12 @@ export async function mockBackend(page: Page, opts: MockBackendOptions = {}): Pr
     );
     await page.route(`${base}/api/reports/order-has-discount*`, (r) =>
       opts.failReport ? r.abort() : respond(r, opts.orderHasDiscount ?? [], opts)
+    );
+    await page.route(new RegExp(`^${escapeRegExp(base)}/api/reports/commission-plus/sellers(?:\\?.*)?$`), (r) =>
+      opts.failReport ? r.abort() : respond(r, opts.commissionPlusSellers ?? { success: true, data: [] }, opts)
+    );
+    await page.route(new RegExp(`^${escapeRegExp(base)}/api/reports/commission-plus(?:\\?.*)?$`), (r) =>
+      opts.failReport ? r.abort() : respond(r, opts.commissionPlusReport ?? { success: true, data: { orders: [], summary: {} } }, opts)
     );
   }
 
@@ -208,5 +220,26 @@ export const factory = {
       discount: 1000 + i * 100,
       discount_percent: 5 + i,
     },
+  }),
+  commissionPlusSeller: (i = 1) => ({
+    id: i,
+    first_name: `Seller${i}`,
+    last_name: `Last${i}`,
+    nick_name: `Nick${i}`,
+  }),
+  commissionPlusOrder: (i = 1, overrides: Record<string, unknown> = {}) => ({
+    seller_nick_name: `Nick${i}`,
+    seller_job_position: i % 2 === 0 ? 'crm' : 'ts',
+    order_code: `TWP2604${String(i).padStart(4, '0')}`,
+    created_at: `2026-04-${String(i).padStart(2, '0')}T10:00:00Z`,
+    customer_name: `ลูกค้า ${i}`,
+    country_name_th: `ประเทศ ${i}`,
+    product_period_snapshot: `10-12/04/2569`,
+    net_amount: 100000 + i * 1000,
+    room_quantity: i + 1,
+    first_paid_at: `2026-04-${String(i + 1).padStart(2, '0')}T10:00:00Z`,
+    supplier_commission: 12000 + i * 500,
+    discount: 1000 + i * 100,
+    ...overrides,
   }),
 };

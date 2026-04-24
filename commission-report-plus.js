@@ -314,7 +314,7 @@
       valueContainerId: 'crp-created-value-host',
       availablePeriods: availablePeriods,
       multiSelect     : false,
-      modes           : ['all', 'yearly', 'quarterly', 'monthly'],
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : createdPeriodState,
       onChange        : function (s) { createdPeriodState = s; }
     });
@@ -324,7 +324,7 @@
       valueContainerId: 'crp-paid-value-host',
       availablePeriods: availablePeriods,
       multiSelect     : false,
-      modes           : ['all', 'yearly', 'quarterly', 'monthly'],
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : paidPeriodState,
       onChange        : function (s) { paidPeriodState = s; }
     });
@@ -487,15 +487,33 @@
   function buildFilters() {
     const created = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
     const paid    = window.SharedPeriodSelector.toDateRange(paidPeriodState,    availablePeriods);
+    // Business rule: for non-custom paid-period modes, extend paid_at_to by
+    // +3 days to cover the late-payment grace window that finance accepts
+    // after the nominal period end.
+    const paidTo = (paidPeriodState && paidPeriodState.mode !== 'custom')
+      ? addDays(paid.dateTo, 3)
+      : paid.dateTo;
     return {
       created_at_from: created.dateFrom || '',
       created_at_to:   created.dateTo   || '',
       paid_at_from:    paid.dateFrom    || '',
-      paid_at_to:      paid.dateTo      || '',
+      paid_at_to:      paidTo           || '',
       job_position:    selectedJobPosition,
       seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
       order_status:    selectedOrderStatus,
     };
+  }
+
+  // Adds `n` calendar days to a YYYY-MM-DD string, returning the same format.
+  // Returns '' when input is missing so empty filters stay empty.
+  function addDays(ymd, n) {
+    if (!ymd) return '';
+    const parts = String(ymd).split('-');
+    if (parts.length !== 3) return ymd;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    d.setDate(d.getDate() + n);
+    const pad = (x) => String(x).padStart(2, '0');
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
 
   // ---- Loading ----
@@ -540,7 +558,7 @@
       });
     }
 
-    document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
+    document.getElementById('crp-btn-export').addEventListener('click', () => exportExcelWorkbook(orders));
     document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
 
     if (window.SharedSortableHeader) {
@@ -750,7 +768,7 @@
         </div>
         <div class="dashboard-table-actions">
           <div id="crp-table-search-host"></div>
-          ${window.SharedExportButton.render({ id: 'crp-btn-export' })}
+          ${window.SharedExportButton.render({ id: 'crp-btn-export', label: 'Export Excel' })}
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             Download PDF
@@ -789,26 +807,150 @@
       </div>`;
   }
 
-  // ---- Export CSV ----
-  function exportCSV(orders) {
-    const headers = ['เซลล์','รหัส Order','จองวันที่','ลูกค้า','ประเทศ','เดินทาง','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
-    const rows = orders.map(o => {
-      const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
-      return [
-        o.seller_nick_name || '', o.order_code || '', formatDate(o.created_at), o.customer_name || '',
-        o.country_name_th || '', o.product_period_snapshot || '',
-        formatNumber(o.net_amount, 0), o.room_quantity || 0,
-        formatDate(o.first_paid_at), formatNumber(o.supplier_commission, 0),
-        formatNumber(netCom, 0), formatNumber(o.discount, 0),
-      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+  // ---- Export Excel Workbook ----
+  function exportExcelWorkbook(orders) {
+    const worksheets = [
+      {
+        name: 'sales-report',
+        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม'],
+        rows: getVisibleOrders(orders).map(function (o) {
+          const commission = parseFloat(o.supplier_commission || 0);
+          const discount = parseFloat(o.discount || 0);
+          return [
+            o.seller_nick_name || '',
+            o.order_code || '',
+            formatDate(o.created_at),
+            o.customer_name || '',
+            o.country_name_th || '',
+            o.product_period_snapshot || '',
+            parseFloat(o.net_amount || 0),
+            parseInt(o.room_quantity || 0, 10) || 0,
+            formatDate(o.first_paid_at),
+            commission,
+            commission - discount,
+            discount
+          ];
+        })
+      },
+      {
+        name: 'sales-report-by-telesales',
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        rows: getSellerSummaryExportRows(orders, 'ts')
+      },
+      {
+        name: 'sales-report-by-crm',
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        rows: getSellerSummaryExportRows(orders, 'crm')
+      }
+    ];
+
+    downloadExcelWorkbook(buildExcelWorkbookXml(worksheets), getExcelFileName());
+  }
+
+  function getSellerSummaryExportRows(orders, groupClass) {
+    const groupOrders = orders.filter(function (order) {
+      return String(order.seller_job_position || '').toLowerCase() === groupClass;
     });
 
-    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
+      return [
+        index + 1,
+        row.seller,
+        row.orders,
+        row.net_amount,
+        row.discount,
+        row.net_commission
+      ];
+    });
+  }
+
+  function buildExcelWorkbookXml(worksheets) {
+    const body = (worksheets || []).map(function (sheet) {
+      return buildExcelWorksheetXml(sheet.name, sheet.headers, sheet.rows);
+    }).join('');
+
+    return '' +
+      '<?xml version="1.0" encoding="UTF-8"?>' +
+      '<?mso-application progid="Excel.Sheet"?>' +
+      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
+        'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+        'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+        'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' +
+        'xmlns:html="http://www.w3.org/TR/REC-html40">' +
+        '<Styles>' +
+          '<Style ss:ID="header">' +
+            '<Font ss:Bold="1"/>' +
+            '<Interior ss:Color="#E8F0FB" ss:Pattern="Solid"/>' +
+          '</Style>' +
+          '<Style ss:ID="number">' +
+            '<NumberFormat ss:Format="#,##0"/>' +
+          '</Style>' +
+        '</Styles>' +
+        body +
+      '</Workbook>';
+  }
+
+  function buildExcelWorksheetXml(name, headers, rows) {
+    const headerRowXml = '<Row>' + (headers || []).map(function (header) {
+      return buildExcelCellXml(header, true);
+    }).join('') + '</Row>';
+
+    const rowXml = (rows || []).map(function (row) {
+      return '<Row>' + row.map(function (value) {
+        return buildExcelCellXml(value, false);
+      }).join('') + '</Row>';
+    }).join('');
+
+    return '' +
+      '<Worksheet ss:Name="' + escapeExcelXml(name || 'Sheet1') + '">' +
+        '<Table>' +
+          headerRowXml +
+          rowXml +
+        '</Table>' +
+      '</Worksheet>';
+  }
+
+  function buildExcelCellXml(value, isHeader) {
+    const isNumber = typeof value === 'number' && isFinite(value);
+    const styleId = isHeader ? 'header' : (isNumber ? 'number' : '');
+    const type = isNumber ? 'Number' : 'String';
+    const attrs = styleId ? ' ss:StyleID="' + styleId + '"' : '';
+    return '<Cell' + attrs + '><Data ss:Type="' + type + '">' + escapeExcelXml(value) + '</Data></Cell>';
+  }
+
+  function escapeExcelXml(value) {
+    return String(value == null ? '' : value)
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  function downloadExcelWorkbook(content, filename) {
+    const blob = new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'Commission Report.csv'; a.click();
-    URL.revokeObjectURL(url);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(function () {
+      try { URL.revokeObjectURL(url); }
+      catch (e) { /* ignore */ }
+    }, 0);
+  }
+
+  function getExcelFileName() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `sales-report-${yyyy}${mm}${dd}.xls`;
   }
 
   function getSelectedSellerLabel() {
