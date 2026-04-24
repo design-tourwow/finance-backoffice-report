@@ -38,13 +38,6 @@ test.describe('@p1 Sales Report Excel export', () => {
     await page.goto('/sales-report');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.locator('.crp-summary-group--ts tfoot')).toContainText('รวม');
-    await expect(page.locator('.crp-summary-group--ts tfoot')).toContainText('2,226,219');
-    await expect(page.locator('.crp-summary-group--ts tfoot')).toContainText('115,176');
-    await expect(page.locator('.crp-summary-group--crm tfoot')).toContainText('รวม');
-    await expect(page.locator('.crp-summary-group--crm tfoot')).toContainText('948,180');
-    await expect(page.locator('.crp-summary-group--crm tfoot')).toContainText('40,420');
-
     const exportBtn = page.getByRole('button', { name: /Export/i });
     await expect(exportBtn).toBeVisible();
 

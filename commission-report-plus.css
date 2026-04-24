@@ -349,27 +349,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.crp-summary-table tfoot td {
-  padding: 10px 12px;
-  font-weight: 700;
-  border-top: 2px solid #dbe2ea;
-  background: #f8fafc;
-  vertical-align: middle;
-}
-
-.crp-summary-table tfoot td.right {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.crp-summary-group--ts .crp-summary-table tfoot td {
-  background: #eef5ff;
-}
-
-.crp-summary-group--crm .crp-summary-table tfoot td {
-  background: #ecfdf5;
-}
-
 @media (max-width: 768px) {
   .crp-filter-row {
     grid-template-columns: 1fr;

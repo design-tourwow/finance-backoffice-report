@@ -676,7 +676,6 @@
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
-      const totals = summarizeSellerAggregate(aggregateRows);
       const rows = sorted.map((s, i) => {
         const name = s.seller;
         const rank = i + 1;
@@ -704,14 +703,6 @@
             <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
       }).join('');
-      const summaryRow = `
-        <tr class="crp-summary-total-row">
-          <td><strong>รวม</strong></td>
-          <td class="right">${formatNumber(totals.orders, 0)}</td>
-          <td class="right">${formatNumber(totals.net_amount, 0)}</td>
-          <td class="right">${formatNumber(totals.discount, 0)}</td>
-          <td class="right ${totals.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(totals.net_commission, 0)}</td>
-        </tr>`;
       return `
         <div class="crp-summary-group crp-summary-group--${groupClass}">
           <div class="crp-summary-group-header">
@@ -729,7 +720,6 @@
               </tr>
             </thead>
             <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
-            <tfoot>${summaryRow}</tfoot>
           </table>
         </div>`;
     }
