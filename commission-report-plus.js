@@ -466,6 +466,14 @@
 
   // ---- Load Report ----
   async function loadReport() {
+    // Guard against custom-mode period with unselected dates. toDateRange()
+    // silently returns empty strings in that case, which would otherwise hit
+    // the API with blank created_at_from / paid_at_to and return junk or 500.
+    const missing = getMissingCustomRangeLabel();
+    if (missing) {
+      alert('กรุณาเลือกช่วงวันที่ของ "' + missing + '" ก่อนค้นหา');
+      return;
+    }
     showLoading();
     const filters = buildFilters();
     currentData = null;
@@ -482,6 +490,20 @@
       console.error('[CRP] Failed to load report:', e);
       showEmpty();
     }
+  }
+
+  // Returns the Thai label of whichever period selector is in custom mode
+  // but missing from/to — '' if both states are valid.
+  function getMissingCustomRangeLabel() {
+    if (createdPeriodState && createdPeriodState.mode === 'custom'
+        && (!createdPeriodState.customFrom || !createdPeriodState.customTo)) {
+      return 'วันที่สร้าง';
+    }
+    if (paidPeriodState && paidPeriodState.mode === 'custom'
+        && (!paidPeriodState.customFrom || !paidPeriodState.customTo)) {
+      return 'วันที่ชำระ';
+    }
+    return '';
   }
 
   function buildFilters() {
@@ -905,19 +927,74 @@
     }[selectedOrderStatus] || selectedOrderStatus;
   }
 
-  function buildPrintFilters() {
-    const filters = buildFilters();
+  function getThaiYearLabel(yearCe) {
+    const yearNum = Number(yearCe);
+    if (!yearNum) return '-';
+    const years = (availablePeriods && Array.isArray(availablePeriods.years)) ? availablePeriods.years : [];
+    const match = years.find(function (entry) { return Number(entry.year_ce) === yearNum; });
+    return String((match && match.label) || (yearNum + 543));
+  }
+
+  function getThaiMonthLabel(yearCe, monthNum) {
+    const fallback = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+    const years = (availablePeriods && Array.isArray(availablePeriods.years)) ? availablePeriods.years : [];
+    const yearMatch = years.find(function (entry) { return Number(entry.year_ce) === Number(yearCe); });
+    const monthMatch = yearMatch && Array.isArray(yearMatch.months)
+      ? yearMatch.months.find(function (entry) { return Number(entry.month) === Number(monthNum); })
+      : null;
+    return (monthMatch && monthMatch.label) || fallback[Number(monthNum) - 1] || '-';
+  }
+
+  function getQuarterLabel(yearCe, quarterNum) {
+    const years = (availablePeriods && Array.isArray(availablePeriods.years)) ? availablePeriods.years : [];
+    const yearMatch = years.find(function (entry) { return Number(entry.year_ce) === Number(yearCe); });
+    const quarterMatch = yearMatch && Array.isArray(yearMatch.quarters)
+      ? yearMatch.quarters.find(function (entry) { return Number(entry.quarter) === Number(quarterNum); })
+      : null;
+    return (quarterMatch && quarterMatch.label) || ('Q' + Number(quarterNum));
+  }
+
+  function formatPeriodStateForPrint(state) {
+    if (!state || !state.mode) return '-';
+    if (state.mode === 'monthly') {
+      return 'รายเดือน ' + getThaiMonthLabel(state.year, state.month) + ' ' + getThaiYearLabel(state.year);
+    }
+    if (state.mode === 'quarterly') {
+      return 'รายไตรมาส ' + getQuarterLabel(state.year, state.quarter) + ' ' + getThaiYearLabel(state.year);
+    }
+    if (state.mode === 'yearly') {
+      return 'รายปี ' + getThaiYearLabel(state.year);
+    }
+    if (state.mode === 'custom') {
+      if (!state.customFrom || !state.customTo) return '-';
+      return 'Report ช่วงเวลา ' + formatDate(state.customFrom) + ' - ' + formatDate(state.customTo);
+    }
+    return '-';
+  }
+
+  function buildPrintHighlights() {
     return [
-      { label: 'วันที่สร้าง Order', value: [formatDate(filters.created_at_from), formatDate(filters.created_at_to)].join(' - ') },
-      { label: 'วันชำระงวด 1', value: [formatDate(filters.paid_at_from), formatDate(filters.paid_at_to)].join(' - ') },
-      { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
       { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
+      { label: 'วันที่สร้าง Order', value: formatPeriodStateForPrint(createdPeriodState) },
+      { label: 'วันชำระงวด 1', value: formatPeriodStateForPrint(paidPeriodState) },
+    ];
+  }
+
+  function buildPrintFilters() {
+    return [
+      { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
       { label: 'สถานะ Order', value: getSelectedStatusLabel() },
     ];
   }
 
   function getPrintDocumentHtml(tableHtml, summary, countText) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
+    const highlightsHtml = buildPrintHighlights().map(item => `
+      <div class="crp-print-highlight">
+        <span class="crp-print-highlight-label">${escHtml(item.label)}</span>
+        <span class="crp-print-highlight-value">${escHtml(item.value || '-')}</span>
+      </div>
+    `).join('');
     const filtersHtml = buildPrintFilters().map(item => `
       <div class="crp-print-filter">
         <span class="crp-print-filter-label">${escHtml(item.label)}</span>
@@ -976,6 +1053,31 @@
         gap: 8px;
         margin-bottom: 12px;
       }
+      .crp-print-highlights {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .crp-print-highlight {
+        border: 1px solid #dbe2ea;
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+      }
+      .crp-print-highlight-label {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+      .crp-print-highlight-value {
+        display: block;
+        color: #0f172a;
+        font-size: 21px;
+        line-height: 1.25;
+        font-weight: 700;
+      }
       .crp-print-card {
         border: 1px solid #dbe2ea;
         border-radius: 10px;
@@ -996,7 +1098,7 @@
       }
       .crp-print-filters {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
         margin-bottom: 14px;
       }
@@ -1099,6 +1201,7 @@
         </div>
       </div>
 
+      <div class="crp-print-highlights">${highlightsHtml}</div>
       <div class="crp-print-filters">${filtersHtml}</div>
       <div class="crp-print-table">${tableHtml}</div>
     </div>
@@ -1167,6 +1270,20 @@
       <span>ส่วนลด: ${escHtml(formatNumber(currentData?.summary?.total_discount || 0))} บาท</span>
       <span>คอมสุทธิ: ${escHtml(formatNumber(netCommission || 0))} บาท</span>
     `;
+
+    const highlightGrid = document.createElement('div');
+    highlightGrid.style.display = 'grid';
+    highlightGrid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+    highlightGrid.style.gap = '10px';
+    highlightGrid.style.marginBottom = '12px';
+    highlightGrid.innerHTML = buildPrintHighlights().map(function (item) {
+      return `
+        <div style="border:1px solid #dbe2ea;border-radius:12px;padding:12px 14px;background:linear-gradient(180deg,#f8fbff 0%,#eef4fb 100%);">
+          <div style="color:#64748b;font-size:11px;margin-bottom:6px;">${escHtml(item.label)}</div>
+          <div style="color:#0f172a;font-size:21px;line-height:1.25;font-weight:700;">${escHtml(item.value || '-')}</div>
+        </div>
+      `;
+    }).join('');
 
     const filterLine = document.createElement('div');
     filterLine.style.display = 'flex';
@@ -1244,6 +1361,7 @@
 
     wrapper.appendChild(title);
     wrapper.appendChild(summaryLine);
+    wrapper.appendChild(highlightGrid);
     wrapper.appendChild(filterLine);
     wrapper.appendChild(tableWrapperClone);
     document.body.appendChild(wrapper);
