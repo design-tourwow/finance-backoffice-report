@@ -330,8 +330,7 @@
     if (!customers.length) { renderEmpty(); return; }
 
     results.innerHTML =
-      renderLevelSummary('ระดับ 1 · งวด 1 ชำระ + ไม่ยกเลิก', 'l1', summary.l1) +
-      renderLevelSummary('ระดับ 2 · ระดับ 1 + คอม > 0',      'l2', summary.l2) +
+      renderLevelSummary('l1', summary.l1) +
       renderToolbar() +
       '<div id="rcr-table-host"></div>';
 
@@ -355,7 +354,7 @@
   // Each level renders a .dashboard-kpi-cards grid. Colours map semantically
   // to the metric — no repeated modifier within a band — using the expanded
   // kpi-* variants defined in kpi-card.css. Structure mirrors sales-report.
-  function renderLevelSummary(title, levelKey, s) {
+  function renderLevelSummary(levelKey, s) {
     const isL2 = levelKey === 'l2';
     s = s || {};
     const netCommission = parseFloat(s.total_net_commission || 0);
@@ -363,10 +362,6 @@
 
     return `
       <div class="rcr-level-band">
-        <div class="rcr-level-header ${isL2 ? 'rcr-level-l2' : ''}">
-          <span class="rcr-level-title">${escHtml(title)}</span>
-          <span class="rcr-level-subtitle">สรุปยอดรวมทุกลูกค้าที่ผ่านฟิลเตอร์</span>
-        </div>
         <div class="dashboard-kpi-cards">
           <div class="dashboard-kpi-card kpi-top-country">
             <div class="kpi-icon">
@@ -487,9 +482,11 @@
 
   // ---- Table (via shared SharedTable.render + groupColumns) ----
   // Rows are flattened once per render to a shape SharedTable understands:
-  // each key in resolveSortValue() below maps to a flat column key.
+  // each key maps to a flat column key. L2 aggregates still appear in the
+  // KPI summary band above the table, but are deliberately omitted from
+  // this row shape — the table shows only Level 1 metrics per customer.
   function flattenCustomer(c) {
-    const l1 = c.l1 || {}, l2 = c.l2 || {};
+    const l1 = c.l1 || {};
     return {
       _raw: c,
       customer_name:  c.customer_name || '-',
@@ -500,14 +497,7 @@
       l1_net_amount:            l1.net_amount,
       l1_discount:              l1.discount,
       l1_supplier_commission:   l1.supplier_commission,
-      l1_net_commission:        l1.net_commission,
-      l2_orders:                l2.orders,
-      l2_travelers:             l2.travelers,
-      l2_net_amount:            l2.net_amount,
-      l2_discount:              l2.discount,
-      l2_supplier_commission:   l2.supplier_commission,
-      l2_net_commission:        l2.net_commission,
-      _l2_muted: l2.orders === 0
+      l1_net_commission:        l1.net_commission
     };
   }
 
@@ -544,15 +534,10 @@
     const cls = n >= 0 ? 'rcr-positive' : 'rcr-negative';
     return `<span class="${cls}">${formatNumber(n, 0)}</span>`;
   }
-  function l2CommissionFormatter(val, row) {
-    if (row && row._l2_muted) return formatNumber(val, 0);
-    return commissionFormatter(val);
-  }
 
-  // Columns config consumed by SharedTable.render. `cellClassName` below
-  // propagates through to each <td> so we can dim L2 cells when a row has
-  // no commission-eligible order. Sort keys must match flattenCustomer's
-  // flat keys so SharedSortableHeader can sort the rows in place.
+  // Columns config consumed by SharedTable.render. Only Level 1 metrics
+  // are shown in the table; Level 2 roll-ups live in the KPI summary band
+  // above it, so we don't duplicate them per row.
   const TABLE_COLUMNS = [
     { key: 'customer_name',  label: 'ชื่อลูกค้า' },
     { key: 'customer_code',  label: 'รหัส' },
@@ -563,20 +548,12 @@
     { key: 'l1_net_amount',          label: 'ยอดจอง',      align: 'right', format: numberFormatter },
     { key: 'l1_discount',            label: 'ส่วนลด',      align: 'right', format: numberFormatter },
     { key: 'l1_supplier_commission', label: 'คอม (raw)',   align: 'right', format: numberFormatter },
-    { key: 'l1_net_commission',      label: 'คอมสุทธิ',    align: 'right', format: commissionFormatter },
-
-    { key: 'l2_orders',              label: 'Orders',      align: 'right', format: numberFormatter,     className: 'rcr-divider', cellClassName: 'rcr-l2-cell' },
-    { key: 'l2_travelers',           label: 'ผู้เดินทาง',  align: 'right', format: numberFormatter,     cellClassName: 'rcr-l2-cell' },
-    { key: 'l2_net_amount',          label: 'ยอดจอง',      align: 'right', format: numberFormatter,     cellClassName: 'rcr-l2-cell' },
-    { key: 'l2_discount',            label: 'ส่วนลด',      align: 'right', format: numberFormatter,     cellClassName: 'rcr-l2-cell' },
-    { key: 'l2_supplier_commission', label: 'คอม (raw)',   align: 'right', format: numberFormatter,     cellClassName: 'rcr-l2-cell' },
-    { key: 'l2_net_commission',      label: 'คอมสุทธิ',    align: 'right', format: l2CommissionFormatter, cellClassName: 'rcr-l2-cell' }
+    { key: 'l1_net_commission',      label: 'คอมสุทธิ',    align: 'right', format: commissionFormatter }
   ];
 
   const TABLE_GROUPS = [
     { label: 'ลูกค้า',                              span: 3, className: 'group-neutral' },
-    { label: 'ระดับ 1 · งวด 1 ชำระ + ไม่ยกเลิก',    span: 6 },
-    { label: 'ระดับ 2 · ระดับ 1 + คอม > 0',          span: 6, className: 'group-accent' },
+    { label: 'ระดับ 1 · งวด 1 ชำระ + ไม่ยกเลิก',    span: 6 }
   ];
 
   function renderTable() {
@@ -601,16 +578,6 @@
         renderTable();
       }
     });
-
-    // Post-render: dim L2 cells when row has no commission orders. Done via
-    // a CSS hook on <tr> so we don't need to touch SharedTable internals.
-    const tbody = host.querySelector('tbody');
-    if (tbody) {
-      const trs = tbody.querySelectorAll('tr');
-      trs.forEach(function (tr, i) {
-        if (rows[i] && rows[i]._l2_muted) tr.classList.add('rcr-l2-muted-row');
-      });
-    }
 
     // Sync column-header sticky offset with the group-row's actual height.
     const groupRow = host.querySelector('thead tr.shared-group-row');
@@ -640,17 +607,17 @@
   }
 
   // ---- Export CSV ----
+  // CSV mirrors the table — Level 1 only. (L2 roll-ups are visible in the
+  // KPI summary cards above the table and are not per-customer breakdowns.)
   function exportCSV(customers) {
     if (!window.SharedCSV || !window.SharedCSV.export) return;
     const headers = [
       'ชื่อลูกค้า', 'รหัสลูกค้า', 'เบอร์โทร',
-      'L1-Orders', 'L1-ผู้เดินทาง', 'L1-ยอดจอง', 'L1-ส่วนลด', 'L1-คอม(raw)', 'L1-คอมสุทธิ',
-      'L2-Orders', 'L2-ผู้เดินทาง', 'L2-ยอดจอง', 'L2-ส่วนลด', 'L2-คอม(raw)', 'L2-คอมสุทธิ'
+      'Orders', 'ผู้เดินทาง', 'ยอดจอง', 'ส่วนลด', 'คอม(raw)', 'คอมสุทธิ'
     ];
     const rows = getVisibleCustomers(customers).map(c => [
       c.customer_name || '', c.customer_code || '', c.phone_number || '',
-      c.l1.orders, c.l1.travelers, c.l1.net_amount, c.l1.discount, c.l1.supplier_commission, c.l1.net_commission,
-      c.l2.orders, c.l2.travelers, c.l2.net_amount, c.l2.discount, c.l2.supplier_commission, c.l2.net_commission
+      c.l1.orders, c.l1.travelers, c.l1.net_amount, c.l1.discount, c.l1.supplier_commission, c.l1.net_commission
     ]);
     const stamp = new Date().toISOString().slice(0, 10);
     window.SharedCSV.export({
