@@ -59,6 +59,14 @@
   grid-column: 1 / -1;
 }
 
+.crp-filter-label-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .crp-filter-control {
   flex: 1 1 auto;
   min-width: 0;
@@ -73,22 +81,20 @@
    default; .crp-grace-note--visible flips display:inline-block on. */
 .crp-grace-note {
   display: none;
-  align-self: center;
-  margin-left: 4px;
-  padding: 4px 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
   background: #fef3c7;
   color: #92400e;
   border: 1px solid #fcd34d;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
   white-space: nowrap;
   cursor: help;
-  grid-column: 1 / -1;
-  justify-self: start;
 }
 .crp-grace-note.crp-grace-note--visible {
-  display: inline-block;
+  display: inline-flex;
 }
 
 .crp-filter-control .filter-sort-dropdown,
@@ -388,6 +394,10 @@
   }
 
   .crp-filter-label {
+    flex: none;
+  }
+
+  .crp-filter-label-row {
     flex: none;
   }
 

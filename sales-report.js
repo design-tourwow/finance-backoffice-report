@@ -511,15 +511,17 @@
           <!-- แถว 2: วันชำระงวด 1 (period selector) -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">วันชำระงวด 1</span>
+              <div class="crp-filter-label-row">
+                <span class="time-granularity-label crp-filter-label">วันชำระงวด 1</span>
+                <!-- Business rule: paid_at_to is silently extended by +3
+                     days for non-custom modes to honour finance's late-
+                     payment grace window. This badge surfaces the rule so
+                     users don't see "April rows" in their "March" filter
+                     without explanation. Toggled by updateGraceNoteVisibility(). -->
+                <span class="crp-grace-note" id="crp-paid-grace-note" title="ระบบขยาย paid_at_to อีก 3 วัน เพื่อนับการชำระเงินที่ตกค้างจากช่วงก่อนหน้า">+3 วัน</span>
+              </div>
               <div class="crp-filter-control" id="crp-paid-mode-host"></div>
               <div class="crp-filter-control" id="crp-paid-value-host"></div>
-              <!-- Business rule: paid_at_to is silently extended by +3
-                   days for non-custom modes to honour finance's late-
-                   payment grace window. This badge surfaces the rule so
-                   users don't see "April rows" in their "March" filter
-                   without explanation. Toggled by updateGraceNoteVisibility(). -->
-              <span class="crp-grace-note" id="crp-paid-grace-note" title="ระบบขยาย paid_at_to อีก 3 วัน เพื่อนับการชำระเงินที่ตกค้างจากช่วงก่อนหน้า">+3 วัน</span>
             </div>
           </div>
 
