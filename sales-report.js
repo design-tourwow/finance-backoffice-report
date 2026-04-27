@@ -1567,38 +1567,57 @@
     // Top-of-page totals line removed by request — totals now appear only
     // on the main commission table's footer row, no need to duplicate at
     // the top of every page.
+    const sellerLabel = getSelectedSellerLabel();
+    const positionLabel = labelOfJobPosition(selectedJobPosition);
+    const createdLabel = formatPeriodStateForPrint(createdPeriodState);
+    const paidLabel = formatPeriodStateForPrint(paidPeriodState);
+    const statusLabel = getSelectedStatusLabel();
+
     const highlightGrid = document.createElement('div');
     highlightGrid.style.display = 'grid';
-    highlightGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-    highlightGrid.style.gap = '14px';
+    highlightGrid.style.gridTemplateColumns = '1.35fr 1fr 1fr';
+    highlightGrid.style.gap = '18px';
+    highlightGrid.style.alignItems = 'end';
     highlightGrid.style.marginBottom = '10px';
-    highlightGrid.innerHTML = buildPrintHighlights().map(function (item) {
-      return `
-        <div style="position:relative;overflow:hidden;border:1px solid #dbe2ea;border-radius:16px;padding:14px 16px 16px;background:linear-gradient(180deg,#ffffff 0%,#f6f9fc 100%);box-shadow:0 8px 22px rgba(15,23,42,0.06);">
-          <div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,#4f79a4 0%,#7aa5d1 100%);"></div>
-          <div style="color:#64748b;font-size:11px;font-weight:600;letter-spacing:0.01em;margin-bottom:8px;padding-left:6px;">${escHtml(item.label)}</div>
-          <div style="color:#0f172a;font-size:24px;line-height:1.2;font-weight:700;padding-left:6px;">${escHtml(item.value || '-')}</div>
+    highlightGrid.style.padding = '4px 0 12px';
+    highlightGrid.style.borderBottom = '1px solid #dbe2ea';
+    highlightGrid.innerHTML = `
+      <div style="min-width:0;padding-right:12px;">
+        <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">เซลล์ผู้จอง</div>
+        <div style="font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;">${escHtml(sellerLabel || '-')}</div>
+        <div style="margin-top:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">ตำแหน่ง</span>
+          <span style="font-size:21px;line-height:1.2;font-weight:700;color:#243b53;">${escHtml(positionLabel || '-')}</span>
         </div>
-      `;
-    }).join('');
+      </div>
+      <div style="min-width:0;">
+        <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">วันที่สร้าง Order</div>
+        <div style="font-size:24px;line-height:1.15;font-weight:700;color:#0f172a;word-break:break-word;">${escHtml(createdLabel || '-')}</div>
+      </div>
+      <div style="min-width:0;">
+        <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">วันชำระงวด 1</div>
+        <div style="font-size:24px;line-height:1.15;font-weight:700;color:#0f172a;word-break:break-word;">${escHtml(paidLabel || '-')}</div>
+      </div>
+    `;
 
     const filterLine = document.createElement('div');
     filterLine.style.display = 'flex';
-    filterLine.style.flexDirection = 'column';
-    filterLine.style.gap = '8px';
-    filterLine.style.marginBottom = '14px';
+    filterLine.style.justifyContent = 'space-between';
+    filterLine.style.alignItems = 'flex-start';
+    filterLine.style.gap = '16px';
+    filterLine.style.marginBottom = '16px';
     filterLine.innerHTML = `
-      <div style="font-size:11px;font-weight:700;color:#526173;letter-spacing:0.03em;text-transform:uppercase;">ตัวกรองเพิ่มเติม</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        ${buildPrintFilters().map(function (item) {
-          return `
-            <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #dbe2ea;border-radius:999px;background:#f8fafc;color:#0f172a;">
-              <span style="font-size:10px;font-weight:700;color:#64748b;">${escHtml(item.label)}</span>
-              <span style="font-size:11px;font-weight:600;color:#0f172a;">${escHtml(item.value || '-')}</span>
-            </div>
-          `;
-        }).join('')}
+      <div style="display:flex;flex-wrap:wrap;gap:18px 24px;align-items:baseline;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">สถานะ Order</span>
+          <span style="font-size:14px;font-weight:600;color:#334e68;">${escHtml(statusLabel || '-')}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:7px;">
+          <span style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">จำนวนรายการ</span>
+          <span style="font-size:14px;font-weight:600;color:#334e68;">${escHtml(countText || '-')}</span>
+        </div>
       </div>
+      <div style="font-size:11px;font-weight:500;color:#64748b;white-space:nowrap;">พิมพ์วันที่ ${escHtml(new Date().toLocaleString('th-TH'))}</div>
     `;
 
     const tableWrapperClone = tableWrapperEl.cloneNode(true);
