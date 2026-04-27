@@ -25,7 +25,7 @@
   let selectedOrderStatus = 'not_canceled';
   let selectedTravelerFilter = 'all';
   let mainTableQuery = '';
-  let mainTableSort = { key: null, direction: 'desc' };
+  let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
     ts: { key: 'net_commission', direction: 'desc' },
     crm: { key: 'net_commission', direction: 'desc' }
