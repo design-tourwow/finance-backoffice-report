@@ -11,6 +11,9 @@
   let currentData = null;
   let sellers = [];
   let availablePeriods = { years: [] };
+  let createdAvailablePeriods = { years: [] };
+  let paidAvailablePeriods = { years: [] };
+  let periodAvailabilityRequestId = 0;
 
   // Period selector state (mode + year/quarter/month). One for "วันที่สร้าง
   // Order" (created_at), one for "วันชำระงวด 1" (paid_at). Both use
@@ -40,8 +43,14 @@
     if (!validateToken()) return;
     currentUser = getUserFromToken();
     renderShell();
-    await loadSellers();
-    initFilters();
+    // SharedFilterService.getAvailablePeriods already returns { years: [] }
+    // on error so we can call it inline without a try/catch wrapper.
+    const [_, periods] = await Promise.all([
+      loadSellers(),
+      window.SharedFilterService ? window.SharedFilterService.getAvailablePeriods() : null
+    ]);
+    if (periods && Array.isArray(periods.years)) availablePeriods = periods;
+    await initFilters();
     await loadReport();
   }
 
@@ -146,37 +155,229 @@
     };
   }
 
-  function setLinkedPeriodState(nextState) {
-    createdPeriodState = clonePeriodState(nextState);
-    paidPeriodState = clonePeriodState(nextState);
+  function cloneAvailablePeriods(periods) {
+    const source = periods && Array.isArray(periods.years) ? periods.years : [];
+    return {
+      years: source.map(function (yearEntry) {
+        return {
+          year_ce: Number(yearEntry.year_ce),
+          label: yearEntry.label || String(Number(yearEntry.year_ce) + 543),
+          total_orders: yearEntry.total_orders || 0,
+          quarters: Array.isArray(yearEntry.quarters)
+            ? yearEntry.quarters.map(function (quarterEntry) {
+                return {
+                  quarter: Number(quarterEntry.quarter),
+                  label: quarterEntry.label || ('Q' + quarterEntry.quarter),
+                  total_orders: quarterEntry.total_orders || 0
+                };
+              })
+            : [],
+          months: Array.isArray(yearEntry.months)
+            ? yearEntry.months.map(function (monthEntry) {
+                return {
+                  month: Number(monthEntry.month),
+                  label: monthEntry.label || monthName(Number(monthEntry.month)),
+                  label_short: monthEntry.label_short || '',
+                  total_orders: monthEntry.total_orders || 0
+                };
+              })
+            : []
+        };
+      })
+    };
   }
 
-  function mountLinkedPeriodSelectors() {
+  function monthName(month) {
+    return [
+      '',
+      'มกราคม',
+      'กุมภาพันธ์',
+      'มีนาคม',
+      'เมษายน',
+      'พฤษภาคม',
+      'มิถุนายน',
+      'กรกฎาคม',
+      'สิงหาคม',
+      'กันยายน',
+      'ตุลาคม',
+      'พฤศจิกายน',
+      'ธันวาคม'
+    ][Number(month)] || String(month || '');
+  }
+
+  function getDefaultMonthlyPeriodState() {
+    const now = new Date();
+    return {
+      mode: 'monthly',
+      year: now.getFullYear(),
+      quarter: Math.ceil((now.getMonth() + 1) / 3),
+      month: now.getMonth() + 1
+    };
+  }
+
+  function normalizePeriodDateValue(value) {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      quarter: Math.ceil((date.getMonth() + 1) / 3)
+    };
+  }
+
+  function buildAvailablePeriodsFromDates(values) {
+    const yearsMap = new Map();
+    (values || []).forEach(function (value) {
+      const parts = normalizePeriodDateValue(value);
+      if (!parts) return;
+      if (!yearsMap.has(parts.year)) {
+        yearsMap.set(parts.year, { months: new Set(), quarters: new Set() });
+      }
+      const bucket = yearsMap.get(parts.year);
+      bucket.months.add(parts.month);
+      bucket.quarters.add(parts.quarter);
+    });
+
+    return {
+      years: Array.from(yearsMap.entries())
+        .sort(function (a, b) { return b[0] - a[0]; })
+        .map(function (entry) {
+          const year = Number(entry[0]);
+          const bucket = entry[1];
+          return {
+            year_ce: year,
+            label: String(year + 543),
+            quarters: Array.from(bucket.quarters)
+              .sort(function (a, b) { return b - a; })
+              .map(function (quarter) {
+                return {
+                  quarter: quarter,
+                  label: 'Q' + quarter
+                };
+              }),
+            months: Array.from(bucket.months)
+              .sort(function (a, b) { return b - a; })
+              .map(function (month) {
+                return {
+                  month: month,
+                  label: monthName(month)
+                };
+              })
+          };
+        })
+    };
+  }
+
+  function buildAvailablePeriodsFromOrders(orders, dateKey) {
+    return buildAvailablePeriodsFromDates((orders || []).map(function (order) {
+      return order ? order[dateKey] : '';
+    }));
+  }
+
+  function isPeriodStateAvailable(state, periods) {
+    if (!state || state.mode === 'all') return true;
+    if (state.mode === 'custom') return true;
+    const years = periods && Array.isArray(periods.years) ? periods.years : [];
+    if (state.mode === 'yearly') {
+      return years.some(function (entry) { return Number(entry.year_ce) === Number(state.year); });
+    }
+    if (state.mode === 'quarterly') {
+      return years.some(function (entry) {
+        return Number(entry.year_ce) === Number(state.year)
+          && Array.isArray(entry.quarters)
+          && entry.quarters.some(function (quarterEntry) {
+            return Number(quarterEntry.quarter) === Number(state.quarter);
+          });
+      });
+    }
+    if (state.mode === 'monthly') {
+      return years.some(function (entry) {
+        return Number(entry.year_ce) === Number(state.year)
+          && Array.isArray(entry.months)
+          && entry.months.some(function (monthEntry) {
+            return Number(monthEntry.month) === Number(state.month);
+          });
+      });
+    }
+    return true;
+  }
+
+  function setPeriodState(field, nextState) {
+    if (field === 'created') createdPeriodState = clonePeriodState(nextState);
+    else paidPeriodState = clonePeriodState(nextState);
+  }
+
+  function getAllPeriodState() {
+    return { mode: 'all' };
+  }
+
+  function mountPeriodSelectors() {
     window.SharedPeriodSelector.mount({
       modeContainerId : 'crp-created-mode-host',
       valueContainerId: 'crp-created-value-host',
-      availablePeriods: availablePeriods,
+      availablePeriods: createdAvailablePeriods,
       multiSelect     : false,
       modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : createdPeriodState,
       onChange        : function (state) {
-        setLinkedPeriodState(state);
-        mountLinkedPeriodSelectors();
+        handlePeriodChange('created', state);
       }
     });
 
     window.SharedPeriodSelector.mount({
       modeContainerId : 'crp-paid-mode-host',
       valueContainerId: 'crp-paid-value-host',
-      availablePeriods: availablePeriods,
+      availablePeriods: paidAvailablePeriods,
       multiSelect     : false,
       modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : paidPeriodState,
       onChange        : function (state) {
-        setLinkedPeriodState(state);
-        mountLinkedPeriodSelectors();
+        handlePeriodChange('paid', state);
       }
     });
+  }
+
+  async function handlePeriodChange(field, state) {
+    setPeriodState(field, state);
+    mountPeriodSelectors();
+    if (state && state.mode === 'custom' && (!state.customFrom || !state.customTo)) return;
+    await refreshOppositePeriodAvailability(field);
+  }
+
+  async function refreshOppositePeriodAvailability(changedField) {
+    const requestId = ++periodAvailabilityRequestId;
+    try {
+      let response;
+      if (changedField === 'created') {
+        response = await CommissionReportPlusAPI.getReport(buildFilters({ ignorePaidPeriod: true }));
+      } else {
+        response = await CommissionReportPlusAPI.getReport(buildFilters({ ignoreCreatedPeriod: true }));
+      }
+      if (requestId !== periodAvailabilityRequestId) return;
+
+      const orders = response && response.data ? response.data.orders : [];
+      if (changedField === 'created') {
+        const nextPaidPeriods = buildAvailablePeriodsFromOrders(orders, 'first_paid_at');
+        paidAvailablePeriods = nextPaidPeriods;
+        if (!isPeriodStateAvailable(paidPeriodState, nextPaidPeriods)) {
+          paidPeriodState = getAllPeriodState();
+        }
+      } else {
+        const nextCreatedPeriods = buildAvailablePeriodsFromOrders(orders, 'created_at');
+        createdAvailablePeriods = nextCreatedPeriods;
+        if (!isPeriodStateAvailable(createdPeriodState, nextCreatedPeriods)) {
+          createdPeriodState = getAllPeriodState();
+        }
+      }
+      mountPeriodSelectors();
+    } catch (e) {
+      console.error('[CRP] Failed to refresh related period filters:', e);
+      if (requestId !== periodAvailabilityRequestId) return;
+      createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
+      paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
+      mountPeriodSelectors();
+    }
   }
 
   function escHtml(str) {
@@ -345,18 +546,17 @@
   }
 
   // ---- Init Filters ----
-  function initFilters() {
+  async function initFilters() {
     const jobPos  = currentUser ? currentUser.job_position : 'admin';
     const sellerId = currentUser ? String(currentUser.id || '') : '';
 
     // Init two period selectors — one per date field. Default to current
     // month so the report loads with the usual monthly view on first paint.
-    const nowYear    = new Date().getFullYear();
-    const nowMonth   = new Date().getMonth() + 1;
-    const nowQuarter = Math.ceil(nowMonth / 3);
-
-    setLinkedPeriodState({ mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth });
-    mountLinkedPeriodSelectors();
+    createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
+    paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
+    createdPeriodState = getDefaultMonthlyPeriodState();
+    paidPeriodState = getDefaultMonthlyPeriodState();
+    mountPeriodSelectors();
 
     // Set state defaults
     selectedJobPosition  = jobPos;
@@ -535,13 +735,20 @@
     return '';
   }
 
-  function buildFilters() {
-    const created = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
-    const paid    = window.SharedPeriodSelector.toDateRange(paidPeriodState,    availablePeriods);
+  function buildFilters(options) {
+    const cfg = options || {};
+    const createdState = cfg.createdState || createdPeriodState;
+    const paidState = cfg.paidState || paidPeriodState;
+    const created = cfg.ignoreCreatedPeriod
+      ? { dateFrom: '', dateTo: '' }
+      : window.SharedPeriodSelector.toDateRange(createdState, availablePeriods);
+    const paid = cfg.ignorePaidPeriod
+      ? { dateFrom: '', dateTo: '' }
+      : window.SharedPeriodSelector.toDateRange(paidState, availablePeriods);
     // Business rule: for non-custom paid-period modes, extend paid_at_to by
     // +3 days to cover the late-payment grace window that finance accepts
     // after the nominal period end.
-    const paidTo = (paidPeriodState && paidPeriodState.mode !== 'custom')
+    const paidTo = (!cfg.ignorePaidPeriod && paidState && paidState.mode !== 'custom' && paid.dateTo)
       ? addDays(paid.dateTo, 3)
       : paid.dateTo;
     return {
@@ -808,10 +1015,10 @@
         </div>
         <div class="dashboard-table-actions">
           <div id="crp-table-search-host"></div>
-          ${window.SharedExportButton.render({ id: 'crp-btn-export', label: 'Export' })}
+          ${window.SharedExportButton.render({ id: 'crp-btn-export', variant: 'excel' })}
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Download PDF
+            Export PDF
           </button>
         </div>
       </div>
