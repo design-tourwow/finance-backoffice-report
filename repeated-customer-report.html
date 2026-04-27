@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Repeated Customer Report - Tourwow" />
+    <title>Repeated Customer Report - Tourwow</title>
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="shared-font.css" />
+
+    <!-- Styles (shared with other report pages) -->
+    <link rel="stylesheet" href="tour-image-manager.css?v=1777003205" />
+    <link rel="stylesheet" href="shared-export-button.css" />
+    <link rel="stylesheet" href="shared-ui.css" />
+    <link rel="stylesheet" href="filter-panel.css?v=1777003205" />
+    <link rel="stylesheet" href="kpi-card.css" />
+    <link rel="stylesheet" href="dashboard-table.css" />
+    <link rel="stylesheet" href="shared-table-search.css" />
+    <link rel="stylesheet" href="shared-filter-actions.css" />
+    <link rel="stylesheet" href="shared-filter-search-input.css" />
+    <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
+    <link rel="stylesheet" href="date-picker-component.css" />
+    <!-- Reuse the Telesales/CRM ranking table styles from /sales-report so
+         this page renders the same "สรุป" block without duplicating CSS. -->
+    <link rel="stylesheet" href="sales-report.css?v=20260427d" />
+    <link rel="stylesheet" href="repeated-customer-report.css?v=20260428h" />
+
+    <!-- Configuration -->
+    <script>
+      (function() {
+        const hostname = window.location.hostname
+        if (hostname === 'staging-finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://staging-finance-backoffice-report-api.vercel.app'
+          window.ENVIRONMENT = 'staging'
+        } else if (hostname === 'finance-backoffice-report.vercel.app') {
+          window.API_BASE_URL = 'https://finance-backoffice-report-api.vercel.app'
+          window.ENVIRONMENT = 'production'
+        } else {
+          const sessionEnv = sessionStorage.getItem('env') || 'staging'
+          window.ENVIRONMENT = sessionEnv
+          window.API_BASE_URL = sessionEnv === 'staging'
+            ? 'https://staging-finance-backoffice-report-api.vercel.app'
+            : 'https://finance-backoffice-report-api.vercel.app'
+        }
+        // SharedHttp reads this; keep in sync with API_BASE_URL so every
+        // shared service (filter-service, http) resolves the same origin.
+        window.REPORT_API_BASE_URL = window.API_BASE_URL
+      })()
+    </script>
+    <script src="token-utils.js?v=20250128"></script>
+    <script src="shared-auth-guard.js"></script>
+    <script src="shared-font.js"></script>
+    <script src="shared-utils.js"></script>
+    <script src="shared-http.js"></script>
+    <script src="shared-filter-service.js"></script>
+    <script src="shared-ui.js"></script>
+    <script src="repeated-customer-report-api.js"></script>
+    <script src="filter-sort-dropdown-component.js"></script>
+    <script src="filter-search-dropdown-component.js"></script>
+    <script src="date-picker-component.js"></script>
+    <script src="shared-period-selector.js?v=20260427o"></script>
+    <script src="shared-trophy-rank.js"></script>
+    <script src="shared-sortable-header.js"></script>
+    <script src="shared-table.js"></script>
+    <script src="shared-export-button.js"></script>
+    <script src="shared-csv.js"></script>
+    <script src="shared-table-search.js"></script>
+    <script src="shared-filter-actions.js"></script>
+    <script src="shared-filter-search-input.js"></script>
+    <script src="menu-component.js"></script>
+
+    <!-- Load sidebar state -->
+    <script>
+      (function() {
+        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+          document.documentElement.classList.add('sidebar-collapsed-init')
+        }
+      })()
+    </script>
+    <style>
+      .sidebar-collapsed-init .app-wrapper { margin-left: 0 !important; }
+      .sidebar-collapsed-init .sidebar { width: 0 !important; overflow: hidden !important; border-right: none !important; }
+      .sidebar-collapsed-init .main-content { margin-left: 0 !important; }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">ข้ามไปยังเนื้อหาหลัก</a>
+
+    <div class="app-wrapper">
+      <button class="mobile-menu-toggle" aria-label="เปิด/ปิดเมนู" aria-expanded="false">
+        <span class="hamburger-icon"><span></span><span></span><span></span></span>
+      </button>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar" role="navigation" aria-label="เมนูหลัก">
+        <div class="logo">
+          <img src="https://financebackoffice-staging2.tourwow.com/assets/images/tourwow-logo.png" alt="Tourwow Logo" />
+        </div>
+        <nav class="nav-menu"><!-- Menu will be rendered by menu-component.js --></nav>
+        <button class="sidebar-toggle-btn" id="sidebarToggle" aria-label="ซ่อนเมนู" title="ซ่อนเมนู">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>ซ่อนเมนู</span>
+        </button>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content" id="main-content" role="main">
+        <nav class="top-bar" role="banner">
+          <div class="top-bar-container">
+            <ul class="navbar-list"><!-- Menu will be rendered by menu-component.js --></ul>
+          </div>
+        </nav>
+
+        <div class="content-area">
+          <nav class="breadcrumb" aria-label="breadcrumb">
+            <ol>
+              <li><a href="#">หน้าแรก</a></li>
+              <li><a href="#">Report</a></li>
+              <li aria-current="page">Repeated Customer Report</li>
+            </ol>
+          </nav>
+
+          <header class="page-header">
+            <svg class="page-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <h1>Repeated Customer Report</h1>
+          </header>
+
+          <section class="report-content-section" id="reportContentSection">
+            <!-- Dashboard will be rendered here by JavaScript -->
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="repeated-customer-report.js?v=20260428g"></script>
+  </body>
+</html>

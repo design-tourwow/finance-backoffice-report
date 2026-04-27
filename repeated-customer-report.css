@@ -104,22 +104,167 @@
   .rcr-filter-row { grid-template-columns: 1fr; }
 }
 
-/* Table — delegated to SharedTable.render (shared-table.js) with groupColumns.
-   dashboard-table.css supplies the base look; we only add the L1/L2 divider
-   and muted-row hook here. */
+/* Table — delegated to SharedTable.render (shared-table.js). dashboard-table.css
+   supplies the base look; below we add:
+   - a min-width so dense numeric columns don't squeeze
+   - a scrollable wrap with sticky thead so the header stays visible when the
+     list is long (matches /sales-report's .crp-table-scroll feel) */
 .shared-table.rcr-table {
-  min-width: 1400px;
+  min-width: 960px;
 }
 .shared-table.rcr-table .rcr-divider {
   border-left: 2px solid var(--color-border, #e5e7eb);
 }
-.shared-table.rcr-table tbody tr.rcr-l2-muted-row td.rcr-l2-cell {
-  color: #9ca3af;
+
+/* Scrollable table wrap with frozen header, scoped to the repeated-customer
+   wrapper so it doesn't leak into other pages that use SharedTable. */
+.rcr-wrapper .shared-table-wrap {
+  max-height: 65vh;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+.rcr-wrapper .shared-table.rcr-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-bg-subtle, #f9fafb);
+}
+
+/* Ranking summary tables scroll horizontally when the 7 columns overflow
+   the side-by-side group card. The parent .crp-summary-group has
+   overflow:hidden (for border-radius clipping) which otherwise blocks
+   scroll; this inner wrapper brings it back + adds the right-edge fade. */
+.rcr-summary-table-scroll {
+  overflow-x: auto;
+  position: relative;
+}
+.rcr-summary-table-scroll::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.92));
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 2;
+  opacity: 1;
+}
+.rcr-summary-table-scroll.rcr-hint-hidden::after {
+  opacity: 0;
+}
+
+/* Right-edge scroll hint (เงาด้านขวา) — matches /sales-report's
+   .crp-scroll-hint-wrapper. The inner .shared-table-wrap is the scrollable
+   element; the host stays in place as a positioning context so the
+   gradient hugs the visible right edge instead of scrolling with content.
+   SharedTable already toggles .shared-hint-hidden on the inner wrap when
+   the user has scrolled to the right edge (or no horizontal scroll is
+   needed); we bridge that state to the host via :has(). */
+#rcr-table-host {
+  position: relative;
+}
+#rcr-table-host::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 64px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.92));
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 3;
+  opacity: 1;
+}
+#rcr-table-host:has(.shared-table-wrap.shared-hint-hidden)::after {
+  opacity: 0;
+}
+/* Disable the base inner-wrap gradient — the host-level one replaces it
+   so the hint doesn't scroll out of view when the table scrolls vertically. */
+.rcr-wrapper #rcr-table-host .shared-table-wrap::after {
+  display: none;
 }
 
 .rcr-positive { color: #16a34a; font-weight: 600; }
 .rcr-negative { color: #dc2626; font-weight: 600; }
 .rcr-muted    { color: #9ca3af; }
+
+/* Role text-links injected inside the seller dropdown menu (right after
+   the in-menu search input). Three links: ทั้งหมด · Telesales · CRM —
+   pure text-button style, separated by a middle dot. Active link uses
+   the primary brand colour and underline. */
+.rcr-role-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  font-size: 12px;
+  background: var(--color-bg-subtle, #f9fafb);
+}
+.rcr-role-link {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-family);
+  line-height: 1.4;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.rcr-role-link:hover {
+  color: var(--color-primary, #4a7ba7);
+  text-decoration: underline;
+}
+.rcr-role-link.rcr-role-link--active {
+  color: var(--color-primary, #4a7ba7);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.rcr-role-link-sep {
+  color: var(--color-text-faint, #9ca3af);
+  font-size: 12px;
+  user-select: none;
+}
+
+/* "เลือกทั้งหมด" row — checkbox-styled affordance injected above the
+   list. Clicking toggles every currently-visible option in one action.
+   Stays regular weight in both check/uncheck states — only the checkbox
+   icon reflects the selection. */
+.rcr-select-all-row {
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-bg-subtle, #f9fafb);
+}
+.rcr-select-all-row:hover {
+  background: #f3f4f6;
+}
+.rcr-select-all-row,
+.rcr-select-all-row.active,
+.rcr-select-all-label {
+  font-weight: 400;
+}
+.rcr-select-all-label {
+  flex: 1;
+}
+
+/* Read-only display paired with the "ซื้อซ้ำภายใน" mode dropdown. Keeps the
+   .filter-sort-btn chrome so it reads as part of the same composite, but
+   disabled + no arrow to signal "informational, not clickable". */
+.rcr-filter-control .filter-sort-btn.rcr-disabled-display {
+  opacity: 0.75;
+  cursor: not-allowed;
+  background: var(--color-bg-subtle, #f9fafb);
+  pointer-events: none;
+}
+.rcr-filter-control .filter-sort-btn.rcr-disabled-display .filter-sort-arrow {
+  display: none;
+}
 
 .rcr-toolbar {
   display: flex;
