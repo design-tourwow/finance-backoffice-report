@@ -1283,7 +1283,6 @@
 
   function buildPrintHighlights() {
     return [
-      { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
       { label: 'วันที่สร้าง Order', value: formatPeriodStateForPrint(createdPeriodState) },
       { label: 'วันชำระงวด 1', value: formatPeriodStateForPrint(paidPeriodState) },
     ];
@@ -1291,6 +1290,7 @@
 
   function buildPrintFilters() {
     return [
+      { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
       { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
       { label: 'สถานะ Order', value: getSelectedStatusLabel() },
     ];
@@ -1569,28 +1569,37 @@
     // the top of every page.
     const highlightGrid = document.createElement('div');
     highlightGrid.style.display = 'grid';
-    highlightGrid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-    highlightGrid.style.gap = '10px';
-    highlightGrid.style.marginBottom = '12px';
+    highlightGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    highlightGrid.style.gap = '14px';
+    highlightGrid.style.marginBottom = '10px';
     highlightGrid.innerHTML = buildPrintHighlights().map(function (item) {
       return `
-        <div style="border:1px solid #dbe2ea;border-radius:12px;padding:12px 14px;background:linear-gradient(180deg,#f8fbff 0%,#eef4fb 100%);">
-          <div style="color:#64748b;font-size:11px;margin-bottom:6px;">${escHtml(item.label)}</div>
-          <div style="color:#0f172a;font-size:21px;line-height:1.25;font-weight:700;">${escHtml(item.value || '-')}</div>
+        <div style="position:relative;overflow:hidden;border:1px solid #dbe2ea;border-radius:16px;padding:14px 16px 16px;background:linear-gradient(180deg,#ffffff 0%,#f6f9fc 100%);box-shadow:0 8px 22px rgba(15,23,42,0.06);">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,#4f79a4 0%,#7aa5d1 100%);"></div>
+          <div style="color:#64748b;font-size:11px;font-weight:600;letter-spacing:0.01em;margin-bottom:8px;padding-left:6px;">${escHtml(item.label)}</div>
+          <div style="color:#0f172a;font-size:24px;line-height:1.2;font-weight:700;padding-left:6px;">${escHtml(item.value || '-')}</div>
         </div>
       `;
     }).join('');
 
     const filterLine = document.createElement('div');
     filterLine.style.display = 'flex';
-    filterLine.style.flexWrap = 'wrap';
-    filterLine.style.gap = '12px';
-    filterLine.style.marginBottom = '12px';
-    filterLine.style.fontSize = '11px';
-    filterLine.style.color = '#5b6b7c';
-    filterLine.innerHTML = buildPrintFilters().map(item => `
-      <span><strong style="color:#334e68;">${escHtml(item.label)}:</strong> ${escHtml(item.value || '-')}</span>
-    `).join('');
+    filterLine.style.flexDirection = 'column';
+    filterLine.style.gap = '8px';
+    filterLine.style.marginBottom = '14px';
+    filterLine.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:#526173;letter-spacing:0.03em;text-transform:uppercase;">ตัวกรองเพิ่มเติม</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${buildPrintFilters().map(function (item) {
+          return `
+            <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #dbe2ea;border-radius:999px;background:#f8fafc;color:#0f172a;">
+              <span style="font-size:10px;font-weight:700;color:#64748b;">${escHtml(item.label)}</span>
+              <span style="font-size:11px;font-weight:600;color:#0f172a;">${escHtml(item.value || '-')}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
 
     const tableWrapperClone = tableWrapperEl.cloneNode(true);
     tableWrapperClone.style.maxHeight = 'none';
