@@ -130,6 +130,55 @@
     return `${last.getFullYear()}-${String(last.getMonth()+1).padStart(2,'0')}-${String(last.getDate()).padStart(2,'0')}`;
   }
 
+  function clonePeriodState(state) {
+    const source = state && typeof state === 'object' ? state : {};
+    return {
+      mode: source.mode || 'all',
+      allValues: !!source.allValues,
+      year: source.year != null ? Number(source.year) : undefined,
+      quarter: source.quarter != null ? Number(source.quarter) : undefined,
+      month: source.month != null ? Number(source.month) : undefined,
+      periods: Array.isArray(source.periods)
+        ? source.periods.map(function (period) { return Object.assign({}, period); })
+        : undefined,
+      customFrom: source.customFrom || '',
+      customTo: source.customTo || ''
+    };
+  }
+
+  function setLinkedPeriodState(nextState) {
+    createdPeriodState = clonePeriodState(nextState);
+    paidPeriodState = clonePeriodState(nextState);
+  }
+
+  function mountLinkedPeriodSelectors() {
+    window.SharedPeriodSelector.mount({
+      modeContainerId : 'crp-created-mode-host',
+      valueContainerId: 'crp-created-value-host',
+      availablePeriods: availablePeriods,
+      multiSelect     : false,
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+      initialState    : createdPeriodState,
+      onChange        : function (state) {
+        setLinkedPeriodState(state);
+        mountLinkedPeriodSelectors();
+      }
+    });
+
+    window.SharedPeriodSelector.mount({
+      modeContainerId : 'crp-paid-mode-host',
+      valueContainerId: 'crp-paid-value-host',
+      availablePeriods: availablePeriods,
+      multiSelect     : false,
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+      initialState    : paidPeriodState,
+      onChange        : function (state) {
+        setLinkedPeriodState(state);
+        mountLinkedPeriodSelectors();
+      }
+    });
+  }
+
   function escHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -306,28 +355,8 @@
     const nowMonth   = new Date().getMonth() + 1;
     const nowQuarter = Math.ceil(nowMonth / 3);
 
-    createdPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
-    paidPeriodState    = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
-
-    window.SharedPeriodSelector.mount({
-      modeContainerId : 'crp-created-mode-host',
-      valueContainerId: 'crp-created-value-host',
-      availablePeriods: availablePeriods,
-      multiSelect     : false,
-      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
-      initialState    : createdPeriodState,
-      onChange        : function (s) { createdPeriodState = s; }
-    });
-
-    window.SharedPeriodSelector.mount({
-      modeContainerId : 'crp-paid-mode-host',
-      valueContainerId: 'crp-paid-value-host',
-      availablePeriods: availablePeriods,
-      multiSelect     : false,
-      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
-      initialState    : paidPeriodState,
-      onChange        : function (s) { paidPeriodState = s; }
-    });
+    setLinkedPeriodState({ mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth });
+    mountLinkedPeriodSelectors();
 
     // Set state defaults
     selectedJobPosition  = jobPos;

@@ -38,7 +38,7 @@ test.describe('@p1 Sales Report Excel export', () => {
     await page.goto('/sales-report');
     await page.waitForLoadState('networkidle');
 
-    const exportBtn = page.getByRole('button', { name: /Export/i });
+    const exportBtn = page.getByRole('button', { name: 'Export Excel' });
     await expect(exportBtn).toBeVisible();
 
     const [download] = await Promise.all([
