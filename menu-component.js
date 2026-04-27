@@ -65,6 +65,8 @@ function handleExternalLink(e, url) {
     }
   };
 
+  const HEADER_MENU_VISIBLE = false;
+
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   // Menu configuration - แก้ไขที่เดียว ใช้ได้ทุกหน้า
   const MENU_ITEMS = [
@@ -239,6 +241,13 @@ function handleExternalLink(e, url) {
     return normalizePath(window.location.pathname);
   }
 
+  function setHeaderMenuVisibility(isVisible) {
+    var topBar = document.querySelector('.top-bar');
+    if (!topBar) return;
+    topBar.style.display = isVisible ? '' : 'none';
+    topBar.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+  }
+
   // Check if menu item is active
   function isActive(menuUrl) {
     const currentPath = getCurrentPath();
@@ -268,6 +277,14 @@ function handleExternalLink(e, url) {
   function renderHeaderMenu() {
     const navbarList = document.querySelector('.navbar-list');
     if (!navbarList) return;
+
+    if (!HEADER_MENU_VISIBLE) {
+      navbarList.innerHTML = '';
+      setHeaderMenuVisibility(false);
+      return;
+    }
+
+    setHeaderMenuVisibility(true);
 
     const menuHTML = getFlatMenuItems().map(item => {
       const activeClass = isActive(item.url) ? ' active' : '';
