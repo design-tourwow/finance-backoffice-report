@@ -94,6 +94,34 @@
     } catch (e) { return dateStr; }
   }
 
+  function resolveCanceledAt(order) {
+    if (!order || typeof order !== 'object') return '';
+
+    const candidates = [
+      order.canceled_at,
+      order.cancelled_at,
+      order.canceled_date,
+      order.cancelled_date,
+      order.cancel_at,
+      order.cancel_date,
+      order.date_canceled,
+      order.date_cancelled,
+      order.cancelled_on,
+      order.canceled_on
+    ];
+
+    for (const value of candidates) {
+      if (value) return value;
+    }
+
+    const status = String(order.order_status || '').toLowerCase();
+    if (status === 'canceled' || status === 'cancelled') {
+      return order.updated_at || '';
+    }
+
+    return '';
+  }
+
   function firstDayOfMonth() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
@@ -163,7 +191,7 @@
       case 'first_paid_at':
         return new Date(order.first_paid_at || 0).getTime();
       case 'canceled_at':
-        return new Date(order.canceled_at || 0).getTime();
+        return new Date(resolveCanceledAt(order) || 0).getTime();
       case 'supplier_commission':
         return parseFloat(order.supplier_commission || 0);
       case 'net_commission':
@@ -625,7 +653,7 @@
           <td class="right group-start">${formatNumber(o.net_amount, 0)}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
-          <td class="center">${formatDate(o.canceled_at)}</td>
+          <td class="center">${formatDate(resolveCanceledAt(o))}</td>
           <td class="right group-start">${formatNumber(o.supplier_commission, 0)}</td>
           <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom, 0)}</td>
           <td class="right group-start">${formatNumber(o.discount, 0)}</td>
@@ -689,7 +717,7 @@
         o.seller_nick_name || '', o.order_code || '', formatDate(o.created_at), o.customer_name || '',
         o.country_name_th || '', o.product_period_snapshot || '',
         parseFloat(o.net_amount || 0).toFixed(2), o.room_quantity || 0,
-        formatDate(o.first_paid_at), formatDate(o.canceled_at),
+        formatDate(o.first_paid_at), formatDate(resolveCanceledAt(o)),
         parseFloat(o.supplier_commission || 0).toFixed(2),
         netCom.toFixed(2), parseFloat(o.discount || 0).toFixed(2),
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
