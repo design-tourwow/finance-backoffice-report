@@ -68,6 +68,29 @@
   grid-column: 1 / -1;
 }
 
+/* "+3 วันผ่อนปรน" badge sits beside the paid period picker to surface
+   the silent +3-day grace window applied in buildFilters(). Hidden by
+   default; .crp-grace-note--visible flips display:inline-block on. */
+.crp-grace-note {
+  display: none;
+  align-self: center;
+  margin-left: 4px;
+  padding: 4px 10px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: help;
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.crp-grace-note.crp-grace-note--visible {
+  display: inline-block;
+}
+
 .crp-filter-control .filter-sort-dropdown,
 .crp-filter-control .filter-search-dd,
 .crp-filter-control .filter-sort-btn {

@@ -336,6 +336,20 @@
         handlePeriodChange('paid', state);
       }
     });
+
+    updateGraceNoteVisibility();
+  }
+
+  // Show "+3 วันผ่อนปรน" only when the +3-day grace is actually applied
+  // (preset modes — yearly/quarterly/monthly). Hidden for 'all' (no
+  // range to grace) and 'custom' (user picked exact dates so grace is
+  // intentionally skipped — see buildFilters()).
+  function updateGraceNoteVisibility() {
+    const note = document.getElementById('crp-paid-grace-note');
+    if (!note) return;
+    const mode = paidPeriodState && paidPeriodState.mode;
+    const visible = mode && mode !== 'all' && mode !== 'custom';
+    note.classList.toggle('crp-grace-note--visible', !!visible);
   }
 
   async function handlePeriodChange(field, state) {
@@ -500,6 +514,12 @@
               <span class="time-granularity-label crp-filter-label">วันชำระงวด 1</span>
               <div class="crp-filter-control" id="crp-paid-mode-host"></div>
               <div class="crp-filter-control" id="crp-paid-value-host"></div>
+              <!-- Business rule: paid_at_to is silently extended by +3
+                   days for non-custom modes to honour finance's late-
+                   payment grace window. This badge surfaces the rule so
+                   users don't see "April rows" in their "March" filter
+                   without explanation. Toggled by updateGraceNoteVisibility(). -->
+              <span class="crp-grace-note" id="crp-paid-grace-note" title="ระบบขยาย paid_at_to อีก 3 วัน เพื่อนับการชำระเงินที่ตกค้างจากช่วงก่อนหน้า">+3 วัน</span>
             </div>
           </div>
 
@@ -1561,7 +1581,6 @@
       <div>
         <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Sales Report</div>
       </div>
-      <div style="font-size:14px;color:#1f2937;font-weight:600;">พิมพ์วันที่: ${escHtml(new Date().toLocaleString('th-TH'))}</div>
     `;
 
     // Top-of-page totals line removed by request — totals now appear only
