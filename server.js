@@ -70,7 +70,10 @@ const server = http.createServer((req, res) => {
     else if (urlWithoutQuery === '/order-report') {
         filePath = './order-report.html';
     }
-    
+    else if (urlWithoutQuery === '/repeated-customer-report') {
+        filePath = './repeated-customer-report.html';
+    }
+
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
     

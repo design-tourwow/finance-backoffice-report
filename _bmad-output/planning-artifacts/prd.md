@@ -79,9 +79,19 @@ Initiative นี้รวมทุกหน้าเข้า `finance-backoffi
 - ✅ Refactor shared utilities (commit `dd5db13` — `fe2-*.js` renamed to `shared-*.js`; new `shared-http.js` centralises Bearer/401 handling; `shared-ui.js` + `shared-chart.js` + `shared-table.js` + `shared-csv.js` + `shared-filter-panel.js` extracted for reuse across new and existing pages)
 - ✅ Playwright test suite added (commit `97c3f9a`) — 21 Chromium P0 scenarios green
 
-### Vision (Phase 3)
+### Vision (Phase 3) — 🚧 In progress
 
 - Finance Backoffice Report เป็น single consolidated reporting platform สำหรับ Tourwow ทั้งหมด
+- ✅ **Repeated Customer Report** (ship 2026-04-24) — รายงานลูกค้าซื้อซ้ำสำหรับทีม Commission Co'Auay พร้อม customer-name autocomplete + seller (TS/CRM) filter + ranking summary by job_position
+- ✅ **Shared Period Selector "ทั้งหมด" mode** (2026-04-25) — option สำหรับข้ามการกรองช่วงเวลา ครอบคลุม 10 หน้า
+- ✅ **SharedTable groupColumns** (2026-04-25) — รองรับ grouped header (ใช้แล้วใน RCR และ extensible สำหรับ report ใหม่)
+- ✅ **SearchableDropdownComponent legacy retire** (2026-04-27) — migrate sales-by-country มาใช้ FilterSearchDropdown และลบ component เดิมออกจาก codebase
+- ✅ **Phase 5 — Shared component consolidation** (2026-04-27 → 2026-04-28) — เก็บกวาดโค้ดซ้ำที่สะสมระหว่าง Phase 3 + 4 เป็น 4 module กลาง (1 frontend + 3 backend) และจัด format ของ period dropdown ให้เหมือนกันทุกหน้า รายละเอียด:
+  - **`shared-trophy-rank.js`** — รวม trophy SVG + palette (gold/silver/bronze) เป็นจุดเดียว แทน inline copy ใน commission-report-plus + repeated-customer-report
+  - **`shared-filter-service.js#getAvailablePeriods()`** — รวม `loadAvailablePeriods()` ที่ก่อนหน้านี้แต่ละหน้า implement เอง (3 หน้า: commission-report-plus, canceled-orders, order-report) — caching ด้วย module-scope promise
+  - **`lib/agency-db-helper.ts`** — รวม `getAgencyDb()` ที่ duplicate อยู่ 4 routes (work-list, repeated-customer-report, commission-plus, commission-plus/sellers) — INFORMATION_SCHEMA lookup + module-scope caching
+  - **`lib/api-guard.ts#withApiGuard()`** — wrapper รวม rate-limit + JWT/API-key authentication + structured logging boilerplate ที่อยู่หัวของทุก report route — rollout 21 routes (ทั้ง simple-pattern auth-only และ standard rate-limit + auth pattern)
+  - **Period selector label format unification** — ทุก year/quarter/month dropdown แสดงในรูป `[BE] ([CE])` (เช่น `2568 (2025)`) แทนรูปแบบเดิมที่แต่ละหน้าใช้ต่างกัน (`พ.ศ. 2568 (2026)` vs `2026`); แก้ bug `buildYearOptions` ที่ขาดฟิลด์ `year` ทำให้ payload ส่ง `undefined-01-01`
 
 ## User Journeys
 
@@ -206,6 +216,23 @@ Initiative นี้รวมทุกหน้าเข้า `finance-backoffi
 
 - **FR39:** ระบบ route ทุก path ใหม่ผ่าน `server.js` ได้ถูกต้อง
 - **FR40:** ระบบ route ทุก path ใหม่ผ่าน `vercel.json` ได้ถูกต้อง
+
+### Repeated Customer Report (Phase 3 — ship 2026-04-24)
+
+- **FR41:** User ดูรายงานลูกค้าที่ซื้อซ้ำ (≥ 2 orders ที่ชำระงวดแรก + ไม่ยกเลิก) ในรูปแบบตาราง พร้อม KPI summary band (จำนวนลูกค้า, Order, ผู้เดินทาง, ยอดจอง, ส่วนลด, คอม, คอมสุทธิ)
+- **FR42:** User filter ลูกค้าด้วย autocomplete (พิมพ์ ≥ 3 ตัวอักษร → API `/api/customers/search` แนะนำชื่อให้เลือก)
+- **FR43:** User filter ตามจำนวนซื้อซ้ำ (dropdown แสดงเลขจริงที่มีในระบบ — dynamic จาก API `available_repeats`)
+- **FR44:** User filter ตามช่วงเวลาแบบ rolling window ("ซื้อซ้ำภายใน 3/6/9 เดือน / 1/2 ปี") — แสดงช่วงวันจริงให้ยืนยัน
+- **FR45:** User filter ตาม "เซลล์ผู้ขาย" (TS/CRM) — searchable dropdown โหลดจาก `/api/agency-members?roles=ts,crm`; label แสดง "Nickname [TS]" / "Nickname [CRM]"; ระบบกรองตามผู้ดูแล order ล่าสุดของลูกค้า
+- **FR46:** User เห็นตาราง ranking สรุป Telesales / CRM ที่ลูกค้าซื้อซ้ำเยอะที่สุด — แยก 2 group ตาม `job_position`, top 3 มี trophy icon
+- **FR47:** User toggle "นับเฉพาะ Order ที่ค่าคอมมากกว่า 0" เพื่อ filter ลูกค้าในตารางแบบ client-side
+- **FR48:** User export ตารางเป็น CSV (ดาวน์โหลดเฉพาะแถวที่ visible หลัง filter+sort)
+- **FR49:** ตารางมี frozen header + horizontal scroll พร้อม fade gradient ขวา (เหมือน /sales-report) เมื่อยังมีคอลัมน์ให้ดูต่อ
+
+### Cross-cutting Filter Behaviors (Phase 3)
+
+- **FR50:** ทุก filter "เริ่มใหม่" (reset) บนทุกหน้าต้อง clear state กลับ default เท่านั้น — ห้าม re-query หรือ reload หน้า; ผู้ใช้ต้องกด "ค้นหา" เองเพื่อยิง API ใหม่
+- **FR51:** Period selector ต้องมี mode "ทั้งหมด" เป็น option แรก — เลือกแล้วซ่อน value dropdown และไม่ส่ง dateFrom/dateTo ไป API
 
 ## Non-Functional Requirements
 

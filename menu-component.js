@@ -27,7 +27,8 @@ function handleExternalLink(e, url) {
       '/discount-sales': true,
       '/order-external-summary': true,
       '/request-discount': true,
-      '/order-report': true
+      '/order-report': true,
+      '/repeated-customer-report': true
     },
     ts: {
       '/401': true,
@@ -44,7 +45,8 @@ function handleExternalLink(e, url) {
       '/discount-sales': false,
       '/order-external-summary': false,
       '/request-discount': false,
-      '/order-report': false
+      '/order-report': false,
+      '/repeated-customer-report': false
     },
     crm: {
       '/401': true,
@@ -61,7 +63,8 @@ function handleExternalLink(e, url) {
       '/discount-sales': false,
       '/order-external-summary': false,
       '/request-discount': false,
-      '/order-report': false
+      '/order-report': false,
+      '/repeated-customer-report': false
     }
   };
 
@@ -147,6 +150,19 @@ function handleExternalLink(e, url) {
           id: 'order-external-summary',
           label: 'Order แก้ย้อนหลัง',
           url: '/order-external-summary',
+          requireAuth: true
+        }
+      ]
+    },
+    {
+      id: 'report-coauay',
+      label: "Report Co'Auay",
+      requireAuth: true,
+      submenu: [
+        {
+          id: 'repeated-customer-report',
+          label: 'Repeated Customer Report',
+          url: '/repeated-customer-report',
           requireAuth: true
         }
       ]

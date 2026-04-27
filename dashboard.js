@@ -48,6 +48,12 @@
       title: 'Order แก้ย้อนหลัง',
       description: 'รายงานการแก้ไขออเดอร์ย้อนหลังจากระบบภายนอก',
       icon: iconClock()
+    },
+    {
+      href: '/repeated-customer-report',
+      title: 'Repeated Customer Report',
+      description: 'รายงานลูกค้าซื้อซ้ำพร้อมจัดอันดับ Telesales / CRM',
+      icon: iconRepeat()
     }
   ];
 
@@ -166,6 +172,15 @@
     return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
       + '<circle cx="12" cy="12" r="10"/>'
       + '<polyline points="12 6 12 12 16 14"/>'
+      + '</svg>';
+  }
+
+  function iconRepeat() {
+    return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + '<polyline points="17 1 21 5 17 9"/>'
+      + '<path d="M3 11V9a4 4 0 0 1 4-4h14"/>'
+      + '<polyline points="7 23 3 19 7 15"/>'
+      + '<path d="M21 13v2a4 4 0 0 1-4 4H3"/>'
       + '</svg>';
   }
 

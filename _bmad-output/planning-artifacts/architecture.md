@@ -32,14 +32,16 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 ### Requirements Overview
 
-**Functional Requirements (40 FRs across 9 categories):**
+**Functional Requirements (51 FRs across 11 categories — last updated 2026-04-27):**
 
 - **Auth & Session (FR1-4):** JWT Token handoff ผ่าน URL, storage dual-path (sessionStorage + localStorage), inject into Authorization header, graceful redirect when missing.
 - **Unified Navigation (FR5-7):** Single menu shared across เดิม + ใหม่, single-session navigation (no re-auth between pages), active state indicator.
 - **4 Report Pages (FR8-32):** Supplier Commission / Discount Sales / Order External Summary / Request Discount — charts, sortable tables, cascading filters (country, year/quarter/month, team → job position → user).
 - **Shared Filter Data (FR33-36):** Country, team, job position, user APIs feeding dropdowns.
 - **Formatting Utilities (FR37-38):** Thai-locale currency formatting, Buddhist calendar dates (DD/MM/YYYY+543).
-- **Routing (FR39-40):** `server.js` (local dev) + `vercel.json` (production) must both resolve all 4 new paths.
+- **Routing (FR39-40):** `server.js` (local dev) + `vercel.json` (production) must both resolve all paths.
+- **Repeated Customer Report (FR41-49, ship 2026-04-24):** Phase 3 page for Commission Co'Auay — repeat-purchase analytics, customer autocomplete, dynamic repeat-bucket dropdown, rolling-window date filter, TS/CRM seller filter, ranking summary by job_position, frozen-header table with horizontal scroll-hint.
+- **Cross-cutting Filter Behavior (FR50-51):** Reset clears state without re-querying or reloading; period selector "ทั้งหมด" mode skips date filtering across all pages.
 
 **Non-Functional Requirements (10 NFRs):**
 
@@ -996,4 +998,113 @@ Phase 2 (fe-2-project retirement + shared-http extraction + Playwright suite) sh
 - `order-report` has `.filter-section` + `.filter-form` markup that is currently hidden (`display: none !important`). Filter-panel.css is linked in, so a future revival can adopt the unified pattern in minutes.
 - `tour-image-manager` is out of the report pipeline (image management domain). Uses DatePicker only. No unification needed.
 - `work-list` was explicitly excluded from this pass per Gap.
+
+
+## Phase 4 Retrospective (2026-04-24 → 2026-04-27) — Repeated Customer Report + Component Refinements
+
+**Delivered:**
+
+| Area | Commit / Date | Outcome |
+|---|---|---|
+| New page | `/repeated-customer-report` (2026-04-24) | Phase 3 vision page for Commission Co'Auay. New menu group `report-coauay` in `menu-component.js` + `server.js` + `vercel.json`. KPI summary + Telesales/CRM ranking + customer table with frozen header + horizontal scroll-hint. |
+| New backend route | `/api/reports/repeated-customer-report` | Per-customer aggregates (orders, travelers, net_amount, discount, supplier_commission, net_commission) with `HAVING l1_orders >= 2` enforcing repeat semantics. Returns `customers + summary + available_repeats` for dynamic dropdown. Supports `customer_name`, `seller_id`, `repeat_bucket`, `booking_date_from/to`, `travel_date_from/to`. |
+| New backend route | `/api/customers/search` | Customer-name autocomplete (≥2 chars, LIKE search, returns id/name/code/phone). |
+| Backend route extension | `/api/agency-members?roles=ts,crm` | Optional `roles` query param to scope the agency-members endpoint to specific job_position values. Used by RCR seller filter. |
+| `SharedPeriodSelector` | 2026-04-25 | Added `'all'` mode as first option (auto-prepended to every page's `modes` array unless `excludeAllMode: true`). Hides value dropdown when selected; `toDateRange()` returns empty range. Affects all 10 pages using the selector. |
+| `SharedTable.render()` | 2026-04-25 | Added `groupColumns: [{label, span, className}]` for grouped header rows; `column.className` / `column.cellClassName` for per-column CSS hooks; `tableClassName` option. CSS `.shared-group-row` / `.shared-group-th` + variants `.group-accent` / `.group-neutral` / `.group-warning` added to `dashboard-table.css`. |
+| `report-filter-panel-component.js` | 2026-04-25 | Reset contract fixed: `onResetClick()` no longer calls `onApply(state)`. Cleared filter UI only — caller must press ค้นหา to re-query. Closes a major UX bug affecting 4 fe-2 pages (discount-sales, supplier-commission, order-external-summary, request-discount). |
+| Reset behavior unified | 2026-04-25 | `commission-report-plus.js`, `canceled-orders.js`, `repeated-customer-report.js` reset handlers refactored from `window.location.reload()` → `resetFiltersToDefault()` (state-only reset). |
+| Custom-mode validation | 2026-04-25 | `wholesale-destinations.js` switched from manual period extraction to `SharedPeriodSelector.toDateRange()` (was silently dropping custom-range filter). `commission-report-plus.js` added `getMissingCustomRangeLabel()` guard so users can't ค้นหา with empty custom dates. |
+| `kpi-card.css` expansion | 2026-04-25 | Modifier variants grew from 4 to 10: added `kpi-discount` (red), `kpi-commission` (teal), `kpi-net-commission` (indigo), `kpi-avg` (pink), `kpi-pending` (amber), `kpi-info` (slate). Each scoped via `--kpi-color` / `--kpi-bg` CSS custom properties. |
+| `SearchableDropdownComponent` retired | 2026-04-27 | `sales-by-country.js` migrated to `FilterSearchDropdown` (multi-select). Dead `<script>` + `<link>` tags removed from `order-report.html` and `supplier-commission.html`. `searchable-dropdown-component.js` + `.css` files deleted. **One canonical search-dropdown across the codebase.** |
+
+**Component registry after Phase 4:**
+
+| Role | File | Usage |
+|---|---|---|
+| Widget | `date-picker-component.js` | tour-image-manager, sales-by-country, commission-report-plus, canceled-orders, order-report (via SharedPeriodSelector custom mode) |
+| Widget | `filter-sort-dropdown-component.js` | Single-select dropdowns across all 11 pages (period mode, repeat bucket, status, etc.) |
+| Widget | `filter-search-dropdown-component.js` | Single + multi-select with in-menu search — **canonical search dropdown**. Used by sales-by-country, supplier-commission, order-report, commission-report-plus, repeated-customer-report (seller filter), + 4 fe-2 pages via ReportFilterPanel |
+| Widget | `shared-filter-search-input.js` | Text input + autocomplete (fetchFn). Used by tour-image-manager, repeated-customer-report (customer name) |
+| Widget | `table-sorting-component.js` | sales-by-country |
+| Composition | `report-filter-panel-component.js` | discount-sales, supplier-commission, order-external-summary, request-discount |
+| Composition | `shared-period-selector.js` | All pages with date filter (10 pages) — auto-prepends "ทั้งหมด" mode |
+| Composition | `shared-table.js` | discount-sales, order-external-summary, request-discount, repeated-customer-report — supports `groupColumns` |
+| Wrapper CSS | `filter-panel.css` | All unified pages |
+| Wrapper CSS | `kpi-card.css` | 10 modifier variants for semantic KPI colours |
+| Wrapper CSS | `dashboard-table.css` | Base table + grouped-header CSS |
+| Page-shared CSS | `commission-report-plus.css` | Reused by repeated-customer-report (`.crp-summary-*` classes for ranking tables) |
+| Legacy utility | `shared-*.js` (8 files) | all pages |
+
+**Architectural principles refined this phase:**
+
+- **Repeat-purchase semantics**: "ซื้อซ้ำ N ครั้ง" = N purchases AFTER the first. Backend translates `repeat_bucket='N'` → `HAVING l1_orders = N + 1`. Default report enforces `l1_orders >= 2` (only actual repeat customers shown).
+- **Latest-handler attribution**: per-customer "เซลล์/CRM" = `seller_agency_member_id` of the customer's most-recent non-canceled order, resolved via `ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at DESC)` subquery + LEFT JOIN on `v_6kMWFc_agcy_agency_members`. Job_position drives the TS/CRM ranking split — same logic as `/sales-report`.
+- **Reset never re-queries**: confirmed contract across all 11 pages. Hard rule — clearing filters does not wipe the currently-visible results; user must press ค้นหา.
+- **Cache-buster query strings on shared scripts**: `?v=YYYYMMDDx` appended to `<script src>` for shared components that change frequently. Bumped per deploy when behavior changes (e.g. `shared-period-selector.js?v=20260425b`).
+
+**Carry-forward / next-phase candidates (Priority H):**
+
+- Backend helper `lib/agency-db.ts` — `getAgencyDb()` is now duplicated in 4 routes (work-list, repeated-customer-report, commission-plus, commission-plus/sellers). One place.
+- Backend helper `lib/sql-predicates.ts` — `getPaidFirstInstallmentPredicate(alias)` used in 5+ routes; centralise the EXISTS subquery.
+- Backend helper `lib/api-guard.ts` — `withApiGuard(request, name, handler)` wrapping rate-limit + authenticate + logApiRequest boilerplate (every route's first 20 lines are identical).
+
+**Carry-forward (Priority M):**
+
+- `shared-ranking-trophy.js` — Trophy SVG (gold/silver/bronze) duplicated between commission-report-plus + repeated-customer-report. Same palette, same paths.
+- `shared-scroll-hint.js` + CSS — three implementations of the right-edge fade gradient pattern (CRP `.crp-scroll-hint-wrapper`, RCR `#rcr-table-host::after`, RCR `.rcr-summary-table-scroll::after`). Wrap into one `initScrollHint(scrollEl, hintEl)` helper.
+- `shared-sticky-table.css` — frozen-thead + max-height pattern in CRP and RCR.
+
+**Carry-forward (Priority L):**
+
+- Rolling-date-window selector ("ภายใน 3 เดือน / 6 เดือน / 9 เดือน / 1 ปี / 2 ปี"): page-local in RCR. Wait for a second page request before extracting.
+
+## Phase 5 Retrospective (2026-04-27 → 2026-04-28) — Shared Component Consolidation
+
+Resolved every Priority H carry-forward from Phase 4 plus the Priority M trophy item. Audit-driven cleanup phase: no new user-facing features, focus on collapsing the duplication that accumulated during the Phase 3 + 4 component shuffle.
+
+**Delivered:**
+
+| Area | Module / Path | Outcome |
+|---|---|---|
+| Frontend shared module | `shared-trophy-rank.js` | One canonical trophy SVG + gold/silver/bronze palette + `getTrophySvg(rank, size?)` helper. Replaces inline copies in `commission-report-plus.js` (14 lines) and `repeated-customer-report.js` (14 lines). Hooked via `<script src="shared-trophy-rank.js?v=…">` + `window.SharedTrophyRank.getTrophySvg`. |
+| Frontend shared service | `shared-filter-service.js#getAvailablePeriods()` | Replaces the inline `loadAvailablePeriods()` helper that 3 pages duplicated (`commission-report-plus.js`, `canceled-orders.js`, `order-report.js`). Module-scope promise cache so multiple consumers share one fetch. Other consumers (sales-by-country, wholesale-destinations, work-list) keep the same call shape. |
+| Backend shared helper | `lib/agency-db-helper.ts` — `getAgencyDb()` | One INFORMATION_SCHEMA lookup with module-scope cache. Replaces 4 inline copies (`work-list`, `repeated-customer-report`, `commission-plus`, `commission-plus/sellers`). Returns `null` when the agency-DB view is not provisioned so callers can fall back to ID-only labels. |
+| Backend shared wrapper | `lib/api-guard.ts` — `withApiGuard(routeName, handler, options?)` | Wraps the rate-limit + JWT/API-key auth + structured logging chrome that every report route opened with (~25 boilerplate lines). Default rate limit `100/60s`; per-route override via `options.rateLimit`. Catches handler exceptions → canonical 500 with `logApiRequest` call. Auto-logs success at handler return. |
+| API guard rollout | 21 routes migrated | **Standard pattern (15):** `available-periods`, `by-booking-date`, `by-country`, `by-created-date`, `by-supplier`, `by-travel-date`, `by-travel-start-date`, `commission-plus`, `commission-plus/sellers`, `countries`, `lead-time-analysis`, `repeat-customers`, `summary`, `wholesale-by-country`, `work-list`. **Simple auth-only pattern (4):** `order-external-summary`, `order-has-discount`, `sales-discount`, `supplier-performance` — gain rate-limiting via the wrapper for free. **Custom rate-limit (1):** `commission-plus/pdf` (`{ max: 20, windowMs: 60_000 }`). **Manual template (1):** `repeated-customer-report` (the original migration sample). Plus new `customers/search` route written natively in the new style. |
+| Period-selector label uniformity | `shared-period-selector.js` | All year/quarter/month dropdowns render labels as `[BE] ([CE])` (e.g. `2568 (2025)`) regardless of the originating page. Replaces the previous mix of `พ.ศ. 2568 (2026)` (some pages) and `2026` (others). Helper `formatYearLabel(beLabel, ce)` is the single source of truth for that format. |
+| Bugfix during the unification | `buildYearOptions` | Year-mode option objects were missing the `year` field, so when a user selected yearly mode the API received `created_at_from: undefined-01-01`. Restored `year: Number(entry.year_ce)` in both branches of `buildYearOptions`. |
+
+**Migration approach (codemod methodology):**
+
+The 21-route api-guard rollout was bulk-applied via Node codemod rather than 21 manual edits. First two attempts (regex-based on the entire boilerplate block) failed because of whitespace and brace-formatting variations across routes. The working approach (`migrate_api_guard4.js`) tracks **brace depth** through the auth-check `if`-block to find the boundary between boilerplate and real body — this generalises across every formatting variant in the codebase. Lessons: prefer balanced-bracket scanning over regex when the source is hand-authored; verify with `tsc --noEmit` after every codemod run.
+
+**Component registry after Phase 5:**
+
+| Role | File | Usage |
+|---|---|---|
+| Frontend shared module | `shared-trophy-rank.js` (Phase 5) | commission-report-plus, repeated-customer-report |
+| Frontend shared service | `shared-filter-service.js#getAvailablePeriods` (Phase 5) | commission-report-plus, canceled-orders, order-report, sales-by-country, wholesale-destinations, work-list |
+| Backend shared helper | `lib/agency-db-helper.ts` (Phase 5) | work-list, repeated-customer-report, commission-plus, commission-plus/sellers |
+| Backend shared wrapper | `lib/api-guard.ts` (Phase 5) | 22 routes (21 migrated + 1 native: `customers/search`) |
+| Frontend shared module | `shared-period-selector.js` | All 10 pages with date filter — uniform `[BE] ([CE])` labels |
+
+**Architectural principles refined this phase:**
+
+- **Boilerplate elimination over copy-paste tolerance:** when ≥3 routes/pages share an identical 10+ line block, extract it. Threshold lowered from "many duplicates" → "3 occurrences" because every duplicate is a future divergence point (the period-label inconsistency is the cautionary tale).
+- **Codemod over manual edit for ≥10 file changes:** even with retries, a tested codemod is safer than 10+ targeted edits. Verify with `tsc --noEmit` not just successful execution.
+- **Consistency check during refactor:** during the Phase 5 audit the `[BE] ([CE])` discrepancy was discovered only because the user asked "do all the dropdowns look the same?" — a question we should ask proactively after every shared-module extraction.
+
+**Carry-forward / next-phase candidates (Priority H):**
+
+- Backend helper `lib/sql-predicates.ts` — `getPaidFirstInstallmentPredicate(alias)` still duplicated in 5+ routes. Pattern is the EXISTS subquery on `v_Xqc7k7_customer_order_installments` with `ordinal = 1` + `LOWER(status) = 'paid'`. Extracting requires a small naming convention for predicate helpers.
+
+**Carry-forward (Priority M):**
+
+- `shared-scroll-hint.js` + CSS — three implementations of the right-edge fade gradient pattern remain (CRP `.crp-scroll-hint-wrapper`, RCR `#rcr-table-host::after`, RCR `.rcr-summary-table-scroll::after`).
+- `shared-sticky-table.css` — frozen-thead + max-height pattern in CRP and RCR.
+
+**Carry-forward (Priority L):**
+
+- Rolling-date-window selector still page-local in RCR.
 

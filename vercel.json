@@ -63,6 +63,10 @@
     {
       "source": "/canceled-orders",
       "destination": "/canceled-orders.html"
+    },
+    {
+      "source": "/repeated-customer-report",
+      "destination": "/repeated-customer-report.html"
     }
   ],
   "headers": [

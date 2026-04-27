@@ -85,8 +85,10 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: #eef2ff;
-  color: #4f46e5;
+  /* Match the global brand tone (filter-panel.css design tokens) so the
+     dashboard tiles read as part of the same palette as the report pages. */
+  background: var(--color-primary-subtle, #e0e7ef);
+  color: var(--color-primary, #4a7ba7);
 }
 
 .dashboard-card-body {
