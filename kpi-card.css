@@ -47,7 +47,18 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Colour variants — CSS custom properties scoped to the modifier class */
+/* Colour variants — CSS custom properties scoped to the modifier class.
+   Semantics suggested (not enforced):
+     kpi-travelers      (blue)    = people / counts / neutral totals
+     kpi-top-country    (purple)  = categorical breakdowns / aggregates
+     kpi-growth         (green)   = positive money flow / income / growth
+     kpi-active         (orange)  = in-progress / attention / highlights
+     kpi-discount       (red)     = deductions / losses / discounts
+     kpi-commission     (teal)    = raw commission / supplier fees
+     kpi-net-commission (indigo)  = net commission / derived KPI
+     kpi-avg            (pink)    = averages / per-unit metrics
+     kpi-pending        (amber)   = pending state
+     kpi-info           (slate)   = informational neutrals */
 .dashboard-kpi-card.kpi-travelers {
   --kpi-color: var(--color-primary);
   --kpi-bg: #e3f2fd;
@@ -66,6 +77,36 @@
 .dashboard-kpi-card.kpi-active {
   --kpi-color: #f57c00;
   --kpi-bg: #fff3e0;
+}
+
+.dashboard-kpi-card.kpi-discount {
+  --kpi-color: #dc2626;
+  --kpi-bg: #fee2e2;
+}
+
+.dashboard-kpi-card.kpi-commission {
+  --kpi-color: #0d9488;
+  --kpi-bg: #ccfbf1;
+}
+
+.dashboard-kpi-card.kpi-net-commission {
+  --kpi-color: #4338ca;
+  --kpi-bg: #e0e7ff;
+}
+
+.dashboard-kpi-card.kpi-avg {
+  --kpi-color: #db2777;
+  --kpi-bg: #fce7f3;
+}
+
+.dashboard-kpi-card.kpi-pending {
+  --kpi-color: #b45309;
+  --kpi-bg: #fef3c7;
+}
+
+.dashboard-kpi-card.kpi-info {
+  --kpi-color: #475569;
+  --kpi-bg: #e2e8f0;
 }
 
 /* Icon box — canonical 36×36 with rounded corners. Aliases bring the

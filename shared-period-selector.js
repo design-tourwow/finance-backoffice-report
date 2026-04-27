@@ -38,23 +38,42 @@
   // ── Icons (SVG) ───────────────────────────────────────────────────────────
   var ICON_CALENDAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
   var ICON_CUSTOM   = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h2m4 0h2M8 18h2m4 0h2" stroke-dasharray="2 1"/></svg>';
+  var ICON_ALL      = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>';
+
+  // Sentinel value used to represent the "ทั้งหมด / no filter" option at
+  // the top of the value dropdown. Keeps one string in one place so pages
+  // never need to import it — they only see state.allValues === true.
+  var ALL_VALUE = '__all__';
+  var ALL_LABEL = 'ทั้งหมด';
 
   var MODE_LABELS = {
+    all      : 'ทั้งหมด',
     yearly   : 'รายปี',
     quarterly: 'รายไตรมาส',
     monthly  : 'รายเดือน',
     custom   : 'กำหนดเอง'
   };
 
-  var DEFAULT_MODES = ['yearly', 'quarterly', 'monthly', 'custom'];
+  var DEFAULT_MODES = ['all', 'yearly', 'quarterly', 'monthly', 'custom'];
 
-  // Legacy 'all' mode was removed (2026-04-24). Callers that still pass
-  // 'all' in modes/initialState have it stripped and coerced to the first
-  // remaining mode so pages on stale state keep rendering.
-  function normalizeModes(arr) {
-    if (!Array.isArray(arr)) return DEFAULT_MODES.slice();
-    var filtered = arr.filter(function (m) { return m !== 'all' && MODE_LABELS[m]; });
-    return filtered.length ? filtered : DEFAULT_MODES.slice();
+  // Every page gets "ทั้งหมด" as the first mode option automatically. Callers
+  // pass the modes they care about (e.g. ['yearly','quarterly','monthly','custom'])
+  // and we force-prepend 'all' unless they explicitly opt out via excludeAllMode.
+  function normalizeModes(arr, excludeAllMode) {
+    var base = Array.isArray(arr)
+      ? arr.filter(function (m) { return MODE_LABELS[m]; })
+      : DEFAULT_MODES.slice();
+    if (!base.length) base = DEFAULT_MODES.slice();
+    // Deduplicate while preserving caller-provided order, then ensure 'all'
+    // is either present at the head (default) or completely absent (opt-out).
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < base.length; i++) {
+      if (base[i] === 'all') continue;
+      if (!seen[base[i]]) { seen[base[i]] = true; out.push(base[i]); }
+    }
+    if (!excludeAllMode) out.unshift('all');
+    return out;
   }
   function normalizeMode(m, allowed) {
     return allowed.indexOf(m) >= 0 ? m : allowed[0];
@@ -84,21 +103,36 @@
   }
 
   // ── Option builders (shaped for dropdown components) ──────────────────────
+  // Label convention: "BuddhistYear (CommonEraYear)" — BE first because Thai
+  // users orient by BE; the CE year in parens disambiguates without the
+  // verbose "พ.ศ." prefix.
+  // Examples:
+  //   yearly    → "2568 (2025)"
+  //   quarterly → "Q1 2568 (2025)"
+  //   monthly   → "มกราคม 2568 (2025)"
+  function formatYearLabel(beLabel, ce) {
+    var be = (beLabel != null && beLabel !== '') ? beLabel : (Number(ce) + 543);
+    return be + ' (' + ce + ')';
+  }
+
   function buildYearOptions(periods) {
     var years = getPeriodYears(periods);
     if (!years.length) {
       var fallback = utils() && utils().getYearOptions ? utils().getYearOptions() : [];
       return fallback.map(function (y) {
         var val = (y && typeof y === 'object') ? y.value : y;
-        var lbl = (y && typeof y === 'object') ? (y.label || String(y.value)) : String(y);
-        return { value: String(val), label: lbl };
+        // Fallback list contains plain CE numbers — derive BE locally so the
+        // label still matches the canonical "BE (CE)" shape.
+        var ceNum = Number(val);
+        return { value: String(val), label: formatYearLabel(null, ceNum), year: ceNum };
       });
     }
     return years.map(function (entry) {
-      var label = entry.label != null && entry.label !== ''
-        ? ('พ.ศ. ' + entry.label + ' (' + entry.year_ce + ')')
-        : String(entry.year_ce);
-      return { value: String(entry.year_ce), label: label };
+      return {
+        value: String(entry.year_ce),
+        label: formatYearLabel(entry.label, entry.year_ce),
+        year: Number(entry.year_ce)
+      };
     });
   }
 
@@ -118,9 +152,10 @@
     var out = [];
     years.forEach(function (entry) {
       (entry.quarters || []).forEach(function (qt) {
+        var qLabel = qt.label || ('Q' + qt.quarter);
         out.push({
           value: entry.year_ce + '-' + qt.quarter,
-          label: (qt.label || ('Q' + qt.quarter)) + ' พ.ศ. ' + (entry.label || entry.year_ce),
+          label: qLabel + ' ' + formatYearLabel(entry.label, entry.year_ce),
           year: Number(entry.year_ce),
           quarter: Number(qt.quarter)
         });
@@ -137,7 +172,7 @@
       return fallback.map(function (m) {
         return {
           value: cy + '-' + m.value,
-          label: m.label + ' ' + cy,
+          label: m.label + ' ' + formatYearLabel(null, cy),
           year: cy,
           month: Number(m.value)
         };
@@ -146,9 +181,10 @@
     var out = [];
     years.forEach(function (entry) {
       (entry.months || []).forEach(function (mm) {
+        var mLabel = mm.label || ('Month ' + mm.month);
         out.push({
           value: entry.year_ce + '-' + mm.month,
-          label: (mm.label || ('Month ' + mm.month)) + ' พ.ศ. ' + (entry.label || entry.year_ce),
+          label: mLabel + ' ' + formatYearLabel(entry.label, entry.year_ce),
           year: Number(entry.year_ce),
           month: Number(mm.month)
         });
@@ -172,13 +208,19 @@
     }
 
     var multiSelect     = !!config.multiSelect;
-    var allowedModes    = normalizeModes(config.modes);
+    var allowedModes    = normalizeModes(config.modes, !!config.excludeAllMode);
     var onChange        = typeof config.onChange === 'function' ? config.onChange : function () {};
     var availablePeriods = config.availablePeriods || { years: [] };
     var initial         = config.initialState || {};
 
     var state = {
       mode      : normalizeMode(initial.mode, allowedModes),
+      // "ทั้งหมด" toggle inside non-custom modes. When true, the user picked
+      // the top "ทั้งหมด" option in the value dropdown and the page should
+      // apply NO date filter. Preserves the underlying year/quarter/month so
+      // unticking "ทั้งหมด" (or switching mode) can fall back to a sensible
+      // value without extra caller logic.
+      allValues : !!initial.allValues,
       year      : initial.year    != null ? Number(initial.year)    : getCurrentYear(),
       quarter   : initial.quarter != null ? Number(initial.quarter) : getCurrentQuarter(),
       month     : initial.month   != null ? Number(initial.month)   : getCurrentMonth(),
@@ -193,9 +235,19 @@
         return;
       }
       if (multiSelect) {
-        onChange({ mode: state.mode, periods: state.periods.slice() });
+        onChange({
+          mode     : state.mode,
+          allValues: state.allValues,
+          periods  : state.allValues ? [] : state.periods.slice()
+        });
       } else {
-        onChange({ mode: state.mode, year: state.year, quarter: state.quarter, month: state.month });
+        onChange({
+          mode     : state.mode,
+          allValues: state.allValues,
+          year     : state.year,
+          quarter  : state.quarter,
+          month    : state.month
+        });
       }
     }
 
@@ -205,7 +257,7 @@
         return {
           value : m,
           label : MODE_LABELS[m] || m,
-          icon  : m === 'custom' ? ICON_CUSTOM : ICON_CALENDAR,
+          icon  : m === 'custom' ? ICON_CUSTOM : (m === 'all' ? ICON_ALL : ICON_CALENDAR),
           active: m === state.mode
         };
       });
@@ -240,6 +292,14 @@
     function renderValueDropdown() {
       valueHost.innerHTML = '';
       valueHost.style.display = '';
+
+      // 'all' mode = no date filter. Collapse the value slot so the page
+      // grid shows just the mode dropdown (pages rely on toDateRange()
+      // returning an empty range in this case).
+      if (state.mode === 'all') {
+        valueHost.style.display = 'none';
+        return;
+      }
 
       if (state.mode === 'custom') {
         renderCustomRange();
@@ -411,9 +471,20 @@
         if (state.mode === 'custom') {
           return { mode: 'custom', customFrom: state.customFrom, customTo: state.customTo };
         }
-        return multiSelect
-          ? { mode: state.mode, periods: state.periods.slice() }
-          : { mode: state.mode, year: state.year, quarter: state.quarter, month: state.month };
+        if (multiSelect) {
+          return {
+            mode     : state.mode,
+            allValues: state.allValues,
+            periods  : state.allValues ? [] : state.periods.slice()
+          };
+        }
+        return {
+          mode     : state.mode,
+          allValues: state.allValues,
+          year     : state.year,
+          quarter  : state.quarter,
+          month    : state.month
+        };
       },
       destroy: function () {
         try { modeHost.innerHTML = ''; } catch (e) {}
@@ -430,9 +501,10 @@
     if (state.mode === 'custom') {
       return { dateFrom: state.customFrom || '', dateTo: state.customTo || '' };
     }
-    if (state.mode === 'all') {
-      // Legacy 'all' mode — removed from UI but still coerced here so any
-      // stale state blob in localStorage/caller memory maps to "no filter".
+    // "ทั้งหมด" option inside yearly/quarterly/monthly modes → no filter.
+    // Also keeps the legacy 'all' mode coercion for any stale state blob
+    // still floating around in localStorage.
+    if (state.allValues || state.mode === 'all') {
       return { dateFrom: '', dateTo: '' };
     }
     // Multi: convert list of period objects → min(start) / max(end)

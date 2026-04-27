@@ -1,5 +1,6 @@
-/* shared-export-button.css — Export CSV button component.
-   Uses the commission-report-plus dashboard button look as the canonical UI.
+/* shared-export-button.css — Export button component (CSV / Excel).
+   Solid-green action button mirroring the red `.crp-btn-pdf` so the
+   dashboard reads at a glance: red = PDF, green = spreadsheet.
 */
 
 .shared-export-button-host {
@@ -8,12 +9,13 @@
 
 .shared-export-btn {
   padding: 10px 16px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #16a34a;
   border-radius: 8px;
-  background: white;
-  color: #374151;
+  background: #16a34a;
+  color: #ffffff;
   font-size: 16px;
   font-family: var(--font-family-base);
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -23,13 +25,30 @@
 }
 
 .shared-export-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: #15803d;
+  border-color: #15803d;
 }
 
-.shared-export-btn svg {
-  width: 16px;
-  height: 16px;
+.shared-export-btn:active {
+  transform: translateY(1px);
+}
+
+/* PDF variant — red mirror of the green spreadsheet button so callers can
+   drop a PDF export into the same component pipeline rather than rolling
+   their own inline button markup. */
+.shared-export-btn--pdf {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.shared-export-btn--pdf:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.shared-export-btn .shared-export-btn-icon {
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
