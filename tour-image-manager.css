@@ -1824,6 +1824,22 @@ button, input, select, textarea, option {
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Table-search row sits above the result table — search input on the
+   left, banner1 filter checkbox pushed to the right via margin-left:auto
+   on the label. Both controls operate on the visible rows below. */
+.results-table-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.results-table-search > .banner1-filter-checkbox {
+  margin-left: auto;
 }
 
 .banner1-filter-checkbox {
@@ -1865,146 +1881,8 @@ button, input, select, textarea, option {
 }
 
 
-/* Sort Dropdown */
-.sort-dropdown {
-  position: relative;
-}
-
-.sort-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  min-width: 200px;
-  justify-content: center;
-}
-
-.sort-btn-text {
-  flex: 1;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.sort-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 240px;
-  z-index: 1000;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.sort-menu.open {
-  display: flex;
-}
-
-.sort-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: none;
-  background: white;
-  font-size: 14px;
-  font-family: inherit;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.2s;
-  text-align: left;
-}
-
-.sort-option:hover {
-  background: #f9fafb;
-}
-
-.sort-option.active {
-  background: #f0f7ff;
-  color: #4a7ba7;
-  font-weight: 600;
-}
-
-.sort-option svg {
-  flex-shrink: 0;
-  color: #6b7280;
-}
-
-.sort-option.active svg {
-  color: #4a7ba7;
-}
-
-/* Export Dropdown */
-.export-dropdown {
-  position: relative;
-}
-
-.export-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-}
-
-.dropdown-arrow {
-  transition: transform 0.2s;
-}
-
-.export-btn.open .dropdown-arrow,
-.sort-btn.open .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-.export-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-  z-index: 1000;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.export-menu.open {
-  display: flex;
-}
-
-.export-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: none;
-  background: white;
-  font-size: 14px;
-  font-family: inherit;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.2s;
-  text-align: left;
-}
-
-.export-option:hover {
-  background: #f9fafb;
-}
-
-.export-option svg {
-  flex-shrink: 0;
-  color: #6b7280;
-}
-
-.export-option:hover svg {
-  color: #4a7ba7;
-}
+/* Sort + Export markup is now owned by the shared FilterSortDropdownComponent
+   and SharedExportButton — page-local overrides removed. */
 
 /* Chevron Icon */
 .chevron-icon {

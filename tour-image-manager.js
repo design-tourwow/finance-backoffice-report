@@ -1465,87 +1465,59 @@ function initShowAllButtons() {
     `;
   }
 
-  // Sorting Functions
+  // Sorting — mounted via the shared FilterSortDropdownComponent so the
+  // trigger + menu look identical to every other report page (same hover,
+  // active state, chevron, panel position). The 10 options below own all
+  // the sort logic; FilterSortDropdownComponent only handles the UI.
   function initSorting() {
-    const sortBtn = document.getElementById('sortBtn');
-    const sortMenu = document.getElementById('sortMenu');
-    let currentSort = 'date-desc'; // Default sort
+    if (!window.FilterSortDropdownComponent) return;
 
-    if (!sortBtn || !sortMenu) return;
+    const sortLinesIcon =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<path d="M3 6h18M7 12h10M11 18h2"/>' +
+      '</svg>';
+    const calendarIcon =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>' +
+        '<line x1="16" y1="2" x2="16" y2="6"/>' +
+        '<line x1="8" y1="2" x2="8" y2="6"/>' +
+        '<line x1="3" y1="10" x2="21" y2="10"/>' +
+      '</svg>';
+    const usageDescIcon =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<path d="M18 20V10M12 20V4M6 20v-6"/>' +
+      '</svg>';
+    const usageAscIcon =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+        '<path d="M18 20v-6M12 20V4M6 20V10"/>' +
+      '</svg>';
 
-    // Get button text element (create if doesn't exist)
-    let btnTextElement = sortBtn.querySelector('.sort-btn-text');
-    if (!btnTextElement) {
-      // Find the text node and wrap it
-      const textNode = Array.from(sortBtn.childNodes).find(node => node.nodeType === 3 && node.textContent.trim() === 'เรียงลำดับ');
-      if (textNode) {
-        btnTextElement = document.createElement('span');
-        btnTextElement.className = 'sort-btn-text';
-        btnTextElement.textContent = 'เรียงลำดับ';
-        textNode.replaceWith(btnTextElement);
-      }
-    }
+    const options = [
+      { value: 'date-desc',    label: 'วันที่อัปเดต (ใหม่-เก่า)',      icon: calendarIcon,  active: true },
+      { value: 'date-asc',     label: 'วันที่อัปเดต (เก่า-ใหม่)',      icon: calendarIcon },
+      { value: 'usage-desc',   label: 'จำนวนการใช้งาน (มาก-น้อย)',     icon: usageDescIcon },
+      { value: 'usage-asc',    label: 'จำนวนการใช้งาน (น้อย-มาก)',     icon: usageAscIcon },
+      { value: 'banner1-desc', label: 'Banner ลำดับที่ 1 (มาก-น้อย)',  icon: sortLinesIcon },
+      { value: 'banner1-asc',  label: 'Banner ลำดับที่ 1 (น้อย-มาก)',  icon: sortLinesIcon },
+      { value: 'banner2-desc', label: 'Banner ลำดับที่ 2 (มาก-น้อย)',  icon: sortLinesIcon },
+      { value: 'banner2-asc',  label: 'Banner ลำดับที่ 2 (น้อย-มาก)',  icon: sortLinesIcon },
+      { value: 'detail-desc',  label: 'รายละเอียดทัวร์ (มาก-น้อย)',    icon: sortLinesIcon },
+      { value: 'detail-asc',   label: 'รายละเอียดทัวร์ (น้อย-มาก)',    icon: sortLinesIcon }
+    ];
 
-    // Set default sort option as active and update button text
-    const defaultOption = sortMenu.querySelector('[data-sort="date-desc"]');
-    if (defaultOption) {
-      defaultOption.classList.add('active');
-      if (btnTextElement) {
-        btnTextElement.textContent = defaultOption.textContent.trim();
-      }
-    }
+    let currentSort = 'date-desc';
 
-    // Toggle sort menu
-    sortBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      
-      // Close other dropdowns
-      const exportBtn = document.getElementById('exportBtn');
-      const exportMenu = document.getElementById('exportMenu');
-      if (exportBtn && exportMenu) {
-        exportBtn.classList.remove('open');
-        exportMenu.classList.remove('open');
-      }
-      
-      sortBtn.classList.toggle('open');
-      sortMenu.classList.toggle('open');
-    });
-
-    // Close menu on outside click
-    document.addEventListener('click', () => {
-      sortBtn.classList.remove('open');
-      sortMenu.classList.remove('open');
-    });
-
-    // Sort options
-    sortMenu.addEventListener('click', (e) => {
-      const option = e.target.closest('.sort-option');
-      if (option) {
-        const sortType = option.dataset.sort;
-        
-        // Update active state
-        sortMenu.querySelectorAll('.sort-option').forEach(opt => {
-          opt.classList.remove('active');
-        });
-        option.classList.add('active');
-        
-        // Update button text to show selected option
-        if (btnTextElement) {
-          const optionText = option.textContent.trim();
-          btnTextElement.textContent = optionText;
-        }
-        
-        // Apply sort
-        currentSort = sortType;
-        applySorting(sortType);
-        
-        // Close menu
-        sortBtn.classList.remove('open');
-        sortMenu.classList.remove('open');
+    window.FilterSortDropdownComponent.initDropdown({
+      containerId : 'tim-sort-host',
+      defaultLabel: 'วันที่อัปเดต (ใหม่-เก่า)',
+      defaultIcon : calendarIcon,
+      options     : options,
+      onChange    : function (value) {
+        currentSort = value;
+        applySorting(value);
       }
     });
 
-    // Store current sort globally
     window.currentSort = () => currentSort;
   }
 
@@ -1684,45 +1656,27 @@ function initShowAllButtons() {
     console.log(`✅ Sorted by: ${sortType}`);
   }
 
-  // Export Functions
+  // Export buttons — two side-by-side SharedExportButton mounts (CSV
+  // green + PDF red) replacing the previous "Export ▾" dropdown so the
+  // dashboard matches /commission-report-plus and /canceled-orders.
   function initExportImport() {
-    const exportBtn = document.getElementById('exportBtn');
-    const exportMenu = document.getElementById('exportMenu');
+    if (!window.SharedExportButton) return;
 
-    if (!exportBtn || !exportMenu) return;
-
-    // Toggle export menu
-    exportBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      
-      // Close other dropdowns
-      const sortBtn = document.getElementById('sortBtn');
-      const sortMenu = document.getElementById('sortMenu');
-      if (sortBtn && sortMenu) {
-        sortBtn.classList.remove('open');
-        sortMenu.classList.remove('open');
-      }
-      
-      exportBtn.classList.toggle('open');
-      exportMenu.classList.toggle('open');
+    const csvBtn = window.SharedExportButton.mount('tim-export-csv-host', {
+      id: 'exportBtn',
+      variant: 'csv'
     });
+    if (csvBtn) {
+      csvBtn.addEventListener('click', () => handleExport('csv'));
+    }
 
-    // Close menu on outside click
-    document.addEventListener('click', () => {
-      exportBtn.classList.remove('open');
-      exportMenu.classList.remove('open');
+    const pdfBtn = window.SharedExportButton.mount('tim-export-pdf-host', {
+      id: 'exportPdfBtn',
+      variant: 'pdf'
     });
-
-    // Export options
-    exportMenu.addEventListener('click', (e) => {
-      const option = e.target.closest('.export-option');
-      if (option) {
-        const format = option.dataset.format;
-        handleExport(format);
-        exportBtn.classList.remove('open');
-        exportMenu.classList.remove('open');
-      }
-    });
+    if (pdfBtn) {
+      pdfBtn.addEventListener('click', () => handleExport('pdf'));
+    }
   }
 
   // Handle Export

@@ -24,14 +24,15 @@
     <link rel="stylesheet" href="shared-font.css" />
     
     <!-- Styles -->
-    <link rel="stylesheet" href="tour-image-manager.css?v=1777001072" />
+    <link rel="stylesheet" href="tour-image-manager.css?v=20260428e" />
     <link rel="stylesheet" href="date-picker-component.css" />
-    <link rel="stylesheet" href="filter-panel.css?v=1777001072" />
+    <link rel="stylesheet" href="filter-panel.css?v=1777003205" />
     <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
     <link rel="stylesheet" href="shared-table-search.css" />
     <link rel="stylesheet" href="shared-filter-search-input.css" />
     <link rel="stylesheet" href="shared-filter-actions.css" />
-    
+    <link rel="stylesheet" href="shared-export-button.css" />
+
     <!-- Configuration -->
     <!-- CRITICAL: Set API URL based on hostname BEFORE loading any other scripts -->
     <script>
@@ -68,6 +69,8 @@
     <script src="shared-table-search.js"></script>
     <script src="shared-filter-search-input.js"></script>
     <script src="shared-filter-actions.js"></script>
+    <script src="filter-sort-dropdown-component.js"></script>
+    <script src="shared-export-button.js"></script>
     <script src="menu-component.js"></script>
     
     <!-- Authentication Handler -->
@@ -280,124 +283,21 @@
             <div class="results-header">
               <h2 id="resultsCount">ผลการค้นหาพบ : <span class="count">0</span> รูปภาพ</h2>
               <div class="results-actions">
-                <div id="tim-table-search-host"></div>
-                <div class="sort-dropdown">
-                  <button type="button" class="btn btn-secondary sort-btn" id="sortBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 6h18M7 12h10M11 18h2"/>
-                    </svg>
-                    <span class="sort-btn-text">เรียงลำดับ</span>
-                    <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                  </button>
-                  <div class="sort-menu" id="sortMenu">
-                    <button type="button" class="sort-option" data-sort="date-desc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                      วันที่อัปเดต (ใหม่-เก่า)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="date-asc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
-                      วันที่อัปเดต (เก่า-ใหม่)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="usage-desc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 20V10M12 20V4M6 20v-6"/>
-                      </svg>
-                      จำนวนการใช้งาน (มาก-น้อย)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="usage-asc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 20v-6M12 20V4M6 20V10"/>
-                      </svg>
-                      จำนวนการใช้งาน (น้อย-มาก)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="banner1-desc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M7 12h10M11 18h2"/>
-                      </svg>
-                      Banner ลำดับที่ 1 (มาก-น้อย)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="banner1-asc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M7 12h10M11 18h2"/>
-                      </svg>
-                      Banner ลำดับที่ 1 (น้อย-มาก)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="banner2-desc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M7 12h10M11 18h2"/>
-                      </svg>
-                      Banner ลำดับที่ 2 (มาก-น้อย)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="banner2-asc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M7 12h10M11 18h2"/>
-                      </svg>
-                      Banner ลำดับที่ 2 (น้อย-มาก)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="detail-desc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M7 12h10M11 18h2"/>
-                      </svg>
-                      รายละเอียดทัวร์ (มาก-น้อย)
-                    </button>
-                    <button type="button" class="sort-option" data-sort="detail-asc">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M7 12h10M11 18h2"/>
-                      </svg>
-                      รายละเอียดทัวร์ (น้อย-มาก)
-                    </button>
-                  </div>
-                </div>
-                <div class="export-dropdown">
-                  <button type="button" class="btn btn-secondary export-btn" id="exportBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                    </svg>
-                    Export
-                    <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                  </button>
-                  <div class="export-menu" id="exportMenu">
-                    <button type="button" class="export-option" data-format="csv">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                      </svg>
-                      Export เป็น CSV
-                    </button>
-                    <button type="button" class="export-option" data-format="pdf">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <line x1="10" y1="9" x2="8" y2="9"/>
-                      </svg>
-                      Export เป็น PDF Report
-                    </button>
-                  </div>
-                </div>
-                <label class="banner1-filter-checkbox" id="banner1FilterLabel">
-                  <input type="checkbox" id="banner1FilterCheckbox" />
-                  <span class="banner1-filter-text">แสดงเฉพาะโปรแกรม Banner ลำดับที่ 1</span>
-                </label>
+                <div id="tim-export-csv-host"></div>
+                <div id="tim-export-pdf-host"></div>
+                <div id="tim-sort-host"></div>
               </div>
+            </div>
+
+            <!-- Table-search row sits above the result table: search input
+                 on the left, banner1 filter checkbox on the right — both
+                 act on the rows below so they share a row. -->
+            <div class="results-table-search">
+              <div id="tim-table-search-host"></div>
+              <label class="banner1-filter-checkbox" id="banner1FilterLabel">
+                <input type="checkbox" id="banner1FilterCheckbox" />
+                <span class="banner1-filter-text">แสดงเฉพาะโปรแกรม Banner ลำดับที่ 1</span>
+              </label>
             </div>
 
             <!-- Table -->
@@ -579,7 +479,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                 </svg>
-                ดาวน์โหลด
+                Export
               </a>
               <button type="button" class="btn btn-secondary" id="copyImageUrl">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -595,6 +495,6 @@
       </div>
     </div>
 
-    <script src="tour-image-manager.js?v=20241225-1"></script>
+    <script src="tour-image-manager.js?v=20260428a"></script>
   </body>
 </html>
