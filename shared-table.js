@@ -37,9 +37,36 @@
     return sortDir === 'asc' ? 'ascending' : 'descending';
   }
 
-  function renderHeadHTML(columns, sortKey, sortDir) {
-    return '<tr>' + columns.map(function (col) {
+  // Optional group-header row: renders above the main column header row
+  // with colspan grouping. Each group is { label, span, className? } and
+  // `span` must sum to columns.length. Invalid groupings fall back to
+  // omitting the group row rather than breaking the table.
+  function renderGroupRowHTML(groupColumns, totalCols) {
+    if (!Array.isArray(groupColumns) || groupColumns.length === 0) return '';
+    var sum = 0;
+    for (var i = 0; i < groupColumns.length; i++) {
+      var span = Number(groupColumns[i].span) || 0;
+      if (span <= 0) {
+        console.warn('[SharedTable] groupColumns[' + i + '].span must be >= 1');
+        return '';
+      }
+      sum += span;
+    }
+    if (sum !== totalCols) {
+      console.warn('[SharedTable] groupColumns spans (' + sum + ') do not match columns.length (' + totalCols + ')');
+      return '';
+    }
+    return '<tr class="shared-group-row">' + groupColumns.map(function (g) {
+      var cls = 'shared-group-th' + (g.className ? ' ' + String(g.className) : '');
+      return '<th class="' + cls + '" colspan="' + g.span + '">' + escapeHtml(g.label || '') + '</th>';
+    }).join('') + '</tr>';
+  }
+
+  function renderHeadHTML(columns, sortKey, sortDir, groupColumns) {
+    var group = renderGroupRowHTML(groupColumns, columns.length);
+    var cols = '<tr class="shared-col-row">' + columns.map(function (col) {
       var cls = 'shared-th ' + alignClass(col.align);
+      if (col.className) cls += ' ' + String(col.className);
       var sortable = col.sortable !== false; // default sortable unless explicitly false
       if (sortable) {
         var active = sortKey === col.key ? (' ' + (sortDir === 'asc' ? 'sort-asc' : 'sort-desc')) : '';
@@ -52,6 +79,7 @@
       }
       return '<th class="' + cls + '">' + escapeHtml(col.label) + '</th>';
     }).join('') + '</tr>';
+    return group + cols;
   }
 
   function renderBodyHTML(columns, rows) {
@@ -73,7 +101,9 @@
         } else {
           cellHtml = escapeHtml(raw);
         }
-        return '<td class="shared-td ' + alignClass(col.align) + '">' + cellHtml + '</td>';
+        var cellCls = 'shared-td ' + alignClass(col.align);
+        if (col.cellClassName) cellCls += ' ' + String(col.cellClassName);
+        return '<td class="' + cellCls + '">' + cellHtml + '</td>';
       }).join('') + '</tr>';
     }).join('');
   }
@@ -83,11 +113,15 @@
    *
    * @param {Object} cfg
    * @param {HTMLElement} cfg.containerEl - parent to receive the <table>
-   * @param {Array<{key, label, sortable?, align?, format?}>} cfg.columns
+   * @param {Array<{key, label, sortable?, align?, format?, className?, cellClassName?}>} cfg.columns
    * @param {Array<Object>} cfg.rows
    * @param {string|null} [cfg.sortKey]
    * @param {'asc'|'desc'} [cfg.sortDir]
    * @param {function(key:string):void} [cfg.onSort]
+   * @param {string} [cfg.tableClassName] - extra class appended to <table>
+   * @param {Array<{label, span, className?}>} [cfg.groupColumns] - optional
+   *   grouped header row. `span` values must sum to columns.length; invalid
+   *   configs skip the group row and log a warning.
    */
   function render(cfg) {
     cfg = cfg || {};
@@ -100,16 +134,18 @@
       return;
     }
 
-    var columns  = cfg.columns;
-    var rows     = Array.isArray(cfg.rows) ? cfg.rows : [];
-    var sortKey  = cfg.sortKey || null;
-    var sortDir  = cfg.sortDir === 'asc' ? 'asc' : 'desc';
-    var onSort   = typeof cfg.onSort === 'function' ? cfg.onSort : null;
+    var columns       = cfg.columns;
+    var rows          = Array.isArray(cfg.rows) ? cfg.rows : [];
+    var sortKey       = cfg.sortKey || null;
+    var sortDir       = cfg.sortDir === 'asc' ? 'asc' : 'desc';
+    var onSort        = typeof cfg.onSort === 'function' ? cfg.onSort : null;
+    var groupColumns  = Array.isArray(cfg.groupColumns) ? cfg.groupColumns : null;
+    var extraTblClass = cfg.tableClassName ? ' ' + String(cfg.tableClassName) : '';
 
     var html =
       '<div class="shared-table-wrap">' +
-        '<table class="shared-table">' +
-          '<thead>' + renderHeadHTML(columns, sortKey, sortDir) + '</thead>' +
+        '<table class="shared-table' + extraTblClass + '">' +
+          '<thead>' + renderHeadHTML(columns, sortKey, sortDir, groupColumns) + '</thead>' +
           '<tbody>' + renderBodyHTML(columns, rows) + '</tbody>' +
         '</table>' +
       '</div>';

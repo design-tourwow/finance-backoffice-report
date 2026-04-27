@@ -76,6 +76,10 @@
             <span class="time-granularity-label">เซลล์ดูแล</span>
             <div class="filter-sort-dropdown work-list-filter" id="workListSellerFilter"></div>
           </div>
+          <!-- ค้นหา + เริ่มใหม่ button pair — filter changes only update
+               state; results refresh on ค้นหา click. เริ่มใหม่ resets state
+               to default without touching the currently-rendered list. -->
+          <div class="wl-filter-actions" id="wlFilterActionsHost"></div>
         </div>
 
         <div id="workListResults"></div>
@@ -202,8 +206,8 @@
       value: selectedTaskTypeId,
       options: [{ value: '', label: 'ทั้งหมด' }].concat(taskTypes),
       onChange: function (nextValue) {
+        // Defer apply: update state only. User presses ค้นหา to refresh.
         selectedTaskTypeId = nextValue;
-        renderResults();
       }
     });
 
@@ -213,8 +217,32 @@
       value: selectedSellerId,
       options: [{ value: '', label: 'ทั้งหมด' }].concat(sellers),
       onChange: function (nextValue) {
+        // Defer apply: update state only. User presses ค้นหา to refresh.
         selectedSellerId = nextValue;
-        renderResults();
+      }
+    });
+
+    initWorkListFilterActions();
+  }
+
+  // Mount ค้นหา + เริ่มใหม่ buttons. Filter changes (taskType, seller) just
+  // update state; results refresh on ค้นหา. Role tab clicks already trigger
+  // a full reload so they stay as immediate-apply — they're a view switcher,
+  // not a filter.
+  function initWorkListFilterActions() {
+    if (!window.SharedFilterActions || !window.SharedFilterActions.mount) return;
+    if (!document.getElementById('wlFilterActionsHost')) return;
+    window.SharedFilterActions.mount({
+      containerId: 'wlFilterActionsHost',
+      searchType : 'button',
+      resetType  : 'button',
+      onSearch   : function () { renderResults(); },
+      onReset    : function () {
+        selectedTaskTypeId = '';
+        selectedSellerId = '';
+        renderFilters(); // Re-mount the dropdowns with defaults
+        // NOTE: skip renderResults — per spec, เริ่มใหม่ only resets the
+        // filter UI; current results stay visible until ค้นหา.
       }
     });
   }

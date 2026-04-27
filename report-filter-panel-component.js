@@ -110,6 +110,10 @@
     // if loaded; fall back to direct button wiring for legacy pages that
     // haven't added the <script> tag yet.
     function onSearchClick() { onApply(state); }
+    // Reset contract: clears filter UI + state back to page defaults ONLY.
+    // Does NOT call onApply() — the caller presses "ค้นหา" to re-query. This
+    // matches the behaviour users expect from every other report page and
+    // avoids accidentally wiping the currently-visible results.
     function onResetClick() {
       state.mode         = 'monthly';
       state.year         = utils.getCurrentYear();
@@ -120,7 +124,6 @@
       state.job_position = null;
       state.user_id      = null;
       init(cfg);
-      onApply(state);
     }
 
     if (window.SharedFilterActions && document.getElementById(ids.actions)) {
@@ -170,6 +173,8 @@
         valueContainerId: ids.period,
         availablePeriods: options.availablePeriods || { years: [] },
         multiSelect     : false,
+        // 'all' is prepended automatically by SharedPeriodSelector so the
+        // user can pick "ทั้งหมด" to skip date filtering — no caller change.
         modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
         initialState    : {
           mode      : state.mode,

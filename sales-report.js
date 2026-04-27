@@ -659,18 +659,92 @@
     });
 
     // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่ into
-    // the host, wiring click handlers to the existing loadReport / reload
-    // flow. The rendered buttons keep id="crp-btn-search" / "crp-btn-reset"
-    // for continuity with any other code that still queries them.
+    // the host. Reset clears filter UI back to defaults only; the user
+    // still has to press ค้นหา to re-query, so we never overwrite the
+    // currently-visible results silently.
     if (window.SharedFilterActions) {
       window.SharedFilterActions.mount({
         containerId: 'crp-filter-actions-host',
         searchId   : 'crp-btn-search',
         resetId    : 'crp-btn-reset',
         onSearch   : loadReport,
-        onReset    : function () { window.location.reload(); }
+        onReset    : resetFiltersToDefault
       });
     }
+
+  }
+
+  // Reset contract: restore every filter input/UI widget to the page default
+  // (current month, admin defaults, etc.) WITHOUT refetching the report.
+  function resetFiltersToDefault() {
+    const jobPos   = currentUser ? currentUser.job_position : 'admin';
+    const sellerId = currentUser ? String(currentUser.id || '') : '';
+    createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
+    paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
+    createdPeriodState = getDefaultMonthlyPeriodState();
+    paidPeriodState = getDefaultMonthlyPeriodState();
+    selectedJobPosition  = jobPos;
+    selectedSellerId     = isAdmin() ? '' : sellerId;
+    selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
+    selectedTravelerFilter = 'all';
+
+    mountPeriodSelectors();
+
+    // Re-init dropdowns so their selected label reflects the default.
+    if (isAdmin()) {
+      FilterSortDropdownComponent.initDropdown({
+        containerId: 'crp-dd-position',
+        defaultLabel: labelOfJobPosition(jobPos),
+        defaultIcon: getPersonIcon(),
+        options: [
+          { value: 'ts',    label: 'เซลล์', icon: getPersonIcon(), active: jobPos === 'ts' },
+          { value: 'crm',   label: 'CRM',   icon: getPersonIcon(), active: jobPos === 'crm' },
+          { value: 'admin', label: 'Admin', icon: getPersonIcon(), active: jobPos === 'admin' },
+        ],
+        onChange: function (val) { selectedJobPosition = val; }
+      });
+
+      window.FilterSearchDropdown.init({
+        containerId: 'crp-dd-seller',
+        defaultLabel: 'ทั้งหมด',
+        defaultIcon: getAllIcon(),
+        options: [
+          { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
+          ...sellers.map(s => ({
+            value: String(s.id),
+            label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
+            icon: getPersonIcon(),
+            active: false
+          }))
+        ],
+        placeholder: 'ค้นหาเซลล์...',
+        onChange: function (val) { selectedSellerId = val; }
+      });
+
+      FilterSortDropdownComponent.initDropdown({
+        containerId: 'crp-dd-status',
+        defaultLabel: 'ทั้งหมด',
+        defaultIcon: getStatusIcon('all'),
+        options: [
+          { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all'),          active: true  },
+          { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled'), active: false },
+          { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled'),     active: false },
+        ],
+        onChange: function (val) { selectedOrderStatus = val; }
+      });
+    }
+
+    FilterSortDropdownComponent.initDropdown({
+      containerId: 'crp-dd-travelers',
+      defaultLabel: 'ทั้งหมด',
+      defaultIcon: getAllIcon(),
+      options: [
+        { value: 'all',          label: 'ทั้งหมด',   icon: getAllIcon(),    active: true  },
+        { value: 'exclude_zero', label: 'ยกเว้น 0',  icon: getPersonIcon(), active: false },
+      ],
+      onChange: function (val) { selectedTravelerFilter = val; }
+    });
+
   }
 
   function labelOfJobPosition(pos) {
@@ -928,14 +1002,8 @@
         const name = s.seller;
         const rank = i + 1;
         const rankClass = rank <= 3 ? ` crp-summary-rank--${rank}` : '';
-        const trophyPalette = {
-          1: { c0: '#FFC54D', c1: '#C19D72', c2: '#A88763' },
-          2: { c0: '#D4D4D4', c1: '#A8A8A8', c2: '#8C8C8C' },
-          3: { c0: '#CD7F32', c1: '#A0622A', c2: '#8B4513' },
-        };
-        const p = trophyPalette[rank];
-        const trophyIcon = rank <= 3
-          ? `<svg width="20" height="20" viewBox="0 0 120 120" style="flex-shrink:0;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><g><path fill="${p.c0}" d="M101,34l-0.2-1.7h-10c0.5-3.4,0.8-6.9,1-10.5c0.1-1.9-1.4-3.5-3.1-3.5H31.4c-1.8,0-3.2,1.6-3.1,3.5c0.1,3.6,0.5,7.1,1,10.5h-10L19,34c-0.1,0.4-1.2,10.6,5.4,19.8c4.3,6,11,10.1,19.7,12.2c2.8,2.8,5.9,4.9,9.2,6.2c-0.4,4.1-0.9,8.1-1.4,11.8h16.3c-0.6-3.8-1.1-7.7-1.5-11.8c3.3-1.2,6.4-3.3,9.2-6.2c8.7-2.1,15.4-6.2,19.7-12.2C102.2,44.6,101,34.4,101,34z M27.3,51.3c-4.2-5.8-4.7-12.1-4.7-15.1h7.3c1.9,9.5,5.3,17.9,9.6,24.2C34.3,58.4,30.2,55.3,27.3,51.3z M92.7,51.3c-2.9,4-7,7.1-12.2,9.1c4.4-6.4,7.7-14.7,9.6-24.2h7.3C97.4,39.2,96.8,45.5,92.7,51.3z"/><path fill="${p.c1}" d="M77,98.1H43c-1,0-1.8-0.8-1.8-1.8V83.5c0-1,0.8-1.8,1.8-1.8h34c1,0,1.8,0.8,1.8,1.8v12.8C78.8,97.3,78,98.1,77,98.1z"/><path fill="${p.c2}" d="M37.9,101.9h44.2c1,0,1.8-0.8,1.8-1.8v-3.8c0-1-0.8-1.8-1.8-1.8H37.9c-1,0-1.8,0.8-1.8,1.8v3.8C36.1,101,36.9,101.9,37.9,101.9z"/><path fill="${p.c0}" d="M68,91H52c-0.7,0-1.2-0.5-1.2-1.2v-2.5c0-0.7,0.5-1.2,1.2-1.2h16c0.7,0,1.2,0.5,1.2,1.2v2.5C69.2,90.5,68.6,91,68,91z"/></g></svg>`
+        const trophyIcon = window.SharedTrophyRank
+          ? window.SharedTrophyRank.getTrophySvg(rank)
           : '';
         return `
           <tr>
@@ -1190,22 +1258,27 @@
     return (quarterMatch && quarterMatch.label) || ('Q' + Number(quarterNum));
   }
 
+  // Render the active period as a print-friendly value. The card label
+  // ("วันที่สร้าง Order" / "วันชำระงวด 1") already implies "this is a
+  // date filter", so we drop the รายปี/รายไตรมาส/รายเดือน prefixes and
+  // show just the resolved date — same shape that appears in the
+  // dropdown trigger so the printed report mirrors what the user picked.
   function formatPeriodStateForPrint(state) {
-    if (!state || !state.mode) return '-';
+    if (!state || !state.mode || state.mode === 'all') return 'ทั้งหมด';
     if (state.mode === 'monthly') {
-      return 'รายเดือน ' + getThaiMonthLabel(state.year, state.month) + ' ' + getThaiYearLabel(state.year);
+      return getThaiMonthLabel(state.year, state.month) + ' ' + getThaiYearLabel(state.year);
     }
     if (state.mode === 'quarterly') {
-      return 'รายไตรมาส ' + getQuarterLabel(state.year, state.quarter) + ' ' + getThaiYearLabel(state.year);
+      return getQuarterLabel(state.year, state.quarter) + ' / ' + getThaiYearLabel(state.year);
     }
     if (state.mode === 'yearly') {
-      return 'รายปี ' + getThaiYearLabel(state.year);
+      return getThaiYearLabel(state.year);
     }
     if (state.mode === 'custom') {
-      if (!state.customFrom || !state.customTo) return '-';
-      return 'Report ช่วงเวลา ' + formatDate(state.customFrom) + ' - ' + formatDate(state.customTo);
+      if (!state.customFrom || !state.customTo) return 'ทั้งหมด';
+      return formatDate(state.customFrom) + ' - ' + formatDate(state.customTo);
     }
-    return '-';
+    return 'ทั้งหมด';
   }
 
   function buildPrintHighlights() {
@@ -1491,22 +1564,9 @@
       <div style="font-size:14px;color:#1f2937;font-weight:600;">พิมพ์วันที่: ${escHtml(new Date().toLocaleString('th-TH'))}</div>
     `;
 
-    const summaryLine = document.createElement('div');
-    summaryLine.style.display = 'flex';
-    summaryLine.style.flexWrap = 'wrap';
-    summaryLine.style.gap = '18px';
-    summaryLine.style.alignItems = 'center';
-    summaryLine.style.marginBottom = '10px';
-    summaryLine.style.color = '#243b53';
-    summaryLine.style.fontSize = '13px';
-    summaryLine.style.fontWeight = '600';
-    summaryLine.innerHTML = `
-      <span>ยอดจองรวม: ${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))} บาท</span>
-      <span>คอมรวม: ${escHtml(formatNumber(currentData?.summary?.total_commission || 0))} บาท</span>
-      <span>ส่วนลด: ${escHtml(formatNumber(currentData?.summary?.total_discount || 0))} บาท</span>
-      <span>คอมสุทธิ: ${escHtml(formatNumber(netCommission || 0))} บาท</span>
-    `;
-
+    // Top-of-page totals line removed by request — totals now appear only
+    // on the main commission table's footer row, no need to duplicate at
+    // the top of every page.
     const highlightGrid = document.createElement('div');
     highlightGrid.style.display = 'grid';
     highlightGrid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
@@ -1582,25 +1642,91 @@
       const footer = document.createElement('tr');
       footer.style.background = '#d7e4f1';
       footer.style.fontWeight = '700';
+      // 12-column main table — cols 1–6 (เซลล์/รหัส/จองวันที่/ลูกค้า/ประเทศ/
+      // เดินทาง) carry no numeric totals so we colspan them under the "รวม
+      // X รายการ" label, then place each summed value directly under its
+      // own column header (7,10,11,12) with cols 8,9 left blank.
+      const cellBorder = 'border-top:2px solid #9fb6cc;';
       footer.innerHTML = `
-        <td colspan="4" style="text-align:center;color:#243b53;border-top:2px solid #9fb6cc;">รวม ${escHtml(countText || '')}</td>
-        <td style="border-top:2px solid #9fb6cc;"></td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
-        <td style="border-top:2px solid #9fb6cc;"></td>
-        <td style="border-top:2px solid #9fb6cc;"></td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
-        <td style="text-align:right;color:#16a34a;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(netCommission || 0))}</td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
+        <td colspan="6" style="text-align:center;color:#243b53;${cellBorder}">รวม ${escHtml(countText || '')}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
+        <td style="${cellBorder}"></td>
+        <td style="${cellBorder}"></td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
+        <td style="text-align:right;color:#16a34a;${cellBorder}">${escHtml(formatNumber(netCommission || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
       `;
       tbody.appendChild(footer);
     }
 
+    // Source-node child layout (used by clonePdfHeader):
+    //   children[0] = title
+    //   children[1] = highlightGrid (filter context cards)
+    //   children[2] = filterLine (job position / order status)
+    //   children[3] = tableWrapperClone (main commission table)
     wrapper.appendChild(title);
-    wrapper.appendChild(summaryLine);
     wrapper.appendChild(highlightGrid);
     wrapper.appendChild(filterLine);
     wrapper.appendChild(tableWrapperClone);
     document.body.appendChild(wrapper);
+    return wrapper;
+  }
+
+  // Clone a single Telesales / CRM ranking group from the live DOM, restyled
+  // for full-page PDF rendering. Returns null when the group's tbody is
+  // empty (e.g. admin filtered to the other role) so the caller can skip
+  // building a page for it.
+  function clonePdfSellerGroup(groupClass) {
+    const live = document.querySelector('.crp-summary-group--' + groupClass);
+    if (!live) return null;
+    const hasRows = live.querySelector('.crp-summary-table tbody tr td');
+    if (!hasRows) return null;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'crp-pdf-seller-page';
+    // No flex: 1 — let each group take its natural content height so the
+    // two ranking tables stack tightly together. If a group ever grows it
+    // pushes the next one down naturally; we don't reserve empty space.
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+
+    const groupClone = live.cloneNode(true);
+    // Width is controlled by the parent .groupsRow flex container in
+    // buildSellerSummaryPage (TS + CRM side-by-side, each flex:1). Strip
+    // any inherited margin from the live grid layout.
+    groupClone.style.margin = '0';
+
+    // Two groups now share one page (TS stacked over CRM), so each table
+    // gets ~half the vertical real estate. Sizes are tuned to read well on
+    // an A4-landscape page (1520px wide) — the live web sizes (14px) feel
+    // tiny when scaled into a printout, so we bump everything ~30% larger.
+    groupClone.querySelectorAll('.crp-summary-group-header').forEach(el => {
+      el.style.padding = '14px 20px';
+    });
+    groupClone.querySelectorAll('.crp-summary-group-title').forEach(el => {
+      el.style.fontSize = '22px';
+    });
+    groupClone.querySelectorAll('.crp-summary-group-count').forEach(el => {
+      el.style.fontSize = '16px';
+    });
+    groupClone.querySelectorAll('.crp-summary-table thead th').forEach(th => {
+      th.style.position = 'static';
+      th.style.fontSize = '15px';
+      th.style.padding = '12px 16px';
+    });
+    groupClone.querySelectorAll('.crp-summary-table tbody td').forEach(td => {
+      td.style.fontSize = '15px';
+      td.style.padding = '10px 16px';
+    });
+    // Strip interactivity — PDF is a static snapshot of the current sort.
+    groupClone.querySelectorAll('.crp-summary-table thead th .sort-icon').forEach(el => el.remove());
+    groupClone.querySelectorAll('.crp-summary-table thead th[data-sort]').forEach(th => {
+      th.style.cursor = 'default';
+      th.removeAttribute('tabindex');
+      th.removeAttribute('role');
+    });
+
+    wrapper.appendChild(groupClone);
     return wrapper;
   }
 
@@ -1628,10 +1754,14 @@
   }
 
   function clonePdfHeader(sourceNode) {
-    const title = sourceNode.children[0].cloneNode(true);
-    const summary = sourceNode.children[1].cloneNode(true);
-    const filters = sourceNode.children[2].cloneNode(true);
-    return { title, summary, filters };
+    // Source-node child layout after the totals line was dropped:
+    //   children[0] = title
+    //   children[1] = highlightGrid (filter context cards)
+    //   children[2] = filterLine    (job position / order status)
+    const title       = sourceNode.children[0].cloneNode(true);
+    const highlights  = sourceNode.children[1].cloneNode(true);
+    const filters     = sourceNode.children[2].cloneNode(true);
+    return { title, highlights, filters };
   }
 
   function clonePdfTableShell(sourceTableWrapper) {
@@ -1649,11 +1779,76 @@
     return { tableWrapper, table, tbody };
   }
 
+  // Combined summary page: Telesales + CRM stacked vertically on a single
+  // dedicated page (admin view). Empty groups are silently skipped so the
+  // same builder handles all four scenarios:
+  //   - both filled     → 1 page with both groups stacked
+  //   - only TS filled  → 1 page with just TS
+  //   - only CRM filled → 1 page with just CRM
+  //   - none filled     → null (no summary page in the PDF)
+  function buildSellerSummaryPage(sourceNode) {
+    const groups = ['ts', 'crm']
+      .map(clonePdfSellerGroup)
+      .filter(Boolean);
+    if (!groups.length) return null;
+
+    const page = document.createElement('div');
+    page.style.width = '1520px';
+    page.style.minHeight = '1040px';
+    page.style.background = '#ffffff';
+    page.style.padding = '22px 24px 18px';
+    page.style.boxSizing = 'border-box';
+    page.style.display = 'flex';
+    page.style.flexDirection = 'column';
+    page.style.gap = '14px';
+
+    // Title + filter highlights mirror the main table pages so the summary
+    // doesn't read as a context-less first page. The totals line is still
+    // omitted — each ranking group's header already shows its own counts
+    // ("5 คน · 78 orders"), so a page-level totals line would just repeat
+    // information.
+    const clones = clonePdfHeader(sourceNode);
+    page.appendChild(clones.title);
+    page.appendChild(clones.highlights);
+    page.appendChild(clones.filters);
+
+    // Side-by-side row container so TS sits on the left, CRM on the right
+    // (mirrors the live dashboard). When only one group has data, that
+    // group simply takes the full row width via flex:1.
+    const groupsRow = document.createElement('div');
+    groupsRow.style.display = 'flex';
+    groupsRow.style.gap = '16px';
+    groupsRow.style.alignItems = 'flex-start';
+    groups.forEach(function (g) {
+      g.style.flex = '1';
+      g.style.minWidth = '0';
+      groupsRow.appendChild(g);
+    });
+    page.appendChild(groupsRow);
+
+    const footer = document.createElement('div');
+    footer.className = 'crp-pdf-page-footer';
+    footer.style.marginTop = 'auto';
+    footer.style.textAlign = 'right';
+    footer.style.fontSize = '12px';
+    footer.style.fontWeight = '600';
+    footer.style.color = '#334155';
+    page.appendChild(footer);
+    return page;
+  }
+
   function buildPaginatedPdfPages(sourceNode) {
     const countText = sourceNode.dataset.countText || '';
     const sourceTableWrapper = sourceNode.querySelector('.dashboard-table-wrapper.crp-table-scroll');
     const sourceRows = Array.from(sourceNode.querySelectorAll('.crp-table tbody tr'));
     if (!sourceTableWrapper || !sourceRows.length) return [sourceNode];
+
+    // Combined Telesales + CRM ranking page (admin only). Empty groups are
+    // skipped inside buildSellerSummaryPage; if neither has data the
+    // summary page is omitted entirely and only the main table prints.
+    const summaryPages = [];
+    const combinedSummaryPage = buildSellerSummaryPage(sourceNode);
+    if (combinedSummaryPage) summaryPages.push(combinedSummaryPage);
 
     const footerRow = sourceRows[sourceRows.length - 1] && sourceRows[sourceRows.length - 1].querySelector('td[colspan="4"]')
       ? sourceRows[sourceRows.length - 1]
@@ -1679,7 +1874,7 @@
       const clones = clonePdfHeader(sourceNode);
       if (includeFullHeader) {
         page.appendChild(clones.title);
-        page.appendChild(clones.summary);
+        page.appendChild(clones.highlights);
         page.appendChild(clones.filters);
       } else {
         const miniHeader = clones.title.cloneNode(true);
@@ -1743,14 +1938,22 @@
     if (currentPageRows.length) pagesRows.push(currentPageRows);
 
     const builtPages = [];
-    const totalPages = pagesRows.length;
+    const totalPages = summaryPages.length + pagesRows.length;
+    // Summary pages come first; their footer text is patched once we know
+    // both counts (so we can show "หน้า 1/5" etc. consistently).
+    summaryPages.forEach(function (page, idx) {
+      const footer = page.querySelector('.crp-pdf-page-footer');
+      if (footer) footer.textContent = 'หน้า ' + (idx + 1) + '/' + totalPages;
+      builtPages.push(page);
+    });
 
     pagesRows.forEach((rowIndexes, pageIdx) => {
-      const { page, footer } = createPageShell(pageIdx + 1, totalPages);
+      const overallPageNumber = summaryPages.length + pageIdx + 1;
+      const { page, footer } = createPageShell(overallPageNumber, totalPages);
       const clones = clonePdfHeader(sourceNode);
       if (pageIdx === 0) {
         page.appendChild(clones.title);
-        page.appendChild(clones.summary);
+        page.appendChild(clones.highlights);
         page.appendChild(clones.filters);
       } else {
         const miniHeader = clones.title.cloneNode(true);
@@ -1764,7 +1967,11 @@
       rowIndexes.forEach(idx => {
         parts.tbody.appendChild(bodyRows[idx].cloneNode(true));
       });
-      if (pageIdx === totalPages - 1 && footerRow) {
+      // Append the totals footer row only on the FINAL main-table page —
+      // compare against `pagesRows.length - 1` (last main-table index),
+      // not `totalPages - 1` which now includes the leading summary
+      // page(s) and would never match (footer row got dropped pre-fix).
+      if (pageIdx === pagesRows.length - 1 && footerRow) {
         parts.tbody.appendChild(footerRow.cloneNode(true));
       }
       page.appendChild(parts.tableWrapper);
@@ -1825,6 +2032,15 @@
 
       for (let i = 0; i < pages.length; i += 1) {
         if (i > 0) doc.addPage();
+        // Park each page offscreen while html2canvas reads it. createPageShell
+        // and buildSellerSummaryPage produce 1520×1040px boxes that would
+        // otherwise flash visibly below the report (looks like a screenshot
+        // taking place). position:fixed + far-negative-left + z-index:-1
+        // keeps the layout intact for canvas measurement but invisible.
+        pages[i].style.position = 'fixed';
+        pages[i].style.left = '-20000px';
+        pages[i].style.top = '0';
+        pages[i].style.zIndex = '-1';
         document.body.appendChild(pages[i]);
         const canvas = await window.html2canvas(pages[i], {
           scale: 2,

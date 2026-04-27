@@ -64,6 +64,18 @@
   grid-column: 1 / -1;
 }
 
+/* ค้นหา + เริ่มใหม่ button pair inside .time-granularity-control. Spans the
+   full row and right-aligns so it visually echoes /commission-report-plus. */
+.time-granularity-control > .wd-filter-actions,
+.time-granularity-control > .sbc-filter-actions,
+.time-granularity-control > .wl-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
 /* ---------------------------------------------------------------------------
    Shared period selector — "กำหนดเอง" (custom date range) mode
    When users pick the last mode option, the value slot renders two native

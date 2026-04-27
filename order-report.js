@@ -47,6 +47,15 @@
       return;
     }
 
+    // Fetch available periods first so the period dropdowns render with the
+    // canonical "2568 (2025)" labels instead of falling back to plain CE
+    // years. SharedFilterService.getAvailablePeriods already swallows
+    // errors and returns { years: [] }, so we can call it inline.
+    if (window.SharedFilterService) {
+      const periods = await window.SharedFilterService.getAvailablePeriods();
+      if (periods && Array.isArray(periods.years)) availablePeriods = periods;
+    }
+
     // Initialize components
     initTabs();
     initFilters();
@@ -54,10 +63,10 @@
     initFormHandler();
     initTableSearch();
     initExportButton();
-    
+
     // Load initial data
     await loadInitialData();
-    
+
     console.log('✅ Order Report initialized');
   }
 
@@ -476,6 +485,7 @@
       loadTabData('country')
     ]);
   }
+
 
   // Load summary
   async function loadSummary() {

@@ -126,6 +126,41 @@
   white-space: nowrap;
 }
 
+/* SharedTable grouped header row: sits above the main column row and
+   spans columns via colspan. Callers pass groupColumns:[{label,span,className?}]
+   to SharedTable.render. Default look is a muted band; the optional
+   `className` lets pages override colour per group (e.g. .group-primary,
+   .group-accent). Sticky-top keeps the group labels pinned in scroll tables. */
+.shared-table thead tr.shared-group-row th,
+.shared-group-th {
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1e3a8a;
+  background: #eef2ff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.shared-group-th.group-accent { background: #ecfdf5; color: #065f46; }
+.shared-group-th.group-neutral { background: #f3f4f6; color: #374151; }
+.shared-group-th.group-warning { background: #fef3c7; color: #78350f; }
+
+/* When a group row is present, offset the column row sticky top by the
+   group-row height. Pages can override via inline --shared-group-h. */
+.shared-table thead tr.shared-col-row th {
+  position: sticky;
+  top: var(--shared-group-h, 0px);
+  z-index: 2;
+}
+.shared-table thead tr.shared-group-row th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
 /* SharedTable's sortable header: the <th> is .shared-th and contains a
    <button class="shared-sort-btn">. Keep the button visually identical to
    plain header text — colour + typography inherit. */
@@ -314,6 +349,7 @@
   color: var(--color-text);
   font-size: 16px;
   font-family: var(--font-family);
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;

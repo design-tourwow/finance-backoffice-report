@@ -217,75 +217,83 @@
     await loadTabData(tabName);
   }
 
+  // Cached option lists so the "clear" path can re-mount the dropdowns
+  // with the same data set instead of refetching from the API.
+  let countryOptionsCache  = [];
+  let supplierOptionsCache = [];
+
   // Initialize filters
   async function initFilters() {
     console.log('🔧 Initializing filters...');
-    
+
     try {
-      // Initialize country dropdown (Multi-select like tour-image-manager)
-      console.log('📍 Creating country dropdown...');
-      countryDropdownInstance = SearchableDropdownComponent.initMultiSelect({
-        wrapperId: 'countryDropdownWrapper',
-        placeholder: 'ประเทศทั้งหมด',
-        options: [],
-        onChange: (values, labels) => {
-          document.getElementById('filterCountry').value = values.join(',');
-          console.log('Countries selected:', values, labels);
-        }
-      });
-      
-      if (!countryDropdownInstance) {
-        console.error('❌ Failed to create country dropdown');
-      } else {
-        console.log('✅ Country dropdown created');
-      }
+      // Load countries + suppliers up front, then mount each FilterSearchDropdown
+      // with the full option list. (FilterSearchDropdown is mount-once: to
+      // change options or active state, we re-init the host.)
+      console.log('🌍 Loading countries + suppliers...');
+      const [countriesResponse, suppliersResponse] = await Promise.all([
+        SalesByCountryAPI.getCountries(),
+        SalesByCountryAPI.getSuppliers()
+      ]);
 
-      // Initialize supplier dropdown (Multi-select like tour-image-manager)
-      console.log('🏢 Creating supplier dropdown...');
-      supplierDropdownInstance = SearchableDropdownComponent.initMultiSelect({
-        wrapperId: 'supplierDropdownWrapper',
-        placeholder: 'เลือก Supplier',
-        options: [],
-        onChange: (values, labels) => {
-          document.getElementById('filterSupplier').value = values.join(',');
-          console.log('Suppliers selected:', values, labels);
-        }
-      });
-      
-      if (!supplierDropdownInstance) {
-        console.error('❌ Failed to create supplier dropdown');
-      } else {
-        console.log('✅ Supplier dropdown created');
-      }
-
-      // Load countries
-      console.log('🌍 Loading countries...');
-      const countriesResponse = await SalesByCountryAPI.getCountries();
       if (countriesResponse && countriesResponse.success && countriesResponse.data) {
-        const countryOptions = countriesResponse.data.map(country => ({
-          value: country.id,
-          label: `${country.name_th} (${country.name_en})`
+        countryOptionsCache = countriesResponse.data.map(country => ({
+          value: String(country.id),
+          label: `${country.name_th} (${country.name_en})`,
+          active: false
         }));
-        countryDropdownInstance.updateOptions(countryOptions);
-        console.log('✅ Countries loaded:', countryOptions.length);
+      }
+      if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
+        supplierOptionsCache = suppliersResponse.data.map(supplier => ({
+          value: String(supplier.id),
+          label: `${supplier.name_th} (${supplier.name_en})`,
+          active: false
+        }));
       }
 
-      // Load suppliers
-      console.log('🏢 Loading suppliers...');
-      const suppliersResponse = await SalesByCountryAPI.getSuppliers();
-      if (suppliersResponse && suppliersResponse.success && suppliersResponse.data) {
-        const supplierOptions = suppliersResponse.data.map(supplier => ({
-          value: supplier.id,
-          label: `${supplier.name_th} (${supplier.name_en})`
-        }));
-        supplierDropdownInstance.updateOptions(supplierOptions);
-        console.log('✅ Suppliers loaded:', supplierOptions.length);
-      }
-      
+      mountCountryDropdown(countryOptionsCache);
+      mountSupplierDropdown(supplierOptionsCache);
+
       console.log('✅ Filters initialized successfully');
     } catch (error) {
       console.error('❌ Failed to load filters:', error);
     }
+  }
+
+  // Mount helpers — split out so the reset handler can re-mount with the
+  // same option cache but every option's `active: false` to clear the
+  // selection (FilterSearchDropdown has no clear() method of its own).
+  function mountCountryDropdown(options) {
+    countryDropdownInstance = window.FilterSearchDropdown.init({
+      containerId : 'countryDropdownWrapper',
+      defaultLabel: 'ประเทศทั้งหมด',
+      placeholder : 'ค้นหาประเทศ...',
+      options     : options,
+      multiSelect : true,
+      onChange    : (csv, values) => {
+        document.getElementById('filterCountry').value = (values || []).join(',');
+      }
+    });
+  }
+
+  function mountSupplierDropdown(options) {
+    supplierDropdownInstance = window.FilterSearchDropdown.init({
+      containerId : 'supplierDropdownWrapper',
+      defaultLabel: 'เลือก Supplier',
+      placeholder : 'ค้นหา Supplier...',
+      options     : options,
+      multiSelect : true,
+      onChange    : (csv, values) => {
+        document.getElementById('filterSupplier').value = (values || []).join(',');
+      }
+    });
+  }
+
+  function clearMultiSelectDropdowns() {
+    if (countryDropdownInstance && countryDropdownInstance.destroy) countryDropdownInstance.destroy();
+    if (supplierDropdownInstance && supplierDropdownInstance.destroy) supplierDropdownInstance.destroy();
+    mountCountryDropdown(countryOptionsCache.map(o => Object.assign({}, o, { active: false })));
+    mountSupplierDropdown(supplierOptionsCache.map(o => Object.assign({}, o, { active: false })));
   }
 
   // Initialize form handler
@@ -386,10 +394,9 @@
       // Clear hidden inputs
       document.getElementById('filterCountry').value = '';
       document.getElementById('filterSupplier').value = '';
-      
-      // Clear multi-select dropdowns
-      if (countryDropdownInstance) countryDropdownInstance.clear();
-      if (supplierDropdownInstance) supplierDropdownInstance.clear();
+
+      // Clear multi-select dropdowns by re-mounting with all options inactive.
+      clearMultiSelectDropdowns();
       
       console.log('✅ Form reset - filters cleared (no reload)');
     });
@@ -756,14 +763,18 @@
             </div>
           </div>
 
-          <!-- Country Filter — rendered by FilterSearchDropdown so the
-               dropdown shares the same searchable multi-select UI + country
-               flag icons used in /tour-image-manager. -->
+          <!-- Country Filter — uses the shared FilterSearchDropdown component
+               (same as /tour-image-manager) with country flag icons. -->
           <div class="filter-inline-field">
             <span class="time-granularity-label">ประเทศ</span>
             <div id="countryFilterHost"></div>
           </div>
           <div class="selected-period-badge" id="selectedCountryBadge" style="display: none;"></div>
+          <!-- Search/Reset buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่
+               here. Filter changes only update state; results refresh when
+               the user clicks ค้นหา. "เริ่มใหม่" resets state to default
+               without triggering a query. -->
+          <div class="sbc-filter-actions" id="sbcDashboardFilterActionsHost"></div>
         </div>
 
         <!-- View Mode Tabs -->
@@ -1166,12 +1177,65 @@
         periods: selectedPeriods.slice()
       },
       onChange        : function (state) {
+        // Defer apply: only update local state here. User must press ค้นหา
+        // to refresh results.
         currentTimeGranularity = state.mode;
         selectedPeriods = Array.isArray(state.periods) ? state.periods.slice() : [];
-        if (typeof applyAllFilters === 'function') applyAllFilters();
       }
     });
 
+    initDashboardFilterActions();
+
+  }
+
+  // Mount the shared ค้นหา + เริ่มใหม่ button pair inside the dashboard's
+  // time-granularity-control. Filter changes (period/country) update local
+  // state only — results refresh when the user clicks ค้นหา. "เริ่มใหม่"
+  // resets state to default (monthly, current month, no country selected)
+  // without triggering a query.
+  function initDashboardFilterActions() {
+    if (!window.SharedFilterActions || !window.SharedFilterActions.mount) return;
+    if (!document.getElementById('sbcDashboardFilterActionsHost')) return;
+    window.SharedFilterActions.mount({
+      containerId: 'sbcDashboardFilterActionsHost',
+      searchType : 'button',
+      resetType  : 'button',
+      onSearch   : function () { applyAllFilters(); },
+      onReset    : function () { resetDashboardFiltersToDefault(); }
+    });
+  }
+
+  function resetDashboardFiltersToDefault() {
+    var now = new Date();
+    var monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    currentTimeGranularity = 'monthly';
+    selectedPeriods = [{
+      type : 'monthly',
+      year : now.getFullYear(),
+      quarter: null,
+      month: now.getMonth() + 1,
+      label: monthNames[now.getMonth()] + ' ' + (now.getFullYear() + 543)
+    }];
+    selectedCountries = [];
+
+    if (window.SharedPeriodSelector && window.SharedPeriodSelector.mount) {
+      window.SharedPeriodSelector.mount({
+        modeContainerId : 'sc-period-mode-host',
+        valueContainerId: 'sc-period-value-host',
+        availablePeriods: availablePeriods || { years: [] },
+        multiSelect     : true,
+        modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+        initialState    : { mode: 'monthly', periods: selectedPeriods.slice() },
+        onChange        : function (state) {
+          currentTimeGranularity = state.mode;
+          selectedPeriods = Array.isArray(state.periods) ? state.periods.slice() : [];
+        }
+      });
+    }
+
+    selectedCountries = [];
+    renderCountryItems(availableCountries || []);
+    updateSelectedCountryBadge();
   }
 
   // Initialize period type selector (master dropdown)
@@ -1796,12 +1860,12 @@
     badge.style.display = 'flex';
   }
 
-  // Initialize country filter dropdown
+  // Initialize country filter using the shared FilterSearchDropdown
+  // component (same as /tour-image-manager). Each option renders with a
+  // country flag icon next to its label.
   async function initCountryFilter() {
     if (!document.getElementById('countryFilterHost')) return;
 
-    // Fetch countries from API on first init; subsequent re-renders skip
-    // the network call and just re-mount with the cached list.
     if (!availableCountries || !availableCountries.length) {
       try {
         const response = await SalesByCountryAPI.getCountries();
@@ -1812,22 +1876,21 @@
         console.error('❌ Failed to fetch countries:', error);
       }
     }
-
     renderCountryItems(availableCountries);
   }
 
-  // Mount FilterSearchDropdown at #countryFilterHost with flag icons. Called
-  // both on initial load and whenever availableCountries changes (e.g. after
-  // switching tabs or view modes). onChange syncs selectedCountries and
-  // triggers the same downstream flow (badge + period refresh + applyAll).
+  // Mount FilterSearchDropdown at #countryFilterHost. Called on initial load
+  // and whenever the available list changes (e.g. after period filter
+  // narrows the countries with data). Defers apply — onChange only updates
+  // state; user presses ค้นหา to refresh results.
   function renderCountryItems(countries) {
     const host = document.getElementById('countryFilterHost');
     if (!host) {
-      console.warn('[SalesByCountry] countryFilterHost element missing — skipping country dropdown mount');
+      console.warn('[SalesByCountry] #countryFilterHost missing; dashboard render skipped?');
       return;
     }
     if (!window.FilterSearchDropdown || !window.FilterSearchDropdown.init) {
-      console.error('[SalesByCountry] FilterSearchDropdown missing — ensure filter-search-dropdown-component.js is loaded');
+      console.error('[SalesByCountry] window.FilterSearchDropdown missing; ensure filter-search-dropdown-component.js is loaded');
       return;
     }
 
@@ -1851,6 +1914,8 @@
         multiSelect : true,
         groupLabel  : 'ประเทศ',
         onChange    : async function (_csv, values) {
+          // Defer apply: update state + refresh dependent period dropdown
+          // options, but leave the results untouched until user hits ค้นหา.
           const idSet = new Set((values || []).map(String));
           selectedCountries = (availableCountries || [])
             .filter(c => idSet.has(String(c.id)))
@@ -1862,63 +1927,21 @@
           } else {
             populateTimeDropdowns();
           }
-          applyAllFilters();
         }
       });
-      console.log('[SalesByCountry] country dropdown mounted:', options.length, 'options');
+      console.log('[SalesByCountry] country dropdown mounted with', options.length, 'options');
     } catch (e) {
       console.error('[SalesByCountry] Failed to mount country dropdown:', e);
     }
   }
 
-  // Render country items in dropdown
-  function renderCountryItems(countries) {
-    const container = document.getElementById('countryItemsContainer');
-    if (!container) return;
-
-    container.innerHTML = countries.map(country => {
-      const isSelected = selectedCountries.some(c => c.id === country.id);
-      return `
-        <div class="time-dropdown-item country-item ${isSelected ? 'selected' : ''}" data-country-id="${country.id}" data-country-name="${country.name_th}">
-          <label class="dropdown-checkbox">
-            <input type="checkbox" class="country-checkbox" ${isSelected ? 'checked' : ''} />
-            <span class="checkbox-custom"></span>
-          </label>
-          <span class="dropdown-item-label">${country.name_th}</span>
-          <span class="dropdown-item-count">${country.name_en}</span>
-        </div>
-      `;
-    }).join('');
-
-    // Add click handlers
-    container.querySelectorAll('.country-item').forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const checkbox = this.querySelector('.country-checkbox');
-        if (checkbox && e.target !== checkbox && !e.target.closest('.dropdown-checkbox')) {
-          checkbox.checked = !checkbox.checked;
-        }
-        this.classList.toggle('selected', checkbox?.checked);
-      });
-
-      const checkbox = item.querySelector('.country-checkbox');
-      if (checkbox) {
-        checkbox.addEventListener('click', function(e) {
-          e.stopPropagation();
-          setTimeout(() => {
-            item.classList.toggle('selected', this.checked);
-          }, 0);
-        });
-      }
-    });
-  }
-
-  // Clear country selection (used by the in-badge × button). Resets
-  // selectedCountries and re-mounts the FilterSearchDropdown so the trigger
-  // label reverts to "ประเทศทั้งหมด" with no checkmarks.
+  // Legacy no-op shims — the country dropdown now uses FilterSearchDropdown
+  // which manages its own state via onChange, so there is no separate
+  // confirm/clear button. Kept so callers that still reference these don't
+  // throw; they resync state via renderCountryItems() instead.
   function clearCountrySelection() {
     selectedCountries = [];
-    renderCountryItems(availableCountries);
+    renderCountryItems(availableCountries || []);
   }
 
   // Update selected country badge
@@ -1950,15 +1973,14 @@
     badge.style.display = 'flex';
   }
 
-  // Clear country filter (called from the badge × button). Resets state,
-  // re-mounts the dropdown, refreshes period dropdowns, reloads data.
+  // Clear country filter (called from the badge × button). Resets UI state
+  // only — results stay until user presses ค้นหา.
   window.clearCountryFilter = async function() {
     selectedCountries = [];
-    renderCountryItems(availableCountries);
+    renderCountryItems(availableCountries || []);
     const badge = document.getElementById('selectedCountryBadge');
     if (badge) badge.style.display = 'none';
     populateTimeDropdowns();
-    applyAllFilters();
   };
 
   // Build one filter object per selected period. Flattening N periods to

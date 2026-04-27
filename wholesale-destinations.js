@@ -24,6 +24,10 @@
   let availablePeriods = null;
   let currentTimeGranularity = 'yearly';
   let selectedPeriods = []; // Array for multi-select: [{ type, year, quarter, month, label }]
+  // Full period state emitted by SharedPeriodSelector — single source of truth
+  // for applyAllFilters(). Includes custom-range { mode:'custom', customFrom, customTo }
+  // which selectedPeriods cannot represent.
+  let currentPeriodState = null;
   let availableWholesales = []; // List of wholesales from API
   let selectedWholesales = []; // Array for multi-select: [{ id, name }]
   let currentViewMode = 'sales'; // 'sales' or 'travelers'
@@ -241,6 +245,11 @@
             </div>
           </div>
           <div class="selected-period-badge" id="selectedWholesaleBadge" style="display: none;"></div>
+          <!-- Search/Reset buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่
+               pair here. Filter changes only update state; results refresh
+               when the user clicks ค้นหา. "เริ่มใหม่" resets state to default
+               without triggering a query. -->
+          <div class="wd-filter-actions" id="wdFilterActionsHost"></div>
         </div>
 
         <!-- View Mode Tabs -->
@@ -497,22 +506,97 @@
       label: monthNames[nowMonth - 1] + ' ' + (nowYear + 543)
     }];
 
+    currentPeriodState = {
+      mode   : currentTimeGranularity,
+      periods: selectedPeriods.slice()
+    };
+
     window.SharedPeriodSelector.mount({
       modeContainerId : 'wd-period-mode-host',
       valueContainerId: 'wd-period-value-host',
       availablePeriods: availablePeriods || { years: [] },
       multiSelect     : true,
       modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
-      initialState    : {
-        mode   : currentTimeGranularity,
-        periods: selectedPeriods.slice()
-      },
+      initialState    : currentPeriodState,
       onChange        : function (state) {
+        // Defer apply: only update local state here. The "ค้นหา" button
+        // (mounted below via SharedFilterActions) is the single place that
+        // triggers applyAllFilters → re-query.
+        currentPeriodState = state;
         currentTimeGranularity = state.mode;
         selectedPeriods = Array.isArray(state.periods) ? state.periods.slice() : [];
-        if (typeof applyAllFilters === 'function') applyAllFilters();
       }
     });
+
+    initFilterActionsButtons();
+  }
+
+  // Mount the shared ค้นหา + เริ่มใหม่ button pair. Changes to period +
+  // wholesale filters stay local until the user presses ค้นหา; "เริ่มใหม่"
+  // resets to default (monthly, current month, no wholesale selected) but
+  // does NOT re-query — the existing results stay on screen.
+  function initFilterActionsButtons() {
+    if (!window.SharedFilterActions || !window.SharedFilterActions.mount) return;
+    var host = document.getElementById('wdFilterActionsHost');
+    if (!host) return;
+    window.SharedFilterActions.mount({
+      containerId: 'wdFilterActionsHost',
+      searchType : 'button',
+      resetType  : 'button',
+      onSearch   : function () {
+        applyAllFilters();
+      },
+      onReset    : function () {
+        resetFiltersToDefault();
+      }
+    });
+  }
+
+  // Reset filter UI + state to default (monthly + current month, no
+  // wholesale selected). Does NOT trigger an API query — current results
+  // remain visible until the user presses ค้นหา again.
+  function resetFiltersToDefault() {
+    var now = new Date();
+    currentTimeGranularity = 'monthly';
+    var monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    selectedPeriods = [{
+      type : 'monthly',
+      year : now.getFullYear(),
+      quarter: null,
+      month: now.getMonth() + 1,
+      label: monthNames[now.getMonth()] + ' ' + (now.getFullYear() + 543)
+    }];
+    selectedWholesales = [];
+
+    currentPeriodState = { mode: 'monthly', periods: selectedPeriods.slice() };
+
+    // Re-mount period selector with default state
+    if (window.SharedPeriodSelector && window.SharedPeriodSelector.mount) {
+      window.SharedPeriodSelector.mount({
+        modeContainerId : 'wd-period-mode-host',
+        valueContainerId: 'wd-period-value-host',
+        availablePeriods: availablePeriods || { years: [] },
+        multiSelect     : true,
+        modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+        initialState    : currentPeriodState,
+        onChange        : function (state) {
+          currentPeriodState = state;
+          currentTimeGranularity = state.mode;
+          selectedPeriods = Array.isArray(state.periods) ? state.periods.slice() : [];
+        }
+      });
+    }
+
+    // Clear wholesale dropdown UI
+    if (typeof renderWholesaleItems === 'function') renderWholesaleItems(availableWholesales || []);
+    var btn = document.getElementById('wholesaleFilterBtn');
+    if (btn) {
+      btn.classList.remove('active');
+      var btnText = btn.querySelector('.time-btn-text');
+      if (btnText) btnText.textContent = 'Wholesale ทั้งหมด';
+    }
+    var badge = document.getElementById('selectedWholesaleBadge');
+    if (badge) badge.style.display = 'none';
   }
 
   // Initialize period type selector (master dropdown)
@@ -813,14 +897,12 @@
     // Close dropdown
     dropdown.classList.remove('show');
 
-    // Update badge and reload data
+    // Update badge and refresh dependent wholesale dropdown options.
+    // Do NOT apply the filter yet — user must press ค้นหา.
     updateSelectedPeriodBadge();
     if (selectedPeriods.length > 0) {
-      // Filter wholesales based on selected periods
       await updateWholesaleDropdownByPeriod();
-      applyAllFilters();
     } else {
-      // Reset wholesale dropdown to show all
       renderWholesaleItems(availableWholesales);
     }
   }
@@ -1066,18 +1148,15 @@
     // Close dropdown
     document.getElementById('wholesaleFilterDropdown')?.classList.remove('show');
 
-    // Update badge and reload data
+    // Update badge and refresh dependent period dropdown options. Do NOT
+    // apply the filter yet — user must press ค้นหา.
     updateSelectedWholesaleBadge();
 
     if (selectedWholesales.length > 0) {
-      // Filter periods based on selected wholesales
       await updatePeriodDropdownsByWholesale();
     } else {
-      // Reset period dropdowns to show all
       populateTimeDropdowns();
     }
-
-    applyAllFilters();
   }
 
   // Clear wholesale dropdown selection
@@ -1367,17 +1446,16 @@
     // Add view mode filter
     filters.view_mode = currentViewMode;
 
-    // Add period filter
-    if (selectedPeriods.length > 0) {
-      let allDateFrom = null;
-      let allDateTo = null;
-      selectedPeriods.forEach(period => {
-        const { dateFrom, dateTo } = getPeriodDateRange(period);
-        if (!allDateFrom || dateFrom < allDateFrom) allDateFrom = dateFrom;
-        if (!allDateTo || dateTo > allDateTo) allDateTo = dateTo;
-      });
-      filters.booking_date_from = allDateFrom;
-      filters.booking_date_to = allDateTo;
+    // Add period filter via SharedPeriodSelector helper so every mode
+    // (yearly / quarterly / monthly / custom) is handled consistently.
+    // Custom mode stores customFrom/customTo on currentPeriodState and is
+    // invisible to selectedPeriods, so we must route through toDateRange().
+    if (currentPeriodState && window.SharedPeriodSelector && window.SharedPeriodSelector.toDateRange) {
+      const range = window.SharedPeriodSelector.toDateRange(currentPeriodState, availablePeriods);
+      if (range.dateFrom && range.dateTo) {
+        filters.booking_date_from = range.dateFrom;
+        filters.booking_date_to   = range.dateTo;
+      }
     }
 
     // Add wholesale filter
@@ -1995,18 +2073,15 @@
     const badge = document.getElementById('selectedPeriodBadge');
     if (badge) badge.style.display = 'none';
 
-    // Reset wholesale dropdown to show all
+    // Reset wholesale dropdown to show all (no query — user hits ค้นหา).
     renderWholesaleItems(availableWholesales);
-
-    // Apply filters
-    applyAllFilters();
   };
 
-  // Global function for clearing wholesale filter (called from badge button)
+  // Global function for clearing wholesale filter (called from badge button).
+  // Resets UI state only — results stay until user presses ค้นหา.
   window.clearWholesaleFilter = function() {
     selectedWholesales = [];
 
-    // Reset button
     const btn = document.getElementById('wholesaleFilterBtn');
     if (btn) {
       btn.classList.remove('active');
@@ -2014,18 +2089,12 @@
       if (btnText) btnText.textContent = 'Wholesale ทั้งหมด';
     }
 
-    // Clear dropdown selection
     clearWholesaleDropdownSelection();
 
-    // Hide badge
     const badge = document.getElementById('selectedWholesaleBadge');
     if (badge) badge.style.display = 'none';
 
-    // Reset period dropdowns
     populateTimeDropdowns();
-
-    // Apply filters
-    applyAllFilters();
   };
 
 })();

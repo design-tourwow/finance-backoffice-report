@@ -38,7 +38,13 @@
     if (!validateToken()) return;
     currentUser = getUserFromToken();
     renderShell();
-    await loadSellers();
+    // SharedFilterService.getAvailablePeriods already returns { years: [] }
+    // on error so we can call it inline without a try/catch wrapper.
+    const [_, periods] = await Promise.all([
+      loadSellers(),
+      window.SharedFilterService ? window.SharedFilterService.getAvailablePeriods() : null
+    ]);
+    if (periods && Array.isArray(periods.years)) availablePeriods = periods;
     initFilters();
     await loadReport();
   }
@@ -349,17 +355,57 @@
          </button>`;
     }
 
-    // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่ into
-    // the host, wiring click handlers to the existing loadReport / reload
-    // flow. The rendered buttons keep id="crp-btn-search" / "crp-btn-reset"
-    // for continuity with any other code that still queries them.
+    // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่. Reset
+    // clears filter UI back to defaults; the user must press ค้นหา to
+    // re-query so current results stay visible until they choose.
     if (window.SharedFilterActions) {
       window.SharedFilterActions.mount({
         containerId: 'crp-filter-actions-host',
         searchId   : 'crp-btn-search',
         resetId    : 'crp-btn-reset',
         onSearch   : loadReport,
-        onReset    : function () { window.location.reload(); }
+        onReset    : resetFiltersToDefault
+      });
+    }
+  }
+
+  // Reset: restore filter inputs to page defaults only. Does NOT refetch.
+  function resetFiltersToDefault() {
+    const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const nowYear    = new Date().getFullYear();
+    const nowMonth   = new Date().getMonth() + 1;
+    const nowQuarter = Math.ceil(nowMonth / 3);
+
+    canceledPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
+    selectedSellerId    = isAdmin() ? '' : sellerId;
+
+    window.SharedPeriodSelector.mount({
+      modeContainerId : 'co-canceled-mode-host',
+      valueContainerId: 'co-canceled-value-host',
+      availablePeriods: availablePeriods,
+      multiSelect     : false,
+      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
+      initialState    : canceledPeriodState,
+      onChange        : function (s) { canceledPeriodState = s; }
+    });
+
+    if (isAdmin()) {
+      const sellerOptions = [
+        { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
+        ...sellers.map(s => ({
+          value: String(s.id),
+          label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
+          icon: getPersonIcon(),
+          active: false
+        }))
+      ];
+      window.FilterSearchDropdown.init({
+        containerId: 'crp-dd-seller',
+        defaultLabel: 'ทั้งหมด',
+        defaultIcon: getAllIcon(),
+        options: sellerOptions,
+        placeholder: 'ค้นหาเซลล์...',
+        onChange: function (val) { selectedSellerId = val; }
       });
     }
   }
@@ -671,7 +717,7 @@
           ${window.SharedExportButton.render({ id: 'crp-btn-export' })}
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Download PDF
+            Export PDF
           </button>
         </div>
       </div>

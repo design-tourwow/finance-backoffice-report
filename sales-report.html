@@ -10,16 +10,16 @@
     <link rel="stylesheet" href="shared-font.css" />
 
     <!-- Styles -->
-    <link rel="stylesheet" href="tour-image-manager.css?v=1777001072" />
+    <link rel="stylesheet" href="tour-image-manager.css?v=1777003205" />
     <link rel="stylesheet" href="shared-export-button.css" />
-    <link rel="stylesheet" href="filter-panel.css?v=1777001072" />
+    <link rel="stylesheet" href="filter-panel.css?v=1777003205" />
     <link rel="stylesheet" href="kpi-card.css" />
     <link rel="stylesheet" href="dashboard-table.css" />
     <link rel="stylesheet" href="shared-table-search.css" />
     <link rel="stylesheet" href="shared-filter-actions.css" />
     <link rel="stylesheet" href="filter-sort-dropdown-component.css" />
     <link rel="stylesheet" href="date-picker-component.css" />
-    <link rel="stylesheet" href="sales-report.css?v=1777001072" />
+    <link rel="stylesheet" href="sales-report.css?v=20260427l" />
 
     <!-- Configuration -->
     <script>
@@ -38,6 +38,10 @@
             ? 'https://staging-finance-backoffice-report-api.vercel.app'
             : 'https://finance-backoffice-report-api.vercel.app'
         }
+        // SharedHttp / SharedFilterService both read REPORT_API_BASE_URL —
+        // alias it to API_BASE_URL so getAvailablePeriods() reaches the
+        // same backend resolver as page-level XHR.
+        window.REPORT_API_BASE_URL = window.API_BASE_URL;
       })()
     </script>
     <script src="shared-font.js"></script>
@@ -48,7 +52,10 @@
     <script src="filter-search-dropdown-component.js"></script>
     <script src="date-picker-component.js"></script>
     <script src="shared-utils.js"></script>
-    <script src="shared-period-selector.js"></script>
+    <script src="shared-http.js"></script>
+    <script src="shared-filter-service.js"></script>
+    <script src="shared-period-selector.js?v=20260427o"></script>
+    <script src="shared-trophy-rank.js"></script>
     <script src="shared-sortable-header.js"></script>
     <script src="shared-export-button.js"></script>
     <script src="shared-table-search.js"></script>
