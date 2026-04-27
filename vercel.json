@@ -38,7 +38,7 @@
     },
     {
       "source": "/sales-report",
-      "destination": "/commission-report-plus.html"
+      "destination": "/sales-report.html"
     },
     {
       "source": "/work-list",

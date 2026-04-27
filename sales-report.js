@@ -1,4 +1,4 @@
-// Commission Report Plus - Main JavaScript
+// Sales Report - Main JavaScript
 (function () {
   'use strict';
 

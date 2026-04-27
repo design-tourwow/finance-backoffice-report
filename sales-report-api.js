@@ -1,4 +1,4 @@
-// Commission Report Plus API Service
+// Sales Report API Service
 const CommissionReportPlusAPI = {
   get baseURL() {
     const url = window.API_BASE_URL || 'https://finance-backoffice-report-api.vercel.app'

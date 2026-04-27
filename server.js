@@ -50,7 +50,7 @@ const server = http.createServer((req, res) => {
         filePath = './wholesale-destinations.html';
     }
     else if (urlWithoutQuery === '/sales-report') {
-        filePath = './commission-report-plus.html';
+        filePath = './sales-report.html';
     }
     else if (urlWithoutQuery === '/work-list') {
         filePath = './work-list.html';
