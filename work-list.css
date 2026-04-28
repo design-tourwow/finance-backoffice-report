@@ -39,6 +39,7 @@
 .work-list-table td:first-child {
   width: 72px;
   text-align: center;
+  font-family: var(--font-family-numeric);
   font-variant-numeric: tabular-nums;
 }
 

@@ -189,7 +189,7 @@
 .crp-table thead th.right { text-align: right; }
 .crp-table thead th.center { text-align: center; }
 
-.crp-table tbody td.right { text-align: right; font-variant-numeric: tabular-nums; }
+.crp-table tbody td.right { text-align: right; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; }
 .crp-table tbody td.center { text-align: center; }
 .crp-table tbody td { vertical-align: middle; }
 
@@ -375,6 +375,7 @@
 
 .crp-summary-table tbody td.right {
   text-align: right;
+  font-family: var(--font-family-numeric);
   font-variant-numeric: tabular-nums;
 }
 

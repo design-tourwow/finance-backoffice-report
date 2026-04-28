@@ -223,12 +223,12 @@
 /* Right/center alignment on .rd-table cells — rd markup uses plain
    .right / .center classes on <th>/<td> instead of .shared-cell-*. */
 .rd-table thead th.right,
-.rd-table tbody td.right  { text-align: right; font-variant-numeric: tabular-nums; }
+.rd-table tbody td.right  { text-align: right; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; }
 .rd-table thead th.center,
 .rd-table tbody td.center { text-align: center; }
 
 .shared-cell-left   { text-align: left; }
-.shared-cell-right  { text-align: right; font-variant-numeric: tabular-nums; }
+.shared-cell-right  { text-align: right; font-family: var(--font-family-numeric); font-variant-numeric: tabular-nums; }
 .shared-cell-center { text-align: center; }
 
 .shared-empty-row {

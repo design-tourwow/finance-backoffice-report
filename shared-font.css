@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
+/* Numeric font: Roboto, but subsetted via the Google Fonts &text= parameter
+   so the downloaded font ONLY contains digits and the surrounding number
+   punctuation. Any non-numeric character (Thai, English letters, etc.) is
+   not present in the file, so the browser falls through to the next family
+   in --font-family-numeric — guaranteeing Roboto only ever renders digits. */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&text=0123456789%2C.%2B-%E2%80%93%E2%80%94%28%29%25%E2%82%AC%24%C2%A5%E0%B8%BF&display=swap');
+
 @font-face {
   font-family: 'Kanit';
   src:
@@ -14,6 +21,10 @@
 :root {
   --font-family-base: 'Kanit', sans-serif;
   --font-family: var(--font-family-base);
+  /* Stack used for cells that contain numbers. Roboto is the digit-only
+     subset above, so it renders only digits/separators and Kanit picks up
+     everything else (e.g. "300 รายการ" → "300" Roboto, " รายการ" Kanit). */
+  --font-family-numeric: 'Roboto', var(--font-family-base);
 }
 
 html {
