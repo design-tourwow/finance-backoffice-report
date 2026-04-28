@@ -26,6 +26,12 @@
       icon: iconReceipt()
     },
     {
+      href: '/sales-report-by-seller',
+      title: 'Sales Report by Seller',
+      description: 'รายงานยอดขายของพนักงานขาย แยกรายเซลล์',
+      icon: iconReceipt()
+    },
+    {
       href: '/supplier-commission',
       title: 'Supplier Commission',
       description: 'รายงาน Supplier Commission แยกตามประเทศและทีม',

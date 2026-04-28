@@ -41,6 +41,10 @@
       "destination": "/sales-report.html"
     },
     {
+      "source": "/sales-report-by-seller",
+      "destination": "/sales-report-by-seller.html"
+    },
+    {
       "source": "/work-list",
       "destination": "/work-list.html"
     },
