@@ -259,6 +259,12 @@
     const count = selectedSellerIds.length;
     if (count <= 1) return; // single / empty already render correctly
 
+    // Bail out early if the seller cache failed to load — without it we
+    // can't tell whether the user picked "all TS" / "all CRM", so leaving
+    // the component's default "เซลล์ผู้ขาย (N)" trigger is the safest
+    // fallback rather than silently showing the wrong role label.
+    if (!sellerOptionsCache.length) return;
+
     const selSet = new Set(selectedSellerIds.map(String));
     const tsIds  = sellerOptionsCache.filter(o => o.job_position === 'ts').map(o => String(o.value));
     const crmIds = sellerOptionsCache.filter(o => o.job_position === 'crm').map(o => String(o.value));
@@ -663,7 +669,7 @@
     window.SharedTableSearch.init({
       containerId: 'rcr-table-search-host',
       value      : tableQuery,
-      placeholder: 'ค้นหาในตาราง (ชื่อลูกค้า / เบอร์ / รหัส)...',
+      placeholder: 'ค้นหาในตาราง (ชื่อลูกค้า / รหัส)...',
       onInput    : function (raw) {
         tableQuery = String(raw || '').toLowerCase().trim();
         renderTable();
@@ -948,9 +954,11 @@
 
   // ---- Toolbar (table search + export) ----
   function renderToolbar() {
+    const initialCount = currentData && Array.isArray(currentData.customers) ? currentData.customers.length : 0;
     return `
       <div class="rcr-toolbar">
         <div class="rcr-toolbar-left">
+          ${window.SharedTableCount.render({ id: 'rcr-table-count', count: initialCount })}
           <div id="rcr-table-search-host"></div>
         </div>
         <div class="rcr-toolbar-right">
@@ -981,7 +989,6 @@
       seller_crm:       role === 'crm' ? handler : '',
       customer_code:  c.customer_code || '-',
       customer_name:  c.customer_name || '-',
-      phone_number:   c.phone_number  || '-',
       l1_orders:                totalOrders,
       // "ซื้อซ้ำ" excludes the first purchase; never goes below 0.
       l1_repeats:               Math.max(totalOrders - 1, 0),
@@ -1034,8 +1041,7 @@
     return q
       ? baseRows.filter(c =>
           (c.customer_name || '').toLowerCase().includes(q) ||
-          (c.customer_code || '').toLowerCase().includes(q) ||
-          (c.phone_number  || '').toLowerCase().includes(q))
+          (c.customer_code || '').toLowerCase().includes(q))
       : baseRows;
   }
 
@@ -1070,7 +1076,6 @@
     { key: 'seller_crm',       label: 'CRM',       format: sellerBadgeFormat },
     { key: 'customer_code',    label: 'รหัสลูกค้า' },
     { key: 'customer_name',  label: 'ชื่อลูกค้า' },
-    { key: 'phone_number',   label: 'เบอร์โทรศัพท์', sortable: false },
 
     { key: 'l1_orders',              label: 'Order ทั้งหมด',     align: 'right', format: numberFormatter, className: 'rcr-divider' },
     { key: 'l1_repeats',             label: 'ซื้อซ้ำรวม',        align: 'right', format: numberFormatter },
@@ -1088,6 +1093,7 @@
     const host = document.getElementById('rcr-table-host');
     if (!host || !currentData) return;
     const rows = getVisibleRows(currentData.customers || []);
+    if (window.SharedTableCount) window.SharedTableCount.update('rcr-table-count', rows.length);
     window.SharedTable.render({
       containerEl: host,
       columns    : TABLE_COLUMNS,
@@ -1132,7 +1138,7 @@
   function exportCSV(customers) {
     if (!window.SharedCSV || !window.SharedCSV.export) return;
     const headers = [
-      'Telesales', 'CRM', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'เบอร์โทรศัพท์',
+      'Telesales', 'CRM', 'รหัสลูกค้า', 'ชื่อลูกค้า',
       'Order ทั้งหมด', 'ซื้อซ้ำรวม', 'ซื้อซ้ำใน 3 เดือน', 'ซื้อซ้ำใน 12 เดือน', 'ซื้อซ้ำใน 24 เดือน',
       'ผู้เดินทาง', 'ยอดจอง', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม'
     ];
@@ -1143,7 +1149,7 @@
       return [
         role === 'ts'  ? name : '',
         role === 'crm' ? name : '',
-        c.customer_code || '', c.customer_name || '', c.phone_number || '',
+        c.customer_code || '', c.customer_name || '',
         total, Math.max(total - 1, 0),
         computeRepeatsInWindow(c, 'orders_3m',  3),
         computeRepeatsInWindow(c, 'orders_12m', 12),
