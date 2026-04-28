@@ -374,13 +374,7 @@
       ${renderSummary(tasks.length)}
       <div class="dashboard-table-container">
         <div class="dashboard-table-header">
-          <div class="dashboard-table-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 11l3 3L22 4"></path>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-            </svg>
-            <span>แสดง ${tasks.length} รายการ</span>
-          </div>
+          ${window.SharedTableCount.render({ id: 'wl-table-count', count: tasks.length })}
           <div class="dashboard-table-actions">
             <div id="wl-table-search-host"></div>
           </div>

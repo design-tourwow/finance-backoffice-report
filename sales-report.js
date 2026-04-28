@@ -561,7 +561,7 @@
             </div>
 
             <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">เซลล์ผู้จอง</span>
+              <span class="time-granularity-label crp-filter-label">ชื่อผู้จอง</span>
               <div class="crp-filter-control" id="crp-dd-seller"></div>
             </div>
           </div>
@@ -649,22 +649,15 @@
       { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled') },
     ].map(o => ({ ...o, active: o.value === defaultStatus }));
 
-    if (isAdmin()) {
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-status',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getStatusIcon('all'),
-        options: statusOptions,
-        onChange: function (val, label) {
-          selectedOrderStatus = val;
-        }
-      });
-    } else {
-      document.getElementById('crp-dd-status').innerHTML =
-        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
-           <div class="filter-sort-btn-content">${getStatusIcon('not_canceled')}<span class="filter-sort-btn-text">ไม่ยกเลิก</span></div>
-         </button>`;
-    }
+    FilterSortDropdownComponent.initDropdown({
+      containerId: 'crp-dd-status',
+      defaultLabel: defaultStatus === 'not_canceled' ? 'ไม่ยกเลิก' : 'ทั้งหมด',
+      defaultIcon: getStatusIcon(defaultStatus),
+      options: statusOptions,
+      onChange: function (val) {
+        selectedOrderStatus = val;
+      }
+    });
 
     // ---- จำนวนผู้เดินทาง dropdown ----
     const travelerOptions = [
@@ -734,19 +727,19 @@
       // every time ตำแหน่ง changes, so the seller list always matches
       // the role pill above it.
       renderSellerDropdown();
-
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-status',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getStatusIcon('all'),
-        options: [
-          { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all'),          active: true  },
-          { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled'), active: false },
-          { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled'),     active: false },
-        ],
-        onChange: function (val) { selectedOrderStatus = val; }
-      });
     }
+
+    FilterSortDropdownComponent.initDropdown({
+      containerId: 'crp-dd-status',
+      defaultLabel: selectedOrderStatus === 'not_canceled' ? 'ไม่ยกเลิก' : 'ทั้งหมด',
+      defaultIcon: getStatusIcon(selectedOrderStatus),
+      options: [
+        { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all'),          active: selectedOrderStatus === 'all'          },
+        { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled'), active: selectedOrderStatus === 'not_canceled' },
+        { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled'),     active: selectedOrderStatus === 'canceled'     },
+      ],
+      onChange: function (val) { selectedOrderStatus = val; }
+    });
 
     FilterSortDropdownComponent.initDropdown({
       containerId: 'crp-dd-travelers',
@@ -1304,7 +1297,7 @@
 
   function buildPrintFilters() {
     return [
-      { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
+      { label: 'ชื่อผู้จอง', value: getSelectedSellerLabel() },
       { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
       { label: 'สถานะ Order', value: getSelectedStatusLabel() },
     ];
@@ -1610,7 +1603,7 @@
     highlightGrid.style.borderBottom = '1px solid #dbe2ea';
     highlightGrid.innerHTML = `
       <div style="min-width:0;">
-        <div style="${HEADLINE_LABEL_STYLE}">เซลล์ผู้จอง</div>
+        <div style="${HEADLINE_LABEL_STYLE}">ชื่อผู้จอง</div>
         <div style="${HEADLINE_VALUE_STYLE}">${escHtml(sellerDisplay || '-')}</div>
       </div>
       ${showPositionLabel ? `

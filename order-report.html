@@ -61,6 +61,7 @@
     <script src="shared-period-selector.js?v=20260427o"></script>
     <script src="shared-export-button.js"></script>
     <script src="shared-table-search.js"></script>
+    <script src="shared-table-count.js"></script>
     <script src="shared-filter-actions.js"></script>
     <script src="menu-component.js"></script>
     
@@ -326,12 +327,15 @@
               <div class="table-container" id="tableContainer" style="display: none;">
                 <!-- Table Search & Filters -->
                 <div class="table-search-wrapper">
+                  <!-- Count display -->
+                  <div id="or-table-count-host"></div>
+
                   <!-- Shared SharedTableSearch renders input + icon + clear button into this host -->
                   <div id="or-table-search-host"></div>
 
                   <!-- Filter Dropdown (dynamic for each tab) -->
                   <div id="tabFilterContainer"></div>
-                  
+
                   <!-- Export Button -->
                   <div id="exportCsvBtnHost" class="shared-export-button-host"></div>
                 </div>
@@ -356,6 +360,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="chart-defaults.js"></script>
-    <script src="order-report.js"></script>
+    <script src="order-report.js?v=20260428a"></script>
   </body>
 </html>

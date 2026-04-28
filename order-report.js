@@ -415,6 +415,10 @@
         });
       });
       if (resultsDiv) resultsDiv.style.display = 'none';
+      if (window.SharedTableCount) {
+        const total = Array.isArray(currentTableData) ? currentTableData.length : rows.length;
+        window.SharedTableCount.update('or-table-count', total);
+      }
     }
 
     tableSearchInstance = window.SharedTableSearch.init({
@@ -447,6 +451,7 @@
 
         if (resultCount) resultCount.textContent = matchCount;
         if (resultsDiv) resultsDiv.style.display = 'block';
+        if (window.SharedTableCount) window.SharedTableCount.update('or-table-count', matchCount);
       }
     });
 
@@ -1988,11 +1993,17 @@
   function renderSortableTable(columns, data) {
     const thead = document.getElementById('reportTableHead');
     const tbody = document.getElementById('reportTableBody');
-    
+
     // Clear existing content
     thead.innerHTML = '';
     tbody.innerHTML = '';
-    
+
+    // Mount/refresh shared table-count display
+    const countHost = document.getElementById('or-table-count-host');
+    if (countHost && window.SharedTableCount) {
+      countHost.innerHTML = window.SharedTableCount.render({ id: 'or-table-count', count: Array.isArray(data) ? data.length : 0 });
+    }
+
     // Store current data
     currentTableData = data;
     

@@ -146,7 +146,7 @@
       '</div>' +
       '<div class="ds-table-card">' +
         '<div class="ds-table-header">' +
-          '<h2>รายละเอียดส่วนลด</h2>' +
+          window.SharedTableCount.render({ id: 'ds-table-count', count: allData.length }) +
           '<div class="dashboard-table-actions">' +
             '<div id="ds-table-search-host"></div>' +
             window.SharedExportButton.render({ id: 'ds-export-btn' }) +
@@ -319,6 +319,7 @@
           return name.indexOf(filterQuery) !== -1 || nick.indexOf(filterQuery) !== -1;
         })
       : allData;
+    if (window.SharedTableCount) window.SharedTableCount.update('ds-table-count', rows.length);
     window.SharedTable.render({
       containerEl: host,
       columns    : TABLE_COLUMNS,

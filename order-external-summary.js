@@ -242,7 +242,7 @@
       elTableHost.innerHTML =
         '<div class="oes-table-section">' +
         '  <div class="oes-table-header">' +
-        '    <h2>รายละเอียด Orders</h2>' +
+        '    ' + window.SharedTableCount.render({ id: 'oes-table-count', count: 0 }) +
         '    <div class="dashboard-table-actions">' +
         '      <div id="oes-table-search-host"></div>' +
         '      ' + window.SharedExportButton.render({ id: 'oes-export-btn' }) +
@@ -269,6 +269,8 @@
           });
         })
       : lastData;
+
+    if (window.SharedTableCount) window.SharedTableCount.update('oes-table-count', filtered.length);
 
     SharedTable.render({
       containerEl: document.getElementById('oes-table-body'),

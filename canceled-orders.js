@@ -22,6 +22,10 @@
 
   // Selected values from FilterSortDropdown instances
   let selectedSellerId = '';
+  // ตำแหน่ง dropdown — 'ts' / 'crm' / 'admin'. Drives the linked
+  // เซลล์ผู้จอง dropdown so admins only see sellers of the chosen role.
+  // Sent to the backend as filters.job_position (admin = no role filter).
+  let selectedJobPosition = 'admin';
   let mainTableQuery = '';
   let mainTableSort = { key: null, direction: 'desc' };
   let sellerSummarySort = {
@@ -248,6 +252,66 @@
     return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
   }
 
+  function labelOfJobPosition(pos) {
+    if (pos === 'ts')    return 'เซลล์';
+    if (pos === 'crm')   return 'CRM';
+    if (pos === 'admin') return 'Admin';
+    return 'ทั้งหมด';
+  }
+
+  // Render the "เซลล์ผู้จอง" dropdown filtered by selectedJobPosition.
+  // Each ตำแหน่ง option (ts / crm / admin) shows only sellers of that
+  // role; admins see role-scoped lists, non-admins see a locked button
+  // with their own nick name. Re-runs on every ตำแหน่ง change so the
+  // seller list always matches the role pill above it.
+  function renderSellerDropdown() {
+    const sellerHost = document.getElementById('crp-dd-seller');
+    if (!sellerHost) return;
+
+    if (!isAdmin()) {
+      const sellerId = currentUser ? String(currentUser.id || '') : '';
+      const me = sellers.find(s => String(s.id) === sellerId);
+      const name = (me && me.nick_name) || (currentUser && currentUser.nick_name) || '-';
+      sellerHost.innerHTML =
+        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
+           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
+         </button>`;
+      return;
+    }
+
+    const role = (selectedJobPosition || '').toLowerCase();
+    const filtered = role
+      ? sellers.filter(s => String(s.job_position || '').toLowerCase() === role)
+      : sellers;
+
+    // Drop the previous selection if the new role list doesn't include it.
+    if (selectedSellerId) {
+      const stillThere = filtered.some(s => String(s.id) === String(selectedSellerId));
+      if (!stillThere) selectedSellerId = '';
+    }
+
+    const sellerOptions = [
+      { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: !selectedSellerId },
+      ...filtered.map(s => ({
+        value : String(s.id),
+        label : s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
+        icon  : getPersonIcon(),
+        active: String(s.id) === String(selectedSellerId)
+      }))
+    ];
+
+    window.FilterSearchDropdown.init({
+      containerId : 'crp-dd-seller',
+      defaultLabel: 'ทั้งหมด',
+      defaultIcon : getAllIcon(),
+      options     : sellerOptions,
+      placeholder : 'ค้นหาเซลล์...',
+      onChange    : function (val) {
+        selectedSellerId = val || '';
+      }
+    });
+  }
+
   // ---- Sellers ----
   async function loadSellers() {
     try {
@@ -269,14 +333,23 @@
         <!-- Filter Bar -->
         <div class="filter-wrap filter-wrap-stacked">
 
-          <!-- แถว 1: วันที่ยกเลิก Order (period selector spans 2 cells)
-               + Seller (1 cell) on the same outer row so all three dropdowns
-               sit at 33.3% each. -->
+          <!-- แถว 1: วันที่ยกเลิก Order (period selector spans full row,
+               same shape as /sales-report's row 1). -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">วันที่ยกเลิก Order</span>
               <div class="crp-filter-control" id="co-canceled-mode-host"></div>
               <div class="crp-filter-control" id="co-canceled-value-host"></div>
+            </div>
+          </div>
+
+          <!-- แถว 2: ตำแหน่ง + เซลล์ผู้จอง paired side-by-side, mirroring
+               /sales-report's row-3 dropdown pair. เซลล์ดropdown is linked to
+               ตำแหน่ง above. -->
+          <div class="filter-row crp-filter-row">
+            <div class="crp-filter-field">
+              <span class="time-granularity-label crp-filter-label">ตำแหน่ง</span>
+              <div class="crp-filter-control" id="crp-dd-position"></div>
             </div>
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">เซลล์ผู้จอง</span>
@@ -321,39 +394,38 @@
     });
 
     // Non-admin users are locked to their own seller id; admins see the
-    // searchable dropdown.
-    selectedSellerId = isAdmin() ? '' : sellerId;
+    // linked ตำแหน่ง + searchable เซลล์ pair (same pattern as /sales-report).
+    const jobPos = currentUser ? currentUser.job_position : 'admin';
+    selectedJobPosition = jobPos;
+    selectedSellerId    = isAdmin() ? '' : sellerId;
 
-    // ---- เซลล์ผู้จอง dropdown (same search UX as commission-report-plus) ----
+    // ---- ตำแหน่ง dropdown ----
     if (isAdmin()) {
-      const sellerOptions = [
-        { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
-        ...sellers.map(s => ({
-          value: String(s.id),
-          label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
-          icon: getPersonIcon(),
-          active: false
-        }))
-      ];
+      const jobPositionOptions = [
+        { value: 'ts',    label: 'เซลล์', icon: getPersonIcon() },
+        { value: 'crm',   label: 'CRM',   icon: getPersonIcon() },
+        { value: 'admin', label: 'Admin', icon: getPersonIcon() },
+      ].map(o => ({ ...o, active: o.value === jobPos }));
 
-      window.FilterSearchDropdown.init({
-        containerId: 'crp-dd-seller',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getAllIcon(),
-        options: sellerOptions,
-        placeholder: 'ค้นหาเซลล์...',
-        onChange: function (val) {
-          selectedSellerId = val;
+      window.FilterSortDropdownComponent.initDropdown({
+        containerId : 'crp-dd-position',
+        defaultLabel: labelOfJobPosition(jobPos),
+        defaultIcon : getPersonIcon(),
+        options     : jobPositionOptions,
+        onChange    : function (val) {
+          selectedJobPosition = val;
+          renderSellerDropdown();
         }
       });
     } else {
-      const me = sellers.find(s => String(s.id) === sellerId);
-      const name = me ? me.nick_name : (currentUser ? currentUser.nick_name : '-');
-      document.getElementById('crp-dd-seller').innerHTML =
+      document.getElementById('crp-dd-position').innerHTML =
         `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
-           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
+           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(labelOfJobPosition(jobPos))}</span></div>
          </button>`;
     }
+
+    // ---- เซลล์ผู้จอง dropdown ---- linked to ตำแหน่ง above.
+    renderSellerDropdown();
 
     // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่. Reset
     // clears filter UI back to defaults; the user must press ค้นหา to
@@ -372,11 +444,13 @@
   // Reset: restore filter inputs to page defaults only. Does NOT refetch.
   function resetFiltersToDefault() {
     const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const jobPos   = currentUser ? currentUser.job_position : 'admin';
     const nowYear    = new Date().getFullYear();
     const nowMonth   = new Date().getMonth() + 1;
     const nowQuarter = Math.ceil(nowMonth / 3);
 
     canceledPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
+    selectedJobPosition = jobPos;
     selectedSellerId    = isAdmin() ? '' : sellerId;
 
     window.SharedPeriodSelector.mount({
@@ -390,30 +464,24 @@
     });
 
     if (isAdmin()) {
-      const sellerOptions = [
-        { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
-        ...sellers.map(s => ({
-          value: String(s.id),
-          label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
-          icon: getPersonIcon(),
-          active: false
-        }))
-      ];
-      window.FilterSearchDropdown.init({
-        containerId: 'crp-dd-seller',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getAllIcon(),
-        options: sellerOptions,
-        placeholder: 'ค้นหาเซลล์...',
-        onChange: function (val) { selectedSellerId = val; }
+      window.FilterSortDropdownComponent.initDropdown({
+        containerId : 'crp-dd-position',
+        defaultLabel: labelOfJobPosition(jobPos),
+        defaultIcon : getPersonIcon(),
+        options     : [
+          { value: 'ts',    label: 'เซลล์', icon: getPersonIcon(), active: jobPos === 'ts' },
+          { value: 'crm',   label: 'CRM',   icon: getPersonIcon(), active: jobPos === 'crm' },
+          { value: 'admin', label: 'Admin', icon: getPersonIcon(), active: jobPos === 'admin' },
+        ],
+        onChange    : function (val) {
+          selectedJobPosition = val;
+          renderSellerDropdown();
+        }
       });
     }
-  }
 
-  function labelOfJobPosition(pos) {
-    return { ts: 'เซลล์', crm: 'CRM', admin: 'Admin' }[pos] || pos;
+    renderSellerDropdown();
   }
-
 
   // Icon helpers — same Lucide set used across all report pages
   function getAllIcon() {
@@ -456,9 +524,7 @@
       canceled_at_from: range.dateFrom || '',
       canceled_at_to:   range.dateTo   || '',
       seller_id:        isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
-      // Job position filter is not exposed on this page; 'admin' means "no
-      // is_old_customer filter" in the backend, matching CRP's default.
-      job_position:     'admin',
+      job_position:     isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
       // Hardcoded: this page is only about canceled orders.
       order_status:     'canceled',
     };
@@ -708,10 +774,7 @@
 
     return `
       <div class="dashboard-table-header">
-        <div class="dashboard-table-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-          <span id="crp-table-count">แสดง ${formatNumber(visibleOrders.length, 0)} รายการ</span>
-        </div>
+        ${window.SharedTableCount.render({ id: 'crp-table-count', count: visibleOrders.length })}
         <div class="dashboard-table-actions">
           <div id="crp-table-search-host"></div>
           ${window.SharedExportButton.render({ id: 'crp-btn-export' })}

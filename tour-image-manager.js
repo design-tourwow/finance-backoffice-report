@@ -6,6 +6,19 @@
   const APP_FONT_CSS_FAMILY = APP_FONT.cssFamily();
   const APP_FONT_STYLESHEET_TAG = APP_FONT.stylesheetTag();
 
+  // Mount/update the shared table-count display in the results header.
+  // First call inserts the wrapper into #tim-results-count-host; later
+  // calls just update the number in place.
+  function setResultsCount(n) {
+    const host = document.getElementById('tim-results-count-host');
+    if (!host || !window.SharedTableCount) return;
+    if (!host.querySelector('#tim-results-count')) {
+      host.innerHTML = window.SharedTableCount.render({ id: 'tim-results-count', count: n, label: 'รูปภาพ' });
+    } else {
+      window.SharedTableCount.update('tim-results-count', n, 'รูปภาพ');
+    }
+  }
+
   // Utility: Debounce function
   function debounce(func, wait) {
     let timeout;
@@ -50,10 +63,14 @@
       onInput: function (raw) {
         var q = String(raw || '').toLowerCase().trim();
         var rows = document.querySelectorAll('#resultsTable .table-row');
+        var visible = 0;
         rows.forEach(function (row) {
-          if (!q) { row.style.display = ''; return; }
-          row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+          if (!q) { row.style.display = ''; visible++; return; }
+          var match = row.textContent.toLowerCase().indexOf(q) !== -1;
+          row.style.display = match ? '' : 'none';
+          if (match) visible++;
         });
+        setResultsCount(visible);
       }
     });
   }
@@ -573,9 +590,6 @@ function initFormHandler() {
       
       if (loadingState) loadingState.style.display = 'none';
 
-      // Update results count immediately
-      const countElement = document.querySelector('.results-header .count');
-      
       if (response && response.status === 'success' && response.data && response.data.length > 0) {
         let filteredData = [...response.data];
         
@@ -625,7 +639,7 @@ function initFormHandler() {
         // Check if we have results after filtering
         if (sortedData.length === 0) {
           if (emptyState) emptyState.style.display = 'flex';
-          if (countElement) countElement.textContent = '0';
+          setResultsCount(0);
           console.log('❌ No results after filtering');
         } else {
           // Render results
@@ -635,9 +649,7 @@ function initFormHandler() {
           if (emptyState) emptyState.style.display = 'none';
           
           // Update results count
-          if (countElement) {
-            countElement.textContent = sortedData.length;
-          }
+          setResultsCount(sortedData.length);
           
           // Reset infinite scroll with current filters and total
           if (window.resetInfiniteScroll) {
@@ -648,9 +660,7 @@ function initFormHandler() {
         }
       } else {
         if (emptyState) emptyState.style.display = 'flex';
-        if (countElement) {
-          countElement.textContent = '0';
-        }
+        setResultsCount(0);
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -1152,7 +1162,6 @@ function initShowAllButtons() {
     const resultsTable = document.getElementById('resultsTable');
     const loadingState = document.querySelector('.loading-state');
     const emptyState = document.querySelector('.empty-state');
-    const countElement = document.querySelector('.results-header .count');
     const tableHeader = resultsTable ? resultsTable.querySelector('.table-header') : null;
 
     try {
@@ -1188,9 +1197,7 @@ function initShowAllButtons() {
         if (emptyState) emptyState.style.display = 'none';
         
         // Update count
-        if (countElement) {
-          countElement.textContent = sortedData.length;
-        }
+        setResultsCount(sortedData.length);
         
         // Reset infinite scroll for initial load
         if (window.resetInfiniteScroll) {
@@ -1200,17 +1207,13 @@ function initShowAllButtons() {
         console.log(`✅ Loaded ${sortedData.length} images`);
       } else {
         if (emptyState) emptyState.style.display = 'flex';
-        if (countElement) {
-          countElement.textContent = '0';
-        }
+        setResultsCount(0);
       }
     } catch (error) {
       console.error('Failed to load images:', error);
       if (loadingState) loadingState.style.display = 'none';
       if (emptyState) emptyState.style.display = 'flex';
-      if (countElement) {
-        countElement.textContent = '0';
-      }
+      setResultsCount(0);
     }
   }
 

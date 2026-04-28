@@ -155,7 +155,7 @@
       '</div>' +
       '<div class="sc-table-card">' +
         '<div class="sc-table-header">' +
-          '<h2>รายละเอียด Supplier</h2>' +
+          window.SharedTableCount.render({ id: 'sc-table-count', count: (Array.isArray(reportData) ? reportData.length : 0) }) +
           '<div class="dashboard-table-actions">' +
             '<div id="sc-table-search-host"></div>' +
             window.SharedExportButton.render({ id: 'sc-export-btn' }) +
@@ -257,6 +257,8 @@
           return th.indexOf(filterQuery) !== -1 || en.indexOf(filterQuery) !== -1;
         })
       : reportData;
+
+    if (window.SharedTableCount) window.SharedTableCount.update('sc-table-count', rows.length);
 
     window.SharedTable.render({
       containerEl: container,

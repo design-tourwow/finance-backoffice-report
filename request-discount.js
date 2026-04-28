@@ -539,7 +539,7 @@
         '<div class="rd-card-header">' +
           '<div class="rd-card-header-row">' +
             '<div>' +
-              '<h2>รายละเอียด Orders</h2>' +
+              window.SharedTableCount.render({ id: 'rd-table-count', count: total }) +
               '<p>' + subtitleMap[subtitleKey] + '</p>' +
             '</div>' +
             '<div class="rd-table-controls">' +

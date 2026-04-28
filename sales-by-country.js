@@ -933,13 +933,7 @@
         <!-- Data Table -->
         <div class="dashboard-table-container">
           <div class="dashboard-table-header">
-            <div class="dashboard-table-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-              </svg>
-              รายละเอียดตามประเทศ
-            </div>
+            ${window.SharedTableCount.render({ id: 'sbc-table-count', count: (data && Array.isArray(data) ? data.length : 0) })}
             <div class="dashboard-table-actions">
               <div id="sbc-table-search-host"></div>
               ${window.SharedExportButton.render({ id: 'dashboardExportBtn' })}
@@ -2489,14 +2483,17 @@
       onInput: function (raw) {
         const searchTerm = String(raw || '').toLowerCase().trim();
         const rows = document.querySelectorAll('#dashboardTableBody tr');
+        let visibleCount = 0;
         rows.forEach(row => {
           const countryName = row.dataset.country?.toLowerCase() || '';
           if (!searchTerm || countryName.includes(searchTerm)) {
             row.style.display = '';
+            visibleCount++;
           } else {
             row.style.display = 'none';
           }
         });
+        if (window.SharedTableCount) window.SharedTableCount.update('sbc-table-count', visibleCount);
       }
     });
   }

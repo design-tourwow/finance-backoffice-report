@@ -9,24 +9,24 @@
   // ---- State ----
   let currentUser = null;
   let currentData = null;
+  // Subset of currentData filtered to the current user's own orders. For
+  // admins this equals currentData.orders; for ts/crm it's just their rows.
+  // Used by the main table, KPI cards, and exports so non-admins only ever
+  // see their own raw data — even though the API returns role-wide rows
+  // so the ranking summary can show their position.
+  let currentOwnOrders = [];
+  let currentOwnSummary = null;
   let sellers = [];
   let availablePeriods = { years: [] };
-  let createdAvailablePeriods = { years: [] };
-  let paidAvailablePeriods = { years: [] };
-  let periodAvailabilityRequestId = 0;
 
-  // Period selector state (mode + year/quarter/month). One for "วันที่สร้าง
-  // Order" (created_at), one for "วันชำระงวด 1" (paid_at). Both use
-  // SharedPeriodSelector single-select mode; buildFilters() converts them to
-  // date ranges via SharedPeriodSelector.toDateRange.
+  // Period selector state for "วันที่สร้าง Order" (created_at).
+  // SharedPeriodSelector single-select mode; buildFilters() converts it to a
+  // date range via SharedPeriodSelector.toDateRange.
   let createdPeriodState = { mode: 'all' };
-  let paidPeriodState    = { mode: 'all' };
 
   // Selected values from FilterSortDropdown instances
-  let selectedJobPosition = 'admin';
   let selectedSellerId = '';
   let selectedOrderStatus = 'not_canceled';
-  let selectedTravelerFilter = 'all';
   let mainTableQuery = '';
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
@@ -94,6 +94,32 @@
     return (parseFloat(val) || 0).toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   }
 
+  // Redaction helpers — used in the seller-ranking summary so non-admin
+  // users only see real values for their own row. Length is preserved so
+  // the digit count of the actual value remains visible (e.g. 12,345 →
+  // **,***), giving a rough magnitude without exposing exact figures.
+  function maskText(value) {
+    return String(value == null ? '' : value).replace(/\S/g, '*');
+  }
+
+  function maskNumber(value) {
+    return formatNumber(value, 0).replace(/\d/g, '*');
+  }
+
+  // Aggregate KPI totals from a subset of orders. Used to recompute the
+  // KPI cards from a non-admin's own subset since the API summary spans
+  // every row in the response (which for non-admins now includes the
+  // whole role's orders so the ranking can show their position).
+  function computeSummary(orders) {
+    return (orders || []).reduce(function (acc, o) {
+      acc.total_orders += 1;
+      acc.total_net_amount += parseFloat(o.net_amount || 0);
+      acc.total_commission += parseFloat(o.supplier_commission || 0);
+      acc.total_discount += parseFloat(o.discount || 0);
+      return acc;
+    }, { total_orders: 0, total_net_amount: 0, total_commission: 0, total_discount: 0 });
+  }
+
   function formatDate(dateStr) {
     if (!dateStr) return '-';
     try {
@@ -155,38 +181,6 @@
     };
   }
 
-  function cloneAvailablePeriods(periods) {
-    const source = periods && Array.isArray(periods.years) ? periods.years : [];
-    return {
-      years: source.map(function (yearEntry) {
-        return {
-          year_ce: Number(yearEntry.year_ce),
-          label: yearEntry.label || String(Number(yearEntry.year_ce) + 543),
-          total_orders: yearEntry.total_orders || 0,
-          quarters: Array.isArray(yearEntry.quarters)
-            ? yearEntry.quarters.map(function (quarterEntry) {
-                return {
-                  quarter: Number(quarterEntry.quarter),
-                  label: quarterEntry.label || ('Q' + quarterEntry.quarter),
-                  total_orders: quarterEntry.total_orders || 0
-                };
-              })
-            : [],
-          months: Array.isArray(yearEntry.months)
-            ? yearEntry.months.map(function (monthEntry) {
-                return {
-                  month: Number(monthEntry.month),
-                  label: monthEntry.label || monthName(Number(monthEntry.month)),
-                  label_short: monthEntry.label_short || '',
-                  total_orders: monthEntry.total_orders || 0
-                };
-              })
-            : []
-        };
-      })
-    };
-  }
-
   function monthName(month) {
     return [
       '',
@@ -215,149 +209,19 @@
     };
   }
 
-  function normalizePeriodDateValue(value) {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    return {
-      year: date.getFullYear(),
-      month: date.getMonth() + 1,
-      quarter: Math.ceil((date.getMonth() + 1) / 3)
-    };
-  }
-
-  function buildAvailablePeriodsFromDates(values) {
-    const yearsMap = new Map();
-    (values || []).forEach(function (value) {
-      const parts = normalizePeriodDateValue(value);
-      if (!parts) return;
-      if (!yearsMap.has(parts.year)) {
-        yearsMap.set(parts.year, { months: new Set(), quarters: new Set() });
-      }
-      const bucket = yearsMap.get(parts.year);
-      bucket.months.add(parts.month);
-      bucket.quarters.add(parts.quarter);
-    });
-
-    return {
-      years: Array.from(yearsMap.entries())
-        .sort(function (a, b) { return b[0] - a[0]; })
-        .map(function (entry) {
-          const year = Number(entry[0]);
-          const bucket = entry[1];
-          return {
-            year_ce: year,
-            label: String(year + 543),
-            quarters: Array.from(bucket.quarters)
-              .sort(function (a, b) { return b - a; })
-              .map(function (quarter) {
-                return {
-                  quarter: quarter,
-                  label: 'Q' + quarter
-                };
-              }),
-            months: Array.from(bucket.months)
-              .sort(function (a, b) { return b - a; })
-              .map(function (month) {
-                return {
-                  month: month,
-                  label: monthName(month)
-                };
-              })
-          };
-        })
-    };
-  }
-
-  function buildAvailablePeriodsFromOrders(orders, dateKey) {
-    return buildAvailablePeriodsFromDates((orders || []).map(function (order) {
-      return order ? order[dateKey] : '';
-    }));
-  }
-
-  function setPeriodState(field, nextState) {
-    if (field === 'created') createdPeriodState = clonePeriodState(nextState);
-    else paidPeriodState = clonePeriodState(nextState);
-  }
-
   function mountPeriodSelectors() {
     window.SharedPeriodSelector.mount({
       modeContainerId : 'crp-created-mode-host',
       valueContainerId: 'crp-created-value-host',
-      availablePeriods: createdAvailablePeriods,
+      availablePeriods: availablePeriods,
       multiSelect     : false,
       modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : createdPeriodState,
       onChange        : function (state) {
-        handlePeriodChange('created', state);
+        createdPeriodState = clonePeriodState(state);
+        mountPeriodSelectors();
       }
     });
-
-    window.SharedPeriodSelector.mount({
-      modeContainerId : 'crp-paid-mode-host',
-      valueContainerId: 'crp-paid-value-host',
-      availablePeriods: paidAvailablePeriods,
-      multiSelect     : false,
-      modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
-      initialState    : paidPeriodState,
-      onChange        : function (state) {
-        handlePeriodChange('paid', state);
-      }
-    });
-
-    updateGraceNoteVisibility();
-  }
-
-  // Show "+3 วันผ่อนปรน" only when the +3-day grace is actually applied
-  // (preset modes — yearly/quarterly/monthly). Hidden for 'all' (no
-  // range to grace) and 'custom' (user picked exact dates so grace is
-  // intentionally skipped — see buildFilters()).
-  function updateGraceNoteVisibility() {
-    const note = document.getElementById('crp-paid-grace-note');
-    if (!note) return;
-    const mode = paidPeriodState && paidPeriodState.mode;
-    const visible = mode && mode !== 'all' && mode !== 'custom';
-    note.classList.toggle('crp-grace-note--visible', !!visible);
-  }
-
-  async function handlePeriodChange(field, state) {
-    setPeriodState(field, state);
-    mountPeriodSelectors();
-    if (state && state.mode === 'custom' && (!state.customFrom || !state.customTo)) return;
-    await refreshOppositePeriodAvailability(field);
-  }
-
-  async function refreshOppositePeriodAvailability(changedField) {
-    const requestId = ++periodAvailabilityRequestId;
-    try {
-      let response;
-      if (changedField === 'created') {
-        response = await CommissionReportPlusAPI.getReport(buildFilters({ ignorePaidPeriod: true }));
-      } else {
-        response = await CommissionReportPlusAPI.getReport(buildFilters({ ignoreCreatedPeriod: true }));
-      }
-      if (requestId !== periodAvailabilityRequestId) return;
-
-      const orders = response && response.data ? response.data.orders : [];
-      // Only refresh the opposite selector's available-period options so its
-      // dropdown reflects what's actually queryable under the current filter.
-      // Do NOT overwrite the user's selection if it falls outside the new
-      // option list — they may have intentionally picked a combo that returns
-      // zero rows, and silently resetting it surprised users (the "every
-      // change wipes the other filter to ทั้งหมด" complaint).
-      if (changedField === 'created') {
-        paidAvailablePeriods = buildAvailablePeriodsFromOrders(orders, 'first_paid_at');
-      } else {
-        createdAvailablePeriods = buildAvailablePeriodsFromOrders(orders, 'created_at');
-      }
-      mountPeriodSelectors();
-    } catch (e) {
-      console.error('[CRP] Failed to refresh related period filters:', e);
-      if (requestId !== periodAvailabilityRequestId) return;
-      createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
-      paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
-      mountPeriodSelectors();
-    }
   }
 
   function escHtml(str) {
@@ -428,9 +292,14 @@
   function buildSellerAggregate(orders) {
     const map = new Map();
     orders.forEach(o => {
-      const name = o.seller_nick_name || '-';
-      if (!map.has(name)) map.set(name, { seller: name, orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
-      const s = map.get(name);
+      const sid = String(o.seller_agency_member_id || '');
+      const key = sid || (o.seller_nick_name || '-');
+      if (!map.has(key)) map.set(key, {
+        seller_id: sid,
+        seller: o.seller_nick_name || '-',
+        orders: 0, net_amount: 0, discount: 0, net_commission: 0
+      });
+      const s = map.get(key);
       s.orders += 1;
       s.net_amount += parseFloat(o.net_amount || 0);
       s.discount += parseFloat(o.discount || 0);
@@ -454,13 +323,8 @@
     }
   }
 
-  // Render the "เซลล์ผู้จอง" dropdown filtered by the currently-selected
-  // ตำแหน่ง (selectedJobPosition):
-  //   - 'admin' → no role filter, show every seller
-  //   - 'ts' / 'crm' → show only sellers whose job_position matches
-  // Non-admins see a locked button showing their own nick name. Called on
-  // initial mount AND every time the ตำแหน่ง dropdown changes so the
-  // seller list always matches the role pill above it.
+  // Render the "เซลล์ผู้จอง" dropdown. Admins see every seller; non-admins
+  // see a locked button showing their own nick name.
   function renderSellerDropdown() {
     const sellerHost = document.getElementById('crp-dd-seller');
     if (!sellerHost) return;
@@ -476,25 +340,9 @@
       return;
     }
 
-    // Each ตำแหน่ง option (ts / crm / admin) filters the seller list to
-    // exactly that job_position. Sellers whose role doesn't match the
-    // current pill are hidden — including admins when the pill is TS
-    // or CRM, and TS/CRM when the pill is Admin.
-    const role = (selectedJobPosition || '').toLowerCase();
-    const filtered = role
-      ? sellers.filter(s => String(s.job_position || '').toLowerCase() === role)
-      : sellers;
-
-    // If the previously-selected seller is no longer in the filtered list,
-    // drop the selection so the dropdown doesn't render a stale value.
-    if (selectedSellerId) {
-      const stillThere = filtered.some(s => String(s.id) === String(selectedSellerId));
-      if (!stillThere) selectedSellerId = '';
-    }
-
     const sellerOptions = [
       { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: !selectedSellerId },
-      ...filtered.map(s => ({
+      ...sellers.map(s => ({
         value : String(s.id),
         label : s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
         icon  : getPersonIcon(),
@@ -534,48 +382,18 @@
             </div>
           </div>
 
-          <!-- แถว 2: วันชำระงวด 1 (period selector) -->
-          <div class="filter-row crp-filter-row">
-            <div class="crp-filter-field">
-              <div class="crp-filter-label-row">
-                <span class="time-granularity-label crp-filter-label">วันชำระงวด 1</span>
-                <!-- Business rule: paid_at_to is silently extended by +3
-                     days for non-custom modes to honour finance's late-
-                     payment grace window. This badge surfaces the rule so
-                     users don't see "April rows" in their "March" filter
-                     without explanation. Toggled by updateGraceNoteVisibility(). -->
-                <span class="crp-grace-note" id="crp-paid-grace-note" title="ระบบขยาย paid_at_to อีก 3 วัน เพื่อนับการชำระเงินที่ตกค้างจากช่วงก่อนหน้า">+3 วัน</span>
-              </div>
-              <div class="crp-filter-control" id="crp-paid-mode-host"></div>
-              <div class="crp-filter-control" id="crp-paid-value-host"></div>
-            </div>
-          </div>
-
           <div class="filter-row-divider"></div>
 
-          <!-- แถว 2: Dropdown Pair 1 -->
+          <!-- แถว 2: Dropdown Pair -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">ตำแหน่ง</span>
-              <div class="crp-filter-control" id="crp-dd-position"></div>
-            </div>
-
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">เซลล์ผู้จอง</span>
+              <span class="time-granularity-label crp-filter-label">ชื่อผู้จอง</span>
               <div class="crp-filter-control" id="crp-dd-seller"></div>
             </div>
-          </div>
 
-          <!-- แถว 3: Dropdown Pair 2 -->
-          <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">สถานะ Order</span>
               <div class="crp-filter-control" id="crp-dd-status"></div>
-            </div>
-
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">จำนวนผู้เดินทาง</span>
-              <div class="crp-filter-control" id="crp-dd-travelers"></div>
             </div>
           </div>
 
@@ -595,50 +413,18 @@
 
   // ---- Init Filters ----
   async function initFilters() {
-    const jobPos  = currentUser ? currentUser.job_position : 'admin';
     const sellerId = currentUser ? String(currentUser.id || '') : '';
 
-    // Init two period selectors — one per date field. Default to current
-    // month so the report loads with the usual monthly view on first paint.
-    createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
-    paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
+    // Default created-period to current month so the report loads with the
+    // usual monthly view on first paint.
     createdPeriodState = getDefaultMonthlyPeriodState();
-    paidPeriodState = getDefaultMonthlyPeriodState();
     mountPeriodSelectors();
 
     // Set state defaults
-    selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
 
-    // ---- ตำแหน่ง dropdown ----
-    const jobPositionOptions = [
-      { value: 'ts',    label: 'เซลล์', icon: getPersonIcon() },
-      { value: 'crm',   label: 'CRM',   icon: getPersonIcon() },
-      { value: 'admin', label: 'Admin', icon: getPersonIcon() },
-    ].map(o => ({ ...o, active: o.value === jobPos }));
-
-    if (isAdmin()) {
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-position',
-        defaultLabel: labelOfJobPosition(jobPos),
-        defaultIcon: getPersonIcon(),
-        options: jobPositionOptions,
-        onChange: function (val, label) {
-          selectedJobPosition = val;
-          // Linked behaviour: changing position re-scopes the seller
-          // dropdown so admins only see sellers of the chosen role.
-          renderSellerDropdown();
-        }
-      });
-    } else {
-      document.getElementById('crp-dd-position').innerHTML =
-        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
-           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${labelOfJobPosition(jobPos)}</span></div>
-         </button>`;
-    }
-
-    // ---- เซลล์ผู้จอง dropdown ---- linked to ตำแหน่ง above.
+    // ---- เซลล์ผู้จอง dropdown ----
     renderSellerDropdown();
 
     // ---- สถานะ Order dropdown ----
@@ -649,35 +435,13 @@
       { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled') },
     ].map(o => ({ ...o, active: o.value === defaultStatus }));
 
-    if (isAdmin()) {
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-status',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getStatusIcon('all'),
-        options: statusOptions,
-        onChange: function (val, label) {
-          selectedOrderStatus = val;
-        }
-      });
-    } else {
-      document.getElementById('crp-dd-status').innerHTML =
-        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
-           <div class="filter-sort-btn-content">${getStatusIcon('not_canceled')}<span class="filter-sort-btn-text">ไม่ยกเลิก</span></div>
-         </button>`;
-    }
-
-    // ---- จำนวนผู้เดินทาง dropdown ----
-    const travelerOptions = [
-      { value: 'all',          label: 'ทั้งหมด',   icon: getAllIcon(),              active: true },
-      { value: 'exclude_zero', label: 'ยกเว้น 0',  icon: getPersonIcon(),           active: false },
-    ];
     FilterSortDropdownComponent.initDropdown({
-      containerId: 'crp-dd-travelers',
-      defaultLabel: 'ทั้งหมด',
-      defaultIcon: getAllIcon(),
-      options: travelerOptions,
+      containerId: 'crp-dd-status',
+      defaultLabel: defaultStatus === 'not_canceled' ? 'ไม่ยกเลิก' : 'ทั้งหมด',
+      defaultIcon: getStatusIcon(defaultStatus),
+      options: statusOptions,
       onChange: function (val) {
-        selectedTravelerFilter = val;
+        selectedOrderStatus = val;
       }
     });
 
@@ -700,69 +464,28 @@
   // Reset contract: restore every filter input/UI widget to the page default
   // (current month, admin defaults, etc.) WITHOUT refetching the report.
   function resetFiltersToDefault() {
-    const jobPos   = currentUser ? currentUser.job_position : 'admin';
     const sellerId = currentUser ? String(currentUser.id || '') : '';
-    createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
-    paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
     createdPeriodState = getDefaultMonthlyPeriodState();
-    paidPeriodState = getDefaultMonthlyPeriodState();
-    selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
-    selectedTravelerFilter = 'all';
 
     mountPeriodSelectors();
 
-    // Re-init dropdowns so their selected label reflects the default.
-    if (isAdmin()) {
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-position',
-        defaultLabel: labelOfJobPosition(jobPos),
-        defaultIcon: getPersonIcon(),
-        options: [
-          { value: 'ts',    label: 'เซลล์', icon: getPersonIcon(), active: jobPos === 'ts' },
-          { value: 'crm',   label: 'CRM',   icon: getPersonIcon(), active: jobPos === 'crm' },
-          { value: 'admin', label: 'Admin', icon: getPersonIcon(), active: jobPos === 'admin' },
-        ],
-        onChange: function (val) {
-          selectedJobPosition = val;
-          renderSellerDropdown();
-        }
-      });
-
-      // Linked seller dropdown — re-renders inside renderSellerDropdown
-      // every time ตำแหน่ง changes, so the seller list always matches
-      // the role pill above it.
-      renderSellerDropdown();
-
-      FilterSortDropdownComponent.initDropdown({
-        containerId: 'crp-dd-status',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getStatusIcon('all'),
-        options: [
-          { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all'),          active: true  },
-          { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled'), active: false },
-          { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled'),     active: false },
-        ],
-        onChange: function (val) { selectedOrderStatus = val; }
-      });
-    }
+    // Linked seller dropdown — re-renders inside renderSellerDropdown.
+    renderSellerDropdown();
 
     FilterSortDropdownComponent.initDropdown({
-      containerId: 'crp-dd-travelers',
-      defaultLabel: 'ทั้งหมด',
-      defaultIcon: getAllIcon(),
+      containerId: 'crp-dd-status',
+      defaultLabel: selectedOrderStatus === 'not_canceled' ? 'ไม่ยกเลิก' : 'ทั้งหมด',
+      defaultIcon: getStatusIcon(selectedOrderStatus),
       options: [
-        { value: 'all',          label: 'ทั้งหมด',   icon: getAllIcon(),    active: true  },
-        { value: 'exclude_zero', label: 'ยกเว้น 0',  icon: getPersonIcon(), active: false },
+        { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all'),          active: selectedOrderStatus === 'all'          },
+        { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled'), active: selectedOrderStatus === 'not_canceled' },
+        { value: 'canceled',     label: 'ยกเลิก',    icon: getStatusIcon('canceled'),     active: selectedOrderStatus === 'canceled'     },
       ],
-      onChange: function (val) { selectedTravelerFilter = val; }
+      onChange: function (val) { selectedOrderStatus = val; }
     });
 
-  }
-
-  function labelOfJobPosition(pos) {
-    return { ts: 'เซลล์', crm: 'CRM', admin: 'Admin' }[pos] || pos;
   }
 
 
@@ -816,39 +539,23 @@
         && (!createdPeriodState.customFrom || !createdPeriodState.customTo)) {
       return 'วันที่สร้าง';
     }
-    if (paidPeriodState && paidPeriodState.mode === 'custom'
-        && (!paidPeriodState.customFrom || !paidPeriodState.customTo)) {
-      return 'วันที่ชำระ';
-    }
     return '';
   }
 
-  function buildFilters(options) {
-    const cfg = options || {};
-    const createdState = cfg.createdState || createdPeriodState;
-    const paidState = cfg.paidState || paidPeriodState;
-    const created = cfg.ignoreCreatedPeriod
-      ? { dateFrom: '', dateTo: '' }
-      : window.SharedPeriodSelector.toDateRange(createdState, availablePeriods);
-    const paid = cfg.ignorePaidPeriod
-      ? { dateFrom: '', dateTo: '' }
-      : window.SharedPeriodSelector.toDateRange(paidState, availablePeriods);
-    // Business rule: for non-custom paid-period modes, extend paid_at_to by
-    // +3 days to cover the late-payment grace window that finance accepts
-    // after the nominal period end.
-    const paidTo = (!cfg.ignorePaidPeriod && paidState && paidState.mode !== 'custom' && paid.dateTo)
-      ? addDays(paid.dateTo, 3)
-      : paid.dateTo;
+  function buildFilters() {
+    const created = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
     return {
       created_at_from: created.dateFrom || '',
       created_at_to:   created.dateTo   || '',
-      paid_at_from:    paid.dateFrom    || '',
-      paid_at_to:      paidTo           || '',
-      // Match canceled-orders' pattern: non-admins always send their own
-      // role from the JWT, never a stale `selectedJobPosition`. Admins use
-      // whatever the ตำแหน่ง dropdown shows.
-      job_position:    isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
-      seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
+      // Send the user's role from the JWT; admins implicitly get "all
+      // orders" since the API treats anything other than ts/crm as no
+      // is_old_customer filter.
+      job_position:    currentUser?.job_position || 'admin',
+      // Non-admins intentionally omit seller_id so the response covers
+      // every seller in their role — the ranking summary needs this to
+      // show their position; the main table and KPI cards filter back
+      // down to their own rows in renderResults.
+      seller_id:       isAdmin() ? selectedSellerId : '',
       order_status:    selectedOrderStatus,
     };
   }
@@ -878,13 +585,21 @@
   function renderResults(data) {
     const results = document.getElementById('crp-results');
     if (!results) return;
-    const { orders: rawOrders = [], summary = {} } = data;
-    const orders = selectedTravelerFilter === 'exclude_zero'
-      ? rawOrders.filter(o => parseInt(o.room_quantity || 0) >= 1)
-      : rawOrders;
+    const { orders = [], summary = {} } = data;
     if (!orders.length) { showEmpty(); return; }
 
-    results.innerHTML = renderSummary(summary) + renderSellerSummary(orders) + renderTableSection(orders);
+    // For non-admins the API returns role-wide rows so the ranking summary
+    // can show their position. The main table, KPI cards, and exports
+    // however should still reflect only the user's own data.
+    const myId = String(currentUser?.id || '');
+    const ownOrders = isAdmin()
+      ? orders
+      : orders.filter(o => String(o.seller_agency_member_id || '') === myId);
+    const ownSummary = isAdmin() ? summary : computeSummary(ownOrders);
+    currentOwnOrders = ownOrders;
+    currentOwnSummary = ownSummary;
+
+    results.innerHTML = renderSummary(ownSummary) + renderSellerSummary(orders) + renderTableSection(ownOrders);
 
     // Sticky header: set col-row top = group-row height
     const groupRow = results.querySelector('.crp-table thead tr.group-row');
@@ -896,7 +611,7 @@
     }
 
     document.getElementById('crp-btn-export').addEventListener('click', () => exportExcelWorkbook(orders));
-    document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
+    document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, ownSummary));
 
     if (window.SharedSortableHeader) {
       const mainTable = results.querySelector('.crp-table');
@@ -1008,32 +723,43 @@
       </div>`;
   }
 
-  // ---- Seller Summary (Admin only) ----
+  // ---- Seller Summary ----
+  // Admin: see both Telesales + CRM groups with full data.
+  // ts/crm: see only their own role's group; other sellers' rows in that
+  // group are redacted (text and digits replaced with `*`) so the user
+  // can see their rank position without revealing peers' figures.
   function renderSellerSummary(orders) {
-    if (!isAdmin()) return '';
+    const myId = String(currentUser?.id || '');
+    const myRole = String(currentUser?.job_position || '').toLowerCase();
 
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
       const rows = sorted.map((s, i) => {
-        const name = s.seller;
         const rank = i + 1;
-        const rankClass = rank <= 3 ? ` crp-summary-rank--${rank}` : '';
         const trophyIcon = window.SharedTrophyRank
           ? window.SharedTrophyRank.getTrophySvg(rank)
           : '';
+        const isSelf = isAdmin() || (s.seller_id && s.seller_id === myId);
+        const sellerCell  = isSelf ? escHtml(s.seller)               : maskText(s.seller);
+        const ordersCell  = isSelf ? formatNumber(s.orders, 0)       : maskNumber(s.orders);
+        const amountCell  = isSelf ? formatNumber(s.net_amount, 0)   : maskNumber(s.net_amount);
+        const discCell    = isSelf ? formatNumber(s.discount, 0)     : maskNumber(s.discount);
+        const netComCell  = isSelf ? formatNumber(s.net_commission, 0) : maskNumber(s.net_commission);
+        const netComClass = isSelf ? (s.net_commission >= 0 ? 'crp-positive' : 'crp-negative') : '';
+        const rowClass    = isSelf ? '' : 'crp-summary-row--masked';
         return `
-          <tr>
+          <tr class="${rowClass}">
             <td>
               <div class="crp-summary-seller-cell">
                 ${trophyIcon}${rank > 3 ? `<span class="crp-summary-rank">${rank}</span>` : ''}
-                <span class="crp-seller-badge">${escHtml(name)}</span>
+                <span class="crp-seller-badge">${sellerCell}</span>
               </div>
             </td>
-            <td class="right">${formatNumber(s.orders, 0)}</td>
-            <td class="right">${formatNumber(s.net_amount, 0)}</td>
-            <td class="right">${formatNumber(s.discount, 0)}</td>
-            <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
+            <td class="right">${ordersCell}</td>
+            <td class="right">${amountCell}</td>
+            <td class="right">${discCell}</td>
+            <td class="right ${netComClass}">${netComCell}</td>
           </tr>`;
       }).join('');
       return `
@@ -1060,12 +786,22 @@
     const tsOrders  = orders.filter(o => (o.seller_job_position || '').toLowerCase() === 'ts');
     const crmOrders = orders.filter(o => (o.seller_job_position || '').toLowerCase() === 'crm');
 
+    let groupsHtml = '';
+    if (isAdmin()) {
+      groupsHtml = buildGroupTable('Telesales', 'ts', tsOrders) + buildGroupTable('CRM', 'crm', crmOrders);
+    } else if (myRole === 'ts' && tsOrders.length) {
+      // ts users see the Telesales ranking with peer rows redacted.
+      // crm users intentionally see no ranking at all (per spec).
+      groupsHtml = buildGroupTable('Telesales', 'ts', tsOrders);
+    }
+
+    if (!groupsHtml) return '';
+
     return `
       <div class="crp-seller-summary">
         <div class="crp-summary-title">สรุป</div>
         <div class="crp-summary-groups">
-          ${buildGroupTable('Telesales', 'ts', tsOrders)}
-          ${buildGroupTable('CRM', 'crm', crmOrders)}
+          ${groupsHtml}
         </div>
       </div>`;
   }
@@ -1137,6 +873,9 @@
   }
 
   // ---- Export Excel Workbook ----
+  // `orders` is the role-wide set used for the ranking sheets so non-admins
+  // still see their position; the main sheet uses currentOwnOrders so it
+  // mirrors what the user can see in the table.
   function exportExcelWorkbook(orders) {
     if (!window.XLSX || !window.XLSX.utils) {
       console.error('[CRP] XLSX library is not available');
@@ -1144,12 +883,13 @@
       return;
     }
 
+    const myRole = String(currentUser?.job_position || '').toLowerCase();
     const workbook = window.XLSX.utils.book_new();
     const worksheets = [
       {
         name: 'sales-report',
         headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม'],
-        rows: getVisibleOrders(orders).map(function (o) {
+        rows: getVisibleOrders(currentOwnOrders).map(function (o) {
           const commission = parseFloat(o.supplier_commission || 0);
           const discount = parseFloat(o.discount || 0);
           return [
@@ -1167,18 +907,23 @@
             discount
           ];
         })
-      },
-      {
+      }
+    ];
+
+    if (isAdmin() || myRole === 'ts') {
+      worksheets.push({
         name: 'sales-report-by-telesales',
         headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'ts')
-      },
-      {
+      });
+    }
+    if (isAdmin()) {
+      worksheets.push({
         name: 'sales-report-by-crm',
         headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'crm')
-      }
-    ];
+      });
+    }
 
     worksheets.forEach(function (sheet) {
       const worksheet = window.XLSX.utils.aoa_to_sheet([sheet.headers].concat(sheet.rows));
@@ -1190,17 +935,22 @@
   }
 
   function getSellerSummaryExportRows(orders, groupClass) {
+    const myId = String(currentUser?.id || '');
     const groupOrders = orders.filter(function (order) {
       return String(order.seller_job_position || '').toLowerCase() === groupClass;
     });
     return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
+      const isSelf = isAdmin() || (row.seller_id && row.seller_id === myId);
+      if (isSelf) {
+        return [index + 1, row.seller, row.orders, row.net_amount, row.discount, row.net_commission];
+      }
       return [
         index + 1,
-        row.seller,
-        row.orders,
-        row.net_amount,
-        row.discount,
-        row.net_commission
+        maskText(row.seller),
+        maskNumber(row.orders),
+        maskNumber(row.net_amount),
+        maskNumber(row.discount),
+        maskNumber(row.net_commission)
       ];
     });
   }
@@ -1273,10 +1023,10 @@
   }
 
   // Render the active period as a print-friendly value. The card label
-  // ("วันที่สร้าง Order" / "วันชำระงวด 1") already implies "this is a
-  // date filter", so we drop the รายปี/รายไตรมาส/รายเดือน prefixes and
-  // show just the resolved date — same shape that appears in the
-  // dropdown trigger so the printed report mirrors what the user picked.
+  // ("วันที่สร้าง Order") already implies "this is a date filter", so we
+  // drop the รายปี/รายไตรมาส/รายเดือน prefixes and show just the resolved
+  // date — same shape that appears in the dropdown trigger so the printed
+  // report mirrors what the user picked.
   function formatPeriodStateForPrint(state) {
     if (!state || !state.mode || state.mode === 'all') return 'ทั้งหมด';
     if (state.mode === 'monthly') {
@@ -1298,14 +1048,12 @@
   function buildPrintHighlights() {
     return [
       { label: 'วันที่สร้าง Order', value: formatPeriodStateForPrint(createdPeriodState) },
-      { label: 'วันชำระงวด 1', value: formatPeriodStateForPrint(paidPeriodState) },
     ];
   }
 
   function buildPrintFilters() {
     return [
-      { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
-      { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
+      { label: 'ชื่อผู้จอง', value: getSelectedSellerLabel() },
       { label: 'สถานะ Order', value: getSelectedStatusLabel() },
     ];
   }
@@ -1562,7 +1310,7 @@
     wrapper.className = 'crp-pdf-source';
     wrapper.dataset.countText = countText || '';
 
-    const netCommission = parseFloat(currentData?.summary?.total_commission || 0) - parseFloat(currentData?.summary?.total_discount || 0);
+    const netCommission = parseFloat(currentOwnSummary?.total_commission || 0) - parseFloat(currentOwnSummary?.total_discount || 0);
 
     const title = document.createElement('div');
     title.style.display = 'flex';
@@ -1581,20 +1329,16 @@
     // on the main commission table's footer row, no need to duplicate at
     // the top of every page.
     const sellerLabel = getSelectedSellerLabel();
-    const positionLabel = labelOfJobPosition(selectedJobPosition);
     const createdLabel = formatPeriodStateForPrint(createdPeriodState);
-    const paidLabel = formatPeriodStateForPrint(paidPeriodState);
     const statusLabel = getSelectedStatusLabel();
     const isAllSeller = !sellerLabel || sellerLabel === 'ทั้งหมด';
-    // When the user filters by role but leaves the seller picker on "ทั้งหมด",
-    // the seller value alone reads as "ทั้งหมด" and loses the role context.
-    // Prefix with the role name in that case ("Telesales ทั้งหมด" / "CRM ทั้งหมด")
+    // For non-admins viewing their own role's report, prefix the "ทั้งหมด"
+    // seller label with their role ("Telesales ทั้งหมด" / "CRM ทั้งหมด")
     // so the PDF says what scope the report covers.
-    const roleScopeName = ({ ts: 'Telesales', crm: 'CRM' })[(selectedJobPosition || '').toLowerCase()] || '';
+    const roleScopeName = ({ ts: 'Telesales', crm: 'CRM' })[String(currentUser?.job_position || '').toLowerCase()] || '';
     const sellerDisplay = isAllSeller && roleScopeName
       ? `${roleScopeName} ทั้งหมด`
       : sellerLabel;
-    const showPositionLabel = !isAllSeller;
     const compactCountText = String(countText || '').replace(/แสดง\s*/g, '').trim();
 
     const HEADLINE_LABEL_STYLE = 'font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;';
@@ -1610,22 +1354,12 @@
     highlightGrid.style.borderBottom = '1px solid #dbe2ea';
     highlightGrid.innerHTML = `
       <div style="min-width:0;">
-        <div style="${HEADLINE_LABEL_STYLE}">เซลล์ผู้จอง</div>
+        <div style="${HEADLINE_LABEL_STYLE}">ชื่อผู้จอง</div>
         <div style="${HEADLINE_VALUE_STYLE}">${escHtml(sellerDisplay || '-')}</div>
       </div>
-      ${showPositionLabel ? `
-        <div style="min-width:0;">
-          <div style="${HEADLINE_LABEL_STYLE}">ตำแหน่ง</div>
-          <div style="${HEADLINE_VALUE_STYLE}">${escHtml(positionLabel || '-')}</div>
-        </div>
-      ` : ''}
       <div style="min-width:0;">
         <div style="${HEADLINE_LABEL_STYLE}">วันที่สร้าง Order</div>
         <div style="${HEADLINE_VALUE_STYLE}">${escHtml(createdLabel || '-')}</div>
-      </div>
-      <div style="min-width:0;">
-        <div style="${HEADLINE_LABEL_STYLE}">วันชำระงวด 1</div>
-        <div style="${HEADLINE_VALUE_STYLE}">${escHtml(paidLabel || '-')}</div>
       </div>
     `;
 
@@ -1706,12 +1440,12 @@
       const cellBorder = 'border-top:2px solid #9fb6cc;';
       footer.innerHTML = `
         <td colspan="6" style="text-align:center;color:#243b53;${cellBorder}">รวม ${escHtml(countText || '')}</td>
-        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentOwnSummary?.total_net_amount || 0))}</td>
         <td style="${cellBorder}"></td>
         <td style="${cellBorder}"></td>
-        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentOwnSummary?.total_commission || 0))}</td>
         <td style="text-align:right;color:#16a34a;${cellBorder}">${escHtml(formatNumber(netCommission || 0))}</td>
-        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentOwnSummary?.total_discount || 0))}</td>
       `;
       tbody.appendChild(footer);
     }

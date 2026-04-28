@@ -413,13 +413,7 @@
         <!-- Data Table -->
         <div class="dashboard-table-container">
           <div class="dashboard-table-header">
-            <div class="dashboard-table-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
-                <rect x="8" y="2" width="8" height="4" rx="1"/>
-              </svg>
-              รายละเอียด Wholesale
-            </div>
+            ${window.SharedTableCount.render({ id: 'wd-table-count', count: (Array.isArray(wholesales) ? wholesales.length : 0) })}
             <div class="dashboard-table-actions">
               <div id="wd-table-search-host"></div>
               ${window.SharedExportButton.render({ id: 'dashboardExportBtn' })}
@@ -1914,6 +1908,7 @@
         if (tableBody) {
           tableBody.innerHTML = renderTableRows(filtered, totalBookings, countries);
         }
+        if (window.SharedTableCount) window.SharedTableCount.update('wd-table-count', filtered.length);
       }
     });
   }
