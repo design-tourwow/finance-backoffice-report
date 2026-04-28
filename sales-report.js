@@ -1585,7 +1585,16 @@
     const createdLabel = formatPeriodStateForPrint(createdPeriodState);
     const paidLabel = formatPeriodStateForPrint(paidPeriodState);
     const statusLabel = getSelectedStatusLabel();
-    const showPositionLabel = sellerLabel && sellerLabel !== 'ทั้งหมด';
+    const isAllSeller = !sellerLabel || sellerLabel === 'ทั้งหมด';
+    // When the user filters by role but leaves the seller picker on "ทั้งหมด",
+    // the seller value alone reads as "ทั้งหมด" and loses the role context.
+    // Prefix with the role name in that case ("Telesales ทั้งหมด" / "CRM ทั้งหมด")
+    // so the PDF says what scope the report covers.
+    const roleScopeName = ({ ts: 'Telesales', crm: 'CRM' })[(selectedJobPosition || '').toLowerCase()] || '';
+    const sellerDisplay = isAllSeller && roleScopeName
+      ? `${roleScopeName} ทั้งหมด`
+      : sellerLabel;
+    const showPositionLabel = !isAllSeller;
     const compactCountText = String(countText || '').replace(/แสดง\s*/g, '').trim();
 
     const HEADLINE_LABEL_STYLE = 'font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;';
@@ -1602,7 +1611,7 @@
     highlightGrid.innerHTML = `
       <div style="min-width:0;">
         <div style="${HEADLINE_LABEL_STYLE}">เซลล์ผู้จอง</div>
-        <div style="${HEADLINE_VALUE_STYLE}">${escHtml(sellerLabel || '-')}</div>
+        <div style="${HEADLINE_VALUE_STYLE}">${escHtml(sellerDisplay || '-')}</div>
       </div>
       ${showPositionLabel ? `
         <div style="min-width:0;">
