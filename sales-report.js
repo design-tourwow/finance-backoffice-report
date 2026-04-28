@@ -488,6 +488,66 @@
     }
   }
 
+  // Render the "เซลล์ผู้จอง" dropdown filtered by the currently-selected
+  // ตำแหน่ง (selectedJobPosition):
+  //   - 'admin' → no role filter, show every seller
+  //   - 'ts' / 'crm' → show only sellers whose job_position matches
+  // Non-admins see a locked button showing their own nick name. Called on
+  // initial mount AND every time the ตำแหน่ง dropdown changes so the
+  // seller list always matches the role pill above it.
+  function renderSellerDropdown() {
+    const sellerHost = document.getElementById('crp-dd-seller');
+    if (!sellerHost) return;
+
+    if (!isAdmin()) {
+      const sellerId = currentUser ? String(currentUser.id || '') : '';
+      const me = sellers.find(s => String(s.id) === sellerId);
+      const name = (me && me.nick_name) || (currentUser && currentUser.nick_name) || '-';
+      sellerHost.innerHTML =
+        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
+           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
+         </button>`;
+      return;
+    }
+
+    // Each ตำแหน่ง option (ts / crm / admin) filters the seller list to
+    // exactly that job_position. Sellers whose role doesn't match the
+    // current pill are hidden — including admins when the pill is TS
+    // or CRM, and TS/CRM when the pill is Admin.
+    const role = (selectedJobPosition || '').toLowerCase();
+    const filtered = role
+      ? sellers.filter(s => String(s.job_position || '').toLowerCase() === role)
+      : sellers;
+
+    // If the previously-selected seller is no longer in the filtered list,
+    // drop the selection so the dropdown doesn't render a stale value.
+    if (selectedSellerId) {
+      const stillThere = filtered.some(s => String(s.id) === String(selectedSellerId));
+      if (!stillThere) selectedSellerId = '';
+    }
+
+    const sellerOptions = [
+      { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: !selectedSellerId },
+      ...filtered.map(s => ({
+        value : String(s.id),
+        label : s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
+        icon  : getPersonIcon(),
+        active: String(s.id) === String(selectedSellerId)
+      }))
+    ];
+
+    window.FilterSearchDropdown.init({
+      containerId : 'crp-dd-seller',
+      defaultLabel: 'ทั้งหมด',
+      defaultIcon : getAllIcon(),
+      options     : sellerOptions,
+      placeholder : 'ค้นหาเซลล์...',
+      onChange    : function (val) {
+        selectedSellerId = val || '';
+      }
+    });
+  }
+
   // ---- Render Shell ----
   function renderShell() {
     const section = document.getElementById('reportContentSection');
@@ -600,6 +660,9 @@
         options: jobPositionOptions,
         onChange: function (val, label) {
           selectedJobPosition = val;
+          // Linked behaviour: changing position re-scopes the seller
+          // dropdown so admins only see sellers of the chosen role.
+          renderSellerDropdown();
         }
       });
     } else {
@@ -609,36 +672,8 @@
          </button>`;
     }
 
-    // ---- เซลล์ผู้จอง dropdown ----
-    if (isAdmin()) {
-      const sellerOptions = [
-        { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
-        ...sellers.map(s => ({
-          value: String(s.id),
-          label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
-          icon: getPersonIcon(),
-          active: false
-        }))
-      ];
-
-      window.FilterSearchDropdown.init({
-        containerId: 'crp-dd-seller',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getAllIcon(),
-        options: sellerOptions,
-        placeholder: 'ค้นหาเซลล์...',
-        onChange: function (val) {
-          selectedSellerId = val;
-        }
-      });
-    } else {
-      const me = sellers.find(s => String(s.id) === sellerId);
-      const name = me ? me.nick_name : (currentUser ? currentUser.nick_name : '-');
-      document.getElementById('crp-dd-seller').innerHTML =
-        `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
-           <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
-         </button>`;
-    }
+    // ---- เซลล์ผู้จอง dropdown ---- linked to ตำแหน่ง above.
+    renderSellerDropdown();
 
     // ---- สถานะ Order dropdown ----
     const defaultStatus = isAdmin() ? 'all' : 'not_canceled';
@@ -723,25 +758,16 @@
           { value: 'crm',   label: 'CRM',   icon: getPersonIcon(), active: jobPos === 'crm' },
           { value: 'admin', label: 'Admin', icon: getPersonIcon(), active: jobPos === 'admin' },
         ],
-        onChange: function (val) { selectedJobPosition = val; }
+        onChange: function (val) {
+          selectedJobPosition = val;
+          renderSellerDropdown();
+        }
       });
 
-      window.FilterSearchDropdown.init({
-        containerId: 'crp-dd-seller',
-        defaultLabel: 'ทั้งหมด',
-        defaultIcon: getAllIcon(),
-        options: [
-          { value: '', label: 'ทั้งหมด', icon: getAllIcon(), active: true },
-          ...sellers.map(s => ({
-            value: String(s.id),
-            label: s.nick_name || `${s.first_name} ${s.last_name}`.trim() || String(s.id),
-            icon: getPersonIcon(),
-            active: false
-          }))
-        ],
-        placeholder: 'ค้นหาเซลล์...',
-        onChange: function (val) { selectedSellerId = val; }
-      });
+      // Linked seller dropdown — re-renders inside renderSellerDropdown
+      // every time ตำแหน่ง changes, so the seller list always matches
+      // the role pill above it.
+      renderSellerDropdown();
 
       FilterSortDropdownComponent.initDropdown({
         containerId: 'crp-dd-status',
@@ -852,7 +878,10 @@
       created_at_to:   created.dateTo   || '',
       paid_at_from:    paid.dateFrom    || '',
       paid_at_to:      paidTo           || '',
-      job_position:    selectedJobPosition,
+      // Match canceled-orders' pattern: non-admins always send their own
+      // role from the JWT, never a stale `selectedJobPosition`. Admins use
+      // whatever the ตำแหน่ง dropdown shows.
+      job_position:    isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
       seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
       order_status:    selectedOrderStatus,
     };
@@ -1099,10 +1128,7 @@
 
     return `
       <div class="dashboard-table-header">
-        <div class="dashboard-table-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-          <span id="crp-table-count">แสดง ${formatNumber(visibleOrders.length, 0)} รายการ</span>
-        </div>
+        ${window.SharedTableCount.render({ id: 'crp-table-count', count: visibleOrders.length })}
         <div class="dashboard-table-actions">
           <div id="crp-table-search-host"></div>
           ${window.SharedExportButton.render({ id: 'crp-btn-export', variant: 'excel' })}
@@ -1594,20 +1620,23 @@
     const paidLabel = formatPeriodStateForPrint(paidPeriodState);
     const statusLabel = getSelectedStatusLabel();
     const showPositionLabel = sellerLabel && sellerLabel !== 'ทั้งหมด';
-    const compactCountText = String(countText || '').replace(/^แสดง\s*/, '').trim();
+    const compactCountText = String(countText || '').replace(/แสดง\s*/g, '').trim();
+
+    const HEADLINE_LABEL_STYLE = 'font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;';
+    const HEADLINE_VALUE_STYLE = 'font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;';
 
     const highlightGrid = document.createElement('div');
     highlightGrid.style.display = 'flex';
     highlightGrid.style.alignItems = 'flex-start';
     highlightGrid.style.justifyContent = 'flex-start';
-    highlightGrid.style.gap = '36px';
+    highlightGrid.style.gap = '72px';
     highlightGrid.style.marginBottom = '10px';
     highlightGrid.style.padding = '4px 0 12px';
     highlightGrid.style.borderBottom = '1px solid #dbe2ea';
     highlightGrid.innerHTML = `
-      <div style="min-width:0;flex:0 0 360px;max-width:360px;">
-        <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">เซลล์ผู้จอง</div>
-        <div style="font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;">${escHtml(sellerLabel || '-')}</div>
+      <div style="min-width:0;">
+        <div style="${HEADLINE_LABEL_STYLE}">เซลล์ผู้จอง</div>
+        <div style="${HEADLINE_VALUE_STYLE}">${escHtml(sellerLabel || '-')}</div>
         ${showPositionLabel ? `
           <div style="margin-top:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
             <span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">ตำแหน่ง</span>
@@ -1615,15 +1644,13 @@
           </div>
         ` : ''}
       </div>
-      <div style="display:grid;grid-template-columns:repeat(2, minmax(260px, 260px));gap:36px;align-items:flex-start;min-width:0;">
-        <div style="min-width:0;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">วันที่สร้าง Order</div>
-          <div style="font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;">${escHtml(createdLabel || '-')}</div>
-        </div>
-        <div style="min-width:0;">
-          <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">วันชำระงวด 1</div>
-          <div style="font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;">${escHtml(paidLabel || '-')}</div>
-        </div>
+      <div style="min-width:0;">
+        <div style="${HEADLINE_LABEL_STYLE}">วันที่สร้าง Order</div>
+        <div style="${HEADLINE_VALUE_STYLE}">${escHtml(createdLabel || '-')}</div>
+      </div>
+      <div style="min-width:0;">
+        <div style="${HEADLINE_LABEL_STYLE}">วันชำระงวด 1</div>
+        <div style="${HEADLINE_VALUE_STYLE}">${escHtml(paidLabel || '-')}</div>
       </div>
     `;
 
@@ -1634,14 +1661,14 @@
     filterLine.style.gap = '16px';
     filterLine.style.marginBottom = '16px';
     filterLine.innerHTML = `
-      <div style="display:flex;flex-wrap:wrap;gap:18px 24px;align-items:baseline;min-width:0;">
-        <div style="display:flex;align-items:baseline;gap:7px;">
-          <span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">สถานะ Order</span>
-          <span style="font-size:20px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(statusLabel || '-')}</span>
+      <div style="display:flex;flex-wrap:wrap;gap:18px 28px;align-items:baseline;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:9px;">
+          <span style="font-size:13px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">สถานะ Order</span>
+          <span style="font-size:23px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(statusLabel || '-')}</span>
         </div>
-        <div style="display:flex;align-items:baseline;gap:7px;">
-          <span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">จำนวนรายการ</span>
-          <span style="font-size:20px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(compactCountText || '-')}</span>
+        <div style="display:flex;align-items:baseline;gap:9px;">
+          <span style="font-size:13px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">จำนวนรายการ</span>
+          <span style="font-size:23px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(compactCountText || '-')}</span>
         </div>
       </div>
       <div style="font-size:11px;font-weight:500;color:#64748b;white-space:nowrap;">พิมพ์วันที่ ${escHtml(new Date().toLocaleString('th-TH'))}</div>
@@ -2049,7 +2076,6 @@
 
   // ---- Export PDF (generate file from current table view) ----
   async function exportPDF(orders, summary = {}) {
-    const tableCount = document.getElementById('crp-table-count');
     const btn = document.getElementById('crp-btn-pdf');
     const originalText = btn ? btn.innerHTML : '';
     const rows = getVisibleTableRows();
@@ -2070,7 +2096,7 @@
 
     try {
       const jsPDF = window.jspdf.jsPDF;
-      const countText = tableCount ? tableCount.textContent : `แสดง ${formatNumber(rows.length, 0)} รายการ`;
+      const countText = `${formatNumber(rows.length, 0)} รายการ`;
       const sourceNode = createPdfSourceNode(countText);
       if (!sourceNode) throw new Error('PDF source node not found');
       const pages = buildPaginatedPdfPages(sourceNode);
