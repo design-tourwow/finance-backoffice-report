@@ -1594,17 +1594,18 @@
     const paidLabel = formatPeriodStateForPrint(paidPeriodState);
     const statusLabel = getSelectedStatusLabel();
     const showPositionLabel = sellerLabel && sellerLabel !== 'ทั้งหมด';
+    const compactCountText = String(countText || '').replace(/^แสดง\s*/, '').trim();
 
     const highlightGrid = document.createElement('div');
     highlightGrid.style.display = 'flex';
-    highlightGrid.style.alignItems = 'end';
+    highlightGrid.style.alignItems = 'flex-start';
     highlightGrid.style.justifyContent = 'flex-start';
-    highlightGrid.style.gap = '54px';
+    highlightGrid.style.gap = '36px';
     highlightGrid.style.marginBottom = '10px';
     highlightGrid.style.padding = '4px 0 12px';
     highlightGrid.style.borderBottom = '1px solid #dbe2ea';
     highlightGrid.innerHTML = `
-      <div style="min-width:0;flex:0 0 420px;max-width:420px;padding-right:4px;">
+      <div style="min-width:0;flex:0 0 360px;max-width:360px;">
         <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">เซลล์ผู้จอง</div>
         <div style="font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;">${escHtml(sellerLabel || '-')}</div>
         ${showPositionLabel ? `
@@ -1614,14 +1615,14 @@
           </div>
         ` : ''}
       </div>
-      <div style="display:grid;grid-template-columns:repeat(2, minmax(250px, 300px));gap:28px;align-items:end;min-width:0;">
+      <div style="display:grid;grid-template-columns:repeat(2, minmax(260px, 260px));gap:36px;align-items:flex-start;min-width:0;">
         <div style="min-width:0;">
           <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">วันที่สร้าง Order</div>
-          <div style="font-size:24px;line-height:1.15;font-weight:700;color:#0f172a;word-break:break-word;">${escHtml(createdLabel || '-')}</div>
+          <div style="font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;">${escHtml(createdLabel || '-')}</div>
         </div>
         <div style="min-width:0;">
           <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px;">วันชำระงวด 1</div>
-          <div style="font-size:24px;line-height:1.15;font-weight:700;color:#0f172a;word-break:break-word;">${escHtml(paidLabel || '-')}</div>
+          <div style="font-size:36px;line-height:1.08;font-weight:800;color:#0f172a;letter-spacing:-0.03em;word-break:break-word;">${escHtml(paidLabel || '-')}</div>
         </div>
       </div>
     `;
@@ -1636,11 +1637,11 @@
       <div style="display:flex;flex-wrap:wrap;gap:18px 24px;align-items:baseline;min-width:0;">
         <div style="display:flex;align-items:baseline;gap:7px;">
           <span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">สถานะ Order</span>
-          <span style="font-size:18px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(statusLabel || '-')}</span>
+          <span style="font-size:20px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(statusLabel || '-')}</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:7px;">
           <span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">จำนวนรายการ</span>
-          <span style="font-size:18px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(countText || '-')}</span>
+          <span style="font-size:20px;line-height:1.2;font-weight:700;color:#334e68;">${escHtml(compactCountText || '-')}</span>
         </div>
       </div>
       <div style="font-size:11px;font-weight:500;color:#64748b;white-space:nowrap;">พิมพ์วันที่ ${escHtml(new Date().toLocaleString('th-TH'))}</div>
