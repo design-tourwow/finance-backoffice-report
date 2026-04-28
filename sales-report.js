@@ -275,41 +275,9 @@
     }));
   }
 
-  function isPeriodStateAvailable(state, periods) {
-    if (!state || state.mode === 'all') return true;
-    if (state.mode === 'custom') return true;
-    const years = periods && Array.isArray(periods.years) ? periods.years : [];
-    if (state.mode === 'yearly') {
-      return years.some(function (entry) { return Number(entry.year_ce) === Number(state.year); });
-    }
-    if (state.mode === 'quarterly') {
-      return years.some(function (entry) {
-        return Number(entry.year_ce) === Number(state.year)
-          && Array.isArray(entry.quarters)
-          && entry.quarters.some(function (quarterEntry) {
-            return Number(quarterEntry.quarter) === Number(state.quarter);
-          });
-      });
-    }
-    if (state.mode === 'monthly') {
-      return years.some(function (entry) {
-        return Number(entry.year_ce) === Number(state.year)
-          && Array.isArray(entry.months)
-          && entry.months.some(function (monthEntry) {
-            return Number(monthEntry.month) === Number(state.month);
-          });
-      });
-    }
-    return true;
-  }
-
   function setPeriodState(field, nextState) {
     if (field === 'created') createdPeriodState = clonePeriodState(nextState);
     else paidPeriodState = clonePeriodState(nextState);
-  }
-
-  function getAllPeriodState() {
-    return { mode: 'all' };
   }
 
   function mountPeriodSelectors() {
@@ -371,18 +339,16 @@
       if (requestId !== periodAvailabilityRequestId) return;
 
       const orders = response && response.data ? response.data.orders : [];
+      // Only refresh the opposite selector's available-period options so its
+      // dropdown reflects what's actually queryable under the current filter.
+      // Do NOT overwrite the user's selection if it falls outside the new
+      // option list — they may have intentionally picked a combo that returns
+      // zero rows, and silently resetting it surprised users (the "every
+      // change wipes the other filter to ทั้งหมด" complaint).
       if (changedField === 'created') {
-        const nextPaidPeriods = buildAvailablePeriodsFromOrders(orders, 'first_paid_at');
-        paidAvailablePeriods = nextPaidPeriods;
-        if (!isPeriodStateAvailable(paidPeriodState, nextPaidPeriods)) {
-          paidPeriodState = getAllPeriodState();
-        }
+        paidAvailablePeriods = buildAvailablePeriodsFromOrders(orders, 'first_paid_at');
       } else {
-        const nextCreatedPeriods = buildAvailablePeriodsFromOrders(orders, 'created_at');
-        createdAvailablePeriods = nextCreatedPeriods;
-        if (!isPeriodStateAvailable(createdPeriodState, nextCreatedPeriods)) {
-          createdPeriodState = getAllPeriodState();
-        }
+        createdAvailablePeriods = buildAvailablePeriodsFromOrders(orders, 'created_at');
       }
       mountPeriodSelectors();
     } catch (e) {
