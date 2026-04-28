@@ -1637,13 +1637,13 @@
       <div style="min-width:0;">
         <div style="${HEADLINE_LABEL_STYLE}">เซลล์ผู้จอง</div>
         <div style="${HEADLINE_VALUE_STYLE}">${escHtml(sellerLabel || '-')}</div>
-        ${showPositionLabel ? `
-          <div style="margin-top:12px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-            <span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:0.03em;text-transform:uppercase;">ตำแหน่ง</span>
-            <span style="font-size:21px;line-height:1.2;font-weight:700;color:#243b53;">${escHtml(positionLabel || '-')}</span>
-          </div>
-        ` : ''}
       </div>
+      ${showPositionLabel ? `
+        <div style="min-width:0;">
+          <div style="${HEADLINE_LABEL_STYLE}">ตำแหน่ง</div>
+          <div style="${HEADLINE_VALUE_STYLE}">${escHtml(positionLabel || '-')}</div>
+        </div>
+      ` : ''}
       <div style="min-width:0;">
         <div style="${HEADLINE_LABEL_STYLE}">วันที่สร้าง Order</div>
         <div style="${HEADLINE_VALUE_STYLE}">${escHtml(createdLabel || '-')}</div>
