@@ -94,17 +94,9 @@
     return (parseFloat(val) || 0).toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   }
 
-  // Redaction helpers — used in the seller-ranking summary so non-admin
-  // users only see real values for their own row. Length is preserved so
-  // the digit count of the actual value remains visible (e.g. 12,345 →
-  // **,***), giving a rough magnitude without exposing exact figures.
-  function maskText(value) {
-    return String(value == null ? '' : value).replace(/\S/g, '*');
-  }
-
-  function maskNumber(value) {
-    return formatNumber(value, 0).replace(/\d/g, '*');
-  }
+  // Fixed-length placeholder for redacted seller names — uniform across
+  // every peer row so individual name lengths can't be inferred.
+  const MASKED_NAME = '******';
 
   // Aggregate KPI totals from a subset of orders. Used to recompute the
   // KPI cards from a non-admin's own subset since the API summary spans
@@ -741,12 +733,12 @@
           ? window.SharedTrophyRank.getTrophySvg(rank)
           : '';
         const isSelf = isAdmin() || (s.seller_id && s.seller_id === myId);
-        const sellerCell  = isSelf ? escHtml(s.seller)               : maskText(s.seller);
-        const ordersCell  = isSelf ? formatNumber(s.orders, 0)       : maskNumber(s.orders);
-        const amountCell  = isSelf ? formatNumber(s.net_amount, 0)   : maskNumber(s.net_amount);
-        const discCell    = isSelf ? formatNumber(s.discount, 0)     : maskNumber(s.discount);
-        const netComCell  = isSelf ? formatNumber(s.net_commission, 0) : maskNumber(s.net_commission);
-        const netComClass = isSelf ? (s.net_commission >= 0 ? 'crp-positive' : 'crp-negative') : '';
+        // Peer rows: numeric columns show real values so the user can
+        // see the competitive landscape; only the seller name is hidden,
+        // and we use a fixed-length asterisk string so individual name
+        // lengths don't leak.
+        const sellerCell  = isSelf ? escHtml(s.seller) : MASKED_NAME;
+        const netComClass = s.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
         const rowClass    = isSelf ? '' : 'crp-summary-row--masked';
         return `
           <tr class="${rowClass}">
@@ -756,10 +748,10 @@
                 <span class="crp-seller-badge">${sellerCell}</span>
               </div>
             </td>
-            <td class="right">${ordersCell}</td>
-            <td class="right">${amountCell}</td>
-            <td class="right">${discCell}</td>
-            <td class="right ${netComClass}">${netComCell}</td>
+            <td class="right">${formatNumber(s.orders, 0)}</td>
+            <td class="right">${formatNumber(s.net_amount, 0)}</td>
+            <td class="right">${formatNumber(s.discount, 0)}</td>
+            <td class="right ${netComClass}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
       }).join('');
       return `
@@ -941,17 +933,8 @@
     });
     return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
       const isSelf = isAdmin() || (row.seller_id && row.seller_id === myId);
-      if (isSelf) {
-        return [index + 1, row.seller, row.orders, row.net_amount, row.discount, row.net_commission];
-      }
-      return [
-        index + 1,
-        maskText(row.seller),
-        maskNumber(row.orders),
-        maskNumber(row.net_amount),
-        maskNumber(row.discount),
-        maskNumber(row.net_commission)
-      ];
+      const sellerName = isSelf ? row.seller : MASKED_NAME;
+      return [index + 1, sellerName, row.orders, row.net_amount, row.discount, row.net_commission];
     });
   }
 
