@@ -443,13 +443,13 @@
 
     // Set state defaults
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
+    selectedOrderStatus  = 'not_canceled';
 
     // ---- เซลล์ผู้จอง dropdown ----
     renderSellerDropdown();
 
     // ---- สถานะ Order dropdown ----
-    const defaultStatus = isAdmin() ? 'all' : 'not_canceled';
+    const defaultStatus = 'not_canceled';
     const statusOptions = [
       { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all') },
       { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled') },
@@ -488,7 +488,7 @@
     const sellerId = currentUser ? String(currentUser.id || '') : '';
     createdPeriodState = getDefaultMonthlyPeriodState();
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
+    selectedOrderStatus  = 'not_canceled';
 
     mountPeriodSelectors();
 
