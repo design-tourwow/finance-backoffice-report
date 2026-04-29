@@ -1072,15 +1072,15 @@
     }
   }
 
-  // Format currency to short format (e.g., 1.2M, 500K)
+  // Format currency to short format (e.g., 1.2M, 500K) — no ฿ symbol
   function formatCurrencyShort(num) {
     if (num === null || num === undefined) return '-';
     if (num >= 1000000) {
-      return '฿' + (num / 1000000).toFixed(1) + 'M';
+      return (num / 1000000).toFixed(1) + 'M';
     } else if (num >= 1000) {
-      return '฿' + (num / 1000).toFixed(0) + 'K';
+      return (num / 1000).toFixed(0) + 'K';
     }
-    return '฿' + formatNumber(num);
+    return formatNumber(num);
   }
 
   // Render market share list (based on current view mode field)
@@ -3853,12 +3853,10 @@
     return new Intl.NumberFormat('th-TH').format(num);
   }
 
-  // Format currency
+  // Format currency — number-only, no ฿ symbol (matches the rest of the app)
   function formatCurrency(num) {
     if (num === null || num === undefined) return '-';
     return new Intl.NumberFormat('th-TH', {
-      style: 'currency',
-      currency: 'THB',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(num);
