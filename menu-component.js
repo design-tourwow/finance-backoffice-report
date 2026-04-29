@@ -446,6 +446,40 @@ function handleExternalLink(e, url) {
   var VA_TRIGGER_ID = 'view-as-trigger';
   var VA_DIALOG_ID = 'view-as-dialog';
 
+  // Some report pages call fetch() directly (e.g. sales-report-by-seller-api.js)
+  // instead of going through SharedHttp. Patch window.fetch once globally so
+  // X-View-As-* headers are injected on API requests during impersonation
+  // regardless of how the page issues its requests.
+  function patchFetchForViewAs() {
+    if (typeof window === 'undefined' || !window.fetch || window.__viewAsFetchPatched) return;
+    var originalFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      init = init || {};
+      var url = typeof input === 'string' ? input : (input && input.url) || '';
+      // Match same-origin /api/ paths and the absolute API base URL hosts —
+      // skip third-party requests so their CORS contracts aren't disturbed.
+      var apiHosts = ['/api/', 'finance-backoffice-report-api.vercel.app', 'financebackoffice.tourwow.com'];
+      var isApiCall = false;
+      for (var i = 0; i < apiHosts.length; i++) {
+        if (url.indexOf(apiHosts[i]) !== -1) { isApiCall = true; break; }
+      }
+      if (isApiCall) {
+        try {
+          var role = sessionStorage.getItem('viewAsRole');
+          var uid = sessionStorage.getItem('viewAsUserId');
+          if (role && uid) {
+            var headers = new Headers(init.headers || (typeof input !== 'string' && input.headers) || {});
+            if (!headers.has('X-View-As-Role'))    headers.set('X-View-As-Role', role);
+            if (!headers.has('X-View-As-User-Id')) headers.set('X-View-As-User-Id', uid);
+            init.headers = headers;
+          }
+        } catch (e) { /* sessionStorage may be unavailable */ }
+      }
+      return originalFetch(input, init);
+    };
+    window.__viewAsFetchPatched = true;
+  }
+
   function injectViewAsStyles() {
     if (document.getElementById(VA_STYLE_ID)) return;
     var s = document.createElement('style');
@@ -784,7 +818,8 @@ function handleExternalLink(e, url) {
     renderSidebarMenu();
     renderHeaderMenu();
 
-    // View-as feature: trigger button + banner injection
+    // View-as feature: trigger button + banner injection + fetch patch
+    patchFetchForViewAs();
     injectViewAsStyles();
     injectViewAsTrigger();
     injectViewAsBanner();
