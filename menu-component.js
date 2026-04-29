@@ -206,11 +206,19 @@ function handleExternalLink(e, url) {
   var VIEW_AS_ADMIN_ID = 555;          // single authorized impersonator
   var VIEW_AS_ROLES = ['ts', 'crm'];
 
+  // Bypass TokenUtils — read the JWT directly so the eligibility check
+  // doesn't see the patched (impersonated) payload from below.
   function getRealUserMember() {
     var token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
     if (!token) return null;
-    var payload = decodeTokenPayload(token);
-    return payload && payload.user && payload.user.agency_member ? payload.user.agency_member : null;
+    try {
+      var parts = String(token).split('.');
+      if (parts.length !== 3) return null;
+      var payload = JSON.parse(atob(parts[1]));
+      return payload && payload.user && payload.user.agency_member ? payload.user.agency_member : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   function getRealUserRole() {
@@ -446,6 +454,51 @@ function handleExternalLink(e, url) {
   var VA_TRIGGER_ID = 'view-as-trigger';
   var VA_DIALOG_ID = 'view-as-dialog';
 
+  // Override TokenUtils.decodeToken so any page that decodes the JWT to
+  // populate its own `currentUser` object (e.g. sales-report-by-seller.js)
+  // sees the impersonated identity instead of the real admin id=555.
+  // The actual JWT in storage is untouched — Authorization: Bearer still
+  // carries the real admin token; the backend re-derives effective role
+  // from X-View-As-* headers anyway, so this is purely a UI affordance
+  // that lets per-page logic naturally render the impersonated role's
+  // experience (mask seller names, hide Excel/PDF export, etc.).
+  function patchTokenUtilsForViewAs() {
+    if (typeof window === 'undefined' || window.__viewAsTokenPatched) return;
+    if (!window.TokenUtils || typeof window.TokenUtils.decodeToken !== 'function') return;
+    var originalDecode = window.TokenUtils.decodeToken.bind(window.TokenUtils);
+    window.TokenUtils.decodeToken = function (token) {
+      var payload = originalDecode(token);
+      if (!payload) return payload;
+      try {
+        var member = payload.user && payload.user.agency_member;
+        if (!member) return payload;
+        // Only override for the eligible admin's own token while impersonating
+        var realRole = String(member.job_position || '').toLowerCase();
+        if (realRole !== 'admin' || member.id !== VIEW_AS_ADMIN_ID) return payload;
+        var role = sessionStorage.getItem('viewAsRole');
+        var uidStr = sessionStorage.getItem('viewAsUserId');
+        if (!role || !uidStr || (role !== 'ts' && role !== 'crm')) return payload;
+        var uid = parseInt(uidStr, 10);
+        if (!isFinite(uid) || uid <= 0) return payload;
+        var teamRaw = sessionStorage.getItem('viewAsUserTeam');
+        var team = parseInt(teamRaw || '', 10);
+        return Object.assign({}, payload, {
+          user: Object.assign({}, payload.user, {
+            agency_member: Object.assign({}, member, {
+              id: uid,
+              job_position: role,
+              nick_name: sessionStorage.getItem('viewAsUserNick') || member.nick_name,
+              team: isFinite(team) ? team : member.team
+            })
+          })
+        });
+      } catch (e) {
+        return payload;
+      }
+    };
+    window.__viewAsTokenPatched = true;
+  }
+
   // Some report pages call fetch() directly (e.g. sales-report-by-seller-api.js)
   // instead of going through SharedHttp. Patch window.fetch once globally so
   // X-View-As-* headers are injected on API requests during impersonation
@@ -484,54 +537,144 @@ function handleExternalLink(e, url) {
     if (document.getElementById(VA_STYLE_ID)) return;
     var s = document.createElement('style');
     s.id = VA_STYLE_ID;
-    s.textContent =
-      '.va-banner{position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;align-items:center;gap:12px;' +
-      'padding:8px 16px;background:#fff3cd;color:#7c4a00;border-bottom:2px solid #f0ad4e;font-size:14px;' +
-      'font-family:inherit;}' +
-      '.va-banner__left{display:flex;align-items:center;gap:8px;flex:1 1 auto;}' +
-      '.va-banner__center{flex:0 1 auto;color:#7c4a00aa;}' +
-      '.va-banner__right{display:flex;gap:8px;margin-left:auto;}' +
-      '.va-banner__target{font-weight:600;}' +
-      '.va-btn-switch,.va-btn-exit{padding:4px 12px;border-radius:6px;border:1px solid #d49a2e;' +
-      'background:#fff;color:#7c4a00;cursor:pointer;font-size:13px;}' +
-      '.va-btn-exit{background:#7c4a00;color:#fff;border-color:#7c4a00;}' +
-      '.va-btn-switch:hover{background:#fff7dd;}' +
-      '.va-btn-exit:hover{background:#5a3700;}' +
-      '@media(max-width:767px){.va-banner{flex-direction:column;align-items:flex-start;}' +
-      '.va-banner__right{margin-left:0;}}' +
-      '.va-trigger-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;margin:8px 16px;' +
-      'border-radius:999px;border:1px solid #cbd5e0;background:#fff;color:#2d3748;cursor:pointer;' +
-      'font-size:13px;font-family:inherit;}' +
-      '.va-trigger-btn:hover{background:#edf2f7;}' +
-      '.va-dialog-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;' +
-      'align-items:center;justify-content:center;padding:16px;}' +
-      '.va-dialog{background:#fff;border-radius:12px;width:min(480px,95vw);max-height:90vh;overflow-y:auto;' +
-      'padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:inherit;color:#1f2937;}' +
-      '.va-dialog__header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}' +
-      '.va-dialog__title{font-size:18px;font-weight:700;margin:0;}' +
-      '.va-dialog__close{background:none;border:none;font-size:22px;cursor:pointer;color:#718096;}' +
-      '.va-roles{display:flex;gap:12px;margin-bottom:16px;}' +
-      '.va-role-card{flex:1;padding:14px;border:2px solid #e2e8f0;border-radius:10px;text-align:center;' +
-      'cursor:pointer;background:#fff;font-weight:600;}' +
-      '.va-role-card.is-selected{border-color:#3182ce;background:#ebf8ff;color:#2c5282;}' +
-      '.va-role-card[disabled]{cursor:not-allowed;opacity:.4;}' +
-      '.va-user-search{width:100%;padding:8px 10px;border:1px solid #cbd5e0;border-radius:6px;' +
-      'margin-bottom:8px;font-family:inherit;font-size:14px;box-sizing:border-box;}' +
-      '.va-user-list{max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;' +
-      'background:#fafafa;}' +
-      '.va-user-group{padding:6px 12px;background:#edf2f7;font-size:12px;font-weight:600;color:#4a5568;}' +
-      '.va-user-item{padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;' +
-      'border-bottom:1px solid #edf2f7;font-size:13px;}' +
-      '.va-user-item:hover{background:#fff;}' +
-      '.va-user-item.is-selected{background:#bee3f8;}' +
-      '.va-user-item__id{color:#a0aec0;font-size:12px;}' +
-      '.va-dialog__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}' +
-      '.va-btn-apply,.va-btn-cancel{padding:8px 18px;border-radius:6px;border:1px solid #cbd5e0;' +
-      'background:#fff;cursor:pointer;font-family:inherit;font-size:14px;}' +
-      '.va-btn-apply{background:#3182ce;color:#fff;border-color:#3182ce;}' +
-      '.va-btn-apply[disabled]{background:#a0aec0;border-color:#a0aec0;cursor:not-allowed;}' +
-      '.va-dialog__error{padding:12px;background:#fed7d7;color:#9b2c2c;border-radius:6px;margin-bottom:12px;}' +
-      'body.va-impersonating{}';
+    s.textContent = [
+      // ── Banner: subtle amber tint + steel-blue accents (matches system theme) ──
+      '.va-banner{',
+      '  position:sticky;top:0;z-index:900;',
+      '  display:flex;flex-wrap:wrap;align-items:center;gap:14px;',
+      '  padding:10px 20px;',
+      '  background:linear-gradient(135deg,#fffaeb 0%,#fef3c7 100%);',
+      '  color:#78350f;',
+      '  border-bottom:1px solid #f0c674;',
+      '  font:500 13px/1.4 var(--font-family-base, "Roboto", "Kanit", sans-serif);',
+      '  box-shadow:0 1px 3px rgba(120,53,15,.08);',
+      '}',
+      '.va-banner__icon{font-size:16px;flex-shrink:0;}',
+      '.va-banner__left{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0;}',
+      '.va-banner__target{font-weight:600;color:#78350f;letter-spacing:.01em;}',
+      '.va-banner__divider{color:#d2a154;}',
+      '.va-banner__self{color:#a16207;font-size:12.5px;}',
+      '.va-banner__right{display:flex;gap:8px;margin-left:auto;flex-shrink:0;}',
+      '.va-btn-switch,.va-btn-exit{',
+      '  padding:6px 14px;border-radius:6px;cursor:pointer;',
+      '  font:500 13px/1 var(--font-family-base, "Roboto", "Kanit", sans-serif);',
+      '  transition:background .15s ease,border-color .15s ease;',
+      '}',
+      '.va-btn-switch{background:#fff;color:#78350f;border:1px solid #e0c068;}',
+      '.va-btn-switch:hover{background:#fffbeb;border-color:#c9a14a;}',
+      '.va-btn-exit{background:#78350f;color:#fff;border:1px solid #78350f;}',
+      '.va-btn-exit:hover{background:#5a2607;border-color:#5a2607;}',
+      '@media(max-width:767px){',
+      '  .va-banner{flex-direction:column;align-items:flex-start;padding:10px 16px;}',
+      '  .va-banner__right{margin-left:0;width:100%;}',
+      '  .va-btn-switch,.va-btn-exit{flex:1;text-align:center;}',
+      '}',
+      // ── Trigger button in sidebar ──
+      '.va-trigger-btn{',
+      '  display:flex;align-items:center;justify-content:center;gap:6px;',
+      '  padding:8px 14px;margin:12px 16px 8px;',
+      '  border-radius:6px;border:1px solid #d4dde6;',
+      '  background:#fff;color:#4a7ba7;cursor:pointer;',
+      '  font:500 13px/1.4 var(--font-family-base, "Roboto", "Kanit", sans-serif);',
+      '  transition:background .15s ease,border-color .15s ease,color .15s ease;',
+      '}',
+      '.va-trigger-btn:hover{background:#f0f7ff;border-color:#4a7ba7;color:#3a6287;}',
+      '.va-trigger-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(74,123,167,.25);}',
+      // ── Modal overlay ──
+      '.va-dialog-overlay{',
+      '  position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);',
+      '  z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;',
+      '  font-family:var(--font-family-base, "Roboto", "Kanit", sans-serif);',
+      '}',
+      '.va-dialog{',
+      '  background:#fff;border-radius:12px;',
+      '  width:min(480px,95vw);max-height:90vh;overflow-y:auto;',
+      '  box-shadow:0 20px 50px rgba(0,0,0,.25);',
+      '  color:#1a1a1a;',
+      '}',
+      '.va-dialog__header{',
+      '  display:flex;justify-content:space-between;align-items:center;',
+      '  padding:18px 22px 14px;border-bottom:1px solid #e5e7eb;',
+      '}',
+      '.va-dialog__title{font-size:17px;font-weight:600;margin:0;color:#1a1a1a;}',
+      '.va-dialog__close{',
+      '  background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;',
+      '  width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;',
+      '  transition:background .15s ease,color .15s ease;',
+      '}',
+      '.va-dialog__close:hover{background:#f5f5f5;color:#374151;}',
+      '.va-dialog__body{padding:18px 22px;}',
+      // ── Role cards ──
+      '.va-roles__label{font-size:12px;font-weight:600;color:#6b7280;letter-spacing:.04em;text-transform:uppercase;margin:0 0 8px;}',
+      '.va-roles{display:flex;gap:10px;margin-bottom:18px;}',
+      '.va-role-card{',
+      '  flex:1;padding:14px 12px;border:1.5px solid #e5e7eb;border-radius:10px;',
+      '  background:#fff;cursor:pointer;text-align:center;',
+      '  font:600 14px/1.2 var(--font-family-base, "Roboto", "Kanit", sans-serif);',
+      '  color:#374151;',
+      '  transition:border-color .15s ease,background .15s ease,color .15s ease;',
+      '}',
+      '.va-role-card:hover{border-color:#4a7ba7;background:#f0f7ff;}',
+      '.va-role-card.is-selected{border-color:#4a7ba7;background:#e8f0f7;color:#3a6287;box-shadow:0 0 0 3px rgba(74,123,167,.12);}',
+      '.va-role-card[disabled]{cursor:not-allowed;opacity:.4;}',
+      // ── Search input ──
+      '.va-user-search{',
+      '  width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:6px;',
+      '  font:14px/1.4 var(--font-family-base, "Roboto", "Kanit", sans-serif);',
+      '  margin-bottom:10px;box-sizing:border-box;background:#fff;color:#1a1a1a;',
+      '  transition:border-color .15s ease,box-shadow .15s ease;',
+      '}',
+      '.va-user-search:focus{outline:none;border-color:#4a7ba7;box-shadow:0 0 0 3px rgba(74,123,167,.15);}',
+      '.va-user-search::placeholder{color:#9ca3af;}',
+      // ── User list ──
+      '.va-user-list{',
+      '  max-height:280px;overflow-y:auto;',
+      '  border:1px solid #e5e7eb;border-radius:8px;background:#fafafa;',
+      '}',
+      '.va-user-group{',
+      '  padding:6px 14px;background:#f5f5f5;border-bottom:1px solid #e5e7eb;',
+      '  font-size:11px;font-weight:600;color:#6b7280;letter-spacing:.05em;text-transform:uppercase;',
+      '  position:sticky;top:0;',
+      '}',
+      '.va-user-item{',
+      '  padding:10px 14px;cursor:pointer;',
+      '  display:flex;justify-content:space-between;align-items:center;gap:10px;',
+      '  border-bottom:1px solid #f0f0f0;',
+      '  font-size:13.5px;color:#374151;',
+      '  transition:background .12s ease;',
+      '}',
+      '.va-user-item:last-child{border-bottom:none;}',
+      '.va-user-item:hover{background:#fff;}',
+      '.va-user-item.is-selected{background:#e8f0f7;color:#3a6287;font-weight:500;}',
+      '.va-user-item__name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+      '.va-user-item__id{color:#9ca3af;font-size:11.5px;flex-shrink:0;font-variant-numeric:tabular-nums;}',
+      '.va-user-empty{padding:32px 14px;text-align:center;color:#9ca3af;font-size:13px;}',
+      // ── Actions ──
+      '.va-dialog__actions{',
+      '  display:flex;justify-content:flex-end;gap:10px;',
+      '  padding:14px 22px 18px;border-top:1px solid #e5e7eb;background:#fafafa;',
+      '  border-radius:0 0 12px 12px;',
+      '}',
+      '.va-btn-apply,.va-btn-cancel{',
+      '  padding:9px 20px;border-radius:6px;cursor:pointer;',
+      '  font:500 14px/1 var(--font-family-base, "Roboto", "Kanit", sans-serif);',
+      '  transition:background .15s ease,border-color .15s ease;',
+      '}',
+      '.va-btn-cancel{background:#fff;color:#6b7280;border:1px solid #d1d5db;}',
+      '.va-btn-cancel:hover{background:#f5f5f5;color:#374151;}',
+      '.va-btn-apply{background:#4a7ba7;color:#fff;border:1px solid #4a7ba7;}',
+      '.va-btn-apply:hover:not([disabled]){background:#3a6287;border-color:#3a6287;}',
+      '.va-btn-apply[disabled]{background:#cbd5e0;border-color:#cbd5e0;color:#fff;cursor:not-allowed;}',
+      // ── Error state ──
+      '.va-dialog__error{',
+      '  padding:11px 14px;background:#fef2f2;color:#991b1b;',
+      '  border:1px solid #fecaca;border-radius:8px;',
+      '  margin-bottom:14px;font-size:13px;line-height:1.5;',
+      '}',
+      // ── body class hook (subtle inset shadow during impersonation) ──
+      'body.va-impersonating{}',
+      ''
+    ].join('\n');
     document.head.appendChild(s);
   }
 
@@ -544,7 +687,13 @@ function handleExternalLink(e, url) {
     btn.id = VA_TRIGGER_ID;
     btn.className = 'va-trigger-btn';
     btn.type = 'button';
-    btn.innerHTML = '\u{1F441} ดูเป็น...';
+    btn.setAttribute('aria-label', 'เปิดโหมดดูเป็น');
+    btn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+      ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>' +
+      '<circle cx="12" cy="12" r="3"/></svg>' +
+      '<span>ดูเป็น Role อื่น</span>';
     btn.addEventListener('click', openViewAsPickerDialog);
     sidebar.appendChild(btn);
   }
@@ -568,10 +717,16 @@ function handleExternalLink(e, url) {
     banner.setAttribute('aria-live', 'polite');
     banner.innerHTML =
       '<div class="va-banner__left">' +
-      '  <span>⚠️</span>' +
-      '  <strong class="va-banner__target">ดูในฐานะ: ' + escapeHtml(nick) + ' (' + escapeHtml(roleLabel) + escapeHtml(teamLabel) + ')</strong>' +
+      '  <span class="va-banner__icon" aria-hidden="true">' +
+      '    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+      '      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>' +
+      '      <circle cx="12" cy="12" r="3"/></svg>' +
+      '  </span>' +
+      '  <span class="va-banner__target">กำลังดูในฐานะ: ' + escapeHtml(nick) + ' (' + escapeHtml(roleLabel) + escapeHtml(teamLabel) + ')</span>' +
+      '  <span class="va-banner__divider" aria-hidden="true">·</span>' +
+      '  <span class="va-banner__self">คุณคือ Admin (id ' + getRealUserId() + ')</span>' +
       '</div>' +
-      '<div class="va-banner__center">คุณคือ: Admin (id ' + getRealUserId() + ')</div>' +
       '<div class="va-banner__right">' +
       '  <button class="va-btn-switch" type="button">เปลี่ยน</button>' +
       '  <button class="va-btn-exit" type="button">ออกจากโหมดดูเป็น</button>' +
@@ -609,16 +764,18 @@ function handleExternalLink(e, url) {
       '<div class="va-dialog" role="dialog" aria-modal="true" aria-labelledby="va-dlg-title">' +
       '  <div class="va-dialog__header">' +
       '    <h2 id="va-dlg-title" class="va-dialog__title">ดูในฐานะ Role อื่น</h2>' +
-      '    <button class="va-dialog__close" type="button" aria-label="ปิด">×</button>' +
+      '    <button class="va-dialog__close" type="button" aria-label="ปิด">&times;</button>' +
       '  </div>' +
       '  <div class="va-dialog__body">' +
       '    <div class="va-dialog__error" hidden></div>' +
+      '    <p class="va-roles__label">เลือก Role</p>' +
       '    <div role="radiogroup" aria-label="เลือก Role" class="va-roles">' +
       '      <button class="va-role-card" data-role="ts" type="button" role="radio">TS</button>' +
       '      <button class="va-role-card" data-role="crm" type="button" role="radio">CRM</button>' +
       '    </div>' +
-      '    <input class="va-user-search" type="search" placeholder="ค้นหาชื่อ / ทีม..." aria-label="ค้นหาผู้ใช้"/>' +
-      '    <div class="va-user-list" role="listbox"><div style="padding:24px;text-align:center;color:#a0aec0;">กำลังโหลด...</div></div>' +
+      '    <p class="va-roles__label">เลือกผู้ใช้</p>' +
+      '    <input class="va-user-search" type="search" placeholder="ค้นหาชื่อเล่น / ชื่อจริง..." aria-label="ค้นหาผู้ใช้"/>' +
+      '    <div class="va-user-list" role="listbox"><div class="va-user-empty">กำลังโหลด...</div></div>' +
       '  </div>' +
       '  <div class="va-dialog__actions">' +
       '    <button class="va-btn-cancel" type="button">ยกเลิก</button>' +
@@ -660,7 +817,7 @@ function handleExternalLink(e, url) {
         return hay.indexOf(search) !== -1;
       });
       if (filtered.length === 0) {
-        listEl.innerHTML = '<div style="padding:24px;text-align:center;color:#a0aec0;">ไม่พบผลลัพธ์</div>';
+        listEl.innerHTML = '<div class="va-user-empty">ไม่พบผู้ใช้ที่ตรงกับการค้นหา</div>';
         return;
       }
       var groups = {};
@@ -679,10 +836,12 @@ function handleExternalLink(e, url) {
         html += '<div class="va-user-group">' + escapeHtml(label) + '</div>';
         groups[k].forEach(function (u) {
           var isSel = state.selectedUser && state.selectedUser.ID === u.ID;
-          var name = (u.nickname || '?') + ' — ' + (u.first_name || '') + ' ' + (u.last_name || '');
+          var nick = u.nickname || '-';
+          var fullName = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
+          var displayName = fullName ? nick + ' — ' + fullName : nick;
           html += '<div class="va-user-item' + (isSel ? ' is-selected' : '') +
-                  '" role="option" data-id="' + u.ID + '" tabindex="0">' +
-                  '<span>' + escapeHtml(name.trim()) + '</span>' +
+                  '" role="option" data-id="' + u.ID + '" tabindex="0" aria-selected="' + (isSel ? 'true' : 'false') + '">' +
+                  '<span class="va-user-item__name">' + escapeHtml(displayName) + '</span>' +
                   '<span class="va-user-item__id">id ' + u.ID + '</span></div>';
         });
       });
@@ -818,7 +977,10 @@ function handleExternalLink(e, url) {
     renderSidebarMenu();
     renderHeaderMenu();
 
-    // View-as feature: trigger button + banner injection + fetch patch
+    // View-as feature: UI + fetch + token patches.
+    // (TokenUtils patch is also applied at script-body level below so it
+    //  takes effect before page-level scripts decode the token.)
+    patchTokenUtilsForViewAs();
     patchFetchForViewAs();
     injectViewAsStyles();
     injectViewAsTrigger();
@@ -829,6 +991,14 @@ function handleExternalLink(e, url) {
 
     console.log('✅ Menu Component initialized');
   }
+
+  // Patch TokenUtils.decodeToken IMMEDIATELY at script-body time, before
+  // any page-level script (e.g. sales-report-by-seller.js) gets a chance
+  // to call it during their own initialisation. menu-component.js is
+  // loaded after token-utils.js but before page-level scripts in every
+  // page's <head>, so this synchronous patch is in place by the time
+  // page scripts read the token.
+  patchTokenUtilsForViewAs();
 
   // Auto-initialize when DOM is ready
   if (document.readyState === 'loading') {
