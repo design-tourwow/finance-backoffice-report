@@ -76,6 +76,17 @@
     if (auth) {
       headers['Authorization'] = auth;
     }
+    // View-as impersonation. Both keys must be present together — backend
+    // requires the pair. Set BEFORE merging extraHeaders so a caller cannot
+    // accidentally override these via opts.headers.
+    try {
+      var viewAsRole   = sessionStorage.getItem('viewAsRole');
+      var viewAsUserId = sessionStorage.getItem('viewAsUserId');
+      if (viewAsRole && viewAsUserId) {
+        headers['X-View-As-Role']    = viewAsRole;
+        headers['X-View-As-User-Id'] = viewAsUserId;
+      }
+    } catch (e) { /* sessionStorage may be unavailable in private mode */ }
     if (extraHeaders && typeof extraHeaders === 'object') {
       var keys = Object.keys(extraHeaders);
       for (var i = 0; i < keys.length; i++) {
@@ -120,6 +131,23 @@
   }
 
   /**
+   * Handle a 403 Forbidden response: token is valid but the user's role does
+   * not have access to this endpoint. Redirect to /403 and throw so awaiters
+   * unwind cleanly.
+   * @throws {Error}
+   */
+  function handleForbidden() {
+    console.warn('[SharedHttp] 403 Forbidden — redirecting to /403');
+    if (window.TokenUtils && typeof window.TokenUtils.redirectToForbiddenPage === 'function') {
+      window.TokenUtils.redirectToForbiddenPage();
+    }
+    var err = new Error('SharedHttp forbidden (403) — insufficient permissions');
+    err.name = 'SharedHttpForbiddenError';
+    err.status = 403;
+    throw err;
+  }
+
+  /**
    * Core request runner used by both get() and post().
    * @param {string} method
    * @param {string} url
@@ -139,6 +167,21 @@
     if (response.status === 401) {
       return handleUnauthorized();
     }
+
+    if (response.status === 403) {
+      return handleForbidden();
+    }
+
+    // Verify the server agrees with our view-as state. Non-blocking; just warn.
+    try {
+      var expectedRole = sessionStorage.getItem('viewAsRole');
+      if (expectedRole) {
+        var effectiveRole = response.headers.get('X-Effective-Role');
+        if (effectiveRole && effectiveRole !== expectedRole) {
+          console.warn('[ViewAs] X-Effective-Role mismatch. Expected: ' + expectedRole + ', Got: ' + effectiveRole);
+        }
+      }
+    } catch (e) { /* ignore */ }
 
     if (!response.ok) {
       var bodyText = await safeReadText(response);
