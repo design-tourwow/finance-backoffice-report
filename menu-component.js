@@ -1009,6 +1009,56 @@ function handleExternalLink(e, url) {
     // Add click handlers
     document.addEventListener('click', handleMenuClick);
 
+    // ── View-As diagnostic: visible in DevTools Console ───────────────────
+    // Testers: open DevTools → Console → look for [ViewAs Diagnostic] rows.
+    // This fires on every page load so you can confirm the view-as state
+    // before reading any other role-dependent behaviour.
+    (function logViewAsDiagnostic() {
+      try {
+        var realRole   = getRealUserRole();
+        var realId     = getRealUserId();
+        var effRole    = getCurrentUserRole();
+        var impActive  = isImpersonating();
+        var tokenPatch = !!window.__viewAsTokenPatched;
+        var fetchPatch = !!window.__viewAsFetchPatched;
+        // Decode the token AFTER the patch so we see what page scripts will see.
+        var tokenAfterPatch = null;
+        try {
+          var tok = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+          if (tok && window.TokenUtils && window.TokenUtils.decodeToken) {
+            var pl = window.TokenUtils.decodeToken(tok);
+            var m  = pl && pl.user && pl.user.agency_member;
+            tokenAfterPatch = m ? { id: m.id, job_position: m.job_position, nick_name: m.nick_name } : null;
+          }
+        } catch (e2) { /* ignore */ }
+
+        var rows = [
+          { field: 'real_role',              value: String(realRole || '—') },
+          { field: 'real_id',                value: String(realId  || '—') },
+          { field: 'effective_role',         value: String(effRole || '—') },
+          { field: 'is_impersonating',       value: String(impActive) },
+          { field: 'viewAs_role_ss',         value: String(sessionStorage.getItem('viewAsRole') || '—') },
+          { field: 'viewAs_userId_ss',       value: String(sessionStorage.getItem('viewAsUserId') || '—') },
+          { field: '__viewAsTokenPatched',   value: String(tokenPatch) },
+          { field: '__viewAsFetchPatched',   value: String(fetchPatch) },
+          { field: 'decoded_id_after_patch', value: tokenAfterPatch ? String(tokenAfterPatch.id) : '—' },
+          { field: 'decoded_role_after_patch', value: tokenAfterPatch ? String(tokenAfterPatch.job_position) : '—' },
+        ];
+        console.group('[ViewAs Diagnostic] — ' + window.location.pathname);
+        console.table(rows);
+        if (impActive && tokenAfterPatch && tokenAfterPatch.job_position !== effRole) {
+          console.warn(
+            '[ViewAs] MISMATCH: token patch may have failed. ' +
+            'Expected job_position="' + effRole + '" but decoded "' + tokenAfterPatch.job_position + '". ' +
+            'isAdmin() will still return false via MenuComponent.isImpersonating() guard.'
+          );
+        }
+        console.groupEnd();
+      } catch (diagErr) {
+        console.warn('[ViewAs] Diagnostic error:', diagErr);
+      }
+    }());
+
     console.log('✅ Menu Component initialized');
   }
 

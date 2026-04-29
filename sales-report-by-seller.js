@@ -85,8 +85,37 @@
     } catch (e) { return null; }
   }
 
+  // getEffectiveRole() — single source of truth for all role-aware UI guards.
+  // Priority: (1) view-as sessionStorage when impersonation is confirmed active
+  //           (via MenuComponent.isImpersonating, which reads sessionStorage and
+  //           validates the real JWT directly — not subject to token-patch issues),
+  //           (2) currentUser.job_position from the (possibly-patched) token,
+  //           (3) 'admin' as safe default when no user is loaded.
+  //
+  // All callers that previously read currentUser.job_position directly for role
+  // decisions have been migrated to this function so view-as fidelity is
+  // preserved even when TokenUtils.decodeToken patch fails.
+  function getEffectiveRole() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      // sessionStorage is authoritative when view-as is confirmed active
+      try {
+        var vaRole = sessionStorage.getItem('viewAsRole');
+        if (vaRole === 'ts' || vaRole === 'crm') return vaRole;
+      } catch (e) { /* ignore */ }
+    }
+    return (currentUser && currentUser.job_position) || 'admin';
+  }
+
+  // isAdmin() — true only when effective role is not ts or crm.
+  // Uses getEffectiveRole() so it is view-as aware as a hard guarantee:
+  // during impersonation this always returns false regardless of whether
+  // the TokenUtils.decodeToken patch successfully rewrote currentUser.
   function isAdmin() {
-    return !currentUser || currentUser.job_position === 'admin';
+    const role = getEffectiveRole();
+    return role !== 'ts' && role !== 'crm';
   }
 
   // ---- Helpers ----
@@ -539,10 +568,10 @@
     return {
       created_at_from: created.dateFrom || '',
       created_at_to:   created.dateTo   || '',
-      // Send the user's role from the JWT; admins implicitly get "all
-      // orders" since the API treats anything other than ts/crm as no
-      // is_old_customer filter.
-      job_position:    currentUser?.job_position || 'admin',
+      // Send the effective role so the API hint matches the view-as state.
+      // Admins get "all orders"; the backend enforces ts/crm scoping via
+      // X-View-As-* headers, so this is an advisory hint only.
+      job_position:    getEffectiveRole(),
       // Non-admins intentionally omit seller_id so the response covers
       // every seller in their role — the ranking summary needs this to
       // show their position; the main table and KPI cards filter back
@@ -722,8 +751,24 @@
   // group are redacted (text and digits replaced with `*`) so the user
   // can see their rank position without revealing peers' figures.
   function renderSellerSummary(orders) {
-    const myId = String(currentUser?.id || '');
-    const myRole = String(currentUser?.job_position || '').toLowerCase();
+    // myId: prefer viewAsUserId from sessionStorage when impersonating so the
+    // self-row highlight works even when the token patch fails to rewrite
+    // currentUser.id (which would otherwise still hold admin id=555).
+    const myId = (function () {
+      if (typeof window !== 'undefined' &&
+          window.MenuComponent &&
+          typeof window.MenuComponent.isImpersonating === 'function' &&
+          window.MenuComponent.isImpersonating()) {
+        try {
+          var vaUid = sessionStorage.getItem('viewAsUserId');
+          if (vaUid) return String(parseInt(vaUid, 10) || '');
+        } catch (e) { /* ignore */ }
+      }
+      return String(currentUser?.id || '');
+    }());
+    // Use getEffectiveRole() so view-as crm/ts is correctly identified even
+    // when the token patch fails and currentUser.job_position is still 'admin'.
+    const myRole = getEffectiveRole();
 
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
@@ -876,7 +921,7 @@
       return;
     }
 
-    const myRole = String(currentUser?.job_position || '').toLowerCase();
+    const myRole = getEffectiveRole();
     const workbook = window.XLSX.utils.book_new();
     const worksheets = [
       {
@@ -928,7 +973,20 @@
   }
 
   function getSellerSummaryExportRows(orders, groupClass) {
-    const myId = String(currentUser?.id || '');
+    // Same viewAsUserId fallback used in renderSellerSummary so the self-row
+    // is identified correctly even when the token patch fails.
+    const myId = (function () {
+      if (typeof window !== 'undefined' &&
+          window.MenuComponent &&
+          typeof window.MenuComponent.isImpersonating === 'function' &&
+          window.MenuComponent.isImpersonating()) {
+        try {
+          var vaUid = sessionStorage.getItem('viewAsUserId');
+          if (vaUid) return String(parseInt(vaUid, 10) || '');
+        } catch (e) { /* ignore */ }
+      }
+      return String(currentUser?.id || '');
+    }());
     const groupOrders = orders.filter(function (order) {
       return String(order.seller_job_position || '').toLowerCase() === groupClass;
     });
@@ -1319,7 +1377,7 @@
     // For non-admins viewing their own role's report, prefix the "ทั้งหมด"
     // seller label with their role ("Telesales ทั้งหมด" / "CRM ทั้งหมด")
     // so the PDF says what scope the report covers.
-    const roleScopeName = ({ ts: 'Telesales', crm: 'CRM' })[String(currentUser?.job_position || '').toLowerCase()] || '';
+    const roleScopeName = ({ ts: 'Telesales', crm: 'CRM' })[getEffectiveRole()] || '';
     const sellerDisplay = isAllSeller && roleScopeName
       ? `${roleScopeName} ทั้งหมด`
       : sellerLabel;
