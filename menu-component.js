@@ -706,11 +706,39 @@ function handleExternalLink(e, url) {
                    || 'ts';
 
     function loadMembers() {
-      if (!window.SharedHttp || typeof window.SharedHttp.get !== 'function') {
-        showError('ไม่พบโมดูล SharedHttp — กรุณาโหลดหน้าใหม่');
-        return;
+      // Prefer SharedHttp when available (consistent 401/403 redirect handling),
+      // otherwise fall back to plain fetch — some pages (dashboard, index,
+      // wholesale-destinations, sales-by-country, tour-image-manager, work-list)
+      // don't include shared-http.js but still need the picker to work.
+      var loader;
+      if (window.SharedHttp && typeof window.SharedHttp.get === 'function') {
+        loader = window.SharedHttp.get('/api/agency-members', { params: { roles: 'ts,crm' } });
+      } else {
+        var token = (window.TokenUtils && window.TokenUtils.getToken && window.TokenUtils.getToken()) ||
+                    sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+        var base  = window.REPORT_API_BASE_URL || '';
+        var url   = base + '/api/agency-members?roles=ts,crm';
+        var headers = { 'Accept': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        loader = fetch(url, { headers: headers }).then(function (r) {
+          if (r.status === 401) {
+            if (window.TokenUtils && window.TokenUtils.redirectToLogin) {
+              window.TokenUtils.redirectToLogin('Session หมดอายุ กรุณา login อีกครั้ง');
+            }
+            throw new Error('Unauthorized');
+          }
+          if (r.status === 403) {
+            if (window.TokenUtils && window.TokenUtils.redirectToForbiddenPage) {
+              window.TokenUtils.redirectToForbiddenPage();
+            }
+            throw new Error('Forbidden');
+          }
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        });
       }
-      window.SharedHttp.get('/api/agency-members', { params: { roles: 'ts,crm' } })
+
+      loader
         .then(function (resp) {
           var data = (resp && (resp.data || resp)) || [];
           state.members = Array.isArray(data) ? data : [];
