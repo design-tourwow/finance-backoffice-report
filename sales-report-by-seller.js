@@ -1717,7 +1717,7 @@
       if (combinedSummaryPage) summaryPages.push(combinedSummaryPage);
     }
 
-    const footerRow = sourceRows[sourceRows.length - 1] && sourceRows[sourceRows.length - 1].querySelector('td[colspan="4"]')
+    const footerRow = sourceRows[sourceRows.length - 1] && sourceRows[sourceRows.length - 1].querySelector('td[colspan="6"]')
       ? sourceRows[sourceRows.length - 1]
       : null;
     const bodyRows = footerRow ? sourceRows.slice(0, -1) : sourceRows.slice();
