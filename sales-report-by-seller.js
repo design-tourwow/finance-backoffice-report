@@ -30,8 +30,8 @@
   let mainTableQuery = '';
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
-    ts: { key: 'net_commission', direction: 'desc' },
-    crm: { key: 'net_commission', direction: 'desc' }
+    ts: { key: 'net_amount', direction: 'desc' },
+    crm: { key: 'net_amount', direction: 'desc' }
   };
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -362,7 +362,7 @@
   }
 
   function sortSellerAggregate(rows, groupClass) {
-    const state = sellerSummarySort[groupClass] || { key: 'net_commission', direction: 'desc' };
+    const state = sellerSummarySort[groupClass] || { key: 'net_amount', direction: 'desc' };
     return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
   }
 
