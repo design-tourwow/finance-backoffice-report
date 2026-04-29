@@ -465,8 +465,12 @@ function handleExternalLink(e, url) {
   // that lets per-page logic naturally render the impersonated role's
   // experience (mask seller names, hide Excel/PDF export, etc.).
   function patchTokenUtilsForViewAs() {
-    if (typeof window === 'undefined' || window.__viewAsTokenPatched) return;
-    if (!window.TokenUtils || typeof window.TokenUtils.decodeToken !== 'function') return;
+    if (typeof window === 'undefined') return;
+    if (window.__viewAsTokenPatched) return;
+    if (!window.TokenUtils || typeof window.TokenUtils.decodeToken !== 'function') {
+      console.warn('[ViewAs] Patch deferred — TokenUtils not ready yet');
+      return;
+    }
     var originalDecode = window.TokenUtils.decodeToken.bind(window.TokenUtils);
     window.TokenUtils.decodeToken = function (token) {
       var payload = originalDecode(token);
@@ -474,20 +478,26 @@ function handleExternalLink(e, url) {
       try {
         var member = payload.user && payload.user.agency_member;
         if (!member) return payload;
-        // Only override for the eligible admin's own token while impersonating.
-        // Coerce ids to numbers — some token issuers send strings.
-        var realRole = String(member.job_position || '').toLowerCase();
-        var realIdNum = parseInt(String(member.id), 10);
-        if (realRole !== 'admin' || realIdNum !== VIEW_AS_ADMIN_ID) return payload;
         var role = sessionStorage.getItem('viewAsRole');
         var uidStr = sessionStorage.getItem('viewAsUserId');
-        if (!role || !uidStr || (role !== 'ts' && role !== 'crm')) return payload;
+        if (!role || !uidStr) return payload;            // not impersonating
+        if (role !== 'ts' && role !== 'crm') return payload;
+        var realRole = String(member.job_position || '').toLowerCase();
+        var realIdNum = parseInt(String(member.id), 10);
+        if (realRole !== 'admin' || realIdNum !== VIEW_AS_ADMIN_ID) {
+          console.warn('[ViewAs] Override skipped — real user is not admin id=' + VIEW_AS_ADMIN_ID,
+            { realRole: realRole, realId: member.id, parsedId: realIdNum });
+          return payload;
+        }
         var uid = parseInt(uidStr, 10);
-        if (!isFinite(uid) || uid <= 0) return payload;
+        if (!isFinite(uid) || uid <= 0) {
+          console.warn('[ViewAs] Override skipped — invalid viewAsUserId:', uidStr);
+          return payload;
+        }
         var teamRaw = sessionStorage.getItem('viewAsUserTeam');
         var team = parseInt(teamRaw || '', 10);
         if (!window.__viewAsLogged) {
-          console.log('[ViewAs] God-mode active: admin id=555 →', role, 'user id=' + uid);
+          console.log('[ViewAs] God-mode active — overriding agency_member to', role, 'user id=' + uid);
           window.__viewAsLogged = true;
         }
         return Object.assign({}, payload, {
@@ -501,10 +511,12 @@ function handleExternalLink(e, url) {
           })
         });
       } catch (e) {
+        console.error('[ViewAs] Patch error:', e);
         return payload;
       }
     };
     window.__viewAsTokenPatched = true;
+    console.log('[ViewAs] TokenUtils.decodeToken patch installed');
   }
 
   // Some report pages call fetch() directly (e.g. sales-report-by-seller-api.js)
