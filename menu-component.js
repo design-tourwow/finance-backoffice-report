@@ -230,7 +230,9 @@ function handleExternalLink(e, url) {
 
   function getRealUserId() {
     var m = getRealUserMember();
-    return m && typeof m.id === 'number' ? m.id : 0;
+    if (!m) return 0;
+    var n = Number(m.id);
+    return Number.isFinite(n) ? n : 0;
   }
 
   function isViewAsEligible() {
@@ -472,9 +474,11 @@ function handleExternalLink(e, url) {
       try {
         var member = payload.user && payload.user.agency_member;
         if (!member) return payload;
-        // Only override for the eligible admin's own token while impersonating
+        // Only override for the eligible admin's own token while impersonating.
+        // Coerce ids to numbers — some token issuers send strings.
         var realRole = String(member.job_position || '').toLowerCase();
-        if (realRole !== 'admin' || member.id !== VIEW_AS_ADMIN_ID) return payload;
+        var realIdNum = parseInt(String(member.id), 10);
+        if (realRole !== 'admin' || realIdNum !== VIEW_AS_ADMIN_ID) return payload;
         var role = sessionStorage.getItem('viewAsRole');
         var uidStr = sessionStorage.getItem('viewAsUserId');
         if (!role || !uidStr || (role !== 'ts' && role !== 'crm')) return payload;
@@ -482,6 +486,10 @@ function handleExternalLink(e, url) {
         if (!isFinite(uid) || uid <= 0) return payload;
         var teamRaw = sessionStorage.getItem('viewAsUserTeam');
         var team = parseInt(teamRaw || '', 10);
+        if (!window.__viewAsLogged) {
+          console.log('[ViewAs] God-mode active: admin id=555 →', role, 'user id=' + uid);
+          window.__viewAsLogged = true;
+        }
         return Object.assign({}, payload, {
           user: Object.assign({}, payload.user, {
             agency_member: Object.assign({}, member, {
