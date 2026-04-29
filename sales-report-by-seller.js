@@ -118,6 +118,38 @@
     return role !== 'ts' && role !== 'crm';
   }
 
+  // Effective user id — prefer view-as sessionStorage during impersonation
+  // so identity-driven UI (locked seller dropdown, self-row highlight,
+  // per-user data filters) shows the impersonated user, not admin id=555.
+  function getEffectiveUserId() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      try {
+        var vaUid = sessionStorage.getItem('viewAsUserId');
+        var n = parseInt(vaUid, 10);
+        if (Number.isFinite(n) && n > 0) return String(n);
+      } catch (e) { /* ignore */ }
+    }
+    return String((currentUser && currentUser.id) || '');
+  }
+
+  // Effective nick — same logic. Used by the disabled seller dropdown
+  // and any other label that prints "your name" while impersonating.
+  function getEffectiveNickName() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      try {
+        var vaNick = sessionStorage.getItem('viewAsUserNick');
+        if (vaNick) return vaNick;
+      } catch (e) { /* ignore */ }
+    }
+    return (currentUser && currentUser.nick_name) || '';
+  }
+
   // ---- Helpers ----
   function formatNumber(val, decimals = 0) {
     return (parseFloat(val) || 0).toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -351,9 +383,9 @@
     if (!sellerHost) return;
 
     if (!isAdmin()) {
-      const sellerId = currentUser ? String(currentUser.id || '') : '';
+      const sellerId = getEffectiveUserId();
       const me = sellers.find(s => String(s.id) === sellerId);
-      const name = (me && me.nick_name) || (currentUser && currentUser.nick_name) || '-';
+      const name = (me && me.nick_name) || getEffectiveNickName() || '-';
       sellerHost.innerHTML =
         `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
            <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
@@ -434,7 +466,7 @@
 
   // ---- Init Filters ----
   async function initFilters() {
-    const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const sellerId = getEffectiveUserId();
 
     // Default created-period to current month so the report loads with the
     // usual monthly view on first paint.
@@ -485,7 +517,7 @@
   // Reset contract: restore every filter input/UI widget to the page default
   // (current month, admin defaults, etc.) WITHOUT refetching the report.
   function resetFiltersToDefault() {
-    const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const sellerId = getEffectiveUserId();
     createdPeriodState = getDefaultMonthlyPeriodState();
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = 'not_canceled';
@@ -612,7 +644,7 @@
     // For non-admins the API returns role-wide rows so the ranking summary
     // can show their position. The main table, KPI cards, and exports
     // however should still reflect only the user's own data.
-    const myId = String(currentUser?.id || '');
+    const myId = getEffectiveUserId();
     const ownOrders = isAdmin()
       ? orders
       : orders.filter(o => String(o.seller_agency_member_id || '') === myId);
@@ -1023,7 +1055,7 @@
   }
 
   function getSelectedSellerLabel() {
-    if (!isAdmin()) return currentUser ? currentUser.nick_name || '-' : '-';
+    if (!isAdmin()) return getEffectiveNickName() || '-';
     const seller = sellers.find(s => String(s.id) === String(selectedSellerId));
     if (!selectedSellerId) return 'ทั้งหมด';
     return seller ? (seller.nick_name || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || String(seller.id)) : 'ทั้งหมด';
