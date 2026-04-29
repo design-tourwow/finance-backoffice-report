@@ -609,7 +609,7 @@
     // Set state defaults
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
+    selectedOrderStatus  = 'not_canceled';
 
     // ---- ตำแหน่ง dropdown ----
     const jobPositionOptions = [
@@ -642,7 +642,7 @@
     renderSellerDropdown();
 
     // ---- สถานะ Order dropdown ----
-    const defaultStatus = isAdmin() ? 'all' : 'not_canceled';
+    const defaultStatus = 'not_canceled';
     const statusOptions = [
       { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all') },
       { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled') },
@@ -701,7 +701,7 @@
     paidPeriodState = getDefaultMonthlyPeriodState();
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = isAdmin() ? 'all' : 'not_canceled';
+    selectedOrderStatus  = 'not_canceled';
     selectedTravelerFilter = 'all';
 
     mountPeriodSelectors();
