@@ -686,7 +686,7 @@
 
       results.querySelectorAll('.crp-summary-table').forEach(table => {
         const group = table.getAttribute('data-group');
-        const state = sellerSummarySort[group] || { key: 'net_commission', direction: 'desc' };
+        const state = sellerSummarySort[group] || { key: 'net_amount', direction: 'desc' };
         window.SharedSortableHeader.bindTable(table, {
           headerSelector  : 'thead th[data-sort]',
           sortKey         : state.key,
