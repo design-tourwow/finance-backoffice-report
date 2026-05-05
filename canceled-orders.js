@@ -21,10 +21,11 @@
   let canceledPeriodState = { mode: 'all' };
 
   // วันที่สร้าง Order relation to the canceled period:
+  //   'all'    → no created_at filter (default — show every canceled order in the period)
   //   'before' → created_at strictly before canceled_at_from (old orders canceled now)
   //   'same'   → created_at within [canceled_at_from, canceled_at_to] (created and canceled in same period)
   // Applied as created_at_from/to in buildFilters() only when a canceled range exists.
-  let createdRelationState = 'before';
+  let createdRelationState = 'all';
 
   // Selected values from FilterSortDropdown instances
   let selectedSellerId = '';
@@ -285,18 +286,21 @@
   // Render the "วันที่สร้าง Order" relation dropdown. Lets the user split
   // canceled orders into ones created BEFORE the canceled period (old orders
   // canceled now) vs ones created WITHIN the same period as the cancellation
-  // (rapid same-period cancellations).
+  // (rapid same-period cancellations). Default "ทั้งหมด" applies no
+  // created_at filter so the page degrades to all canceled orders in the
+  // selected period.
   function renderCreatedRelationDropdown() {
     const options = [
-      { value: 'before', label: 'ก่อนช่วงที่ยกเลิก',  icon: getCalendarIcon(), active: createdRelationState === 'before' },
-      { value: 'same',   label: 'ตรงกับช่วงที่ยกเลิก', icon: getCalendarIcon(), active: createdRelationState === 'same'   },
+      { value: 'all',    label: 'ทั้งหมด',              icon: getAllIcon(),      active: createdRelationState === 'all'    },
+      { value: 'before', label: 'ก่อนช่วงที่ยกเลิก',     icon: getCalendarIcon(), active: createdRelationState === 'before' },
+      { value: 'same',   label: 'ตรงกับช่วงที่ยกเลิก',   icon: getCalendarIcon(), active: createdRelationState === 'same'   },
     ];
     const active = options.find(o => o.active) || options[0];
 
     window.FilterSortDropdownComponent.initDropdown({
       containerId : 'co-created-relation-host',
       defaultLabel: active.label,
-      defaultIcon : getCalendarIcon(),
+      defaultIcon : active.icon,
       options     : options,
       onChange    : function (val) { createdRelationState = val; }
     });
@@ -505,7 +509,7 @@
     canceledPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
     selectedJobPosition = jobPos;
     selectedSellerId    = isAdmin() ? '' : sellerId;
-    createdRelationState = 'before';
+    createdRelationState = 'all';
 
     window.SharedPeriodSelector.mount({
       modeContainerId : 'co-canceled-mode-host',
@@ -598,6 +602,7 @@
     // UI for 'all' and 'custom' modes, so don't apply the filter there
     // either: 'all' has no boundary, and 'custom' is a free range that
     // doesn't map onto a "before vs same" comparison.
+    // Relation state 'all' = no created_at filter regardless of mode.
     const mode = (canceledPeriodState && canceledPeriodState.mode) || '';
     const applyRelation = mode === 'yearly' || mode === 'quarterly' || mode === 'monthly';
     if (applyRelation && range.dateFrom && range.dateTo) {
@@ -607,6 +612,7 @@
         filters.created_at_from = range.dateFrom;
         filters.created_at_to   = range.dateTo;
       }
+      // 'all' falls through with no created_at_* keys.
     }
 
     return filters;
@@ -755,7 +761,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="kpi-content">
-            <div class="kpi-label">ยอดจองรวม</div>
+            <div class="kpi-label">ยอดยกเลิกรวม</div>
             <div class="kpi-value">${formatNumber(summary.total_net_amount, 0)}</div>
             <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
           </div>
@@ -933,9 +939,12 @@
     const filters = buildFilters();
     const mode = (canceledPeriodState && canceledPeriodState.mode) || '';
     const showRelation = mode === 'yearly' || mode === 'quarterly' || mode === 'monthly';
-    const createdRelationLabel = createdRelationState === 'same'
-      ? 'ตรงกับช่วงที่ยกเลิก'
-      : 'ก่อนช่วงที่ยกเลิก';
+    const RELATION_LABEL = {
+      all:    'ทั้งหมด',
+      before: 'ก่อนช่วงที่ยกเลิก',
+      same:   'ตรงกับช่วงที่ยกเลิก',
+    };
+    const createdRelationLabel = RELATION_LABEL[createdRelationState] || 'ทั้งหมด';
     const rows = [
       { label: 'วันที่ยกเลิก Order', value: [formatDate(filters.canceled_at_from), formatDate(filters.canceled_at_to)].join(' - ') }
     ];
@@ -1115,7 +1124,7 @@
 
       <div class="crp-print-summary">
         <div class="crp-print-card">
-          <span class="crp-print-card-label">ยอดจองรวม</span>
+          <span class="crp-print-card-label">ยอดยกเลิกรวม</span>
           <span class="crp-print-card-value">${formatNumber(summary.total_net_amount)}</span>
         </div>
         <div class="crp-print-card">
@@ -1195,7 +1204,7 @@
     summaryLine.style.fontSize = '13px';
     summaryLine.style.fontWeight = '600';
     summaryLine.innerHTML = `
-      <span>ยอดจองรวม: ${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))} บาท</span>
+      <span>ยอดยกเลิกรวม: ${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))} บาท</span>
       <span>คอมรวม: ${escHtml(formatNumber(currentData?.summary?.total_commission || 0))} บาท</span>
       <span>ส่วนลด: ${escHtml(formatNumber(currentData?.summary?.total_discount || 0))} บาท</span>
       <span>คอมสุทธิ: ${escHtml(formatNumber(netCommission || 0))} บาท</span>
