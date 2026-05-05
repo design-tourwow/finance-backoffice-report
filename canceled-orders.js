@@ -20,6 +20,12 @@
   let availablePeriods = { years: [] };
   let canceledPeriodState = { mode: 'all' };
 
+  // วันที่สร้าง Order relation to the canceled period:
+  //   'before' → created_at strictly before canceled_at_from (old orders canceled now)
+  //   'same'   → created_at within [canceled_at_from, canceled_at_to] (created and canceled in same period)
+  // Applied as created_at_from/to in buildFilters() only when a canceled range exists.
+  let createdRelationState = 'before';
+
   // Selected values from FilterSortDropdown instances
   let selectedSellerId = '';
   // ตำแหน่ง dropdown — 'ts' / 'crm' / 'admin'. Drives the linked
@@ -259,6 +265,26 @@
     return 'ทั้งหมด';
   }
 
+  // Render the "วันที่สร้าง Order" relation dropdown. Lets the user split
+  // canceled orders into ones created BEFORE the canceled period (old orders
+  // canceled now) vs ones created WITHIN the same period as the cancellation
+  // (rapid same-period cancellations).
+  function renderCreatedRelationDropdown() {
+    const options = [
+      { value: 'before', label: 'ก่อนช่วงที่ยกเลิก',  icon: getCalendarIcon(), active: createdRelationState === 'before' },
+      { value: 'same',   label: 'ตรงกับช่วงที่ยกเลิก', icon: getCalendarIcon(), active: createdRelationState === 'same'   },
+    ];
+    const active = options.find(o => o.active) || options[0];
+
+    window.FilterSortDropdownComponent.initDropdown({
+      containerId : 'co-created-relation-host',
+      defaultLabel: active.label,
+      defaultIcon : getCalendarIcon(),
+      options     : options,
+      onChange    : function (val) { createdRelationState = val; }
+    });
+  }
+
   // Render the "เซลล์ผู้จอง" dropdown filtered by selectedJobPosition.
   // Each ตำแหน่ง option (ts / crm / admin) shows only sellers of that
   // role; admins see role-scoped lists, non-admins see a locked button
@@ -333,13 +359,17 @@
         <!-- Filter Bar -->
         <div class="filter-wrap filter-wrap-stacked">
 
-          <!-- แถว 1: วันที่ยกเลิก Order (period selector spans full row,
-               same shape as /sales-report's row 1). -->
+          <!-- แถว 1: วันที่ยกเลิก Order (mode + value, spans 2 cells) +
+               วันที่สร้าง Order relation dropdown (1 cell). Total = 3 cells = full row. -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">วันที่ยกเลิก Order</span>
               <div class="crp-filter-control" id="co-canceled-mode-host"></div>
               <div class="crp-filter-control" id="co-canceled-value-host"></div>
+            </div>
+            <div class="crp-filter-field">
+              <span class="time-granularity-label crp-filter-label">วันที่สร้าง Order</span>
+              <div class="crp-filter-control" id="co-created-relation-host"></div>
             </div>
           </div>
 
@@ -392,6 +422,8 @@
       initialState    : canceledPeriodState,
       onChange        : function (s) { canceledPeriodState = s; }
     });
+
+    renderCreatedRelationDropdown();
 
     // Non-admin users are locked to their own seller id; admins see the
     // linked ตำแหน่ง + searchable เซลล์ pair (same pattern as /sales-report).
@@ -452,6 +484,7 @@
     canceledPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
     selectedJobPosition = jobPos;
     selectedSellerId    = isAdmin() ? '' : sellerId;
+    createdRelationState = 'before';
 
     window.SharedPeriodSelector.mount({
       modeContainerId : 'co-canceled-mode-host',
@@ -462,6 +495,8 @@
       initialState    : canceledPeriodState,
       onChange        : function (s) { canceledPeriodState = s; }
     });
+
+    renderCreatedRelationDropdown();
 
     if (isAdmin()) {
       window.FilterSortDropdownComponent.initDropdown({
@@ -492,6 +527,10 @@
     return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
   }
 
+  function getCalendarIcon() {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+  }
+
   function getStatusIcon(status) {
     if (status === 'canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
     if (status === 'not_canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
@@ -520,7 +559,7 @@
 
   function buildFilters() {
     const range = window.SharedPeriodSelector.toDateRange(canceledPeriodState, availablePeriods);
-    return {
+    const filters = {
       canceled_at_from: range.dateFrom || '',
       canceled_at_to:   range.dateTo   || '',
       seller_id:        isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
@@ -528,6 +567,21 @@
       // Hardcoded: this page is only about canceled orders.
       order_status:     'canceled',
     };
+
+    // วันที่สร้าง Order relation — only meaningful when there is a canceled
+    // range to pivot on. If canceledPeriodState resolves to no range (e.g.
+    // mode='all'), skip the created_at filter so the page degrades to
+    // "all canceled orders" rather than silently filtering everything out.
+    if (range.dateFrom && range.dateTo) {
+      if (createdRelationState === 'before') {
+        filters.created_at_to = addDays(range.dateFrom, -1);
+      } else if (createdRelationState === 'same') {
+        filters.created_at_from = range.dateFrom;
+        filters.created_at_to   = range.dateTo;
+      }
+    }
+
+    return filters;
   }
 
   // ---- Loading ----
@@ -849,8 +903,12 @@
 
   function buildPrintFilters() {
     const filters = buildFilters();
+    const createdRelationLabel = createdRelationState === 'same'
+      ? 'ตรงกับช่วงที่ยกเลิก'
+      : 'ก่อนช่วงที่ยกเลิก';
     return [
       { label: 'วันที่ยกเลิก Order', value: [formatDate(filters.canceled_at_from), formatDate(filters.canceled_at_to)].join(' - ') },
+      { label: 'วันที่สร้าง Order', value: createdRelationLabel },
       { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
       { label: 'สถานะ Order', value: 'ยกเลิก' },
     ];
