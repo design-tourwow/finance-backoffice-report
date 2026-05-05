@@ -13,6 +13,13 @@
   // ---- State ----
   let currentUser = null;
   let currentData = null;
+  // Own-scoped slice of currentData.orders: equals all orders for admin,
+  // equals (orders WHERE seller_agency_member_id === effectiveUserId) for
+  // ts/crm. Backend returns role-wide rows so the page must filter
+  // client-side for non-admins to honour data isolation. Recomputed every
+  // renderResults() and consumed by KPI summary, main table, CSV/PDF export.
+  let currentOwnOrders = [];
+  let currentOwnSummary = null;
   let sellers = [];
 
   // Period selector state — replaces the canceled_at date-picker. Converts
@@ -297,6 +304,20 @@
         mainTableSort.direction
       );
     });
+  }
+
+  // Client-side summary aggregator — used when ts/crm sees the page so the
+  // KPI cards and PDF totals reflect ONLY the user's own canceled orders,
+  // not the role-wide rows the backend returned for ranking-context reasons
+  // (see architecture-rbac-view-as Section 7 — same pattern as sales-report-by-seller).
+  function computeSummary(orders) {
+    return (orders || []).reduce(function (acc, o) {
+      acc.total_orders += 1;
+      acc.total_net_amount += parseFloat(o.net_amount || 0);
+      acc.total_commission += parseFloat(o.supplier_commission || 0);
+      acc.total_discount += parseFloat(o.discount || 0);
+      return acc;
+    }, { total_orders: 0, total_net_amount: 0, total_commission: 0, total_discount: 0 });
   }
 
   function labelOfJobPosition(pos) {
@@ -680,10 +701,20 @@
   function renderResults(data) {
     const results = document.getElementById('crp-results');
     if (!results) return;
-    const { orders = [], summary = {} } = data;
-    if (!orders.length) { showEmpty(); return; }
+    const rawOrders = (data && data.orders) || [];
+    if (!rawOrders.length) { showEmpty(); return; }
 
-    results.innerHTML = renderSummary(summary) + renderTableSection(orders);
+    // For ts/crm the API returns role-wide rows. Scope to own seller for
+    // KPI / table / exports (mirror sales-report-by-seller's pattern).
+    const myId = getEffectiveUserId();
+    const ownOrders = isAdmin()
+      ? rawOrders
+      : rawOrders.filter(o => String(o.seller_agency_member_id || '') === myId);
+    const ownSummary = isAdmin() ? (data.summary || {}) : computeSummary(ownOrders);
+    currentOwnOrders = ownOrders;
+    currentOwnSummary = ownSummary;
+
+    results.innerHTML = renderSummary(ownSummary) + renderTableSection(ownOrders);
 
     // Sticky header: set col-row top = group-row height
     const groupRow = results.querySelector('.crp-table thead tr.group-row');
@@ -694,8 +725,8 @@
       });
     }
 
-    document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(orders));
-    document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
+    document.getElementById('crp-btn-export').addEventListener('click', () => exportCSV(ownOrders));
+    document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(ownOrders, ownSummary));
 
     if (window.SharedSortableHeader) {
       const mainTable = results.querySelector('.crp-table');
@@ -1132,7 +1163,7 @@
     wrapper.className = 'crp-pdf-source';
     wrapper.dataset.countText = countText || '';
 
-    const netCommission = parseFloat(currentData?.summary?.total_commission || 0) - parseFloat(currentData?.summary?.total_discount || 0);
+    const netCommission = parseFloat(currentOwnSummary?.total_commission || 0) - parseFloat(currentOwnSummary?.total_discount || 0);
 
     const title = document.createElement('div');
     title.style.display = 'flex';
@@ -1158,9 +1189,9 @@
     summaryLine.style.fontSize = '13px';
     summaryLine.style.fontWeight = '600';
     summaryLine.innerHTML = `
-      <span>ยอดยกเลิกรวม: ${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))} บาท</span>
-      <span>คอมรวม: ${escHtml(formatNumber(currentData?.summary?.total_commission || 0))} บาท</span>
-      <span>ส่วนลด: ${escHtml(formatNumber(currentData?.summary?.total_discount || 0))} บาท</span>
+      <span>ยอดยกเลิกรวม: ${escHtml(formatNumber(currentOwnSummary?.total_net_amount || 0))} บาท</span>
+      <span>คอมรวม: ${escHtml(formatNumber(currentOwnSummary?.total_commission || 0))} บาท</span>
+      <span>ส่วนลด: ${escHtml(formatNumber(currentOwnSummary?.total_discount || 0))} บาท</span>
       <span>คอมสุทธิ: ${escHtml(formatNumber(netCommission || 0))} บาท</span>
     `;
 
@@ -1228,13 +1259,13 @@
       footer.innerHTML = `
         <td colspan="5" style="text-align:center;color:#243b53;border-top:2px solid #9fb6cc;">รวม ${escHtml(countText || '')}</td>
         <td style="border-top:2px solid #9fb6cc;"></td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentOwnSummary?.total_net_amount || 0))}</td>
         <td style="border-top:2px solid #9fb6cc;"></td>
         <td style="border-top:2px solid #9fb6cc;"></td>
         <td style="border-top:2px solid #9fb6cc;"></td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentOwnSummary?.total_commission || 0))}</td>
         <td style="text-align:right;color:#16a34a;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(netCommission || 0))}</td>
-        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
+        <td style="text-align:right;border-top:2px solid #9fb6cc;">${escHtml(formatNumber(currentOwnSummary?.total_discount || 0))}</td>
       `;
       tbody.appendChild(footer);
     }
