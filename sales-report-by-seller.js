@@ -16,6 +16,11 @@
   // so the ranking summary can show their position.
   let currentOwnOrders = [];
   let currentOwnSummary = null;
+  // Reference summary from the canceled-orders slice that maps
+  // created_at(on this page) -> canceled_at(on canceled-orders) and
+  // created_at < canceled-period-start. Used only as a gray note below the
+  // KPI "ยอดจองรวม"; it does not alter any totals on this page.
+  let currentCanceledReferenceSummary = null;
   let sellers = [];
   let availablePeriods = { years: [] };
 
@@ -178,6 +183,16 @@
       acc.total_discount += parseFloat(o.discount || 0);
       return acc;
     }, { total_orders: 0, total_net_amount: 0, total_commission: 0, total_discount: 0 });
+  }
+
+  function normalizeSummary(summary) {
+    const source = summary && typeof summary === 'object' ? summary : {};
+    return {
+      total_orders: parseFloat(source.total_orders || 0) || 0,
+      total_net_amount: parseFloat(source.total_net_amount || 0) || 0,
+      total_commission: parseFloat(source.total_commission || 0) || 0,
+      total_discount: parseFloat(source.total_discount || 0) || 0,
+    };
   }
 
   function getDiscountPercentValue(discountValue, netAmountValue) {
@@ -592,13 +607,26 @@
     }
     showLoading();
     const filters = buildFilters();
+    const canceledReferenceFilters = buildCanceledReferenceFilters();
     currentData = null;
+    currentCanceledReferenceSummary = null;
     mainTableQuery = '';
     try {
-      const res = await CommissionReportPlusAPI.getReport(filters);
-      if (res && res.success && res.data) {
-        currentData = res.data;
-        renderResults(res.data);
+      const [reportRes, canceledReferenceRes] = await Promise.all([
+        CommissionReportPlusAPI.getReport(filters),
+        canceledReferenceFilters
+          ? CommissionReportPlusAPI.getReport(canceledReferenceFilters).catch(function (error) {
+              console.error('[CRP] Failed to load canceled reference summary:', error);
+              return null;
+            })
+          : Promise.resolve(null)
+      ]);
+      if (reportRes && reportRes.success && reportRes.data) {
+        currentData = reportRes.data;
+        currentCanceledReferenceSummary = canceledReferenceRes && canceledReferenceRes.success && canceledReferenceRes.data
+          ? normalizeSummary(canceledReferenceRes.data.summary || computeSummary(canceledReferenceRes.data.orders || []))
+          : null;
+        renderResults(reportRes.data);
       } else {
         showEmpty();
       }
@@ -633,6 +661,23 @@
       // down to their own rows in renderResults.
       seller_id:       isAdmin() ? selectedSellerId : '',
       order_status:    selectedOrderStatus,
+    };
+  }
+
+  function buildCanceledReferenceFilters() {
+    const createdRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
+    if (!createdRange.dateFrom || !createdRange.dateTo) return null;
+    return {
+      canceled_at_from: createdRange.dateFrom,
+      canceled_at_to:   createdRange.dateTo,
+      // "ก่อนช่วงที่ยกเลิก" → strictly before the period selected on the
+      // by-seller page, regardless of monthly/quarterly/yearly/custom mode.
+      created_at_to:    addDays(createdRange.dateFrom, -1),
+      // Note scope must match the visible KPI card, so non-admins are pinned
+      // to their own seller id here (unlike the main ranking query).
+      seller_id:        isAdmin() ? selectedSellerId : getEffectiveUserId(),
+      job_position:     getEffectiveRole(),
+      order_status:     'canceled',
     };
   }
 
@@ -774,6 +819,9 @@
   function renderSummary(summary) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
+    const canceledReferenceNote = currentCanceledReferenceSummary
+      ? `<div class="kpi-note">มียอด Order ที่ยกเลิก ${formatNumber(currentCanceledReferenceSummary.total_net_amount, 0)} บาท</div>`
+      : '';
     const discountCard = `
         <div class="dashboard-kpi-card kpi-active">
           <div class="kpi-icon">
@@ -814,6 +862,7 @@
             <div class="kpi-label">ยอดจองรวม</div>
             <div class="kpi-value">${formatNumber(summary.total_net_amount, 0)}</div>
             <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
+            ${canceledReferenceNote}
           </div>
         </div>
         ${adminCards}

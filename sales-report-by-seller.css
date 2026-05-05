@@ -94,6 +94,14 @@
   gap: 12px;
 }
 
+.kpi-note {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #6b7280;
+  font-family: var(--font-family);
+}
+
 /* ========= Table Scroll + Sticky Header ========= */
 
 .crp-scroll-hint-wrapper {
