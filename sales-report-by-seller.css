@@ -234,7 +234,11 @@
 }
 
 .crp-summary-group {
-  flex: 1;
+  /* Lock each box to ~half the row (minus half the 16px gap) so a single
+     group rendered alone (ts or crm view) keeps the same visual width as
+     the admin view's side-by-side pair, aligned-left. flex-grow:0 prevents
+     a lone box from stretching to fill the row. */
+  flex: 0 1 calc(50% - 8px);
   min-width: 300px;
   background: white;
   border-radius: 10px;

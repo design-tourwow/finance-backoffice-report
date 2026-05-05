@@ -350,6 +350,10 @@
       if (!map.has(key)) map.set(key, {
         seller_id: sid,
         seller: o.seller_nick_name || '-',
+        // team_number is per-seller in agency_members, so any order from this
+        // seller carries it — capture once on first hit. Falls back to 0 when
+        // the agency-members JOIN didn't resolve (no team assigned).
+        team_number: parseInt(o.seller_team_number, 10) || 0,
         orders: 0, net_amount: 0, discount: 0, net_commission: 0
       });
       const s = map.get(key);
@@ -817,6 +821,9 @@
       // Trophies (gold/silver/bronze) only on Telesales — CRM uses plain
       // numbering for every rank per business rule.
       const useTrophies = groupClass === 'ts';
+      // CRM-only "ทีม" column — sourced from agency_members.team_number
+      // via the seller_team_number field on each order.
+      const showTeamCol = groupClass === 'crm';
       const rows = sorted.map((s, i) => {
         const rank = i + 1;
         const trophyIcon = (useTrophies && window.SharedTrophyRank)
@@ -831,6 +838,9 @@
         const sellerCell  = shouldMask ? MASKED_NAME : escHtml(s.seller);
         const netComClass = s.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
         const rowClass    = shouldMask ? 'crp-summary-row--masked' : '';
+        const teamCell    = showTeamCol
+          ? `<td class="center">${s.team_number ? formatNumber(s.team_number, 0) : '-'}</td>`
+          : '';
         return `
           <tr class="${rowClass}">
             <td>
@@ -839,12 +849,17 @@
                 <span class="crp-seller-badge">${sellerCell}</span>
               </div>
             </td>
+            ${teamCell}
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${netComClass}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
       }).join('');
+      const teamHeader = showTeamCol
+        ? '<th class="center" data-sort="team_number" data-type="number">ทีม</th>'
+        : '';
+      const colCount = showTeamCol ? 6 : 5;
       return `
         <div class="crp-summary-group crp-summary-group--${groupClass}">
           <div class="crp-summary-group-header">
@@ -855,13 +870,14 @@
             <thead>
               <tr>
                 <th data-sort="seller" data-type="string">เซลล์</th>
+                ${teamHeader}
                 <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
                 <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
                 <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
                 <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
             </thead>
-            <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            <tbody>${rows || `<tr><td colspan="${colCount}" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>`}</tbody>
           </table>
         </div>`;
     }
@@ -1005,7 +1021,7 @@
     if (isAdmin()) {
       worksheets.push({
         name: 'sales-report-by-crm',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ทีม', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'crm')
       });
     }
@@ -1040,6 +1056,11 @@
     return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
       const isSelf = isAdmin() || (row.seller_id && row.seller_id === myId);
       const sellerName = isSelf ? row.seller : MASKED_NAME;
+      // CRM worksheet has an extra "ทีม" column inserted right after the
+      // seller name. Telesales worksheet keeps its original 6-column shape.
+      if (groupClass === 'crm') {
+        return [index + 1, sellerName, row.team_number || '', row.orders, row.net_amount, row.discount, row.net_commission];
+      }
       return [index + 1, sellerName, row.orders, row.net_amount, row.discount, row.net_commission];
     });
   }
