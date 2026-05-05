@@ -1164,3 +1164,35 @@ A small, focused session that closed two long-standing data bugs on `/canceled-o
 
 - Rolling-date-window selector still page-local in RCR.
 
+### Phase 6 Follow-up (same day, 2026-05-05) — RBAC expansion + view-as parity bugs caught during user testing
+
+The original Phase 6 commit shipped early in the session. The user reported follow-up tasks (a traveler-toggle on /sales-report-by-seller, opening /canceled-orders to ts/crm) and then live-tested view-as mode on the newly-opened page — which surfaced two parity bugs that hadn't been caught at SOP-checklist time. Documenting both the planned features and the bugs caught + fixed because they together describe the most useful pattern: **opening a route to ts/crm is a multi-step migration, not a single ROLE_ACCESS flip.**
+
+**Planned features:**
+
+| Page | Change | Reason |
+|---|---|---|
+| /sales-report-by-seller | Toolbar checkbox "นับ Order ที่มีผู้เดินทางเท่านั้น" | Toggle the `room_quantity` filter direction. Default `> 0` matches Phase 6 commit, unchecked flips to `= 0` so finance can audit empty-traveler orders separately. Reuses `banner1-filter-checkbox` already loaded by tour-image-manager.css. |
+| /canceled-orders | `ROLE_ACCESS` flipped `false → true` for ts and crm | CRM ops + Telesales asked for visibility into their own canceled bookings for follow-up workflow. Backend `commission-plus` already accepted ts/crm so no API guard change. |
+| /canceled-orders | "ทั้งหมด" added as first option on the วันที่สร้าง Order dropdown | Default state was previously `before` — changed to `all` (no created_at filter). Three options now form an exhaustive partition: `all = before ∪ same`. |
+| /canceled-orders | KPI / print / PDF total renamed "ยอดจองรวม" → "ยอดยกเลิกรวม" | Per-row "ยอดจอง" stays — it's still the order's booking value. Aggregates carry the cancellation-totals reading. |
+| /canceled-orders | Seller summary section removed entirely (-107 lines) | Audit-purpose page, not ranking-purpose. Section was admin-only, never used in practice. Removing it eliminates the trophies-vs-numbering / CRM-team-suffix branch logic that would otherwise have to be re-implemented when access opened to ts/crm. |
+
+**View-as parity bugs caught during user testing (and fixed same-day):**
+
+| Bug | Root cause | Fix |
+|---|---|---|
+| ตำแหน่ง dropdown stayed on "Admin" during view-as ts/crm; เซลล์ผู้จอง dropdown not locked | `canceled-orders.js#isAdmin()` read `currentUser.job_position` directly — bypassing the `sessionStorage.viewAsRole` that menu-component.js writes during impersonation. Identical pattern to the bugs the SOP was written to prevent. | Ported `getEffectiveRole()` / `getEffectiveUserId()` / `getEffectiveNickName()` from /sales-report-by-seller verbatim. Migrated 9 call sites that previously read `currentUser.*` directly to use the helpers. The helpers' fallback path (when not impersonating) preserves the original semantics. |
+| ts/crm logged in saw other sellers' rows in the main table | `renderResults()` rendered the API response directly without filtering. Backend returns role-wide rows by design (architecture-rbac-view-as Section 7 — needed so /sales-report-by-seller's ranking can show peers); each consumer page is responsible for own-seller scoping when it doesn't render rankings. | Added `currentOwnOrders` / `currentOwnSummary` module state. `renderResults` filters `seller_agency_member_id === effectiveUserId` for non-admins and recomputes summary via a new `computeSummary()` ported from /sales-report-by-seller. CSV/PDF exports + 4 print-template references migrated from `currentData?.summary?.*` → `currentOwnSummary?.*`. |
+
+**Architectural principles refined this follow-up:**
+
+- **Opening a route to ts/crm is at minimum a four-step migration.** (1) Flip `ROLE_ACCESS`. (2) Audit every direct `currentUser.*` read on the page and migrate to the `getEffective*` helpers — every page-level `isAdmin()` should already be view-as-aware via `getEffectiveRole()`. (3) Audit every render path that consumes API rows and wrap with own-seller scoping for non-admins. (4) Audit every print/export path that reads `data.summary` and switch to a client-computed `ownSummary`. The SOP's pre-merge checklist needs an explicit "did you do all four?" question — both bugs caught here would have been caught by a single look at the pattern in /sales-report-by-seller.
+- **Helpers extraction beats inline migration when ≥2 pages need the pattern.** With /canceled-orders becoming the second consumer of `getEffectiveRole / Id / NickName` (after /sales-report-by-seller), the threshold for moving these to a shared module is met. Carry-forward — Priority H.
+- **PRD-shaped feature work and bug-fix-by-tester work compound.** This session shipped the access expansion as one commit, then the user immediately found two parity bugs. The fix-cycle was 30 minutes, but had user-testing not happened the bugs would have shipped silently to ts/crm production. Future RBAC expansions should treat user smoke-test on staging as a hard gate before production deploy.
+
+**Carry-forward (Priority H, added this follow-up):**
+
+- Extract `shared-rbac-helpers.js` (or merge into `menu-component.js`) — `getEffectiveRole()`, `getEffectiveUserId()`, `getEffectiveNickName()` are now duplicated verbatim in two pages. Third occurrence will trigger extraction; with the access-expansion pattern now established, the third occurrence is likely sooner rather than later.
+- Pre-merge SOP checklist needs "all four migration steps done?" question (see Architectural principles above) before any future ts/crm route expansion.
+
