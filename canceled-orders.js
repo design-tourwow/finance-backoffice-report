@@ -62,6 +62,7 @@
       window.SharedFilterService ? window.SharedFilterService.getAvailablePeriods() : null
     ]);
     if (periods && Array.isArray(periods.years)) availablePeriods = periods;
+    applyQueryPrefill();
     initFilters();
     await loadReport();
   }
@@ -320,6 +321,38 @@
     }, { total_orders: 0, total_net_amount: 0, total_commission: 0, total_discount: 0 });
   }
 
+  function applyQueryPrefill() {
+    if (typeof window === 'undefined' || !window.location || !window.location.search) return;
+    const params = new URLSearchParams(window.location.search);
+    const periodMode = params.get('period_mode');
+    if (periodMode === 'yearly' || periodMode === 'quarterly' || periodMode === 'monthly' || periodMode === 'custom') {
+      canceledPeriodState = { mode: periodMode };
+      const year = parseInt(params.get('period_year') || '', 10);
+      const quarter = parseInt(params.get('period_quarter') || '', 10);
+      const month = parseInt(params.get('period_month') || '', 10);
+      if (Number.isFinite(year)) canceledPeriodState.year = year;
+      if (Number.isFinite(quarter)) canceledPeriodState.quarter = quarter;
+      if (Number.isFinite(month)) canceledPeriodState.month = month;
+      if (periodMode === 'custom') {
+        canceledPeriodState.customFrom = params.get('period_custom_from') || '';
+        canceledPeriodState.customTo = params.get('period_custom_to') || '';
+      }
+    }
+
+    const relation = params.get('created_relation');
+    if (relation === 'all' || relation === 'before' || relation === 'same') {
+      createdRelationState = relation;
+    }
+
+    const role = params.get('job_position');
+    if (role === 'ts' || role === 'crm' || role === 'admin') {
+      selectedJobPosition = role;
+    }
+
+    const sellerId = params.get('seller_id');
+    if (sellerId) selectedSellerId = String(sellerId);
+  }
+
   function labelOfJobPosition(pos) {
     if (pos === 'ts')    return 'เซลล์';
     if (pos === 'crm')   return 'CRM';
@@ -483,14 +516,17 @@
   // ---- Init Filters ----
   function initFilters() {
     const sellerId = getEffectiveUserId();
-    const from = firstDayOfMonth();
-    const to   = today();
-
-    // Canceled-at period selector — default to current month.
-    const nowYear    = new Date().getFullYear();
-    const nowMonth   = new Date().getMonth() + 1;
-    const nowQuarter = Math.ceil(nowMonth / 3);
-    canceledPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
+    const hasPrefilledPeriod = canceledPeriodState
+      && (canceledPeriodState.mode === 'yearly'
+        || canceledPeriodState.mode === 'quarterly'
+        || canceledPeriodState.mode === 'monthly'
+        || canceledPeriodState.mode === 'custom');
+    if (!hasPrefilledPeriod) {
+      const nowYear    = new Date().getFullYear();
+      const nowMonth   = new Date().getMonth() + 1;
+      const nowQuarter = Math.ceil(nowMonth / 3);
+      canceledPeriodState = { mode: 'monthly', year: nowYear, quarter: nowQuarter, month: nowMonth };
+    }
 
     window.SharedPeriodSelector.mount({
       modeContainerId : 'co-canceled-mode-host',
@@ -511,8 +547,8 @@
     // Non-admin users are locked to their own seller id; admins see the
     // linked ตำแหน่ง + searchable เซลล์ pair (same pattern as /sales-report).
     const jobPos = getEffectiveRole();
-    selectedJobPosition = jobPos;
-    selectedSellerId    = isAdmin() ? '' : sellerId;
+    selectedJobPosition = isAdmin() ? (selectedJobPosition || jobPos) : jobPos;
+    selectedSellerId    = isAdmin() ? (selectedSellerId || '') : sellerId;
 
     // ---- ตำแหน่ง dropdown ----
     if (isAdmin()) {
@@ -520,11 +556,11 @@
         { value: 'ts',    label: 'เซลล์', icon: getPersonIcon() },
         { value: 'crm',   label: 'CRM',   icon: getPersonIcon() },
         { value: 'admin', label: 'Admin', icon: getPersonIcon() },
-      ].map(o => ({ ...o, active: o.value === jobPos }));
+      ].map(o => ({ ...o, active: o.value === selectedJobPosition }));
 
       window.FilterSortDropdownComponent.initDropdown({
         containerId : 'crp-dd-position',
-        defaultLabel: labelOfJobPosition(jobPos),
+        defaultLabel: labelOfJobPosition(selectedJobPosition),
         defaultIcon : getPersonIcon(),
         options     : jobPositionOptions,
         onChange    : function (val) {

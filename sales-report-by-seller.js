@@ -205,6 +205,33 @@
     return percentValue == null ? '-' : `${formatNumber(percentValue, decimals)}%`;
   }
 
+  function inferCanceledReferenceJobPosition() {
+    if (!isAdmin()) return getEffectiveRole();
+    if (!selectedSellerId) return 'admin';
+    const seller = sellers.find(function (entry) {
+      return String(entry.id) === String(selectedSellerId);
+    });
+    const pos = String((seller && seller.job_position) || '').toLowerCase();
+    return (pos === 'ts' || pos === 'crm') ? pos : 'admin';
+  }
+
+  function buildCanceledReferenceNavigationUrl() {
+    const params = new URLSearchParams();
+    const state = createdPeriodState && typeof createdPeriodState === 'object' ? createdPeriodState : {};
+    params.set('period_mode', state.mode || 'monthly');
+    if (state.year != null) params.set('period_year', String(Number(state.year)));
+    if (state.quarter != null) params.set('period_quarter', String(Number(state.quarter)));
+    if (state.month != null) params.set('period_month', String(Number(state.month)));
+    if (state.customFrom) params.set('period_custom_from', state.customFrom);
+    if (state.customTo) params.set('period_custom_to', state.customTo);
+    params.set('created_relation', 'before');
+
+    const sellerId = isAdmin() ? selectedSellerId : getEffectiveUserId();
+    if (sellerId) params.set('seller_id', String(sellerId));
+    params.set('job_position', inferCanceledReferenceJobPosition());
+    return `/canceled-orders?${params.toString()}`;
+  }
+
   function formatDate(dateStr) {
     if (!dateStr) return '-';
     try {
@@ -820,7 +847,15 @@
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
     const canceledReferenceNote = currentCanceledReferenceSummary
-      ? `<div class="kpi-note">มียอด Order ที่ยกเลิก ${formatNumber(currentCanceledReferenceSummary.total_net_amount, 0)} บาท</div>`
+      ? `<div class="kpi-note-row">
+           <span class="kpi-note">มียอด Order ที่ยกเลิก ${formatNumber(currentCanceledReferenceSummary.total_net_amount, 0)} บาท</span>
+           <a class="kpi-note-link" href="${escHtml(buildCanceledReferenceNavigationUrl())}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
+             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
+               <circle cx="12" cy="12" r="3"></circle>
+             </svg>
+           </a>
+         </div>`
       : '';
     const discountCard = `
         <div class="dashboard-kpi-card kpi-active">

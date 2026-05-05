@@ -55,6 +55,9 @@ const server = http.createServer((req, res) => {
     else if (urlWithoutQuery === '/sales-report-by-seller') {
         filePath = './sales-report-by-seller.html';
     }
+    else if (urlWithoutQuery === '/canceled-orders') {
+        filePath = './canceled-orders.html';
+    }
     else if (urlWithoutQuery === '/work-list') {
         filePath = './work-list.html';
     }

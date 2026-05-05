@@ -101,5 +101,16 @@ test.describe('@p1 Sales Report by Seller canceled reference note', () => {
     expect(canceledQuery && canceledQuery.created_at_from).toBeUndefined();
 
     await expect(page.locator('.kpi-note')).toContainText('103,470');
+    await expect(page.locator('.kpi-note-link')).toBeVisible();
+
+    await Promise.all([
+      page.waitForURL(/\/canceled-orders\?/),
+      page.locator('.kpi-note-link').click(),
+    ]);
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('#co-canceled-mode-host .filter-sort-btn-text')).toHaveText('รายเดือน');
+    await expect(page.locator('#co-canceled-value-host .filter-sort-btn-text')).toHaveText('ตุลาคม 2568 (2025)');
+    await expect(page.locator('#co-created-relation-host .filter-sort-btn-text')).toHaveText('ก่อนช่วงที่ยกเลิก');
   });
 });
