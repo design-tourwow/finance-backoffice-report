@@ -227,7 +227,7 @@ Backend ต้องสร้าง **7 Report Endpoints** เพื่อคำ
 - `country_id` - รหัสประเทศ
 - `supplier_id` - รหัส Supplier
 - `view_mode` - **โหมดการแสดงผล (จำเป็น)** ค่าที่เป็นไปได้:
-  - `sales` - ยอดขายรวม (SUM ของ net_amount)
+  - `sales` - ยอดจองรวม (SUM ของ net_amount)
   - `travelers` - จำนวนผู้เดินทาง (COUNT travelers)
   - `orders` - จำนวนออเดอร์ (COUNT orders)
   - `net_commission` - **ค่าคอมสุทธิ** (ดูรายละเอียดการคำนวณด้านล่าง)
@@ -264,7 +264,7 @@ Backend ต้องสร้าง **7 Report Endpoints** เพื่อคำ
 }
 ```
 
-> **หมายเหตุ:** ค่าใน `countries`, `total`, `summary.total_value`, และ `country_totals` จะเปลี่ยนตาม `view_mode` ที่ส่งมา (จำนวน orders / ยอดขาย / จำนวนผู้เดินทาง / ค่าคอมสุทธิ)
+> **หมายเหตุ:** ค่าใน `countries`, `total`, `summary.total_value`, และ `country_totals` จะเปลี่ยนตาม `view_mode` ที่ส่งมา (จำนวน orders / ยอดจอง / จำนวนผู้เดินทาง / ค่าคอมสุทธิ)
 
 **วิธีทำ:**
 - Group by Supplier แล้วแยกตามประเทศ
@@ -278,7 +278,7 @@ Backend ต้องสร้าง **7 Report Endpoints** เพื่อคำ
 
 | view_mode | ค่าที่คำนวณ | สูตร |
 |---|---|---|
-| `sales` | ยอดขายรวม | `SUM(o.net_amount)` |
+| `sales` | ยอดจองรวม | `SUM(o.net_amount)` |
 | `travelers` | จำนวนผู้เดินทาง | `SUM(o.pax)` หรือ COUNT travelers |
 | `orders` | จำนวนออเดอร์ | `COUNT(DISTINCT o.id)` |
 | `net_commission` | **ค่าคอมสุทธิ** | `SUM(COALESCE(o.supplier_commission, 0) - COALESCE(o.discount, 0))` |

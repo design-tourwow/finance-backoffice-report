@@ -10,7 +10,7 @@
     {
       href: '/sales-by-country',
       title: 'Sales by Country',
-      description: 'สรุปยอดขายแยกตามประเทศปลายทาง',
+      description: 'สรุปยอดจองแยกตามประเทศปลายทาง',
       icon: iconGlobe()
     },
     {
@@ -22,13 +22,13 @@
     {
       href: '/sales-report',
       title: 'Sales Report',
-      description: 'รายงานยอดขายระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
+      description: 'รายงานยอดจองระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
       icon: iconReceipt()
     },
     {
       href: '/sales-report-by-seller',
       title: 'Sales Report by Seller',
-      description: 'รายงานยอดขายของพนักงานขาย แยกรายเซลล์',
+      description: 'รายงานยอดจองของพนักงานขาย แยกรายเซลล์',
       icon: iconReceipt()
     },
     {

@@ -259,7 +259,7 @@
               <line x1="12" y1="1" x2="12" y2="23"></line>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
-            <span>ดูตามยอดขาย</span>
+            <span>ดูตามยอดจอง</span>
           </button>
           <button class="view-mode-tab ${currentViewMode === 'travelers' ? 'active' : ''}" data-view="travelers">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -299,7 +299,7 @@
               </svg>
             </div>
             <div class="kpi-content">
-              <div class="kpi-label" id="kpiTotalLabel">${{ sales: 'ยอดขายรวม', travelers: 'จำนวนผู้เดินทาง', orders: 'จำนวนออเดอร์', net_commission: 'ค่าคอมสุทธิรวม' }[currentViewMode] || 'ยอดขายรวม'}</div>
+              <div class="kpi-label" id="kpiTotalLabel">${{ sales: 'ยอดจองรวม', travelers: 'จำนวนผู้เดินทาง', orders: 'จำนวนออเดอร์', net_commission: 'ค่าคอมสุทธิรวม' }[currentViewMode] || 'ยอดจองรวม'}</div>
               <div class="kpi-value" id="kpiTotalValue">${formatValueByMode(summary.total_value || 0, currentViewMode)}</div>
               <div class="kpi-subtext" id="kpiTotalSubtext">${{ sales: 'Total Sales', travelers: 'Total Travelers', orders: 'Total Orders', net_commission: 'Total Net Commission' }[currentViewMode] || 'Total Sales'}</div>
             </div>
@@ -362,7 +362,7 @@
                   </svg>
                   Top 10 Wholesales
                 </div>
-                <div class="glass-chart-subtitle" id="chartSubtitle">${{ sales: 'เรียงตามยอดขาย', travelers: 'เรียงตามจำนวนผู้เดินทาง', orders: 'เรียงตามจำนวนออเดอร์', net_commission: 'เรียงตามค่าคอมสุทธิ' }[currentViewMode] || 'เรียงตามยอดขาย'}</div>
+                <div class="glass-chart-subtitle" id="chartSubtitle">${{ sales: 'เรียงตามยอดจอง', travelers: 'เรียงตามจำนวนผู้เดินทาง', orders: 'เรียงตามจำนวนออเดอร์', net_commission: 'เรียงตามค่าคอมสุทธิ' }[currentViewMode] || 'เรียงตามยอดจอง'}</div>
               </div>
             </div>
             <div class="glass-chart-wrapper">
@@ -378,7 +378,7 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
-                  ${{ sales: 'สัดส่วนยอดขาย', travelers: 'สัดส่วนผู้เดินทาง', orders: 'สัดส่วนออเดอร์', net_commission: 'สัดส่วนค่าคอมสุทธิ' }[currentViewMode] || 'สัดส่วนยอดขาย'}
+                  ${{ sales: 'สัดส่วนยอดจอง', travelers: 'สัดส่วนผู้เดินทาง', orders: 'สัดส่วนออเดอร์', net_commission: 'สัดส่วนค่าคอมสุทธิ' }[currentViewMode] || 'สัดส่วนยอดจอง'}
                 </div>
                 <div class="glass-chart-subtitle">Top 5 Wholesales</div>
               </div>
@@ -398,7 +398,7 @@
                   <rect x="3" y="3" width="18" height="18" rx="2"/>
                   <path d="M3 9h18M9 21V9"/>
                 </svg>
-                ${{ sales: 'สัดส่วนยอดขายแยกตามประเทศ', travelers: 'สัดส่วนผู้เดินทางแยกตามประเทศ', orders: 'สัดส่วนออเดอร์แยกตามประเทศ', net_commission: 'สัดส่วนค่าคอมสุทธิแยกตามประเทศ' }[currentViewMode] || 'สัดส่วนยอดขายแยกตามประเทศ'}
+                ${{ sales: 'สัดส่วนยอดจองแยกตามประเทศ', travelers: 'สัดส่วนผู้เดินทางแยกตามประเทศ', orders: 'สัดส่วนออเดอร์แยกตามประเทศ', net_commission: 'สัดส่วนค่าคอมสุทธิแยกตามประเทศ' }[currentViewMode] || 'สัดส่วนยอดจองแยกตามประเทศ'}
               </div>
               <div class="glass-chart-subtitle">แต่ละ Wholesale แบ่งตามประเทศปลายทาง</div>
             </div>
@@ -1513,7 +1513,7 @@
     const kpiTotalValue = document.getElementById('kpiTotalValue');
     const kpiTotalSubtext = document.getElementById('kpiTotalSubtext');
     const kpiLabels = {
-      sales: { label: 'ยอดขายรวม', subtext: 'Total Sales' },
+      sales: { label: 'ยอดจองรวม', subtext: 'Total Sales' },
       travelers: { label: 'จำนวนผู้เดินทาง', subtext: 'Total Travelers' },
       orders: { label: 'จำนวนออเดอร์', subtext: 'Total Orders' },
       net_commission: { label: 'ค่าคอมสุทธิรวม', subtext: 'Total Net Commission' }
@@ -1541,7 +1541,7 @@
     const chartSubtitle = document.getElementById('chartSubtitle');
     if (chartSubtitle) {
       const subtitleMap = {
-        sales: 'เรียงตามยอดขาย',
+        sales: 'เรียงตามยอดจอง',
         travelers: 'เรียงตามจำนวนผู้เดินทาง',
         orders: 'เรียงตามจำนวนออเดอร์',
         net_commission: 'เรียงตามค่าคอมสุทธิ'
@@ -1556,7 +1556,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
         </svg>
-        ${{ sales: 'สัดส่วนยอดขาย', travelers: 'สัดส่วนผู้เดินทาง', orders: 'สัดส่วนออเดอร์', net_commission: 'สัดส่วนค่าคอมสุทธิ' }[viewMode] || 'สัดส่วนยอดขาย'}
+        ${{ sales: 'สัดส่วนยอดจอง', travelers: 'สัดส่วนผู้เดินทาง', orders: 'สัดส่วนออเดอร์', net_commission: 'สัดส่วนค่าคอมสุทธิ' }[viewMode] || 'สัดส่วนยอดจอง'}
       `;
     }
 
@@ -1568,7 +1568,7 @@
           <rect x="3" y="3" width="18" height="18" rx="2"/>
           <path d="M3 9h18M9 21V9"/>
         </svg>
-        ${{ sales: 'สัดส่วนยอดขายแยกตามประเทศ', travelers: 'สัดส่วนผู้เดินทางแยกตามประเทศ', orders: 'สัดส่วนออเดอร์แยกตามประเทศ', net_commission: 'สัดส่วนค่าคอมสุทธิแยกตามประเทศ' }[viewMode] || 'สัดส่วนยอดขายแยกตามประเทศ'}
+        ${{ sales: 'สัดส่วนยอดจองแยกตามประเทศ', travelers: 'สัดส่วนผู้เดินทางแยกตามประเทศ', orders: 'สัดส่วนออเดอร์แยกตามประเทศ', net_commission: 'สัดส่วนค่าคอมสุทธิแยกตามประเทศ' }[viewMode] || 'สัดส่วนยอดจองแยกตามประเทศ'}
       `;
     }
 
@@ -1638,7 +1638,7 @@
   // Render table header with grouped country columns
   function renderTableHeader(countries) {
     const totalLabelMap = {
-      sales: 'ยอดขายรวม',
+      sales: 'ยอดจองรวม',
       travelers: 'จำนวนผู้เดินทาง',
       orders: 'จำนวนออเดอร์',
       net_commission: 'ค่าคอมสุทธิ'
@@ -1708,7 +1708,7 @@
     const labels = wholesales.map(w => truncateName(w.name, 20));
     const data = wholesales.map(w => w.total);
 
-    const chartLabel = { sales: 'ยอดขาย', travelers: 'จำนวนผู้เดินทาง', orders: 'จำนวนออเดอร์', net_commission: 'ค่าคอมสุทธิ' }[currentViewMode] || 'ยอดขาย';
+    const chartLabel = { sales: 'ยอดจอง', travelers: 'จำนวนผู้เดินทาง', orders: 'จำนวนออเดอร์', net_commission: 'ค่าคอมสุทธิ' }[currentViewMode] || 'ยอดจอง';
 
     topWholesalesChart = new Chart(ctx, {
       type: 'bar',
@@ -1747,7 +1747,7 @@
             bodyFont: { family: APP_FONT_CHART_FAMILY, size: 15 },
             callbacks: {
               label: function(context) {
-                const label = { sales: 'ยอดขาย', travelers: 'ผู้เดินทาง', orders: 'ออเดอร์', net_commission: 'ค่าคอมสุทธิ' }[currentViewMode] || 'ยอดขาย';
+                const label = { sales: 'ยอดจอง', travelers: 'ผู้เดินทาง', orders: 'ออเดอร์', net_commission: 'ค่าคอมสุทธิ' }[currentViewMode] || 'ยอดจอง';
                 const value = formatValueByMode(context.raw, currentViewMode);
                 return `${label}: ${value}`;
               }

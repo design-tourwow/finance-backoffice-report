@@ -768,7 +768,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
           <div class="kpi-content">
-            <div class="kpi-label">ยอดขายรวม</div>
+            <div class="kpi-label">ยอดจองรวม</div>
             <div class="kpi-value">${formatNumber(summary.total_net_amount, 0)}</div>
             <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
           </div>
@@ -843,7 +843,7 @@
               <tr>
                 <th data-sort="seller" data-type="string">เซลล์</th>
                 <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
-                <th class="right" data-sort="net_amount" data-type="number">ยอดขาย</th>
+                <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
                 <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
                 <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
@@ -917,7 +917,7 @@
             <tr class="group-row">
               <th class="group-header">เซลล์</th>
               <th colspan="5" class="group-header">Order</th>
-              <th colspan="3" class="group-header">ยอดขาย</th>
+              <th colspan="3" class="group-header">ยอดจอง</th>
               <th colspan="2" class="group-header">คอมมิชชั่น</th>
               <th class="group-header">ส่วนลด</th>
             </tr>
@@ -928,7 +928,7 @@
               <th data-sort="customer_name" data-type="string">ลูกค้า</th>
               <th data-sort="country_name" data-type="string">ประเทศ</th>
               <th data-sort="travel_period" data-type="string">เดินทาง</th>
-              <th class="right group-start" data-sort="net_amount" data-type="number">ยอดขาย</th>
+              <th class="right group-start" data-sort="net_amount" data-type="number">ยอดจอง</th>
               <th class="center" data-sort="room_quantity" data-type="number">ผู้เดินทาง</th>
               <th class="center" data-sort="first_paid_at" data-type="date">วันชำระงวด 1</th>
               <th class="right group-start" data-sort="supplier_commission" data-type="number">คอมรวม</th>
@@ -958,7 +958,7 @@
     const worksheets = [
       {
         name: 'sales-report',
-        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดขาย', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม'],
+        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม'],
         rows: getVisibleOrders(currentOwnOrders).map(function (o) {
           const commission = parseFloat(o.supplier_commission || 0);
           const discount = parseFloat(o.discount || 0);
@@ -983,14 +983,14 @@
     if (isAdmin() || myRole === 'ts') {
       worksheets.push({
         name: 'sales-report-by-telesales',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดขาย', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'ts')
       });
     }
     if (isAdmin()) {
       worksheets.push({
         name: 'sales-report-by-crm',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดขาย', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'crm')
       });
     }
@@ -1329,7 +1329,7 @@
 
       <div class="crp-print-summary">
         <div class="crp-print-card">
-          <span class="crp-print-card-label">ยอดขายรวม</span>
+          <span class="crp-print-card-label">ยอดจองรวม</span>
           <span class="crp-print-card-value">${formatNumber(summary.total_net_amount)}</span>
         </div>
         <div class="crp-print-card">

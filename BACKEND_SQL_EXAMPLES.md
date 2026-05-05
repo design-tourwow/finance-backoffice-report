@@ -281,7 +281,7 @@ GROUP BY o.supplier_id, s.name, country.name
 ORDER BY value DESC;
 ```
 
-### view_mode = `sales` (ยอดขายรวม)
+### view_mode = `sales` (ยอดจองรวม)
 ```sql
 SELECT
     o.supplier_id,

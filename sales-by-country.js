@@ -784,7 +784,7 @@
               <line x1="12" y1="1" x2="12" y2="23"></line>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
-            <span>ดูตามยอดขาย</span>
+            <span>ดูตามยอดจอง</span>
           </button>
           <button class="view-mode-tab ${currentViewMode === 'travelers' ? 'active' : ''}" data-view="travelers">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2317,7 +2317,7 @@
                 label: function(context) {
                   const total = context.dataset.data.reduce((a, b) => a + b, 0);
                   const percent = ((context.raw / total) * 100).toFixed(1);
-                  if (currentViewMode === 'sales') return `ยอดขาย: ${formatCurrency(context.raw)} (${percent}%)`;
+                  if (currentViewMode === 'sales') return `ยอดจอง: ${formatCurrency(context.raw)} (${percent}%)`;
                   if (currentViewMode === 'orders') return `จำนวนออเดอร์: ${formatNumber(context.raw)} (${percent}%)`;
                   if (currentViewMode === 'net_commission') return `ค่าคอมสุทธิ: ${formatCurrency(context.raw)} (${percent}%)`;
                   return `จำนวนผู้เดินทาง: ${formatNumber(context.raw)} คน (${percent}%)`;
@@ -2392,7 +2392,7 @@
               bodyFont: { family: APP_FONT_CHART_FAMILY, size: 15 },
               callbacks: {
                 label: function(context) {
-                  if (currentViewMode === 'sales') return `ยอดขาย: ${formatCurrency(context.raw)}`;
+                  if (currentViewMode === 'sales') return `ยอดจอง: ${formatCurrency(context.raw)}`;
                   if (currentViewMode === 'orders') return `จำนวนออเดอร์: ${formatNumber(context.raw)}`;
                   if (currentViewMode === 'net_commission') return `ค่าคอมสุทธิ: ${formatCurrency(context.raw)}`;
                   return `จำนวนผู้เดินทาง: ${formatNumber(context.raw)} คน`;
@@ -3900,7 +3900,7 @@
     switch (currentViewMode) {
       case 'sales':
         return {
-          kpi1: { label: 'ยอดขายรวม', value: formatCurrencyShort(totalRevenue), subtext: `จาก ${formatNumber(totalOrders)} ออเดอร์` },
+          kpi1: { label: 'ยอดจองรวม', value: formatCurrencyShort(totalRevenue), subtext: `จาก ${formatNumber(totalOrders)} ออเดอร์` },
           kpi2: { label: 'ประเทศยอดนิยม', value: topCountry?.country_name || '-', subtext: `${topPercent.toFixed(1)}% ของทั้งหมด` },
           kpi3: { label: 'จำนวนออเดอร์', value: formatNumber(totalOrders), subtext: `${formatNumber(totalTravelers)} ผู้เดินทาง` },
           kpi4: { label: 'ยอดเฉลี่ย/ออเดอร์', value: formatCurrencyShort(avgPerOrder), subtext: 'ต่อ 1 ออเดอร์' }
@@ -3932,7 +3932,7 @@
   // Get chart title based on current view mode
   function getChartTitle() {
     switch (currentViewMode) {
-      case 'sales': return 'ยอดขายตามประเทศ';
+      case 'sales': return 'ยอดจองตามประเทศ';
       case 'travelers': return 'จำนวนผู้เดินทางตามประเทศ';
       case 'orders': return 'จำนวนออเดอร์ตามประเทศ';
       case 'net_commission': return 'ค่าคอมสุทธิตามประเทศ';
