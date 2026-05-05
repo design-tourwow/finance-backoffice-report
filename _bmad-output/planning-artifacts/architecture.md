@@ -1108,3 +1108,59 @@ The 21-route api-guard rollout was bulk-applied via Node codemod rather than 21 
 
 - Rolling-date-window selector still page-local in RCR.
 
+## Phase 6 Retrospective (2026-05-05) — Canceled-Orders + Sales-Report-by-Seller Refinements
+
+A small, focused session that closed two long-standing data bugs on `/canceled-orders`, extended the `/sales-report-by-seller` ranking summary to cover the CRM role properly, and unified the user-facing currency-amount label across the system. No new shared-component extraction this round — every change is page-local or a contract addition on the shared `commission-plus` endpoint.
+
+**Bugs fixed:**
+
+| Bug | Root cause | Fix |
+|---|---|---|
+| `/canceled-orders` "วันที่ยกเลิก" column always blank | `commission-plus` SELECT never exposed `canceled_at` — frontend's `resolveCanceledAt()` probed 10 candidate fields and fell back to `updated_at`, none of which the API returned. | Added `DATE_FORMAT(CONVERT_TZ(o.canceled_at, '+00:00', '+07:00'), '%Y-%m-%d %H:%i') AS canceled_at` to SELECT + GROUP BY. |
+| `/canceled-orders` period filter had no effect | Frontend has been sending `canceled_at_from` / `canceled_at_to` as query params for a long time, but the route handler silently dropped them — only `created_at_*` and `paid_at_*` were read. | Added `DATE(o.canceled_at) BETWEEN ?` predicate when params are set. No-op for other consumers (`/sales-report`, `/sales-report-by-seller`) since they don't send the params. |
+
+**Feature additions on `/canceled-orders`:**
+
+- New 3rd-column dropdown on the period filter row: "วันที่สร้าง Order" with two options — "ก่อนช่วงที่ยกเลิก" (translates to `created_at_to = canceled_at_from − 1`) and "ตรงกับช่วงที่ยกเลิก" (created within the same canceled range). Visibility wired through `SharedPeriodSelector#onChange`: shown only when canceled period mode is `yearly | quarterly | monthly` — hidden in `all` and `custom` because there is no discrete boundary to compare against. `buildFilters` and `buildPrintFilters` mirror the same gate so the filter never silently applies when hidden.
+- Default table sort changed from `null` to `{ key: 'created_at', direction: 'desc' }` so the newest bookings sit on top and the active sort arrow lights up.
+
+**Feature additions on `/sales-report-by-seller`:**
+
+| Concern | Behavior matrix |
+|---|---|
+| Ranking visibility | **Admin**: both groups (Telesales + CRM). **TS**: Telesales group with peer names redacted (`******`). **CRM** (was hidden): CRM group with full team unredacted. |
+| Trophies vs numbering | **Admin**: trophies on both groups. **TS**: trophies on Telesales. **CRM viewing CRM group**: plain rank numbers (no trophies). Logic: `useTrophies = !(myRole === 'crm' && groupClass === 'crm')`. |
+| Group title suffix | Only `myRole === 'crm' && groupClass === 'crm'` shows `CRM ทีม X`, where X = the viewer's own `seller_team_number` resolved by scanning orders for `seller_agency_member_id === myId`. Admin and TS see the plain `CRM` / `Telesales` titles. |
+| Single-group width | When only one group renders (TS or CRM), it stays at `flex: 0 1 calc(50% - 8px)` aligned-left — same visual width as the admin's side-by-side pair. Admin's two-box layout unchanged. |
+| 0-traveler exclusion | Filter `room_quantity > 0` applied at the top of `renderResults` so KPI / ranking / table / export all see the same set. Summary recomputed client-side via `computeSummary(ownOrders)` (admin used to use the backend's pre-filter summary, now also derived client-side for consistency). |
+
+**Backend contract additions on `commission-plus`:**
+
+- `canceled_at` (already covered above as a bug fix).
+- `canceled_at_from` / `canceled_at_to` query-param filter (bug fix above).
+- `seller_team_number` SELECT — `COALESCE(am.team_number, 0)`, follows the same `amTable`-null-safety pattern as `seller_nick_name` and `seller_job_position`. Added to GROUP BY. Used by the frontend solely to find the viewer's team_number for the CRM title suffix; not displayed per-row.
+
+**Cross-system rename: ยอดขาย → ยอดจอง:**
+
+53 occurrences across 14 files in both repos (8 frontend, 6 API). User-facing only — `net_amount` / `total_net_amount` and other internal identifiers stayed put. Several existing pages (`/canceled-orders`, `/sales-report`, `/repeated-customer-report`) had already been using "ยอดจอง"; this brought the remaining holdouts (`/sales-by-country`, `/wholesale-destinations`, `/sales-report-by-seller`, dashboard, demo page, audit docs) into line. Codified as **FR59** so future contributions don't reintroduce the old term.
+
+**Architectural principles refined this phase:**
+
+- **Frontend-sent query params are not a contract.** The dead `canceled_at_from/to` params shipped silently for months because the only validation was the network tab. Lesson: when adding a filter that's "purely frontend-driven", grep the backend route handler before assuming it works. Adding an integration test that asserts row counts shrink when the filter is applied would have caught this immediately.
+- **Visibility and applicability must travel together.** For the new "วันที่สร้าง Order" dropdown, hiding the UI in `all`/`custom` mode would have been pointless if `buildFilters` still applied it. Rule: every conditional UI element needs the same condition guarding the data path, ideally derived from one source of truth (here a `mode === 'yearly' | 'quarterly' | 'monthly'` boolean reused in three places).
+- **Backend-summary vs client-summary parity matters under filters.** The admin path used the backend's `summary` blob while non-admins recomputed client-side. As soon as we filtered orders client-side (0-traveler exclusion), admin's KPI started over-counting. Lesson: when introducing a client-side filter, drop the backend-summary fast path — the tiny perf win isn't worth the divergence risk.
+
+**Carry-forward (Priority H):**
+
+- `lib/sql-predicates.ts#getPaidFirstInstallmentPredicate(alias)` — still duplicated in 5+ routes (carried over from Phase 5).
+
+**Carry-forward (Priority M):**
+
+- Rename `o.discount` semantics in docs — interviewers consistently asked "is `net_amount` post-discount?" this phase. The field is a commission-side discount that only feeds `net_commission = supplier_commission − discount`; it does NOT reduce `net_amount`. Worth a one-paragraph note in the data dictionary so future report readers don't have to re-derive this.
+- `shared-scroll-hint.js` + CSS — still three implementations.
+- `shared-sticky-table.css` — frozen-thead + max-height pattern in CRP and RCR.
+
+**Carry-forward (Priority L):**
+
+- Rolling-date-window selector still page-local in RCR.
+

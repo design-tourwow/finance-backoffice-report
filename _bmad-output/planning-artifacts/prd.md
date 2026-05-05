@@ -92,6 +92,18 @@ Initiative นี้รวมทุกหน้าเข้า `finance-backoffi
   - **`lib/agency-db-helper.ts`** — รวม `getAgencyDb()` ที่ duplicate อยู่ 4 routes (work-list, repeated-customer-report, commission-plus, commission-plus/sellers) — INFORMATION_SCHEMA lookup + module-scope caching
   - **`lib/api-guard.ts#withApiGuard()`** — wrapper รวม rate-limit + JWT/API-key authentication + structured logging boilerplate ที่อยู่หัวของทุก report route — rollout 21 routes (ทั้ง simple-pattern auth-only และ standard rate-limit + auth pattern)
   - **Period selector label format unification** — ทุก year/quarter/month dropdown แสดงในรูป `[BE] ([CE])` (เช่น `2568 (2025)`) แทนรูปแบบเดิมที่แต่ละหน้าใช้ต่างกัน (`พ.ศ. 2568 (2026)` vs `2026`); แก้ bug `buildYearOptions` ที่ขาดฟิลด์ `year` ทำให้ payload ส่ง `undefined-01-01`
+- ✅ **Canceled-orders + Sales-report-by-seller refinements** (2026-05-05) — แก้บั๊ก data ที่ค้างมานานบนหน้า /canceled-orders, ปรับ ranking summary ของ /sales-report-by-seller ให้รองรับ CRM role อย่างเต็มรูปแบบ, และปรับคำว่า "ยอดขาย" → "ยอดจอง" ทั้งระบบ รายละเอียด:
+  - **/canceled-orders — คอลัมน์ "วันที่ยกเลิก"** — backend `commission-plus` SELECT ไม่ได้ส่ง `canceled_at` มา ทำให้คอลัมน์ในตารางเป็น "-" ตลอด เพิ่ม `o.canceled_at` ใน SELECT + GROUP BY
+  - **/canceled-orders — `canceled_at_from/to` filter** — frontend ส่ง query param มานาน แต่ backend silently ไม่อ่าน ทำให้ตัวเลือกช่วงวันที่ยกเลิกไม่มีผลกับผลลัพธ์จริง เพิ่มเงื่อนไข `DATE(o.canceled_at) BETWEEN` ตามที่ส่งมา
+  - **/canceled-orders — dropdown "วันที่สร้าง Order"** — เพิ่ม column ที่ 3 บน period filter row 2 ตัวเลือก: "ก่อนช่วงที่ยกเลิก" (`created_at < canceled_at_from`) และ "ตรงกับช่วงที่ยกเลิก" (created ในช่วงเดียวกัน) แสดงเฉพาะตอน canceled period mode = ราย... (ปี/ไตรมาส/เดือน); ซ่อนใน mode "ทั้งหมด" และ "กำหนดเอง"
+  - **/canceled-orders — default sort** — ตารางหลักเริ่มต้น sort ตาม "จองวันที่" (`created_at`) จากใหม่→เก่า เพื่อให้ booking ล่าสุดอยู่บนสุด
+  - **/sales-report-by-seller — CRM ranking visibility** — ก่อนหน้านี้ CRM role login ไม่เห็น ranking summary section เลย เปิดให้แสดง CRM group ของตัวเอง โดย unmasked ทุกคนในทีม (ต่างจาก TS ที่ peer rows ยัง redact name → `******`)
+  - **/sales-report-by-seller — CRM trophies vs numbering** — Admin viewing CRM group เห็นถ้วยทอง/เงิน/ทองแดงเหมือน Telesales (consistency); CRM-role login เห็น CRM group เป็น plain numbering ทุก rank
+  - **/sales-report-by-seller — CRM team title suffix** — title group ของ CRM แสดง "CRM ทีม X" เฉพาะเมื่อ CRM role เป็นคนดู (X = team_number ของผู้ดูเอง จาก `agency_members.team_number`); admin/ts ไม่เห็น suffix
+  - **/sales-report-by-seller — half-width single group** — เมื่อ TS หรือ CRM ดูคนเดียว กล่อง summary คงความกว้างเท่าครึ่งจอ ชิดซ้าย (เหมือน admin's side-by-side pair) แทนที่จะยืดเต็มจอ
+  - **/sales-report-by-seller — exclude 0-traveler orders** — ตัด order ที่ `room_quantity = 0` ออกตั้งแต่ต้นทาง (filter ที่ renderResults entry) ทุก consumer (KPI / ranking / table / export) เห็นชุดเดียวกัน; summary คำนวณ client-side เพื่อให้ count ตรงกับ filter
+  - **`commission-plus` — `seller_team_number`** — เพิ่ม `COALESCE(am.team_number, 0)` ใน SELECT + GROUP BY (ใช้ pattern null-safe เดียวกับ `seller_nick_name` / `seller_job_position`) เพื่อให้ frontend หา team_number ของ user สำหรับ title suffix ได้
+  - **i18n: ยอดขาย → ยอดจอง** — เปลี่ยนคำทั้งระบบ (14 ไฟล์, 53 occurrences) ครอบคลุม UI labels (KPI, table headers, chart titles/tooltips, dropdown labels), CSV/PDF/print headers, page descriptions, HTML meta, และ supporting docs ทั้ง 2 repo รวมเข้ากับ canceled-orders / sales-report / repeated-customer-report ที่ใช้ "ยอดจอง" อยู่แล้วก่อนหน้า
 
 ## User Journeys
 
@@ -233,6 +245,17 @@ Initiative นี้รวมทุกหน้าเข้า `finance-backoffi
 
 - **FR50:** ทุก filter "เริ่มใหม่" (reset) บนทุกหน้าต้อง clear state กลับ default เท่านั้น — ห้าม re-query หรือ reload หน้า; ผู้ใช้ต้องกด "ค้นหา" เองเพื่อยิง API ใหม่
 - **FR51:** Period selector ต้องมี mode "ทั้งหมด" เป็น option แรก — เลือกแล้วซ่อน value dropdown และไม่ส่ง dateFrom/dateTo ไป API
+
+### Canceled Orders + Sales Report by Seller Refinements (Phase 3 — ship 2026-05-05)
+
+- **FR52:** /canceled-orders ตารางหลักต้องแสดงคอลัมน์ "วันที่ยกเลิก" (canceled_at) ที่มีค่าจริง และ filter ช่วงวันที่ยกเลิกใน period selector ต้องมีผลกับผลลัพธ์ (เดิม backend ส่ง `canceled_at_from/to` ไป แต่ไม่ filter จริง)
+- **FR53:** /canceled-orders period filter row ต้องมี dropdown ที่ 3 "วันที่สร้าง Order" 2 ตัวเลือก: "ก่อนช่วงที่ยกเลิก" (default — `created_at < canceled_at_from`) และ "ตรงกับช่วงที่ยกเลิก" (created ในช่วงเดียวกัน); แสดงเฉพาะเมื่อ canceled period mode = รายปี / รายไตรมาส / รายเดือน, ซ่อนใน "ทั้งหมด" และ "กำหนดเอง"
+- **FR54:** /canceled-orders ตารางหลัก default sort ตาม "จองวันที่" (created_at) descending — booking ล่าสุดอยู่บนสุด
+- **FR55:** /sales-report-by-seller — CRM-role login ต้องเห็น ranking summary ของ CRM group (เดิมซ่อน); แสดงทุกคนในทีม unmasked (ต่างจาก TS ที่ peer rows ยัง redact name → `******`); ใช้เลขลำดับธรรมดาแทนถ้วยทอง/เงิน/ทองแดง; group title แสดง "CRM ทีม X" โดย X = `team_number` ของผู้ใช้ (จาก `agency_members.team_number`)
+- **FR56:** /sales-report-by-seller — Admin ต้องเห็น CRM group rendered แบบเดียวกับ Telesales group (ถ้วยทอง/เงิน/ทองแดงบน top 3, title "CRM" plain ไม่มี ทีม X) เพื่อ visual consistency เวลาเทียบสองกล่องข้างกัน
+- **FR57:** /sales-report-by-seller — เมื่อ TS หรือ CRM ดู ranking ของตัวเองคนเดียว (1 group) กล่อง summary ต้องคงความกว้าง ~ครึ่งจอ ชิดซ้าย (`flex: 0 1 calc(50% - 8px)`) ห้ามยืดเต็ม row; admin's two-box layout ไม่เปลี่ยน
+- **FR58:** /sales-report-by-seller — order ที่ `room_quantity = 0` (ผู้เดินทาง = 0) ต้องถูกตัดออกตั้งแต่ต้นทาง (filter ใน `renderResults` entry) ครอบคลุมทุก consumer ที่ตามมา: KPI summary, seller ranking aggregate, main table, Excel/CSV/PDF exports; summary คำนวณ client-side (ไม่ใช้ backend's `summary` ที่ pre-filter)
+- **FR59:** Cross-system terminology — คำว่า "ยอดขาย" ห้ามปรากฏเป็น user-facing label ใน UI / export / print / page meta อีก เปลี่ยนเป็น "ยอดจอง" ทั้งหมด (variable/field names เช่น `net_amount`, `total_net_amount` ไม่ต้องแก้ — เป็น internal identifier)
 
 ## Non-Functional Requirements
 
