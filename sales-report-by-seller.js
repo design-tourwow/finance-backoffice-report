@@ -207,6 +207,12 @@
     return percentValue == null ? '-' : `${formatNumber(percentValue, decimals)}%`;
   }
 
+  function getOrderSellerId(order) {
+    if (!order || typeof order !== 'object') return '';
+    const raw = order.seller_agency_member_id || order.seller_id || order.sellerId || '';
+    return String(raw);
+  }
+
   function inferCanceledReferenceJobPosition() {
     if (!isAdmin()) return getEffectiveRole();
     if (!selectedSellerId) return 'admin';
@@ -406,7 +412,7 @@
   function buildSellerAggregate(orders) {
     const map = new Map();
     orders.forEach(o => {
-      const sid = String(o.seller_agency_member_id || '');
+      const sid = getOrderSellerId(o);
       const key = sid || (o.seller_nick_name || '-');
       if (!map.has(key)) map.set(key, {
         seller_id: sid,
@@ -657,7 +663,13 @@
       if (reportRes && reportRes.success && reportRes.data) {
         currentData = reportRes.data;
         currentCanceledReferenceSummary = canceledReferenceRes && canceledReferenceRes.success && canceledReferenceRes.data
-          ? normalizeSummary(canceledReferenceRes.data.summary || computeSummary(canceledReferenceRes.data.orders || []))
+          ? normalizeSummary(computeSummary(
+              isAdmin()
+                ? (canceledReferenceRes.data.orders || [])
+                : (canceledReferenceRes.data.orders || []).filter(function (order) {
+                    return getOrderSellerId(order) === getEffectiveUserId();
+                  })
+            ))
           : null;
         currentCanceledReferenceNavigationUrl = currentCanceledReferenceSummary
           ? buildCanceledReferenceNavigationUrl(
@@ -765,7 +777,7 @@
     const myId = getEffectiveUserId();
     const ownOrders = isAdmin()
       ? orders
-      : orders.filter(o => String(o.seller_agency_member_id || '') === myId);
+      : orders.filter(o => getOrderSellerId(o) === myId);
     // Always derive the summary from the (filtered) orders array — the
     // backend's `summary` was computed before the room_quantity filter
     // and would over-count by including 0-traveler orders.
@@ -955,7 +967,7 @@
       if (myRole !== 'crm') return 0;
       for (let i = 0; i < orders.length; i++) {
         const o = orders[i];
-        if (String(o.seller_agency_member_id || '') === myId) {
+        if (getOrderSellerId(o) === myId) {
           const t = parseInt(o.seller_team_number, 10);
           if (t > 0) return t;
         }

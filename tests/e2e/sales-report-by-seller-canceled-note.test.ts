@@ -123,15 +123,32 @@ test.describe('@p1 Sales Report by Seller canceled reference note', () => {
         job_position: 'admin',
       },
     });
+    const ownCanceledOrder = factory.commissionPlusOrder(1, {
+      seller_id: 77,
+      seller_agency_member_id: '',
+      seller_job_position: 'ts',
+      net_amount: 109996,
+      supplier_commission: 4500,
+      discount: 0,
+    });
+    const otherCanceledOrder = factory.commissionPlusOrder(2, {
+      seller_id: 88,
+      seller_agency_member_id: '',
+      seller_job_position: 'ts',
+      net_amount: 50000,
+      supplier_commission: 2000,
+      discount: 0,
+    });
     const canceledOrders = [
-      factory.commissionPlusOrder(1, {
-        seller_agency_member_id: 77,
-        seller_job_position: 'ts',
-        net_amount: 109996,
-        supplier_commission: 4500,
-        discount: 0,
-      }),
+      ownCanceledOrder,
+      otherCanceledOrder,
     ];
+    const inflatedCanceledSummary = {
+      total_net_amount: 159996,
+      total_orders: 2,
+      total_commission: 6500,
+      total_discount: 0,
+    };
     const seenCanceledQueries: Array<{ params: Record<string, string>; headers: Record<string, string> }> = [];
 
     await seedToken(page, adminViewAsToken);
@@ -184,7 +201,7 @@ test.describe('@p1 Sales Report by Seller canceled reference note', () => {
             success: true,
             data: {
               orders: canceledOrders,
-              summary: summarize(canceledOrders),
+              summary: inflatedCanceledSummary,
             },
           }
         : {
@@ -227,6 +244,7 @@ test.describe('@p1 Sales Report by Seller canceled reference note', () => {
     await page.waitForLoadState('networkidle');
 
     await expect(page.locator('.kpi-note')).toContainText('109,996');
+    await expect(page.locator('.kpi-note')).not.toContainText('159,996');
 
     await page.locator('#crp-created-value-host .filter-sort-btn').click();
     await page.locator('#crp-created-value-host .filter-sort-option', { hasText: 'กุมภาพันธ์ 2569 (2026)' }).click();
@@ -253,6 +271,7 @@ test.describe('@p1 Sales Report by Seller canceled reference note', () => {
     await expect(page.locator('#co-canceled-value-host .filter-sort-btn-text')).toHaveText('พฤษภาคม 2569 (2026)');
     await expect(page.locator('#co-created-relation-host .filter-sort-btn-text')).toHaveText('ก่อนช่วงที่ยกเลิก');
     await expect(page.locator('.dashboard-table-empty')).toHaveCount(0);
-    await expect(page.locator('.crp-table tbody')).toContainText('TWP26040001');
+    await expect(page.locator('.crp-table tbody')).toContainText(ownCanceledOrder.order_code as string);
+    await expect(page.locator('.crp-table tbody')).not.toContainText(otherCanceledOrder.order_code as string);
   });
 });

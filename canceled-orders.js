@@ -178,6 +178,12 @@
     } catch (e) { return dateStr; }
   }
 
+  function getOrderSellerId(order) {
+    if (!order || typeof order !== 'object') return '';
+    const raw = order.seller_agency_member_id || order.seller_id || order.sellerId || '';
+    return String(raw);
+  }
+
   function resolveCanceledAt(order) {
     if (!order || typeof order !== 'object') return '';
 
@@ -745,7 +751,7 @@
     const myId = getEffectiveUserId();
     const ownOrders = isAdmin()
       ? rawOrders
-      : rawOrders.filter(o => String(o.seller_agency_member_id || '') === myId);
+      : rawOrders.filter(o => getOrderSellerId(o) === myId);
     const ownSummary = isAdmin() ? (data.summary || {}) : computeSummary(ownOrders);
     currentOwnOrders = ownOrders;
     currentOwnSummary = ownSummary;
