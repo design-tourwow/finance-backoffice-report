@@ -90,8 +90,68 @@
     } catch (e) { return null; }
   }
 
+  // getEffectiveRole() — single source of truth for all role-aware UI guards.
+  // Priority: (1) view-as sessionStorage when impersonation is confirmed active
+  //           (via MenuComponent.isImpersonating, which reads sessionStorage and
+  //           validates the real JWT directly — not subject to token-patch issues),
+  //           (2) currentUser.job_position from the (possibly-patched) token,
+  //           (3) 'admin' as safe default when no user is loaded.
+  //
+  // All callers that previously read currentUser.job_position directly for role
+  // decisions have been migrated to this function so view-as fidelity is
+  // preserved even when TokenUtils.decodeToken patch fails.
+  function getEffectiveRole() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      try {
+        var vaRole = sessionStorage.getItem('viewAsRole');
+        if (vaRole === 'ts' || vaRole === 'crm') return vaRole;
+      } catch (e) { /* ignore */ }
+    }
+    return (currentUser && currentUser.job_position) || 'admin';
+  }
+
+  // isAdmin() — true only when effective role is not ts or crm.
+  // Uses getEffectiveRole() so it is view-as aware as a hard guarantee:
+  // during impersonation this always returns false regardless of whether
+  // the TokenUtils.decodeToken patch successfully rewrote currentUser.
   function isAdmin() {
-    return !currentUser || currentUser.job_position === 'admin';
+    const role = getEffectiveRole();
+    return role !== 'ts' && role !== 'crm';
+  }
+
+  // Effective user id — prefer view-as sessionStorage during impersonation
+  // so identity-driven UI (locked seller dropdown, per-user data filters)
+  // shows the impersonated user, not admin id=555.
+  function getEffectiveUserId() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      try {
+        var vaUid = sessionStorage.getItem('viewAsUserId');
+        var n = parseInt(vaUid, 10);
+        if (Number.isFinite(n) && n > 0) return String(n);
+      } catch (e) { /* ignore */ }
+    }
+    return String((currentUser && currentUser.id) || '');
+  }
+
+  // Effective nick — same logic. Used by the disabled seller dropdown
+  // and any other label that prints "your name" while impersonating.
+  function getEffectiveNickName() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      try {
+        var vaNick = sessionStorage.getItem('viewAsUserNick');
+        if (vaNick) return vaNick;
+      } catch (e) { /* ignore */ }
+    }
+    return (currentUser && currentUser.nick_name) || '';
   }
 
   // ---- Helpers ----
@@ -293,9 +353,9 @@
     if (!sellerHost) return;
 
     if (!isAdmin()) {
-      const sellerId = currentUser ? String(currentUser.id || '') : '';
+      const sellerId = getEffectiveUserId();
       const me = sellers.find(s => String(s.id) === sellerId);
-      const name = (me && me.nick_name) || (currentUser && currentUser.nick_name) || '-';
+      const name = (me && me.nick_name) || getEffectiveNickName() || '-';
       sellerHost.innerHTML =
         `<button class="filter-sort-btn" disabled style="opacity:0.6;cursor:not-allowed;min-width:120px">
            <div class="filter-sort-btn-content">${getPersonIcon()}<span class="filter-sort-btn-text">${escHtml(name)}</span></div>
@@ -401,7 +461,7 @@
 
   // ---- Init Filters ----
   function initFilters() {
-    const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const sellerId = getEffectiveUserId();
     const from = firstDayOfMonth();
     const to   = today();
 
@@ -429,7 +489,7 @@
 
     // Non-admin users are locked to their own seller id; admins see the
     // linked ตำแหน่ง + searchable เซลล์ pair (same pattern as /sales-report).
-    const jobPos = currentUser ? currentUser.job_position : 'admin';
+    const jobPos = getEffectiveRole();
     selectedJobPosition = jobPos;
     selectedSellerId    = isAdmin() ? '' : sellerId;
 
@@ -477,8 +537,8 @@
 
   // Reset: restore filter inputs to page defaults only. Does NOT refetch.
   function resetFiltersToDefault() {
-    const sellerId = currentUser ? String(currentUser.id || '') : '';
-    const jobPos   = currentUser ? currentUser.job_position : 'admin';
+    const sellerId = getEffectiveUserId();
+    const jobPos   = getEffectiveRole();
     const nowYear    = new Date().getFullYear();
     const nowMonth   = new Date().getMonth() + 1;
     const nowQuarter = Math.ceil(nowMonth / 3);
@@ -568,8 +628,8 @@
     const filters = {
       canceled_at_from: range.dateFrom || '',
       canceled_at_to:   range.dateTo   || '',
-      seller_id:        isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
-      job_position:     isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
+      seller_id:        isAdmin() ? selectedSellerId : getEffectiveUserId(),
+      job_position:     isAdmin() ? (selectedJobPosition || 'admin') : getEffectiveRole(),
       // Hardcoded: this page is only about canceled orders.
       order_status:     'canceled',
     };
@@ -823,7 +883,7 @@
   }
 
   function getSelectedSellerLabel() {
-    if (!isAdmin()) return currentUser ? currentUser.nick_name || '-' : '-';
+    if (!isAdmin()) return getEffectiveNickName() || '-';
     const seller = sellers.find(s => String(s.id) === String(selectedSellerId));
     if (!selectedSellerId) return 'ทั้งหมด';
     return seller ? (seller.nick_name || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || String(seller.id)) : 'ทั้งหมด';
