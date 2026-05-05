@@ -38,10 +38,6 @@
   // the newest bookings sit on top. Setting an explicit key (vs. null)
   // also lights up the sort arrow on the header column.
   let mainTableSort = { key: 'created_at', direction: 'desc' };
-  let sellerSummarySort = {
-    ts: { key: 'net_commission', direction: 'desc' },
-    crm: { key: 'net_commission', direction: 'desc' }
-  };
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -241,25 +237,6 @@
         mainTableSort.direction
       );
     });
-  }
-
-  function buildSellerAggregate(orders) {
-    const map = new Map();
-    orders.forEach(o => {
-      const name = o.seller_nick_name || '-';
-      if (!map.has(name)) map.set(name, { seller: name, orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
-      const s = map.get(name);
-      s.orders += 1;
-      s.net_amount += parseFloat(o.net_amount || 0);
-      s.discount += parseFloat(o.discount || 0);
-      s.net_commission += (parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0));
-    });
-    return Array.from(map.values());
-  }
-
-  function sortSellerAggregate(rows, groupClass) {
-    const state = sellerSummarySort[groupClass] || { key: 'net_commission', direction: 'desc' };
-    return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
   }
 
   function labelOfJobPosition(pos) {
@@ -646,7 +623,7 @@
     const { orders = [], summary = {} } = data;
     if (!orders.length) { showEmpty(); return; }
 
-    results.innerHTML = renderSummary(summary) + renderSellerSummary(orders) + renderTableSection(orders);
+    results.innerHTML = renderSummary(summary) + renderTableSection(orders);
 
     // Sticky header: set col-row top = group-row height
     const groupRow = results.querySelector('.crp-table thead tr.group-row');
@@ -677,22 +654,6 @@
         });
       }
 
-      results.querySelectorAll('.crp-summary-table').forEach(table => {
-        const group = table.getAttribute('data-group');
-        const state = sellerSummarySort[group] || { key: 'net_commission', direction: 'desc' };
-        window.SharedSortableHeader.bindTable(table, {
-          headerSelector  : 'thead th[data-sort]',
-          sortKey         : state.key,
-          sortDir         : state.direction,
-          defaultDirection: 'desc',
-          sortInDom       : false,
-          onSort: function (sortState) {
-            sellerSummarySort[group] = { key: sortState.key, direction: sortState.direction };
-            renderResults(currentData);
-            return false;
-          }
-        });
-      });
     }
 
     // Scroll hint: gradient fades when scrolled to end
@@ -767,73 +728,6 @@
           </div>
         </div>
         ${adminCards}
-      </div>`;
-  }
-
-  // ---- Seller Summary (Admin only) ----
-  function renderSellerSummary(orders) {
-    if (!isAdmin()) return '';
-
-    function buildGroupTable(title, groupClass, groupOrders) {
-      const sorted = sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass);
-      const rows = sorted.map((s, i) => {
-        const name = s.seller;
-        const rank = i + 1;
-        const rankClass = rank <= 3 ? ` crp-summary-rank--${rank}` : '';
-        const trophyPalette = {
-          1: { c0: '#FFC54D', c1: '#C19D72', c2: '#A88763' },
-          2: { c0: '#D4D4D4', c1: '#A8A8A8', c2: '#8C8C8C' },
-          3: { c0: '#CD7F32', c1: '#A0622A', c2: '#8B4513' },
-        };
-        const p = trophyPalette[rank];
-        const trophyIcon = rank <= 3
-          ? `<svg width="20" height="20" viewBox="0 0 120 120" style="flex-shrink:0;margin-right:4px" xmlns="http://www.w3.org/2000/svg"><g><path fill="${p.c0}" d="M101,34l-0.2-1.7h-10c0.5-3.4,0.8-6.9,1-10.5c0.1-1.9-1.4-3.5-3.1-3.5H31.4c-1.8,0-3.2,1.6-3.1,3.5c0.1,3.6,0.5,7.1,1,10.5h-10L19,34c-0.1,0.4-1.2,10.6,5.4,19.8c4.3,6,11,10.1,19.7,12.2c2.8,2.8,5.9,4.9,9.2,6.2c-0.4,4.1-0.9,8.1-1.4,11.8h16.3c-0.6-3.8-1.1-7.7-1.5-11.8c3.3-1.2,6.4-3.3,9.2-6.2c8.7-2.1,15.4-6.2,19.7-12.2C102.2,44.6,101,34.4,101,34z M27.3,51.3c-4.2-5.8-4.7-12.1-4.7-15.1h7.3c1.9,9.5,5.3,17.9,9.6,24.2C34.3,58.4,30.2,55.3,27.3,51.3z M92.7,51.3c-2.9,4-7,7.1-12.2,9.1c4.4-6.4,7.7-14.7,9.6-24.2h7.3C97.4,39.2,96.8,45.5,92.7,51.3z"/><path fill="${p.c1}" d="M77,98.1H43c-1,0-1.8-0.8-1.8-1.8V83.5c0-1,0.8-1.8,1.8-1.8h34c1,0,1.8,0.8,1.8,1.8v12.8C78.8,97.3,78,98.1,77,98.1z"/><path fill="${p.c2}" d="M37.9,101.9h44.2c1,0,1.8-0.8,1.8-1.8v-3.8c0-1-0.8-1.8-1.8-1.8H37.9c-1,0-1.8,0.8-1.8,1.8v3.8C36.1,101,36.9,101.9,37.9,101.9z"/><path fill="${p.c0}" d="M68,91H52c-0.7,0-1.2-0.5-1.2-1.2v-2.5c0-0.7,0.5-1.2,1.2-1.2h16c0.7,0,1.2,0.5,1.2,1.2v2.5C69.2,90.5,68.6,91,68,91z"/></g></svg>`
-          : '';
-        return `
-          <tr>
-            <td>
-              <div class="crp-summary-seller-cell">
-                ${trophyIcon}${rank > 3 ? `<span class="crp-summary-rank">${rank}</span>` : ''}
-                <span class="crp-seller-badge">${escHtml(name)}</span>
-              </div>
-            </td>
-            <td class="right">${formatNumber(s.orders, 0)}</td>
-            <td class="right">${formatNumber(s.net_amount, 0)}</td>
-            <td class="right">${formatNumber(s.discount, 0)}</td>
-            <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
-          </tr>`;
-      }).join('');
-      return `
-        <div class="crp-summary-group crp-summary-group--${groupClass}">
-          <div class="crp-summary-group-header">
-            <span class="crp-summary-group-title">${escHtml(title)}</span>
-            <span class="crp-summary-group-count">${sorted.length} คน · ${formatNumber(groupOrders.length, 0)} orders</span>
-          </div>
-          <table class="crp-summary-table" data-group="${groupClass}">
-            <thead>
-              <tr>
-                <th data-sort="seller" data-type="string">เซลล์</th>
-                <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
-                <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
-                <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
-                <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
-              </tr>
-            </thead>
-            <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
-          </table>
-        </div>`;
-    }
-
-    const tsOrders  = orders.filter(o => (o.seller_job_position || '').toLowerCase() === 'ts');
-    const crmOrders = orders.filter(o => (o.seller_job_position || '').toLowerCase() === 'crm');
-
-    return `
-      <div class="crp-seller-summary">
-        <div class="crp-summary-title">สรุป</div>
-        <div class="crp-summary-groups">
-          ${buildGroupTable('Telesales', 'ts', tsOrders)}
-          ${buildGroupTable('CRM', 'crm', crmOrders)}
-        </div>
       </div>`;
   }
 
