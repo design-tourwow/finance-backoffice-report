@@ -21,6 +21,8 @@
   // created_at < canceled-period-start. Used only as a gray note below the
   // KPI "ยอดจองรวม"; it does not alter any totals on this page.
   let currentCanceledReferenceSummary = null;
+  let currentCanceledReferenceNavigationUrl = '';
+  let latestLoadRequestId = 0;
   let sellers = [];
   let availablePeriods = { years: [] };
 
@@ -215,9 +217,9 @@
     return (pos === 'ts' || pos === 'crm') ? pos : 'admin';
   }
 
-  function buildCanceledReferenceNavigationUrl() {
+  function buildCanceledReferenceNavigationUrl(periodState, sellerId, jobPosition) {
     const params = new URLSearchParams();
-    const state = createdPeriodState && typeof createdPeriodState === 'object' ? createdPeriodState : {};
+    const state = periodState && typeof periodState === 'object' ? periodState : {};
     params.set('period_mode', state.mode || 'monthly');
     if (state.year != null) params.set('period_year', String(Number(state.year)));
     if (state.quarter != null) params.set('period_quarter', String(Number(state.quarter)));
@@ -225,10 +227,8 @@
     if (state.customFrom) params.set('period_custom_from', state.customFrom);
     if (state.customTo) params.set('period_custom_to', state.customTo);
     params.set('created_relation', 'before');
-
-    const sellerId = isAdmin() ? selectedSellerId : getEffectiveUserId();
     if (sellerId) params.set('seller_id', String(sellerId));
-    params.set('job_position', inferCanceledReferenceJobPosition());
+    params.set('job_position', jobPosition || 'admin');
     return `/canceled-orders?${params.toString()}`;
   }
 
@@ -633,10 +633,15 @@
       return;
     }
     showLoading();
+    const requestId = ++latestLoadRequestId;
     const filters = buildFilters();
     const canceledReferenceFilters = buildCanceledReferenceFilters();
+    const canceledReferencePeriodState = clonePeriodState(createdPeriodState);
+    const canceledReferenceSellerId = isAdmin() ? selectedSellerId : getEffectiveUserId();
+    const canceledReferenceJobPosition = inferCanceledReferenceJobPosition();
     currentData = null;
     currentCanceledReferenceSummary = null;
+    currentCanceledReferenceNavigationUrl = '';
     mainTableQuery = '';
     try {
       const [reportRes, canceledReferenceRes] = await Promise.all([
@@ -648,16 +653,25 @@
             })
           : Promise.resolve(null)
       ]);
+      if (requestId !== latestLoadRequestId) return;
       if (reportRes && reportRes.success && reportRes.data) {
         currentData = reportRes.data;
         currentCanceledReferenceSummary = canceledReferenceRes && canceledReferenceRes.success && canceledReferenceRes.data
           ? normalizeSummary(canceledReferenceRes.data.summary || computeSummary(canceledReferenceRes.data.orders || []))
           : null;
+        currentCanceledReferenceNavigationUrl = currentCanceledReferenceSummary
+          ? buildCanceledReferenceNavigationUrl(
+              canceledReferencePeriodState,
+              canceledReferenceSellerId,
+              canceledReferenceJobPosition
+            )
+          : '';
         renderResults(reportRes.data);
       } else {
         showEmpty();
       }
     } catch (e) {
+      if (requestId !== latestLoadRequestId) return;
       console.error('[CRP] Failed to load report:', e);
       showEmpty();
     }
@@ -852,7 +866,7 @@
            <span class="kpi-note">${hasCanceledAmount
              ? `มียอด Order ที่ยกเลิก ${formatNumber(currentCanceledReferenceSummary.total_net_amount, 0)} บาท`
              : 'ไม่มียอด Order ที่ยกเลิก'}</span>
-           ${hasCanceledAmount ? `<a class="kpi-note-link" href="${escHtml(buildCanceledReferenceNavigationUrl())}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
+           ${hasCanceledAmount && currentCanceledReferenceNavigationUrl ? `<a class="kpi-note-link" href="${escHtml(currentCanceledReferenceNavigationUrl)}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
                <circle cx="12" cy="12" r="3"></circle>
