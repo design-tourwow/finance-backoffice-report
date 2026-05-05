@@ -846,15 +846,18 @@
   function renderSummary(summary) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
+    const hasCanceledAmount = !!(currentCanceledReferenceSummary && Number(currentCanceledReferenceSummary.total_net_amount || 0) > 0);
     const canceledReferenceNote = currentCanceledReferenceSummary
       ? `<div class="kpi-note-row">
-           <span class="kpi-note">มียอด Order ที่ยกเลิก ${formatNumber(currentCanceledReferenceSummary.total_net_amount, 0)} บาท</span>
-           <a class="kpi-note-link" href="${escHtml(buildCanceledReferenceNavigationUrl())}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
+           <span class="kpi-note">${hasCanceledAmount
+             ? `มียอด Order ที่ยกเลิก ${formatNumber(currentCanceledReferenceSummary.total_net_amount, 0)} บาท`
+             : 'ไม่มียอด Order ที่ยกเลิก'}</span>
+           ${hasCanceledAmount ? `<a class="kpi-note-link" href="${escHtml(buildCanceledReferenceNavigationUrl())}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
                <circle cx="12" cy="12" r="3"></circle>
              </svg>
-           </a>
+           </a>` : ''}
          </div>`
       : '';
     const discountCard = `

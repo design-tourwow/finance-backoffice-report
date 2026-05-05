@@ -24,11 +24,25 @@ const CommissionReportPlusAPI = {
     return qs ? `?${qs}` : ''
   },
 
-  async fetchAPI(endpoint) {
+  buildHeaders(extra) {
     const token = this.getToken()
+    const headers = Object.assign({}, extra || {})
+    if (token) headers['Authorization'] = 'Bearer ' + token
+    try {
+      const role = sessionStorage.getItem('viewAsRole')
+      const uid  = sessionStorage.getItem('viewAsUserId')
+      if (role && uid) {
+        headers['X-View-As-Role']    = role
+        headers['X-View-As-User-Id'] = uid
+      }
+    } catch (e) { /* sessionStorage may be unavailable */ }
+    return headers
+  },
+
+  async fetchAPI(endpoint) {
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: this.buildHeaders()
     })
     if (!response.ok) {
       const text = await response.text()
@@ -46,13 +60,9 @@ const CommissionReportPlusAPI = {
   },
 
   async downloadPDF(payload) {
-    const token = this.getToken()
     const response = await fetch(`${this.baseURL}/api/reports/commission-plus/pdf`, {
       method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
+      headers: this.buildHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     })
 
