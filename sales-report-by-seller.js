@@ -638,7 +638,12 @@
   function renderResults(data) {
     const results = document.getElementById('crp-results');
     if (!results) return;
-    const { orders = [], summary = {} } = data;
+    const rawOrders = (data && data.orders) || [];
+    // Drop orders with no travelers — per business rule the report should
+    // count only orders that actually moved people. Applied at the top so
+    // every downstream consumer (KPI summary, seller ranking, main table,
+    // exports) sees the same filtered set.
+    const orders = rawOrders.filter(o => parseFloat(o.room_quantity || 0) > 0);
     if (!orders.length) { showEmpty(); return; }
 
     // For non-admins the API returns role-wide rows so the ranking summary
@@ -648,7 +653,10 @@
     const ownOrders = isAdmin()
       ? orders
       : orders.filter(o => String(o.seller_agency_member_id || '') === myId);
-    const ownSummary = isAdmin() ? summary : computeSummary(ownOrders);
+    // Always derive the summary from the (filtered) orders array — the
+    // backend's `summary` was computed before the room_quantity filter
+    // and would over-count by including 0-traveler orders.
+    const ownSummary = computeSummary(ownOrders);
     currentOwnOrders = ownOrders;
     currentOwnSummary = ownSummary;
 
@@ -806,11 +814,15 @@
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
+      // Trophies (gold/silver/bronze) only on Telesales — CRM uses plain
+      // numbering for every rank per business rule.
+      const useTrophies = groupClass === 'ts';
       const rows = sorted.map((s, i) => {
         const rank = i + 1;
-        const trophyIcon = window.SharedTrophyRank
+        const trophyIcon = (useTrophies && window.SharedTrophyRank)
           ? window.SharedTrophyRank.getTrophySvg(rank)
           : '';
+        const showRankNumber = !useTrophies || rank > 3;
         const isSelf = isAdmin() || (s.seller_id && s.seller_id === myId);
         // Only ts redacts peers — name → ****** with numbers still visible
         // so the user can read their rank. crm and admin see everyone in
@@ -823,7 +835,7 @@
           <tr class="${rowClass}">
             <td>
               <div class="crp-summary-seller-cell">
-                ${trophyIcon}${rank > 3 ? `<span class="crp-summary-rank">${rank}</span>` : ''}
+                ${trophyIcon}${showRankNumber ? `<span class="crp-summary-rank">${rank}</span>` : ''}
                 <span class="crp-seller-badge">${sellerCell}</span>
               </div>
             </td>

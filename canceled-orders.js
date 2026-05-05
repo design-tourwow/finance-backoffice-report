@@ -33,7 +33,10 @@
   // Sent to the backend as filters.job_position (admin = no role filter).
   let selectedJobPosition = 'admin';
   let mainTableQuery = '';
-  let mainTableSort = { key: null, direction: 'desc' };
+  // Default-sort the main table by "จองวันที่" (created_at) descending so
+  // the newest bookings sit on top. Setting an explicit key (vs. null)
+  // also lights up the sort arrow on the header column.
+  let mainTableSort = { key: 'created_at', direction: 'desc' };
   let sellerSummarySort = {
     ts: { key: 'net_commission', direction: 'desc' },
     crm: { key: 'net_commission', direction: 'desc' }
