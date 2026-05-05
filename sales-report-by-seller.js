@@ -779,9 +779,10 @@
 
   // ---- Seller Summary ----
   // Admin: see both Telesales + CRM groups with full data.
-  // ts/crm: see only their own role's group; other sellers' rows in that
-  // group are redacted (text and digits replaced with `*`) so the user
-  // can see their rank position without revealing peers' figures.
+  // ts: sees the Telesales group with peer rows redacted (name → ******,
+  //     numbers visible so the user can still see their rank).
+  // crm: sees the CRM group with no redaction — full team visibility per
+  //     business rule (CRM is a smaller, collaborative team).
   function renderSellerSummary(orders) {
     // myId: prefer viewAsUserId from sessionStorage when impersonating so the
     // self-row highlight works even when the token patch fails to rewrite
@@ -811,13 +812,13 @@
           ? window.SharedTrophyRank.getTrophySvg(rank)
           : '';
         const isSelf = isAdmin() || (s.seller_id && s.seller_id === myId);
-        // Peer rows: numeric columns show real values so the user can
-        // see the competitive landscape; only the seller name is hidden,
-        // and we use a fixed-length asterisk string so individual name
-        // lengths don't leak.
-        const sellerCell  = isSelf ? escHtml(s.seller) : MASKED_NAME;
+        // Only ts redacts peers — name → ****** with numbers still visible
+        // so the user can read their rank. crm and admin see everyone in
+        // the team unredacted.
+        const shouldMask  = !isSelf && myRole === 'ts';
+        const sellerCell  = shouldMask ? MASKED_NAME : escHtml(s.seller);
         const netComClass = s.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
-        const rowClass    = isSelf ? '' : 'crp-summary-row--masked';
+        const rowClass    = shouldMask ? 'crp-summary-row--masked' : '';
         return `
           <tr class="${rowClass}">
             <td>
@@ -860,9 +861,11 @@
     if (isAdmin()) {
       groupsHtml = buildGroupTable('Telesales', 'ts', tsOrders) + buildGroupTable('CRM', 'crm', crmOrders);
     } else if (myRole === 'ts' && tsOrders.length) {
-      // ts users see the Telesales ranking with peer rows redacted.
-      // crm users intentionally see no ranking at all (per spec).
+      // ts: own row + peer rows redacted (****** names, real numbers).
       groupsHtml = buildGroupTable('Telesales', 'ts', tsOrders);
+    } else if (myRole === 'crm' && crmOrders.length) {
+      // crm: full team visibility — no redaction (handled inside buildGroupTable).
+      groupsHtml = buildGroupTable('CRM', 'crm', crmOrders);
     }
 
     if (!groupsHtml) return '';
