@@ -815,15 +815,35 @@
     // when the token patch fails and currentUser.job_position is still 'admin'.
     const myRole = getEffectiveRole();
 
+    // For CRM viewers, find their own team_number from their own row in the
+    // data so we can render "CRM ทีม X" as the group title. Falls back to 0
+    // (no suffix) when the CRM user has no orders in the current period —
+    // the title still says "CRM" plain.
+    const myTeamNumber = (function () {
+      if (myRole !== 'crm') return 0;
+      for (let i = 0; i < orders.length; i++) {
+        const o = orders[i];
+        if (String(o.seller_agency_member_id || '') === myId) {
+          const t = parseInt(o.seller_team_number, 10);
+          if (t > 0) return t;
+        }
+      }
+      return 0;
+    }());
+
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
-      // Trophies (gold/silver/bronze) only on Telesales — CRM uses plain
-      // numbering for every rank per business rule.
-      const useTrophies = groupClass === 'ts';
-      // CRM-only "ทีม" column — sourced from agency_members.team_number
-      // via the seller_team_number field on each order.
-      const showTeamCol = groupClass === 'crm';
+      // Trophies everywhere EXCEPT when a CRM user views their own CRM
+      // group — there we use plain numbering. Admin therefore sees trophies
+      // on both Telesales and CRM groups; ts sees trophies on Telesales;
+      // crm sees plain numbering on CRM.
+      const useTrophies = !(myRole === 'crm' && groupClass === 'crm');
+      // Append the viewer's team number to the CRM group title only when a
+      // CRM user is the one viewing — admin and ts don't see this suffix.
+      const titleSuffix = (myRole === 'crm' && groupClass === 'crm' && myTeamNumber)
+        ? ` ทีม ${myTeamNumber}`
+        : '';
       const rows = sorted.map((s, i) => {
         const rank = i + 1;
         const trophyIcon = (useTrophies && window.SharedTrophyRank)
@@ -838,9 +858,6 @@
         const sellerCell  = shouldMask ? MASKED_NAME : escHtml(s.seller);
         const netComClass = s.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
         const rowClass    = shouldMask ? 'crp-summary-row--masked' : '';
-        const teamCell    = showTeamCol
-          ? `<td class="center">${s.team_number ? formatNumber(s.team_number, 0) : '-'}</td>`
-          : '';
         return `
           <tr class="${rowClass}">
             <td>
@@ -849,35 +866,29 @@
                 <span class="crp-seller-badge">${sellerCell}</span>
               </div>
             </td>
-            ${teamCell}
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${netComClass}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
       }).join('');
-      const teamHeader = showTeamCol
-        ? '<th class="center" data-sort="team_number" data-type="number">ทีม</th>'
-        : '';
-      const colCount = showTeamCol ? 6 : 5;
       return `
         <div class="crp-summary-group crp-summary-group--${groupClass}">
           <div class="crp-summary-group-header">
-            <span class="crp-summary-group-title">${escHtml(title)}</span>
+            <span class="crp-summary-group-title">${escHtml(title + titleSuffix)}</span>
             <span class="crp-summary-group-count">${sorted.length} คน · ${formatNumber(groupOrders.length, 0)} orders</span>
           </div>
           <table class="crp-summary-table" data-group="${groupClass}">
             <thead>
               <tr>
                 <th data-sort="seller" data-type="string">เซลล์</th>
-                ${teamHeader}
                 <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
                 <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
                 <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
                 <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
             </thead>
-            <tbody>${rows || `<tr><td colspan="${colCount}" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>`}</tbody>
+            <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
           </table>
         </div>`;
     }
@@ -1021,7 +1032,7 @@
     if (isAdmin()) {
       worksheets.push({
         name: 'sales-report-by-crm',
-        headers: ['อันดับ', 'เซลล์', 'ทีม', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'crm')
       });
     }
@@ -1056,11 +1067,6 @@
     return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
       const isSelf = isAdmin() || (row.seller_id && row.seller_id === myId);
       const sellerName = isSelf ? row.seller : MASKED_NAME;
-      // CRM worksheet has an extra "ทีม" column inserted right after the
-      // seller name. Telesales worksheet keeps its original 6-column shape.
-      if (groupClass === 'crm') {
-        return [index + 1, sellerName, row.team_number || '', row.orders, row.net_amount, row.discount, row.net_commission];
-      }
       return [index + 1, sellerName, row.orders, row.net_amount, row.discount, row.net_commission];
     });
   }
