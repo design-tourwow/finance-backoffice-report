@@ -28,6 +28,13 @@
   let selectedSellerId = '';
   let selectedOrderStatus = 'not_canceled';
   let mainTableQuery = '';
+  // Toggle for the "นับ Order ที่มีผู้เดินทางเท่านั้น" checkbox above the
+  // main table. Default checked → only count orders with room_quantity > 0
+  // (the post-2026-05-05 default behavior). Unchecking flips the filter to
+  // "only orders with room_quantity = 0" so finance can audit the empty
+  // ones in isolation. Affects every downstream consumer (KPI / ranking /
+  // table / exports) since the filter is applied at the renderResults entry.
+  let countWithTravelers = true;
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
     ts: { key: 'net_amount', direction: 'desc' },
@@ -643,12 +650,16 @@
     const results = document.getElementById('crp-results');
     if (!results) return;
     const rawOrders = (data && data.orders) || [];
-    // Drop orders with no travelers — per business rule the report should
-    // count only orders that actually moved people. Applied at the top so
-    // every downstream consumer (KPI summary, seller ranking, main table,
-    // exports) sees the same filtered set.
-    const orders = rawOrders.filter(o => parseFloat(o.room_quantity || 0) > 0);
-    if (!orders.length) { showEmpty(); return; }
+    if (!rawOrders.length) { showEmpty(); return; }
+    // Toggle-driven traveler filter — checkbox in the table toolbar flips
+    // between "with travelers" and "without travelers" sets. Applied at the
+    // top so every downstream consumer (KPI summary, seller ranking, main
+    // table, exports) sees the same filtered set. Empty result post-filter
+    // is allowed to flow through so the toolbar stays visible and the user
+    // can toggle back without re-querying.
+    const orders = countWithTravelers
+      ? rawOrders.filter(o => parseFloat(o.room_quantity || 0) > 0)
+      : rawOrders.filter(o => parseFloat(o.room_quantity || 0) === 0);
 
     // For non-admins the API returns role-wide rows so the ranking summary
     // can show their position. The main table, KPI cards, and exports
@@ -678,6 +689,14 @@
     const exportBtn = document.getElementById('crp-btn-export');
     if (exportBtn) exportBtn.addEventListener('click', () => exportExcelWorkbook(orders));
     document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, ownSummary));
+
+    const travelerToggle = document.getElementById('crp-traveler-toggle');
+    if (travelerToggle) {
+      travelerToggle.addEventListener('change', function () {
+        countWithTravelers = !!travelerToggle.checked;
+        renderResults(currentData);
+      });
+    }
 
     if (window.SharedSortableHeader) {
       const mainTable = results.querySelector('.crp-table');
@@ -944,6 +963,10 @@
       <div class="dashboard-table-header">
         ${window.SharedTableCount.render({ id: 'crp-table-count', count: visibleOrders.length })}
         <div class="dashboard-table-actions">
+          <label class="banner1-filter-checkbox crp-traveler-checkbox">
+            <input type="checkbox" id="crp-traveler-toggle" ${countWithTravelers ? 'checked' : ''}>
+            <span class="banner1-filter-text">นับ Order ที่มีผู้เดินทางเท่านั้น</span>
+          </label>
           <div id="crp-table-search-host"></div>
           ${isAdmin() ? window.SharedExportButton.render({ id: 'crp-btn-export', variant: 'excel' }) : ''}
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
