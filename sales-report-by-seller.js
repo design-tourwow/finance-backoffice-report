@@ -180,6 +180,16 @@
     }, { total_orders: 0, total_net_amount: 0, total_commission: 0, total_discount: 0 });
   }
 
+  function getDiscountPercentValue(discountValue, netAmountValue) {
+    const netAmount = parseFloat(netAmountValue || 0);
+    if (!(netAmount > 0)) return null;
+    return (parseFloat(discountValue || 0) / netAmount) * 100;
+  }
+
+  function formatPercentValue(percentValue, decimals = 2) {
+    return percentValue == null ? '-' : `${formatNumber(percentValue, decimals)}%`;
+  }
+
   function formatDate(dateStr) {
     if (!dateStr) return '-';
     try {
@@ -324,6 +334,8 @@
         return parseFloat(order.supplier_commission || 0) - parseFloat(order.discount || 0);
       case 'discount':
         return parseFloat(order.discount || 0);
+      case 'discount_percent':
+        return getDiscountPercentValue(order.discount, order.net_amount);
       default:
         return null;
     }
@@ -942,6 +954,7 @@
     const visibleOrders = getVisibleOrders(orders);
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
+      const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
@@ -956,8 +969,9 @@
           <td class="right group-start">${formatNumber(o.supplier_commission, 0)}</td>
           <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom, 0)}</td>
           <td class="right group-start">${formatNumber(o.discount, 0)}</td>
+          <td class="right">${formatPercentValue(discountPercent)}</td>
         </tr>`;
-    }).join('') || '<tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
+    }).join('') || '<tr><td colspan="13" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
 
     return `
       <div class="dashboard-table-header">
@@ -984,7 +998,7 @@
               <th colspan="5" class="group-header">Order</th>
               <th colspan="3" class="group-header">ยอดจอง</th>
               <th colspan="2" class="group-header">คอมมิชชั่น</th>
-              <th class="group-header">ส่วนลด</th>
+              <th colspan="2" class="group-header">ส่วนลด</th>
             </tr>
             <tr class="col-row">
               <th data-sort="seller" data-type="string">เซลล์</th>
@@ -999,6 +1013,7 @@
               <th class="right group-start" data-sort="supplier_commission" data-type="number">คอมรวม</th>
               <th class="right" data-sort="net_commission" data-type="number">คอม (หักส่วนลด)</th>
               <th class="right group-start" data-sort="discount" data-type="number">ส่วนลดรวม</th>
+              <th class="right" data-sort="discount_percent" data-type="number">เปอร์เซ็นต์</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1023,10 +1038,11 @@
     const worksheets = [
       {
         name: 'sales-report',
-        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม'],
+        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม', 'เปอร์เซ็นต์'],
         rows: getVisibleOrders(currentOwnOrders).map(function (o) {
           const commission = parseFloat(o.supplier_commission || 0);
           const discount = parseFloat(o.discount || 0);
+          const discountPercent = getDiscountPercentValue(discount, o.net_amount);
           return [
             o.seller_nick_name || '',
             o.order_code || '',
@@ -1039,7 +1055,8 @@
             formatDate(o.first_paid_at),
             commission,
             commission - discount,
-            discount
+            discount,
+            formatPercentValue(discountPercent)
           ];
         })
       }
@@ -1430,7 +1447,7 @@
   function getVisibleTableRows() {
     return Array.from(document.querySelectorAll('.crp-table tbody tr'))
       .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.innerText.replace(/\s+/g, ' ').trim()))
-      .filter(row => row.length === 12);
+      .filter(row => row.length === 13);
   }
 
   function createPdfSourceNode(countText) {
@@ -1450,6 +1467,7 @@
     wrapper.dataset.countText = countText || '';
 
     const netCommission = parseFloat(currentOwnSummary?.total_commission || 0) - parseFloat(currentOwnSummary?.total_discount || 0);
+    const totalDiscountPercent = getDiscountPercentValue(currentOwnSummary?.total_discount, currentOwnSummary?.total_net_amount);
 
     const title = document.createElement('div');
     title.style.display = 'flex';
@@ -1572,10 +1590,10 @@
       const footer = document.createElement('tr');
       footer.style.background = '#d7e4f1';
       footer.style.fontWeight = '700';
-      // 12-column main table — cols 1–6 (เซลล์/รหัส/จองวันที่/ลูกค้า/ประเทศ/
+      // 13-column main table — cols 1–6 (เซลล์/รหัส/จองวันที่/ลูกค้า/ประเทศ/
       // เดินทาง) carry no numeric totals so we colspan them under the "รวม
       // X รายการ" label, then place each summed value directly under its
-      // own column header (7,10,11,12) with cols 8,9 left blank.
+      // own column header (7,10,11,12,13) with cols 8,9 left blank.
       const cellBorder = 'border-top:2px solid #9fb6cc;';
       footer.innerHTML = `
         <td colspan="6" style="text-align:center;color:#243b53;${cellBorder}">รวม ${escHtml(countText || '')}</td>
@@ -1585,6 +1603,7 @@
         <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentOwnSummary?.total_commission || 0))}</td>
         <td style="text-align:right;color:#16a34a;${cellBorder}">${escHtml(formatNumber(netCommission || 0))}</td>
         <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentOwnSummary?.total_discount || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatPercentValue(totalDiscountPercent))}</td>
       `;
       tbody.appendChild(footer);
     }
