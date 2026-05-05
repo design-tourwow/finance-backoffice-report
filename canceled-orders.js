@@ -268,6 +268,20 @@
     return 'ทั้งหมด';
   }
 
+  // The "วันที่สร้าง Order" relation only makes sense when the canceled
+  // period is a discrete bucket (รายปี / รายไตรมาส / รายเดือน). For
+  // 'all' (no canceled-date filter) and 'custom' (free date range) it is
+  // hidden — there is no meaningful boundary to compare created_at against.
+  function updateCreatedRelationVisibility() {
+    const host = document.getElementById('co-created-relation-host');
+    if (!host) return;
+    const field = host.closest('.crp-filter-field');
+    if (!field) return;
+    const mode = (canceledPeriodState && canceledPeriodState.mode) || '';
+    const visible = mode === 'yearly' || mode === 'quarterly' || mode === 'monthly';
+    field.style.display = visible ? '' : 'none';
+  }
+
   // Render the "วันที่สร้าง Order" relation dropdown. Lets the user split
   // canceled orders into ones created BEFORE the canceled period (old orders
   // canceled now) vs ones created WITHIN the same period as the cancellation
@@ -423,10 +437,14 @@
       multiSelect     : false,
       modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : canceledPeriodState,
-      onChange        : function (s) { canceledPeriodState = s; }
+      onChange        : function (s) {
+        canceledPeriodState = s;
+        updateCreatedRelationVisibility();
+      }
     });
 
     renderCreatedRelationDropdown();
+    updateCreatedRelationVisibility();
 
     // Non-admin users are locked to their own seller id; admins see the
     // linked ตำแหน่ง + searchable เซลล์ pair (same pattern as /sales-report).
@@ -496,10 +514,14 @@
       multiSelect     : false,
       modes           : ['yearly', 'quarterly', 'monthly', 'custom'],
       initialState    : canceledPeriodState,
-      onChange        : function (s) { canceledPeriodState = s; }
+      onChange        : function (s) {
+        canceledPeriodState = s;
+        updateCreatedRelationVisibility();
+      }
     });
 
     renderCreatedRelationDropdown();
+    updateCreatedRelationVisibility();
 
     if (isAdmin()) {
       window.FilterSortDropdownComponent.initDropdown({
@@ -571,11 +593,14 @@
       order_status:     'canceled',
     };
 
-    // วันที่สร้าง Order relation — only meaningful when there is a canceled
-    // range to pivot on. If canceledPeriodState resolves to no range (e.g.
-    // mode='all'), skip the created_at filter so the page degrades to
-    // "all canceled orders" rather than silently filtering everything out.
-    if (range.dateFrom && range.dateTo) {
+    // วันที่สร้าง Order relation — applies only when the canceled period
+    // is a discrete bucket (รายปี / รายไตรมาส / รายเดือน). Hidden in the
+    // UI for 'all' and 'custom' modes, so don't apply the filter there
+    // either: 'all' has no boundary, and 'custom' is a free range that
+    // doesn't map onto a "before vs same" comparison.
+    const mode = (canceledPeriodState && canceledPeriodState.mode) || '';
+    const applyRelation = mode === 'yearly' || mode === 'quarterly' || mode === 'monthly';
+    if (applyRelation && range.dateFrom && range.dateTo) {
       if (createdRelationState === 'before') {
         filters.created_at_to = addDays(range.dateFrom, -1);
       } else if (createdRelationState === 'same') {
@@ -906,15 +931,22 @@
 
   function buildPrintFilters() {
     const filters = buildFilters();
+    const mode = (canceledPeriodState && canceledPeriodState.mode) || '';
+    const showRelation = mode === 'yearly' || mode === 'quarterly' || mode === 'monthly';
     const createdRelationLabel = createdRelationState === 'same'
       ? 'ตรงกับช่วงที่ยกเลิก'
       : 'ก่อนช่วงที่ยกเลิก';
-    return [
-      { label: 'วันที่ยกเลิก Order', value: [formatDate(filters.canceled_at_from), formatDate(filters.canceled_at_to)].join(' - ') },
-      { label: 'วันที่สร้าง Order', value: createdRelationLabel },
-      { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
-      { label: 'สถานะ Order', value: 'ยกเลิก' },
+    const rows = [
+      { label: 'วันที่ยกเลิก Order', value: [formatDate(filters.canceled_at_from), formatDate(filters.canceled_at_to)].join(' - ') }
     ];
+    if (showRelation) {
+      rows.push({ label: 'วันที่สร้าง Order', value: createdRelationLabel });
+    }
+    rows.push(
+      { label: 'เซลล์ผู้จอง', value: getSelectedSellerLabel() },
+      { label: 'สถานะ Order', value: 'ยกเลิก' }
+    );
+    return rows;
   }
 
   function getPrintDocumentHtml(tableHtml, summary, countText) {
