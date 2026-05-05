@@ -48,6 +48,10 @@
   min-width: 0;
 }
 
+.crp-filter-field--wide {
+  grid-column: span 2;
+}
+
 /* A period-selector field (mode + value) spans 2 outer grid cells so each
    sub-control renders at 33.3% of the row — matching sibling paired-field
    dropdowns. */

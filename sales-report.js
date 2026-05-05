@@ -26,8 +26,10 @@
   let selectedJobPosition = 'admin';
   let selectedSellerId = '';
   let selectedOrderStatus = 'not_canceled';
-  let selectedTravelerFilter = 'all';
   let mainTableQuery = '';
+  // Matches /sales-report-by-seller: checked → only room_quantity > 0,
+  // unchecked → include every order (not a "room_quantity = 0" mode).
+  let countWithTravelers = true;
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
     ts: { key: 'net_amount', direction: 'desc' },
@@ -92,6 +94,16 @@
   // ---- Helpers ----
   function formatNumber(val, decimals = 0) {
     return (parseFloat(val) || 0).toLocaleString('th-TH', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  }
+
+  function computeSummary(orders) {
+    return (orders || []).reduce(function (acc, o) {
+      acc.total_orders += 1;
+      acc.total_net_amount += parseFloat(o.net_amount || 0);
+      acc.total_commission += parseFloat(o.supplier_commission || 0);
+      acc.total_discount += parseFloat(o.discount || 0);
+      return acc;
+    }, { total_orders: 0, total_net_amount: 0, total_commission: 0, total_discount: 0 });
   }
 
   function formatDate(dateStr) {
@@ -568,14 +580,9 @@
 
           <!-- แถว 3: Dropdown Pair 2 -->
           <div class="filter-row crp-filter-row">
-            <div class="crp-filter-field">
+            <div class="crp-filter-field crp-filter-field--wide">
               <span class="time-granularity-label crp-filter-label">สถานะ Order</span>
               <div class="crp-filter-control" id="crp-dd-status"></div>
-            </div>
-
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">จำนวนผู้เดินทาง</span>
-              <div class="crp-filter-control" id="crp-dd-travelers"></div>
             </div>
           </div>
 
@@ -659,21 +666,6 @@
       }
     });
 
-    // ---- จำนวนผู้เดินทาง dropdown ----
-    const travelerOptions = [
-      { value: 'all',          label: 'ทั้งหมด',   icon: getAllIcon(),              active: true },
-      { value: 'exclude_zero', label: 'ยกเว้น 0',  icon: getPersonIcon(),           active: false },
-    ];
-    FilterSortDropdownComponent.initDropdown({
-      containerId: 'crp-dd-travelers',
-      defaultLabel: 'ทั้งหมด',
-      defaultIcon: getAllIcon(),
-      options: travelerOptions,
-      onChange: function (val) {
-        selectedTravelerFilter = val;
-      }
-    });
-
     // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่ into
     // the host. Reset clears filter UI back to defaults only; the user
     // still has to press ค้นหา to re-query, so we never overwrite the
@@ -702,7 +694,6 @@
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = 'not_canceled';
-    selectedTravelerFilter = 'all';
 
     mountPeriodSelectors();
 
@@ -740,18 +731,6 @@
       ],
       onChange: function (val) { selectedOrderStatus = val; }
     });
-
-    FilterSortDropdownComponent.initDropdown({
-      containerId: 'crp-dd-travelers',
-      defaultLabel: 'ทั้งหมด',
-      defaultIcon: getAllIcon(),
-      options: [
-        { value: 'all',          label: 'ทั้งหมด',   icon: getAllIcon(),    active: true  },
-        { value: 'exclude_zero', label: 'ยกเว้น 0',  icon: getPersonIcon(), active: false },
-      ],
-      onChange: function (val) { selectedTravelerFilter = val; }
-    });
-
   }
 
   function labelOfJobPosition(pos) {
@@ -871,11 +850,13 @@
   function renderResults(data) {
     const results = document.getElementById('crp-results');
     if (!results) return;
-    const { orders: rawOrders = [], summary = {} } = data;
-    const orders = selectedTravelerFilter === 'exclude_zero'
-      ? rawOrders.filter(o => parseInt(o.room_quantity || 0) >= 1)
+    const { orders: rawOrders = [] } = data;
+    if (!rawOrders.length) { showEmpty(); return; }
+
+    const orders = countWithTravelers
+      ? rawOrders.filter(o => parseFloat(o.room_quantity || 0) > 0)
       : rawOrders;
-    if (!orders.length) { showEmpty(); return; }
+    const summary = computeSummary(orders);
 
     results.innerHTML = renderSummary(summary) + renderSellerSummary(orders) + renderTableSection(orders);
 
@@ -890,6 +871,14 @@
 
     document.getElementById('crp-btn-export').addEventListener('click', () => exportExcelWorkbook(orders));
     document.getElementById('crp-btn-pdf').addEventListener('click', () => exportPDF(orders, summary));
+
+    const travelerToggle = document.getElementById('crp-traveler-toggle');
+    if (travelerToggle) {
+      travelerToggle.addEventListener('change', function () {
+        countWithTravelers = !!travelerToggle.checked;
+        renderResults(currentData);
+      });
+    }
 
     if (window.SharedSortableHeader) {
       const mainTable = results.querySelector('.crp-table');
@@ -1089,6 +1078,10 @@
       <div class="dashboard-table-header">
         ${window.SharedTableCount.render({ id: 'crp-table-count', count: visibleOrders.length })}
         <div class="dashboard-table-actions">
+          <label class="banner1-filter-checkbox crp-traveler-checkbox">
+            <input type="checkbox" id="crp-traveler-toggle" ${countWithTravelers ? 'checked' : ''}>
+            <span class="banner1-filter-text">นับ Order ที่มีผู้เดินทางเท่านั้น</span>
+          </label>
           <div id="crp-table-search-host"></div>
           ${window.SharedExportButton.render({ id: 'crp-btn-export', variant: 'excel' })}
           <button class="dashboard-export-btn crp-btn-pdf" id="crp-btn-pdf">
@@ -1238,6 +1231,10 @@
     }[selectedOrderStatus] || selectedOrderStatus;
   }
 
+  function getTravelerToggleLabel() {
+    return countWithTravelers ? 'เฉพาะ Order ที่มีผู้เดินทาง' : 'ทั้งหมด';
+  }
+
   function getThaiYearLabel(yearCe) {
     const yearNum = Number(yearCe);
     if (!yearNum) return '-';
@@ -1300,6 +1297,7 @@
       { label: 'ชื่อผู้จอง', value: getSelectedSellerLabel() },
       { label: 'ตำแหน่ง', value: labelOfJobPosition(selectedJobPosition) },
       { label: 'สถานะ Order', value: getSelectedStatusLabel() },
+      { label: 'ผู้เดินทาง', value: getTravelerToggleLabel() },
     ];
   }
 
@@ -1539,7 +1537,7 @@
       .filter(row => row.length === 12);
   }
 
-  function createPdfSourceNode(countText) {
+  function createPdfSourceNode(countText, summary) {
     const tableWrapperEl = document.querySelector('.dashboard-table-wrapper.crp-table-scroll');
     if (!tableWrapperEl) return null;
 
@@ -1555,7 +1553,8 @@
     wrapper.className = 'crp-pdf-source';
     wrapper.dataset.countText = countText || '';
 
-    const netCommission = parseFloat(currentData?.summary?.total_commission || 0) - parseFloat(currentData?.summary?.total_discount || 0);
+    const reportSummary = summary || {};
+    const netCommission = parseFloat(reportSummary.total_commission || 0) - parseFloat(reportSummary.total_discount || 0);
 
     const title = document.createElement('div');
     title.style.display = 'flex';
@@ -1699,12 +1698,12 @@
       const cellBorder = 'border-top:2px solid #9fb6cc;';
       footer.innerHTML = `
         <td colspan="6" style="text-align:center;color:#243b53;${cellBorder}">รวม ${escHtml(countText || '')}</td>
-        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_net_amount || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(reportSummary.total_net_amount || 0))}</td>
         <td style="${cellBorder}"></td>
         <td style="${cellBorder}"></td>
-        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_commission || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(reportSummary.total_commission || 0))}</td>
         <td style="text-align:right;color:#16a34a;${cellBorder}">${escHtml(formatNumber(netCommission || 0))}</td>
-        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(currentData?.summary?.total_discount || 0))}</td>
+        <td style="text-align:right;${cellBorder}">${escHtml(formatNumber(reportSummary.total_discount || 0))}</td>
       `;
       tbody.appendChild(footer);
     }
@@ -2065,7 +2064,7 @@
     try {
       const jsPDF = window.jspdf.jsPDF;
       const countText = `${formatNumber(rows.length, 0)} รายการ`;
-      const sourceNode = createPdfSourceNode(countText);
+      const sourceNode = createPdfSourceNode(countText, summary);
       if (!sourceNode) throw new Error('PDF source node not found');
       const pages = buildPaginatedPdfPages(sourceNode);
       sourceNode.remove();

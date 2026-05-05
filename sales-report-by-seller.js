@@ -29,11 +29,11 @@
   let selectedOrderStatus = 'not_canceled';
   let mainTableQuery = '';
   // Toggle for the "นับ Order ที่มีผู้เดินทางเท่านั้น" checkbox above the
-  // main table. Default checked → only count orders with room_quantity > 0
-  // (the post-2026-05-05 default behavior). Unchecking flips the filter to
-  // "only orders with room_quantity = 0" so finance can audit the empty
-  // ones in isolation. Affects every downstream consumer (KPI / ranking /
-  // table / exports) since the filter is applied at the renderResults entry.
+  // main table. Default checked → only count orders with room_quantity > 0.
+  // Unchecking removes the filter entirely so every order (including the
+  // 0-traveler ones) flows through. Affects every downstream consumer
+  // (KPI / ranking / table / exports) since the filter is applied at the
+  // renderResults entry.
   let countWithTravelers = true;
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
@@ -651,15 +651,15 @@
     if (!results) return;
     const rawOrders = (data && data.orders) || [];
     if (!rawOrders.length) { showEmpty(); return; }
-    // Toggle-driven traveler filter — checkbox in the table toolbar flips
-    // between "with travelers" and "without travelers" sets. Applied at the
-    // top so every downstream consumer (KPI summary, seller ranking, main
-    // table, exports) sees the same filtered set. Empty result post-filter
-    // is allowed to flow through so the toolbar stays visible and the user
-    // can toggle back without re-querying.
+    // Toggle-driven traveler filter — checkbox in the table toolbar gates
+    // whether 0-traveler orders are included. Checked → only room_quantity
+    // > 0; unchecked → every order. Applied at the top so every downstream
+    // consumer (KPI summary, seller ranking, main table, exports) sees the
+    // same set. Empty result post-filter is allowed to flow through so the
+    // toolbar stays visible and the user can toggle back without re-querying.
     const orders = countWithTravelers
       ? rawOrders.filter(o => parseFloat(o.room_quantity || 0) > 0)
-      : rawOrders.filter(o => parseFloat(o.room_quantity || 0) === 0);
+      : rawOrders;
 
     // For non-admins the API returns role-wide rows so the ranking summary
     // can show their position. The main table, KPI cards, and exports
