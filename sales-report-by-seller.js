@@ -1020,11 +1020,32 @@
             <td class="right ${netComClass}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
       }).join('');
+      const totals = sorted.reduce((acc, s) => {
+        acc.orders         += parseFloat(s.orders || 0);
+        acc.net_amount     += parseFloat(s.net_amount || 0);
+        acc.discount       += parseFloat(s.discount || 0);
+        acc.net_commission += parseFloat(s.net_commission || 0);
+        return acc;
+      }, { orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
+      const totalNetComClass = totals.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
+      const totalRow = sorted.length ? `
+              <tr class="crp-summary-row--total">
+                <td>รวม</td>
+                <td class="right">${formatNumber(totals.orders, 0)}</td>
+                <td class="right">${formatNumber(totals.net_amount, 0)}</td>
+                <td class="right">${formatNumber(totals.discount, 0)}</td>
+                <td class="right ${totalNetComClass}">${formatNumber(totals.net_commission, 0)}</td>
+              </tr>` : '';
       return `
         <div class="crp-summary-group crp-summary-group--${groupClass}">
           <div class="crp-summary-group-header">
             <span class="crp-summary-group-title">${escHtml(title + titleSuffix)}</span>
-            <span class="crp-summary-group-count">ยอดจอง ${formatNumber(groupNetAmount, 0)} • ${sharePct}% ของยอดจองทั้งหมด • ${sorted.length} คน • ${formatNumber(groupOrders.length, 0)} Orders</span>
+            <span class="crp-summary-group-count">
+              <span class="crp-summary-group-count-item">ยอดจอง ${formatNumber(groupNetAmount, 0)}</span>
+              <span class="crp-summary-group-count-item">${sharePct}% ของยอดจองทั้งหมด</span>
+              <span class="crp-summary-group-count-item">${sorted.length} คน</span>
+              <span class="crp-summary-group-count-item">${formatNumber(groupOrders.length, 0)} Orders</span>
+            </span>
           </div>
           <table class="crp-summary-table" data-group="${groupClass}">
             <thead>
@@ -1037,6 +1058,7 @@
               </tr>
             </thead>
             <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            ${totalRow ? `<tfoot>${totalRow}</tfoot>` : ''}
           </table>
         </div>`;
     }

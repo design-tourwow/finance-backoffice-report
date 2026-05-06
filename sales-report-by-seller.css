@@ -311,6 +311,27 @@
   margin-left: auto;
   font-size: 14px;
   color: #9ca3af;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crp-summary-group-count-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.crp-summary-group-count-item + .crp-summary-group-count-item::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background-color: #d1d5db;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .crp-summary-table {
@@ -392,6 +413,28 @@
   text-align: right;
   font-family: var(--font-family-numeric);
   font-variant-numeric: tabular-nums;
+}
+
+.crp-summary-table tfoot td {
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #374151;
+  border-top: 2px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.crp-summary-table tfoot td.right {
+  text-align: right;
+  font-family: var(--font-family-numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+.crp-summary-group--ts .crp-summary-table tfoot td {
+  background: #f5f9ff;
+}
+
+.crp-summary-group--crm .crp-summary-table tfoot td {
+  background: #f4fdf8;
 }
 
 @media (max-width: 768px) {
