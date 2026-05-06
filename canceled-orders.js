@@ -871,6 +871,7 @@
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return `
         <tr>
+          <td class="center">${formatDate(resolveCanceledAt(o))}</td>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
@@ -880,7 +881,6 @@
           <td class="right group-start">${formatNumber(o.net_amount, 0)}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
-          <td class="center">${formatDate(resolveCanceledAt(o))}</td>
           <td class="right group-start">${formatNumber(o.supplier_commission, 0)}</td>
           <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom, 0)}</td>
           <td class="right group-start">${formatNumber(o.discount, 0)}</td>
@@ -904,13 +904,15 @@
         <table class="dashboard-table crp-table">
           <thead>
             <tr class="group-row">
+              <th class="group-header">วันที่ยกเลิก</th>
               <th class="group-header">เซลล์</th>
               <th colspan="5" class="group-header">Order</th>
-              <th colspan="4" class="group-header">ยอดจอง</th>
+              <th colspan="3" class="group-header">ยอดจอง</th>
               <th colspan="2" class="group-header">คอมมิชชั่น</th>
               <th class="group-header">ส่วนลด</th>
             </tr>
             <tr class="col-row">
+              <th class="center" data-sort="canceled_at" data-type="date">วันที่ยกเลิก</th>
               <th data-sort="seller" data-type="string">เซลล์</th>
               <th class="group-start" data-sort="order_code" data-type="string">รหัส Order</th>
               <th data-sort="created_at" data-type="date">จองวันที่</th>
@@ -920,7 +922,6 @@
               <th class="right group-start" data-sort="net_amount" data-type="number">ยอดจอง</th>
               <th class="center" data-sort="room_quantity" data-type="number">ผู้เดินทาง</th>
               <th class="center" data-sort="first_paid_at" data-type="date">วันชำระงวด 1</th>
-              <th class="center" data-sort="canceled_at" data-type="date">วันที่ยกเลิก</th>
               <th class="right group-start" data-sort="supplier_commission" data-type="number">คอมรวม</th>
               <th class="right" data-sort="net_commission" data-type="number">คอม (หักส่วนลด)</th>
               <th class="right group-start" data-sort="discount" data-type="number">ส่วนลดรวม</th>
@@ -934,14 +935,15 @@
 
   // ---- Export CSV ----
   function exportCSV(orders) {
-    const headers = ['เซลล์','รหัส Order','จองวันที่','ลูกค้า','ประเทศ','เดินทาง','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','วันที่ยกเลิก','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
+    const headers = ['วันที่ยกเลิก','เซลล์','รหัส Order','จองวันที่','ลูกค้า','ประเทศ','เดินทาง','ยอดจอง','ผู้เดินทาง','วันชำระงวด 1','คอมรวม','คอม (หักส่วนลด)','ส่วนลดรวม'];
     const rows = orders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       return [
+        formatDate(resolveCanceledAt(o)),
         o.seller_nick_name || '', o.order_code || '', formatDate(o.created_at), o.customer_name || '',
         o.country_name_th || '', o.product_period_snapshot || '',
         parseFloat(o.net_amount || 0).toFixed(2), o.room_quantity || 0,
-        formatDate(o.first_paid_at), formatDate(resolveCanceledAt(o)),
+        formatDate(o.first_paid_at),
         parseFloat(o.supplier_commission || 0).toFixed(2),
         netCom.toFixed(2), parseFloat(o.discount || 0).toFixed(2),
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
