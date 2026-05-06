@@ -980,7 +980,7 @@
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
       const groupNetAmount = groupOrders.reduce((sum, o) => sum + (parseFloat(o.net_amount) || 0), 0);
-      const sharePct = totalNetAmount > 0 ? Math.round((groupNetAmount / totalNetAmount) * 100) : 0;
+      const sharePct = totalNetAmount > 0 ? ((groupNetAmount / totalNetAmount) * 100).toFixed(2) : '0.00';
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
       // Trophies everywhere EXCEPT when a CRM user views their own CRM
       // group — there we use plain numbering. Admin therefore sees trophies
