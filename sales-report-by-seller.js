@@ -975,8 +975,12 @@
       return 0;
     }());
 
+    const totalNetAmount = orders.reduce((sum, o) => sum + (parseFloat(o.net_amount) || 0), 0);
+
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
+      const groupNetAmount = groupOrders.reduce((sum, o) => sum + (parseFloat(o.net_amount) || 0), 0);
+      const sharePct = totalNetAmount > 0 ? Math.round((groupNetAmount / totalNetAmount) * 100) : 0;
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
       // Trophies everywhere EXCEPT when a CRM user views their own CRM
       // group — there we use plain numbering. Admin therefore sees trophies
@@ -1020,7 +1024,7 @@
         <div class="crp-summary-group crp-summary-group--${groupClass}">
           <div class="crp-summary-group-header">
             <span class="crp-summary-group-title">${escHtml(title + titleSuffix)}</span>
-            <span class="crp-summary-group-count">${sorted.length} คน · ${formatNumber(groupOrders.length, 0)} orders</span>
+            <span class="crp-summary-group-count">ยอดจอง ${formatNumber(groupNetAmount, 0)} • ${sharePct}% ของยอดจองทั้งหมด • ${sorted.length} คน • ${formatNumber(groupOrders.length, 0)} Orders</span>
           </div>
           <table class="crp-summary-table" data-group="${groupClass}">
             <thead>
