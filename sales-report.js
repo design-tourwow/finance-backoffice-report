@@ -25,7 +25,7 @@
   // Selected values from FilterSortDropdown instances
   let selectedJobPosition = 'admin';
   let selectedSellerId = '';
-  let selectedOrderStatus = 'not_canceled';
+  let selectedOrderStatus = 'all';
   let mainTableQuery = '';
   // Matches /sales-report-by-seller: checked → only room_quantity > 0,
   // unchecked → include every order (not a "room_quantity = 0" mode).
@@ -629,7 +629,7 @@
     // Set state defaults
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = 'not_canceled';
+    selectedOrderStatus  = 'all';
 
     // ---- ตำแหน่ง dropdown ----
     const jobPositionOptions = [
@@ -662,7 +662,7 @@
     renderSellerDropdown();
 
     // ---- สถานะ Order dropdown ----
-    const defaultStatus = 'not_canceled';
+    const defaultStatus = 'all';
     const statusOptions = [
       { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all') },
       { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled') },
@@ -671,7 +671,7 @@
 
     FilterSortDropdownComponent.initDropdown({
       containerId: 'crp-dd-status',
-      defaultLabel: defaultStatus === 'not_canceled' ? 'ไม่ยกเลิก' : 'ทั้งหมด',
+      defaultLabel: 'ทั้งหมด',
       defaultIcon: getStatusIcon(defaultStatus),
       options: statusOptions,
       onChange: function (val) {
@@ -706,7 +706,7 @@
     paidPeriodState = { mode: 'all' };
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = 'not_canceled';
+    selectedOrderStatus  = 'all';
 
     mountPeriodSelectors();
 
@@ -1057,7 +1057,7 @@
             </td>
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
-            <td class="right ${(canceledMonthBySellerMap.get(s.seller) || 0) > 0 ? 'crp-canceled-amt' : ''}">${formatNumber(canceledMonthBySellerMap.get(s.seller) || 0, 0)}</td>
+            <td class="right ${(canceledMonthBySellerMap.get(s.seller) || 0) > 0 ? 'crp-canceled-amt' : ''}">${(canceledMonthBySellerMap.get(s.seller) || 0) > 0 ? '-' + formatNumber(canceledMonthBySellerMap.get(s.seller), 0) : formatNumber(0, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
@@ -1103,16 +1103,16 @@
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
-      const isCanceled = !!o.canceled_at;
-      const amtClass = isCanceled ? 'crp-negative' : '';
-      const comClass = isCanceled ? 'crp-negative' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
+      const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
+      const amtClass = isCanceled ? 'crp-canceled-amt' : '';
+      const comClass = isCanceled ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
       const fmtAmt = v => isCanceled ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
-          <td class="${isCanceled ? 'crp-negative' : ''}">${o.canceled_at ? formatDate(o.canceled_at) : ''}</td>
+          <td class="${isCanceled ? 'crp-canceled-amt' : ''}">${o.canceled_at ? formatDate(o.canceled_at) : ''}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td>${escHtml(o.country_name_th || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
@@ -1193,7 +1193,7 @@
           const commission = parseFloat(o.supplier_commission || 0);
           const discount = parseFloat(o.discount || 0);
           const discountPercent = getDiscountPercentValue(discount, o.net_amount);
-          const isCanceled = !!o.canceled_at;
+          const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
           const sign = isCanceled ? -1 : 1;
           return [
             o.seller_nick_name || '',
@@ -1244,7 +1244,7 @@
         row.seller,
         row.orders,
         row.net_amount,
-        canceledMonthBySellerMap.get(row.seller) || 0,
+        -(canceledMonthBySellerMap.get(row.seller) || 0),
         row.discount,
         row.net_commission
       ];
