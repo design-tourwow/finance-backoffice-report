@@ -35,9 +35,8 @@
     ts: { key: 'net_amount', direction: 'desc' },
     crm: { key: 'net_amount', direction: 'desc' }
   };
-  let canceledMonthBySellerMap = new Map();
-  let canceledMonthTotal = 0;
   let canceledReferenceTotal = 0;
+  let canceledReferenceBySellerMap = new Map();
   let canceledReferenceNavUrl = '';
   let createdCancelRelation = 'all';
 
@@ -813,29 +812,8 @@
     return { firstDay, lastDay, prevLastStr };
   }
 
-  function getCurrentMonthCanceledFilters() {
-    const { firstDay, lastDay, prevLastStr } = getCurrentMonthRange();
-    return { canceled_at_from: firstDay, canceled_at_to: lastDay, created_at_to: prevLastStr, order_status: 'canceled' };
-  }
 
-  async function fetchCanceledMonthData() {
-    try {
-      const res = await CommissionReportPlusAPI.getReport(getCurrentMonthCanceledFilters());
-      const orders = (res && res.success && res.data && res.data.orders) || [];
-      canceledMonthBySellerMap = new Map();
-      canceledMonthTotal = 0;
-      orders.forEach(o => {
-        const name = o.seller_nick_name || '-';
-        const amt = parseFloat(o.net_amount || 0);
-        canceledMonthBySellerMap.set(name, (canceledMonthBySellerMap.get(name) || 0) + amt);
-        canceledMonthTotal += amt;
-      });
-    } catch (e) {
-      console.error('[CRP] Failed to load canceled month data:', e);
-      canceledMonthBySellerMap = new Map();
-      canceledMonthTotal = 0;
-    }
-  }
+
 
   function buildCanceledReferenceFiltersForNote() {
     const createdRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
@@ -844,7 +822,7 @@
       canceled_at_from: createdRange.dateFrom,
       canceled_at_to:   createdRange.dateTo,
       created_at_to:    addDays(createdRange.dateFrom, -1),
-      seller_id:        isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
+      seller_id:        isAdmin() ? selectedSellerId : '',
       job_position:     isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
       order_status:     'canceled',
     };
@@ -869,17 +847,25 @@
     const filters = buildCanceledReferenceFiltersForNote();
     if (!filters) {
       canceledReferenceTotal = 0;
+      canceledReferenceBySellerMap = new Map();
       canceledReferenceNavUrl = '';
       return;
     }
     try {
       const res = await CommissionReportPlusAPI.getReport(filters);
       const orders = (res && res.success && res.data && res.data.orders) || [];
+      canceledReferenceBySellerMap = new Map();
+      orders.forEach(o => {
+        const name = o.seller_nick_name || '-';
+        const amt = parseFloat(o.net_amount || 0);
+        canceledReferenceBySellerMap.set(name, (canceledReferenceBySellerMap.get(name) || 0) + amt);
+      });
       canceledReferenceTotal = orders.reduce((sum, o) => sum + parseFloat(o.net_amount || 0), 0);
       canceledReferenceNavUrl = buildCanceledReferenceNavUrl();
     } catch (e) {
       console.error('[CRP] Failed to load canceled reference data:', e);
       canceledReferenceTotal = 0;
+      canceledReferenceBySellerMap = new Map();
       canceledReferenceNavUrl = '';
     }
   }
@@ -901,7 +887,6 @@
     try {
       const [res] = await Promise.all([
         CommissionReportPlusAPI.getReport(filters),
-        fetchCanceledMonthData(),
         fetchCanceledReferenceData()
       ]);
       if (res && res.success && res.data) {
@@ -1169,7 +1154,7 @@
         const isSelf = isAdmin() || (s.seller_id && s.seller_id === myId);
         const shouldMask = !isSelf && myRole === 'ts';
         const sellerCell = shouldMask ? MASKED : escHtml(s.seller);
-        const canceledAmt = canceledMonthBySellerMap.get(s.seller) || 0;
+        const canceledAmt = canceledReferenceBySellerMap.get(s.seller) || 0;
         return `
           <tr>
             <td>
@@ -1392,7 +1377,7 @@
         row.seller,
         row.orders,
         row.net_amount,
-        -(canceledMonthBySellerMap.get(row.seller) || 0),
+        -(canceledReferenceBySellerMap.get(row.seller) || 0),
         row.discount,
         row.net_commission
       ];
