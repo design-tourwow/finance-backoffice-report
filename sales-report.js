@@ -36,6 +36,7 @@
     crm: { key: 'net_amount', direction: 'desc' }
   };
   let canceledMonthBySellerMap = new Map();
+  let canceledMonthTotal = 0;
   let createdCancelRelation = 'all';
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -820,13 +821,17 @@
       const res = await CommissionReportPlusAPI.getReport(getCurrentMonthCanceledFilters());
       const orders = (res && res.success && res.data && res.data.orders) || [];
       canceledMonthBySellerMap = new Map();
+      canceledMonthTotal = 0;
       orders.forEach(o => {
         const name = o.seller_nick_name || '-';
-        canceledMonthBySellerMap.set(name, (canceledMonthBySellerMap.get(name) || 0) + parseFloat(o.net_amount || 0));
+        const amt = parseFloat(o.net_amount || 0);
+        canceledMonthBySellerMap.set(name, (canceledMonthBySellerMap.get(name) || 0) + amt);
+        canceledMonthTotal += amt;
       });
     } catch (e) {
       console.error('[CRP] Failed to load canceled month data:', e);
       canceledMonthBySellerMap = new Map();
+      canceledMonthTotal = 0;
     }
   }
 
@@ -1030,10 +1035,40 @@
     });
   }
 
+  function buildCanceledMonthNavUrl() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const quarter = Math.ceil(month / 3);
+    const jobPos = isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin');
+    const params = new URLSearchParams();
+    params.set('period_mode', 'monthly');
+    params.set('period_year', String(year));
+    params.set('period_quarter', String(quarter));
+    params.set('period_month', String(month));
+    params.set('created_relation', 'before');
+    if (isAdmin() && selectedSellerId) params.set('seller_id', String(selectedSellerId));
+    params.set('job_position', jobPos);
+    return `/canceled-orders?${params.toString()}`;
+  }
+
   // ---- Summary Cards ----
   function renderSummary(summary) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
+    const hasCanceledAmount = canceledMonthTotal > 0;
+    const canceledNavUrl = buildCanceledMonthNavUrl();
+    const canceledNote = `<div class="kpi-note-row">
+           <span class="kpi-note">${hasCanceledAmount
+             ? `มียอด Order ที่ยกเลิก ${formatNumber(canceledMonthTotal, 0)} บาท`
+             : 'ไม่มียอด Order ที่ยกเลิก'}</span>
+           ${hasCanceledAmount ? `<a class="kpi-note-link" href="${escHtml(canceledNavUrl)}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
+             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
+               <circle cx="12" cy="12" r="3"></circle>
+             </svg>
+           </a>` : ''}
+         </div>`;
     const discountCard = `
         <div class="dashboard-kpi-card kpi-active">
           <div class="kpi-icon">
@@ -1074,6 +1109,7 @@
             <div class="kpi-label">ยอดจองรวม</div>
             <div class="kpi-value">${formatNumber(summary.total_net_amount, 0)}</div>
             <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
+            ${canceledNote}
           </div>
         </div>
         ${adminCards}
@@ -1147,19 +1183,26 @@
   // ---- Table ----
   function renderTableSection(orders) {
     const visibleOrders = getVisibleOrders(orders);
+    const { firstDay, lastDay } = getCurrentMonthRange();
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
       const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
+      const canceledDatePart = (o.canceled_at || '').substring(0, 10);
+      const createdDatePart  = (o.created_at  || '').substring(0, 10);
+      // Relevant cancel = canceled this month + created before this month (installment 1 already enforced by backend)
+      const isRelevantCancel = isCanceled
+        && canceledDatePart >= firstDay && canceledDatePart <= lastDay
+        && createdDatePart < firstDay;
       const amtClass = '';
-      const comClass = isCanceled ? '' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
-      const fmtAmt = v => isCanceled ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
+      const comClass = isRelevantCancel ? '' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
+      const fmtAmt = v => isRelevantCancel ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
-          <td class="${isCanceled ? 'crp-canceled-amt' : ''}">${o.canceled_at ? formatDate(o.canceled_at) : ''}</td>
+          <td class="${isRelevantCancel ? 'crp-canceled-amt' : ''}">${isRelevantCancel ? formatDate(o.canceled_at) : ''}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td>${escHtml(o.country_name_th || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
@@ -1232,6 +1275,7 @@
     }
 
     const workbook = window.XLSX.utils.book_new();
+    const { firstDay, lastDay } = getCurrentMonthRange();
     const worksheets = [
       {
         name: 'sales-report',
@@ -1241,12 +1285,17 @@
           const discount = parseFloat(o.discount || 0);
           const discountPercent = getDiscountPercentValue(discount, o.net_amount);
           const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
-          const sign = isCanceled ? -1 : 1;
+          const canceledDatePart = (o.canceled_at || '').substring(0, 10);
+          const createdDatePart  = (o.created_at  || '').substring(0, 10);
+          const isRelevantCancel = isCanceled
+            && canceledDatePart >= firstDay && canceledDatePart <= lastDay
+            && createdDatePart < firstDay;
+          const sign = isRelevantCancel ? -1 : 1;
           return [
             o.seller_nick_name || '',
             o.order_code || '',
             formatDate(o.created_at),
-            o.canceled_at ? formatDate(o.canceled_at) : '',
+            isRelevantCancel ? formatDate(o.canceled_at) : '',
             o.customer_name || '',
             o.country_name_th || '',
             o.product_period_snapshot || '',
