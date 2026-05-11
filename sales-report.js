@@ -1727,7 +1727,7 @@
   function getVisibleTableRows() {
     return Array.from(document.querySelectorAll('.crp-table tbody tr'))
       .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.innerText.replace(/\s+/g, ' ').trim()))
-      .filter(row => row.length === 13);
+      .filter(row => row.length === 14);
   }
 
   function createPdfSourceNode(countText, summary) {
