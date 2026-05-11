@@ -36,6 +36,7 @@
     crm: { key: 'net_amount', direction: 'desc' }
   };
   let canceledMonthBySellerMap = new Map();
+  let createdCancelRelation = 'all';
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -550,12 +551,16 @@
         <!-- Filter Bar -->
         <div class="filter-wrap filter-wrap-stacked">
 
-          <!-- แถว 1: วันที่สร้าง Order (period selector) -->
+          <!-- แถว 1: วันที่สร้าง Order (period selector) + created-cancel relation -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">วันที่สร้าง Order</span>
               <div class="crp-filter-control" id="crp-created-mode-host"></div>
               <div class="crp-filter-control" id="crp-created-value-host"></div>
+            </div>
+            <div class="crp-filter-field">
+              <span class="time-granularity-label crp-filter-label">เปรียบกับช่วงยกเลิก</span>
+              <div class="crp-filter-control" id="crp-created-cancel-relation-host"></div>
             </div>
           </div>
 
@@ -679,6 +684,9 @@
       }
     });
 
+    // ---- เปรียบกับช่วงยกเลิก dropdown ----
+    renderCreatedCancelRelationDropdown();
+
     // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่ into
     // the host. Reset clears filter UI back to defaults only; the user
     // still has to press ค้นหา to re-query, so we never overwrite the
@@ -707,6 +715,7 @@
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = 'all';
+    createdCancelRelation = 'all';
 
     mountPeriodSelectors();
 
@@ -744,6 +753,8 @@
       ],
       onChange: function (val) { selectedOrderStatus = val; }
     });
+
+    renderCreatedCancelRelationDropdown();
   }
 
   function labelOfJobPosition(pos) {
@@ -766,8 +777,28 @@
     return getAllIcon();
   }
 
+  function getCalendarIcon() {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+  }
+
+  function renderCreatedCancelRelationDropdown() {
+    const options = [
+      { value: 'all',    label: 'ทั้งหมด',             icon: getAllIcon(),      active: createdCancelRelation === 'all'    },
+      { value: 'before', label: 'ก่อนช่วงยกเลิก',      icon: getCalendarIcon(), active: createdCancelRelation === 'before' },
+      { value: 'same',   label: 'ช่วงเดียวกับยกเลิก',  icon: getCalendarIcon(), active: createdCancelRelation === 'same'   },
+    ];
+    const active = options.find(o => o.active) || options[0];
+    window.FilterSortDropdownComponent.initDropdown({
+      containerId : 'crp-created-cancel-relation-host',
+      defaultLabel: active.label,
+      defaultIcon : active.icon,
+      options     : options,
+      onChange    : function (val) { createdCancelRelation = val; }
+    });
+  }
+
   // ---- Load Report ----
-  function getCurrentMonthCanceledFilters() {
+  function getCurrentMonthRange() {
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
@@ -776,6 +807,11 @@
     const lastDay  = `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
     const prevLast = new Date(y, m, 0);
     const prevLastStr = `${prevLast.getFullYear()}-${pad(prevLast.getMonth() + 1)}-${pad(prevLast.getDate())}`;
+    return { firstDay, lastDay, prevLastStr };
+  }
+
+  function getCurrentMonthCanceledFilters() {
+    const { firstDay, lastDay, prevLastStr } = getCurrentMonthRange();
     return { canceled_at_from: firstDay, canceled_at_to: lastDay, created_at_to: prevLastStr, order_status: 'canceled' };
   }
 
@@ -854,18 +890,29 @@
     const paidTo = (!cfg.ignorePaidPeriod && paidState && paidState.mode !== 'custom' && paid.dateTo)
       ? addDays(paid.dateTo, 3)
       : paid.dateTo;
-    return {
+    const filters = {
       created_at_from: created.dateFrom || '',
       created_at_to:   created.dateTo   || '',
       paid_at_from:    paid.dateFrom    || '',
       paid_at_to:      paidTo           || '',
-      // Match canceled-orders' pattern: non-admins always send their own
-      // role from the JWT, never a stale `selectedJobPosition`. Admins use
-      // whatever the ตำแหน่ง dropdown shows.
       job_position:    isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
       seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
       order_status:    selectedOrderStatus,
     };
+
+    // Apply created-cancel relation filter using current month as reference.
+    if (createdCancelRelation !== 'all') {
+      const { firstDay, lastDay } = getCurrentMonthRange();
+      if (createdCancelRelation === 'before') {
+        filters.created_at_from = '';
+        filters.created_at_to   = addDays(firstDay, -1);
+      } else if (createdCancelRelation === 'same') {
+        filters.created_at_from = firstDay;
+        filters.created_at_to   = lastDay;
+      }
+    }
+
+    return filters;
   }
 
   // ---- Loading ----
