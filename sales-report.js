@@ -37,6 +37,8 @@
   };
   let canceledMonthBySellerMap = new Map();
   let canceledMonthTotal = 0;
+  let canceledReferenceTotal = 0;
+  let canceledReferenceNavUrl = '';
   let createdCancelRelation = 'all';
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -560,7 +562,7 @@
               <div class="crp-filter-control" id="crp-created-value-host"></div>
             </div>
             <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">เปรียบกับช่วงยกเลิก</span>
+              <span class="time-granularity-label crp-filter-label">สร้าง Order เทียบช่วงยกเลิก</span>
               <div class="crp-filter-control" id="crp-created-cancel-relation-host"></div>
             </div>
           </div>
@@ -835,6 +837,54 @@
     }
   }
 
+  function buildCanceledReferenceFiltersForNote() {
+    const createdRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
+    if (!createdRange.dateFrom || !createdRange.dateTo) return null;
+    return {
+      canceled_at_from: createdRange.dateFrom,
+      canceled_at_to:   createdRange.dateTo,
+      created_at_to:    addDays(createdRange.dateFrom, -1),
+      seller_id:        isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
+      job_position:     isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
+      order_status:     'canceled',
+    };
+  }
+
+  function buildCanceledReferenceNavUrl() {
+    const state = createdPeriodState && typeof createdPeriodState === 'object' ? createdPeriodState : {};
+    const params = new URLSearchParams();
+    params.set('period_mode', state.mode || 'monthly');
+    if (state.year != null) params.set('period_year', String(Number(state.year)));
+    if (state.quarter != null) params.set('period_quarter', String(Number(state.quarter)));
+    if (state.month != null) params.set('period_month', String(Number(state.month)));
+    if (state.customFrom) params.set('period_custom_from', state.customFrom);
+    if (state.customTo) params.set('period_custom_to', state.customTo);
+    params.set('created_relation', 'before');
+    if (isAdmin() && selectedSellerId) params.set('seller_id', String(selectedSellerId));
+    params.set('job_position', isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'));
+    return `/canceled-orders?${params.toString()}`;
+  }
+
+  async function fetchCanceledReferenceData() {
+    const filters = buildCanceledReferenceFiltersForNote();
+    if (!filters) {
+      canceledReferenceTotal = 0;
+      canceledReferenceNavUrl = '';
+      return;
+    }
+    try {
+      const res = await CommissionReportPlusAPI.getReport(filters);
+      const orders = (res && res.success && res.data && res.data.orders) || [];
+      canceledReferenceTotal = orders.reduce((sum, o) => sum + parseFloat(o.net_amount || 0), 0);
+      canceledReferenceNavUrl = buildCanceledReferenceNavUrl();
+    } catch (e) {
+      console.error('[CRP] Failed to load canceled reference data:', e);
+      canceledReferenceTotal = 0;
+      canceledReferenceNavUrl = '';
+    }
+  }
+
+
   async function loadReport() {
     // Guard against custom-mode period with unselected dates. toDateRange()
     // silently returns empty strings in that case, which would otherwise hit
@@ -851,7 +901,8 @@
     try {
       const [res] = await Promise.all([
         CommissionReportPlusAPI.getReport(filters),
-        fetchCanceledMonthData()
+        fetchCanceledMonthData(),
+        fetchCanceledReferenceData()
       ]);
       if (res && res.success && res.data) {
         currentData = res.data;
@@ -1035,40 +1086,24 @@
     });
   }
 
-  function buildCanceledMonthNavUrl() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const quarter = Math.ceil(month / 3);
-    const jobPos = isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin');
-    const params = new URLSearchParams();
-    params.set('period_mode', 'monthly');
-    params.set('period_year', String(year));
-    params.set('period_quarter', String(quarter));
-    params.set('period_month', String(month));
-    params.set('created_relation', 'before');
-    if (isAdmin() && selectedSellerId) params.set('seller_id', String(selectedSellerId));
-    params.set('job_position', jobPos);
-    return `/canceled-orders?${params.toString()}`;
-  }
-
   // ---- Summary Cards ----
   function renderSummary(summary) {
     const netCommission = parseFloat(summary.total_commission || 0) - parseFloat(summary.total_discount || 0);
     const netColor = netCommission >= 0 ? '#388e3c' : '#dc2626';
-    const hasCanceledAmount = canceledMonthTotal > 0;
-    const canceledNavUrl = buildCanceledMonthNavUrl();
-    const canceledNote = `<div class="kpi-note-row">
+    const hasCanceledAmount = canceledReferenceTotal > 0;
+    const canceledNote = canceledReferenceNavUrl
+      ? `<div class="kpi-note-row">
            <span class="kpi-note">${hasCanceledAmount
-             ? `มียอด Order ที่ยกเลิก ${formatNumber(canceledMonthTotal, 0)} บาท`
+             ? `มียอด Order ที่ยกเลิก ${formatNumber(canceledReferenceTotal, 0)} บาท`
              : 'ไม่มียอด Order ที่ยกเลิก'}</span>
-           ${hasCanceledAmount ? `<a class="kpi-note-link" href="${escHtml(canceledNavUrl)}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
+           ${hasCanceledAmount ? `<a class="kpi-note-link" href="${escHtml(canceledReferenceNavUrl)}" title="ดูใน Canceled Orders" aria-label="ดูใน Canceled Orders">
              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path>
                <circle cx="12" cy="12" r="3"></circle>
              </svg>
            </a>` : ''}
-         </div>`;
+         </div>`
+      : '';
     const discountCard = `
         <div class="dashboard-kpi-card kpi-active">
           <div class="kpi-icon">
