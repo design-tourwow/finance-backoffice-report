@@ -236,6 +236,7 @@
 
 .crp-positive { color: #16a34a; font-weight: 600; }
 .crp-negative { color: #dc2626; font-weight: 600; }
+.crp-canceled-amt { color: #dc2626; }
 
 /* ========= Seller Summary ========= */
 .crp-seller-summary {
@@ -253,13 +254,12 @@
 
 .crp-summary-groups {
   display: flex;
+  flex-direction: column;
   gap: 16px;
-  flex-wrap: wrap;
 }
 
 .crp-summary-group {
-  flex: 1;
-  min-width: 300px;
+  width: 100%;
   background: white;
   border-radius: 10px;
   border: 1px solid #e5e7eb;

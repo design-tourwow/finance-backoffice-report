@@ -35,6 +35,7 @@
     ts: { key: 'net_amount', direction: 'desc' },
     crm: { key: 'net_amount', direction: 'desc' }
   };
+  let canceledMonthBySellerMap = new Map();
 
   document.addEventListener('DOMContentLoaded', function () {
     init();
@@ -592,7 +593,7 @@
 
           <!-- แถว 3: Dropdown Pair 2 -->
           <div class="filter-row crp-filter-row">
-            <div class="crp-filter-field crp-filter-field--wide">
+            <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">สถานะ Order</span>
               <div class="crp-filter-control" id="crp-dd-status"></div>
             </div>
@@ -622,7 +623,7 @@
     createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
     paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
     createdPeriodState = getDefaultMonthlyPeriodState();
-    paidPeriodState = getDefaultMonthlyPeriodState();
+    paidPeriodState = { mode: 'all' };
     mountPeriodSelectors();
 
     // Set state defaults
@@ -702,7 +703,7 @@
     createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
     paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
     createdPeriodState = getDefaultMonthlyPeriodState();
-    paidPeriodState = getDefaultMonthlyPeriodState();
+    paidPeriodState = { mode: 'all' };
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = 'not_canceled';
@@ -766,6 +767,33 @@
   }
 
   // ---- Load Report ----
+  function getCurrentMonthCanceledFilters() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const pad = n => String(n).padStart(2, '0');
+    const firstDay = `${y}-${pad(m + 1)}-01`;
+    const lastDay  = `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
+    const prevLast = new Date(y, m, 0);
+    const prevLastStr = `${prevLast.getFullYear()}-${pad(prevLast.getMonth() + 1)}-${pad(prevLast.getDate())}`;
+    return { canceled_at_from: firstDay, canceled_at_to: lastDay, created_at_to: prevLastStr, order_status: 'canceled' };
+  }
+
+  async function fetchCanceledMonthData() {
+    try {
+      const res = await CommissionReportPlusAPI.getReport(getCurrentMonthCanceledFilters());
+      const orders = (res && res.success && res.data && res.data.orders) || [];
+      canceledMonthBySellerMap = new Map();
+      orders.forEach(o => {
+        const name = o.seller_nick_name || '-';
+        canceledMonthBySellerMap.set(name, (canceledMonthBySellerMap.get(name) || 0) + parseFloat(o.net_amount || 0));
+      });
+    } catch (e) {
+      console.error('[CRP] Failed to load canceled month data:', e);
+      canceledMonthBySellerMap = new Map();
+    }
+  }
+
   async function loadReport() {
     // Guard against custom-mode period with unselected dates. toDateRange()
     // silently returns empty strings in that case, which would otherwise hit
@@ -780,7 +808,10 @@
     currentData = null;
     mainTableQuery = '';
     try {
-      const res = await CommissionReportPlusAPI.getReport(filters);
+      const [res] = await Promise.all([
+        CommissionReportPlusAPI.getReport(filters),
+        fetchCanceledMonthData()
+      ]);
       if (res && res.success && res.data) {
         currentData = res.data;
         renderResults(res.data);
@@ -1026,6 +1057,7 @@
             </td>
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
+            <td class="right ${(canceledMonthBySellerMap.get(s.seller) || 0) > 0 ? 'crp-canceled-amt' : ''}">${formatNumber(canceledMonthBySellerMap.get(s.seller) || 0, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
@@ -1042,11 +1074,12 @@
                 <th data-sort="seller" data-type="string">เซลล์</th>
                 <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
                 <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
+                <th class="right">ยอดยกเลิก</th>
                 <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
                 <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
             </thead>
-            <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
           </table>
         </div>`;
     }
@@ -1070,23 +1103,28 @@
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
+      const isCanceled = !!o.canceled_at;
+      const amtClass = isCanceled ? 'crp-negative' : '';
+      const comClass = isCanceled ? 'crp-negative' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
+      const fmtAmt = v => isCanceled ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
+          <td class="${isCanceled ? 'crp-negative' : ''}">${o.canceled_at ? formatDate(o.canceled_at) : ''}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td>${escHtml(o.country_name_th || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
-          <td class="right group-start">${formatNumber(o.net_amount, 0)}</td>
+          <td class="right group-start ${amtClass}">${fmtAmt(parseFloat(o.net_amount || 0))}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
-          <td class="right group-start">${formatNumber(o.supplier_commission, 0)}</td>
-          <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom, 0)}</td>
+          <td class="right group-start ${amtClass}">${fmtAmt(parseFloat(o.supplier_commission || 0))}</td>
+          <td class="right ${comClass}">${fmtAmt(netCom)}</td>
           <td class="right group-start">${formatNumber(o.discount, 0)}</td>
           <td class="right">${formatPercentValue(discountPercent)}</td>
         </tr>`;
-    }).join('') || '<tr><td colspan="13" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
+    }).join('') || '<tr><td colspan="14" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
 
     return `
       <div class="dashboard-table-header">
@@ -1110,7 +1148,7 @@
           <thead>
             <tr class="group-row">
               <th class="group-header">เซลล์</th>
-              <th colspan="5" class="group-header">Order</th>
+              <th colspan="6" class="group-header">Order</th>
               <th colspan="3" class="group-header">ยอดจอง</th>
               <th colspan="2" class="group-header">คอมมิชชั่น</th>
               <th colspan="2" class="group-header">ส่วนลด</th>
@@ -1119,6 +1157,7 @@
               <th data-sort="seller" data-type="string">เซลล์</th>
               <th class="group-start" data-sort="order_code" data-type="string">รหัส Order</th>
               <th data-sort="created_at" data-type="date">จองวันที่</th>
+              <th data-sort="canceled_at" data-type="date">วันที่ยกเลิก</th>
               <th data-sort="customer_name" data-type="string">ลูกค้า</th>
               <th data-sort="country_name" data-type="string">ประเทศ</th>
               <th data-sort="travel_period" data-type="string">เดินทาง</th>
@@ -1149,23 +1188,26 @@
     const worksheets = [
       {
         name: 'sales-report',
-        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม', 'เปอร์เซ็นต์'],
+        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'วันที่ยกเลิก', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม', 'เปอร์เซ็นต์'],
         rows: getVisibleOrders(orders).map(function (o) {
           const commission = parseFloat(o.supplier_commission || 0);
           const discount = parseFloat(o.discount || 0);
           const discountPercent = getDiscountPercentValue(discount, o.net_amount);
+          const isCanceled = !!o.canceled_at;
+          const sign = isCanceled ? -1 : 1;
           return [
             o.seller_nick_name || '',
             o.order_code || '',
             formatDate(o.created_at),
+            o.canceled_at ? formatDate(o.canceled_at) : '',
             o.customer_name || '',
             o.country_name_th || '',
             o.product_period_snapshot || '',
-            parseFloat(o.net_amount || 0),
+            sign * parseFloat(o.net_amount || 0),
             parseInt(o.room_quantity || 0, 10) || 0,
             formatDate(o.first_paid_at),
-            commission,
-            commission - discount,
+            sign * commission,
+            sign * (commission - discount),
             discount,
             formatPercentValue(discountPercent)
           ];
@@ -1173,12 +1215,12 @@
       },
       {
         name: 'sales-report-by-telesales',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดยกเลิก', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'ts')
       },
       {
         name: 'sales-report-by-crm',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดยกเลิก', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'crm')
       }
     ];
@@ -1202,6 +1244,7 @@
         row.seller,
         row.orders,
         row.net_amount,
+        canceledMonthBySellerMap.get(row.seller) || 0,
         row.discount,
         row.net_commission
       ];
