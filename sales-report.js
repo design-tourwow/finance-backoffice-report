@@ -562,7 +562,7 @@
               <div class="crp-filter-control" id="crp-created-value-host"></div>
             </div>
             <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">สร้าง Order เทียบช่วงยกเลิก</span>
+              <span class="time-granularity-label crp-filter-label">วันที่สร้าง Order (เทียบกับช่วงที่ยกเลิก)</span>
               <div class="crp-filter-control" id="crp-created-cancel-relation-host"></div>
             </div>
           </div>
