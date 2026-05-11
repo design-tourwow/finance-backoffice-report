@@ -458,7 +458,7 @@
     const map = new Map();
     orders.forEach(o => {
       const name = o.seller_nick_name || '-';
-      if (!map.has(name)) map.set(name, { seller: name, orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
+      if (!map.has(name)) map.set(name, { seller: name, seller_id: String(o.seller_agency_member_id || ''), orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
       const s = map.get(name);
       s.orders += 1;
       s.net_amount += parseFloat(o.net_amount || 0);
@@ -952,7 +952,10 @@
       paid_at_from:    paid.dateFrom    || '',
       paid_at_to:      paidTo           || '',
       job_position:    isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
-      seller_id:       isAdmin() ? selectedSellerId : (currentUser ? String(currentUser.id || '') : ''),
+      // Non-admins omit seller_id so the response covers all sellers in their
+      // role — the ranking summary needs this; backend ignores seller_id for
+      // ts/crm anyway (auth-enforced) but this makes the intent explicit.
+      seller_id:       isAdmin() ? selectedSellerId : '',
       order_status:    selectedOrderStatus,
     };
 
@@ -1153,29 +1156,31 @@
 
   // ---- Seller Summary (Admin only) ----
   function renderSellerSummary(orders) {
-    if (!isAdmin()) return '';
+    const myRole = currentUser ? String(currentUser.job_position || 'admin').toLowerCase() : 'admin';
+    const myId   = currentUser ? String(currentUser.id || '') : '';
+    const MASKED = '* * * * * *';
 
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
       const rows = sorted.map((s, i) => {
-        const name = s.seller;
         const rank = i + 1;
-        const rankClass = rank <= 3 ? ` crp-summary-rank--${rank}` : '';
-        const trophyIcon = window.SharedTrophyRank
-          ? window.SharedTrophyRank.getTrophySvg(rank)
-          : '';
+        const trophyIcon = window.SharedTrophyRank ? window.SharedTrophyRank.getTrophySvg(rank) : '';
+        const isSelf = isAdmin() || (s.seller_id && s.seller_id === myId);
+        const shouldMask = !isSelf && myRole === 'ts';
+        const sellerCell = shouldMask ? MASKED : escHtml(s.seller);
+        const canceledAmt = canceledMonthBySellerMap.get(s.seller) || 0;
         return `
           <tr>
             <td>
               <div class="crp-summary-seller-cell">
                 ${trophyIcon}${rank > 3 ? `<span class="crp-summary-rank">${rank}</span>` : ''}
-                <span class="crp-seller-badge">${escHtml(name)}</span>
+                <span class="crp-seller-badge">${sellerCell}</span>
               </div>
             </td>
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
-            <td class="right ${(canceledMonthBySellerMap.get(s.seller) || 0) > 0 ? 'crp-canceled-amt' : ''}">${(canceledMonthBySellerMap.get(s.seller) || 0) > 0 ? '-' + formatNumber(canceledMonthBySellerMap.get(s.seller), 0) : formatNumber(0, 0)}</td>
+            <td class="right ${canceledAmt > 0 ? 'crp-canceled-amt' : ''}">${canceledAmt > 0 ? '-' + formatNumber(canceledAmt, 0) : formatNumber(0, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
@@ -1205,12 +1210,24 @@
     const tsOrders  = orders.filter(o => (o.seller_job_position || '').toLowerCase() === 'ts');
     const crmOrders = orders.filter(o => (o.seller_job_position || '').toLowerCase() === 'crm');
 
+    let groupsHtml;
+    if (isAdmin()) {
+      groupsHtml = buildGroupTable('Telesales', 'ts', tsOrders) + buildGroupTable('CRM', 'crm', crmOrders);
+    } else if (myRole === 'ts') {
+      groupsHtml = tsOrders.length ? buildGroupTable('Telesales', 'ts', tsOrders) : '';
+    } else if (myRole === 'crm') {
+      groupsHtml = crmOrders.length ? buildGroupTable('CRM', 'crm', crmOrders) : '';
+    } else {
+      return '';
+    }
+
+    if (!groupsHtml) return '';
+
     return `
       <div class="crp-seller-summary">
         <div class="crp-summary-title">สรุป</div>
         <div class="crp-summary-groups">
-          ${buildGroupTable('Telesales', 'ts', tsOrders)}
-          ${buildGroupTable('CRM', 'crm', crmOrders)}
+          ${groupsHtml}
         </div>
       </div>`;
   }
