@@ -1231,8 +1231,8 @@
       const isRelevantCancel = isCanceled
         && canceledDatePart >= firstDay && canceledDatePart <= lastDay
         && createdDatePart < firstDay;
-      const amtClass = '';
-      const comClass = isRelevantCancel ? '' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
+      const amtClass = isRelevantCancel ? 'crp-canceled-amt' : '';
+      const comClass = isRelevantCancel ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
       const fmtAmt = v => isRelevantCancel ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
       return `
         <tr>
