@@ -1104,8 +1104,8 @@
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
       const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
-      const amtClass = isCanceled ? 'crp-canceled-amt' : '';
-      const comClass = isCanceled ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
+      const amtClass = '';
+      const comClass = isCanceled ? '' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
       const fmtAmt = v => isCanceled ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
       return `
         <tr>
