@@ -1028,6 +1028,7 @@
             </td>
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
+            <td class="right ${s.net_amount - s.net_booking > 0 ? 'crp-canceled-amt' : ''}">${s.net_amount - s.net_booking > 0 ? '-' + formatNumber(s.net_amount - s.net_booking, 0) : formatNumber(0, 0)}</td>
             <td class="right">${formatNumber(s.net_booking, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${netComClass}">${formatNumber(s.net_commission, 0)}</td>
@@ -1036,17 +1037,19 @@
       const totals = sorted.reduce((acc, s) => {
         acc.orders         += parseFloat(s.orders || 0);
         acc.net_amount     += parseFloat(s.net_amount || 0);
+        acc.canceled_amt   += s.net_amount - s.net_booking;
         acc.net_booking    += parseFloat(s.net_booking || 0);
         acc.discount       += parseFloat(s.discount || 0);
         acc.net_commission += parseFloat(s.net_commission || 0);
         return acc;
-      }, { orders: 0, net_amount: 0, net_booking: 0, discount: 0, net_commission: 0 });
+      }, { orders: 0, net_amount: 0, canceled_amt: 0, net_booking: 0, discount: 0, net_commission: 0 });
       const totalNetComClass = totals.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
       const totalRow = sorted.length ? `
               <tr class="crp-summary-row--total">
                 <td>รวม</td>
                 <td class="right">${formatNumber(totals.orders, 0)}</td>
                 <td class="right">${formatNumber(totals.net_amount, 0)}</td>
+                <td class="right ${totals.canceled_amt > 0 ? 'crp-canceled-amt' : ''}">${totals.canceled_amt > 0 ? '-' + formatNumber(totals.canceled_amt, 0) : formatNumber(0, 0)}</td>
                 <td class="right">${formatNumber(totals.net_booking, 0)}</td>
                 <td class="right">${formatNumber(totals.discount, 0)}</td>
                 <td class="right ${totalNetComClass}">${formatNumber(totals.net_commission, 0)}</td>
@@ -1068,12 +1071,13 @@
                 <th data-sort="seller" data-type="string">เซลล์</th>
                 <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
                 <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
+                <th class="right">ยอดยกเลิก</th>
                 <th class="right" data-sort="net_booking" data-type="number">ยอดจองสุทธิ</th>
                 <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
                 <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
             </thead>
-            <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
             ${totalRow ? `<tfoot>${totalRow}</tfoot>` : ''}
           </table>
         </div>`;
@@ -1220,14 +1224,14 @@
     if (isAdmin() || myRole === 'ts') {
       worksheets.push({
         name: 'sales-report-by-telesales',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดจองสุทธิ', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดยกเลิก', 'ยอดจองสุทธิ', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'ts')
       });
     }
     if (isAdmin()) {
       worksheets.push({
         name: 'sales-report-by-crm',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดจองสุทธิ', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดยกเลิก', 'ยอดจองสุทธิ', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'crm')
       });
     }
@@ -1262,7 +1266,7 @@
     return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
       const isSelf = isAdmin() || (row.seller_id && row.seller_id === myId);
       const sellerName = isSelf ? row.seller : MASKED_NAME;
-      return [index + 1, sellerName, row.orders, row.net_amount, row.net_booking, row.discount, row.net_commission];
+      return [index + 1, sellerName, row.orders, row.net_amount, -(row.net_amount - row.net_booking), row.net_booking, row.discount, row.net_commission];
     });
   }
 
