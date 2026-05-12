@@ -990,8 +990,10 @@
     // Only apply when a concrete period is selected (dateFrom is non-empty);
     // if mode='all' the override would silently have no effect so we skip it.
     if (createdCancelRelation === 'before' && created.dateFrom) {
-      filters.created_at_from = '';
-      filters.created_at_to   = addDays(created.dateFrom, -1);
+      filters.created_at_from  = '';
+      filters.created_at_to    = addDays(created.dateFrom, -1);
+      filters.canceled_at_from = created.dateFrom;
+      filters.canceled_at_to   = created.dateTo;
     }
     // 'same' leaves the already-set period dates unchanged.
 
