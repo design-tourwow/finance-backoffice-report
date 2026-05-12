@@ -614,6 +614,8 @@
     mainTableQuery = '';
     mainTableSort  = { key: 'order_code', direction: 'asc' };
     sellerSummarySort = { ts: { key: 'net_booking', direction: 'desc' }, crm: { key: 'net_booking', direction: 'desc' } };
+    const srchInput = document.querySelector('#crp-table-search-host input');
+    if (srchInput) { srchInput.value = ''; srchInput.dispatchEvent(new Event('input')); }
 
     mountPeriodSelectors();
 
