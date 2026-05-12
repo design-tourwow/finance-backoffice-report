@@ -22,6 +22,7 @@
   // KPI "ยอดจองรวม"; it does not alter any totals on this page.
   let currentCanceledReferenceSummary = null;
   let currentCanceledReferenceNavigationUrl = '';
+  let canceledReferenceBySellerMap = new Map();
   let latestLoadRequestId = 0;
   let sellers = [];
   let availablePeriods = { years: [] };
@@ -44,8 +45,8 @@
   let countWithTravelers = true;
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
-    ts: { key: 'net_amount', direction: 'desc' },
-    crm: { key: 'net_amount', direction: 'desc' }
+    ts: { key: 'net_booking', direction: 'desc' },
+    crm: { key: 'net_booking', direction: 'desc' }
   };
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -429,11 +430,15 @@
       s.discount += parseFloat(o.discount || 0);
       s.net_commission += (parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0));
     });
-    return Array.from(map.values());
+    const rows = Array.from(map.values());
+    rows.forEach(s => {
+      s.net_booking = s.net_amount - (canceledReferenceBySellerMap.get(s.seller) || 0);
+    });
+    return rows;
   }
 
   function sortSellerAggregate(rows, groupClass) {
-    const state = sellerSummarySort[groupClass] || { key: 'net_amount', direction: 'desc' };
+    const state = sellerSummarySort[groupClass] || { key: 'net_booking', direction: 'desc' };
     return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
   }
 
@@ -662,14 +667,21 @@
       if (requestId !== latestLoadRequestId) return;
       if (reportRes && reportRes.success && reportRes.data) {
         currentData = reportRes.data;
-        currentCanceledReferenceSummary = canceledReferenceRes && canceledReferenceRes.success && canceledReferenceRes.data
-          ? normalizeSummary(computeSummary(
-              isAdmin()
-                ? (canceledReferenceRes.data.orders || [])
-                : (canceledReferenceRes.data.orders || []).filter(function (order) {
-                    return getOrderSellerId(order) === getEffectiveUserId();
-                  })
-            ))
+        const rawCanceledOrders = canceledReferenceRes && canceledReferenceRes.success && canceledReferenceRes.data
+          ? (isAdmin()
+              ? (canceledReferenceRes.data.orders || [])
+              : (canceledReferenceRes.data.orders || []).filter(function (order) {
+                  return getOrderSellerId(order) === getEffectiveUserId();
+                }))
+          : [];
+        canceledReferenceBySellerMap = new Map();
+        rawCanceledOrders.forEach(function (o) {
+          const name = o.seller_nick_name || '-';
+          const amt = parseFloat(o.net_amount || 0);
+          canceledReferenceBySellerMap.set(name, (canceledReferenceBySellerMap.get(name) || 0) + amt);
+        });
+        currentCanceledReferenceSummary = rawCanceledOrders.length
+          ? normalizeSummary(computeSummary(rawCanceledOrders))
           : null;
         currentCanceledReferenceNavigationUrl = currentCanceledReferenceSummary
           ? buildCanceledReferenceNavigationUrl(
@@ -827,7 +839,7 @@
 
       results.querySelectorAll('.crp-summary-table').forEach(table => {
         const group = table.getAttribute('data-group');
-        const state = sellerSummarySort[group] || { key: 'net_amount', direction: 'desc' };
+        const state = sellerSummarySort[group] || { key: 'net_booking', direction: 'desc' };
         window.SharedSortableHeader.bindTable(table, {
           headerSelector  : 'thead th[data-sort]',
           sortKey         : state.key,
@@ -1016,6 +1028,7 @@
             </td>
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
+            <td class="right">${formatNumber(s.net_booking, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${netComClass}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
@@ -1023,16 +1036,18 @@
       const totals = sorted.reduce((acc, s) => {
         acc.orders         += parseFloat(s.orders || 0);
         acc.net_amount     += parseFloat(s.net_amount || 0);
+        acc.net_booking    += parseFloat(s.net_booking || 0);
         acc.discount       += parseFloat(s.discount || 0);
         acc.net_commission += parseFloat(s.net_commission || 0);
         return acc;
-      }, { orders: 0, net_amount: 0, discount: 0, net_commission: 0 });
+      }, { orders: 0, net_amount: 0, net_booking: 0, discount: 0, net_commission: 0 });
       const totalNetComClass = totals.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
       const totalRow = sorted.length ? `
               <tr class="crp-summary-row--total">
                 <td>รวม</td>
                 <td class="right">${formatNumber(totals.orders, 0)}</td>
                 <td class="right">${formatNumber(totals.net_amount, 0)}</td>
+                <td class="right">${formatNumber(totals.net_booking, 0)}</td>
                 <td class="right">${formatNumber(totals.discount, 0)}</td>
                 <td class="right ${totalNetComClass}">${formatNumber(totals.net_commission, 0)}</td>
               </tr>` : '';
@@ -1053,11 +1068,12 @@
                 <th data-sort="seller" data-type="string">เซลล์</th>
                 <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
                 <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
+                <th class="right" data-sort="net_booking" data-type="number">ยอดจองสุทธิ</th>
                 <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
                 <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
             </thead>
-            <tbody>${rows || '<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
             ${totalRow ? `<tfoot>${totalRow}</tfoot>` : ''}
           </table>
         </div>`;
@@ -1204,14 +1220,14 @@
     if (isAdmin() || myRole === 'ts') {
       worksheets.push({
         name: 'sales-report-by-telesales',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดจองสุทธิ', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'ts')
       });
     }
     if (isAdmin()) {
       worksheets.push({
         name: 'sales-report-by-crm',
-        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ส่วนลด', 'คอมสุทธิ'],
+        headers: ['อันดับ', 'เซลล์', 'ออเดอร์', 'ยอดจอง', 'ยอดจองสุทธิ', 'ส่วนลด', 'คอมสุทธิ'],
         rows: getSellerSummaryExportRows(orders, 'crm')
       });
     }
@@ -1246,7 +1262,7 @@
     return sortSellerAggregate(buildSellerAggregate(groupOrders), groupClass).map(function (row, index) {
       const isSelf = isAdmin() || (row.seller_id && row.seller_id === myId);
       const sellerName = isSelf ? row.seller : MASKED_NAME;
-      return [index + 1, sellerName, row.orders, row.net_amount, row.discount, row.net_commission];
+      return [index + 1, sellerName, row.orders, row.net_amount, row.net_booking, row.discount, row.net_commission];
     });
   }
 
@@ -1900,15 +1916,12 @@
     page.appendChild(clones.highlights);
     page.appendChild(clones.filters);
 
-    // Side-by-side row container so TS sits on the left, CRM on the right
-    // (mirrors the live dashboard). When only one group has data, that
-    // group simply takes the full row width via flex:1.
     const groupsRow = document.createElement('div');
     groupsRow.style.display = 'flex';
+    groupsRow.style.flexDirection = 'column';
     groupsRow.style.gap = '16px';
-    groupsRow.style.alignItems = 'flex-start';
     groups.forEach(function (g) {
-      g.style.flex = '1';
+      g.style.width = '100%';
       g.style.minWidth = '0';
       groupsRow.appendChild(g);
     });
