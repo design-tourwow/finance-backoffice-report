@@ -1177,9 +1177,9 @@
       const isRelevantCancel = isCanceled
         && canceledDatePart >= periodFrom && canceledDatePart <= periodTo
         && createdDatePart < periodFrom;
-      const amtClass = isRelevantCancel ? 'crp-canceled-amt' : '';
-      const comClass = isRelevantCancel ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
-      const fmtAmt = v => isRelevantCancel ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
+      const amtClass = isCanceled ? 'crp-canceled-amt' : '';
+      const comClass = isCanceled ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
+      const fmtAmt = v => isCanceled ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
@@ -1274,12 +1274,7 @@
           const discount = parseFloat(o.discount || 0);
           const discountPercent = getDiscountPercentValue(discount, o.net_amount);
           const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
-          const canceledDatePart = (o.canceled_at || '').substring(0, 10);
-          const createdDatePart  = (o.created_at  || '').substring(0, 10);
-          const isRelevantCancel = isCanceled
-            && canceledDatePart >= exportPeriodFrom && canceledDatePart <= exportPeriodTo
-            && createdDatePart < exportPeriodFrom;
-          const sign = isRelevantCancel ? -1 : 1;
+          const sign = isCanceled ? -1 : 1;
           return [
             o.seller_nick_name || '',
             o.order_code || '',
