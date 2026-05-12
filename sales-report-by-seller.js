@@ -1160,20 +1160,23 @@
       const isRelevantCancel = isCanceled
         && canceledDatePart >= periodFrom && canceledDatePart <= periodTo
         && createdDatePart < periodFrom;
+      const amtClass = isRelevantCancel ? 'crp-canceled-amt' : '';
+      const comClass = isRelevantCancel ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
+      const fmtAmt = v => isRelevantCancel ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
-          <td class="${isRelevantCancel ? 'crp-canceled-amt' : ''}">${isRelevantCancel ? formatDate(o.canceled_at) : ''}</td>
+          <td class="${amtClass}">${isRelevantCancel ? formatDate(o.canceled_at) : ''}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td>${escHtml(o.country_name_th || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
-          <td class="right group-start">${formatNumber(o.net_amount, 0)}</td>
+          <td class="right group-start ${amtClass}">${fmtAmt(parseFloat(o.net_amount || 0))}</td>
           <td class="center">${o.room_quantity || 0}</td>
           <td class="center">${formatDate(o.first_paid_at)}</td>
-          <td class="right group-start">${formatNumber(o.supplier_commission, 0)}</td>
-          <td class="right ${netCom >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(netCom, 0)}</td>
+          <td class="right group-start ${amtClass}">${fmtAmt(parseFloat(o.supplier_commission || 0))}</td>
+          <td class="right ${comClass}">${fmtAmt(netCom)}</td>
           <td class="right group-start">${formatNumber(o.discount, 0)}</td>
           <td class="right">${formatPercentValue(discountPercent)}</td>
         </tr>`;

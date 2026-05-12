@@ -243,6 +243,7 @@
 
 .crp-positive { color: #16a34a; font-weight: 600; }
 .crp-negative { color: #dc2626; font-weight: 600; }
+.crp-canceled-amt { color: #dc2626; }
 
 /* ========= Seller Summary ========= */
 .crp-seller-summary {
