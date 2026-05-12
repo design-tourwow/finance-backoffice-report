@@ -847,7 +847,7 @@
     // Always derive the summary from the (filtered) orders array — the
     // backend's `summary` was computed before the room_quantity filter
     // and would over-count by including 0-traveler orders.
-    const ownSummary = computeSummary(ownOrders);
+    const ownSummary = computeSummary(getVisibleOrders(ownOrders));
     currentOwnOrders = ownOrders;
     currentOwnSummary = ownSummary;
 
@@ -1172,11 +1172,6 @@
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
       const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
-      const canceledDatePart = (o.canceled_at || '').substring(0, 10);
-      const createdDatePart  = (o.created_at  || '').substring(0, 10);
-      const isRelevantCancel = isCanceled
-        && canceledDatePart >= periodFrom && canceledDatePart <= periodTo
-        && createdDatePart < periodFrom;
       const amtClass = isCanceled ? 'crp-canceled-amt' : '';
       const comClass = isCanceled ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
       const fmtAmt = v => isCanceled ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
@@ -1262,9 +1257,6 @@
 
     const myRole = getEffectiveRole();
     const workbook = window.XLSX.utils.book_new();
-    const exportPeriodRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
-    const exportPeriodFrom = exportPeriodRange.dateFrom || '';
-    const exportPeriodTo   = exportPeriodRange.dateTo   || '';
     const worksheets = [
       {
         name: 'sales-report',
