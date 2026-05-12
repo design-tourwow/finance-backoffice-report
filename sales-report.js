@@ -91,8 +91,36 @@
     } catch (e) { return null; }
   }
 
+  function getEffectiveRole() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      try {
+        var vaRole = sessionStorage.getItem('viewAsRole');
+        if (vaRole === 'ts' || vaRole === 'crm') return vaRole;
+      } catch (e) { /* ignore */ }
+    }
+    return (currentUser && currentUser.job_position) || 'admin';
+  }
+
   function isAdmin() {
-    return !currentUser || currentUser.job_position === 'admin';
+    const role = getEffectiveRole();
+    return role !== 'ts' && role !== 'crm';
+  }
+
+  function getEffectiveUserId() {
+    if (typeof window !== 'undefined' &&
+        window.MenuComponent &&
+        typeof window.MenuComponent.isImpersonating === 'function' &&
+        window.MenuComponent.isImpersonating()) {
+      try {
+        var vaUid = sessionStorage.getItem('viewAsUserId');
+        var n = parseInt(vaUid, 10);
+        if (Number.isFinite(n) && n > 0) return String(n);
+      } catch (e) { /* ignore */ }
+    }
+    return String((currentUser && currentUser.id) || '');
   }
 
   // ---- Helpers ----
@@ -435,12 +463,18 @@
 
   function getVisibleOrders(orders) {
     const q = mainTableQuery;
-    const filtered = q
+    let filtered = q
       ? orders.filter(o =>
           (o.order_code || '').toLowerCase().includes(q) ||
           (o.customer_name || '').toLowerCase().includes(q)
         )
       : orders.slice();
+
+    if (selectedOrderStatus === 'canceled') {
+      filtered = filtered.filter(o => String(o.order_status || '').toLowerCase() === 'canceled');
+    } else if (selectedOrderStatus === 'not_canceled') {
+      filtered = filtered.filter(o => String(o.order_status || '').toLowerCase() !== 'canceled');
+    }
 
     if (!mainTableSort.key) return filtered;
 
@@ -498,7 +532,7 @@
     if (!sellerHost) return;
 
     if (!isAdmin()) {
-      const sellerId = currentUser ? String(currentUser.id || '') : '';
+      const sellerId = getEffectiveUserId();
       const me = sellers.find(s => String(s.id) === sellerId);
       const name = (me && me.nick_name) || (currentUser && currentUser.nick_name) || '-';
       sellerHost.innerHTML =
@@ -625,8 +659,8 @@
 
   // ---- Init Filters ----
   async function initFilters() {
-    const jobPos  = currentUser ? currentUser.job_position : 'admin';
-    const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const jobPos   = getEffectiveRole();
+    const sellerId = getEffectiveUserId();
 
     // Init two period selectors — one per date field. Default to current
     // month so the report loads with the usual monthly view on first paint.
@@ -711,8 +745,8 @@
   // Reset contract: restore every filter input/UI widget to the page default
   // (current month, admin defaults, etc.) WITHOUT refetching the report.
   function resetFiltersToDefault() {
-    const jobPos   = currentUser ? currentUser.job_position : 'admin';
-    const sellerId = currentUser ? String(currentUser.id || '') : '';
+    const jobPos   = getEffectiveRole();
+    const sellerId = getEffectiveUserId();
     createdAvailablePeriods = cloneAvailablePeriods(availablePeriods);
     paidAvailablePeriods = cloneAvailablePeriods(availablePeriods);
     createdPeriodState = getDefaultMonthlyPeriodState();
@@ -721,6 +755,9 @@
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = 'not_canceled';
     createdCancelRelation = 'all';
+    mainTableQuery = '';
+    mainTableSort  = { key: 'order_code', direction: 'asc' };
+    sellerSummarySort = { ts: { key: 'net_booking', direction: 'desc' }, crm: { key: 'net_booking', direction: 'desc' } };
 
     mountPeriodSelectors();
 
@@ -826,7 +863,7 @@
       canceled_at_to:   createdRange.dateTo,
       created_at_to:    addDays(createdRange.dateFrom, -1),
       seller_id:        isAdmin() ? selectedSellerId : '',
-      job_position:     isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
+      job_position:     isAdmin() ? (selectedJobPosition || 'admin') : getEffectiveRole(),
       order_status:     'canceled',
     };
   }
@@ -842,7 +879,7 @@
     if (state.customTo) params.set('period_custom_to', state.customTo);
     params.set('created_relation', 'before');
     if (isAdmin() && selectedSellerId) params.set('seller_id', String(selectedSellerId));
-    params.set('job_position', isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'));
+    params.set('job_position', isAdmin() ? (selectedJobPosition || 'admin') : getEffectiveRole());
     return `/canceled-orders?${params.toString()}`;
   }
 
@@ -939,7 +976,7 @@
       created_at_to:   created.dateTo   || '',
       paid_at_from:    paid.dateFrom    || '',
       paid_at_to:      paidTo           || '',
-      job_position:    isAdmin() ? (selectedJobPosition || 'admin') : (currentUser?.job_position || 'admin'),
+      job_position:    isAdmin() ? (selectedJobPosition || 'admin') : getEffectiveRole(),
       // Non-admins omit seller_id so the response covers all sellers in their
       // role — the ranking summary needs this; backend ignores seller_id for
       // ts/crm anyway (auth-enforced) but this makes the intent explicit.
@@ -948,11 +985,17 @@
     };
 
     // Apply created-cancel relation filter relative to the selected period.
-    if (createdCancelRelation === 'before') {
+    // Only apply when a concrete period is selected (dateFrom is non-empty);
+    // if mode='all' the override would silently have no effect so we skip it.
+    if (createdCancelRelation === 'before' && created.dateFrom) {
       filters.created_at_from = '';
-      filters.created_at_to   = created.dateFrom ? addDays(created.dateFrom, -1) : '';
+      filters.created_at_to   = addDays(created.dateFrom, -1);
     }
     // 'same' leaves the already-set period dates unchanged.
+
+    if (createdCancelRelation !== 'all' && selectedOrderStatus === 'canceled') {
+      console.warn('[CRP] order_status=canceled combined with createdCancelRelation affects created_at, not canceled_at — results may differ from expectation.');
+    }
 
     return filters;
   }
@@ -1139,8 +1182,8 @@
 
   // ---- Seller Summary (Admin only) ----
   function renderSellerSummary(orders) {
-    const myRole = currentUser ? String(currentUser.job_position || 'admin').toLowerCase() : 'admin';
-    const myId   = currentUser ? String(currentUser.id || '') : '';
+    const myRole = getEffectiveRole().toLowerCase();
+    const myId   = getEffectiveUserId();
     const MASKED = '* * * * * *';
 
     const totalNetAmount = orders.reduce((sum, o) => sum + (parseFloat(o.net_amount) || 0), 0);

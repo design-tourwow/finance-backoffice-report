@@ -393,12 +393,18 @@
 
   function getVisibleOrders(orders) {
     const q = mainTableQuery;
-    const filtered = q
+    let filtered = q
       ? orders.filter(o =>
           (o.order_code || '').toLowerCase().includes(q) ||
           (o.customer_name || '').toLowerCase().includes(q)
         )
       : orders.slice();
+
+    if (selectedOrderStatus === 'canceled') {
+      filtered = filtered.filter(o => String(o.order_status || '').toLowerCase() === 'canceled');
+    } else if (selectedOrderStatus === 'not_canceled') {
+      filtered = filtered.filter(o => String(o.order_status || '').toLowerCase() !== 'canceled');
+    }
 
     if (!mainTableSort.key) return filtered;
 
@@ -605,6 +611,9 @@
     selectedSellerId      = isAdmin() ? '' : sellerId;
     selectedOrderStatus   = 'not_canceled';
     createdCancelRelation = 'all';
+    mainTableQuery = '';
+    mainTableSort  = { key: 'order_code', direction: 'asc' };
+    sellerSummarySort = { ts: { key: 'net_booking', direction: 'desc' }, crm: { key: 'net_booking', direction: 'desc' } };
 
     mountPeriodSelectors();
 
@@ -757,11 +766,15 @@
       order_status:    selectedOrderStatus,
     };
 
-    if (createdCancelRelation === 'before') {
+    if (createdCancelRelation === 'before' && created.dateFrom) {
       filters.created_at_from = '';
-      filters.created_at_to   = created.dateFrom ? addDays(created.dateFrom, -1) : '';
+      filters.created_at_to   = addDays(created.dateFrom, -1);
     }
     // 'same' leaves the already-set period dates unchanged.
+
+    if (createdCancelRelation !== 'all' && selectedOrderStatus === 'canceled') {
+      console.warn('[CRP] order_status=canceled combined with createdCancelRelation affects created_at, not canceled_at — results may differ from expectation.');
+    }
 
     return filters;
   }
@@ -1245,6 +1258,9 @@
 
     const myRole = getEffectiveRole();
     const workbook = window.XLSX.utils.book_new();
+    const exportPeriodRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
+    const exportPeriodFrom = exportPeriodRange.dateFrom || '';
+    const exportPeriodTo   = exportPeriodRange.dateTo   || '';
     const worksheets = [
       {
         name: 'sales-report',
@@ -1253,19 +1269,26 @@
           const commission = parseFloat(o.supplier_commission || 0);
           const discount = parseFloat(o.discount || 0);
           const discountPercent = getDiscountPercentValue(discount, o.net_amount);
+          const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
+          const canceledDatePart = (o.canceled_at || '').substring(0, 10);
+          const createdDatePart  = (o.created_at  || '').substring(0, 10);
+          const isRelevantCancel = isCanceled
+            && canceledDatePart >= exportPeriodFrom && canceledDatePart <= exportPeriodTo
+            && createdDatePart < exportPeriodFrom;
+          const sign = isRelevantCancel ? -1 : 1;
           return [
             o.seller_nick_name || '',
             o.order_code || '',
             formatDate(o.created_at),
-            formatDate(o.canceled_at),
+            isRelevantCancel ? formatDate(o.canceled_at) : '',
             o.customer_name || '',
             o.country_name_th || '',
             o.product_period_snapshot || '',
-            parseFloat(o.net_amount || 0),
+            sign * parseFloat(o.net_amount || 0),
             parseInt(o.room_quantity || 0, 10) || 0,
             formatDate(o.first_paid_at),
-            commission,
-            commission - discount,
+            sign * commission,
+            sign * (commission - discount),
             discount,
             formatPercentValue(discountPercent)
           ];
@@ -1658,7 +1681,7 @@
   function getVisibleTableRows() {
     return Array.from(document.querySelectorAll('.crp-table tbody tr'))
       .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.innerText.replace(/\s+/g, ' ').trim()))
-      .filter(row => row.length === 13);
+      .filter(row => row.length === 14);
   }
 
   function createPdfSourceNode(countText) {
