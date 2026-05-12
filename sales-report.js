@@ -582,8 +582,10 @@
                      without explanation. Toggled by updateGraceNoteVisibility(). -->
                 <span class="crp-grace-note" id="crp-paid-grace-note" title="ระบบขยาย paid_at_to อีก 3 วัน เพื่อนับการชำระเงินที่ตกค้างจากช่วงก่อนหน้า">+3 วัน</span>
               </div>
-              <div class="crp-filter-control" id="crp-paid-mode-host"></div>
-              <div class="crp-filter-control" id="crp-paid-value-host"></div>
+              <div class="crp-paid-period-wrap">
+                <div id="crp-paid-mode-host"></div>
+                <div id="crp-paid-value-host"></div>
+              </div>
             </div>
 
             <div class="crp-filter-field">

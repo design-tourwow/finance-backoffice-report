@@ -108,6 +108,22 @@
   min-width: 0;
 }
 
+.crp-paid-period-wrap {
+  display: flex;
+  gap: 8px;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.crp-paid-period-wrap > div {
+  flex: 1;
+  min-width: 0;
+}
+.crp-paid-period-wrap > div .filter-sort-dropdown,
+.crp-paid-period-wrap > div .filter-sort-btn {
+  width: 100%;
+  min-width: 0;
+}
+
 .crp-filter-control .filter-search-dd-menu {
   min-width: 100%;
 }
