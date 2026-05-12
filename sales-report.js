@@ -25,15 +25,15 @@
   // Selected values from FilterSortDropdown instances
   let selectedJobPosition = 'admin';
   let selectedSellerId = '';
-  let selectedOrderStatus = 'all';
+  let selectedOrderStatus = 'not_canceled';
   let mainTableQuery = '';
   // Matches /sales-report-by-seller: checked → only room_quantity > 0,
   // unchecked → include every order (not a "room_quantity = 0" mode).
   let countWithTravelers = true;
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
-    ts: { key: 'net_amount', direction: 'desc' },
-    crm: { key: 'net_amount', direction: 'desc' }
+    ts: { key: 'net_booking', direction: 'desc' },
+    crm: { key: 'net_booking', direction: 'desc' }
   };
   let canceledReferenceTotal = 0;
   let canceledReferenceBySellerMap = new Map();
@@ -464,11 +464,15 @@
       s.discount += parseFloat(o.discount || 0);
       s.net_commission += (parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0));
     });
-    return Array.from(map.values());
+    const rows = Array.from(map.values());
+    rows.forEach(s => {
+      s.net_booking = s.net_amount - (canceledReferenceBySellerMap.get(s.seller) || 0);
+    });
+    return rows;
   }
 
   function sortSellerAggregate(rows, groupClass) {
-    const state = sellerSummarySort[groupClass] || { key: 'net_amount', direction: 'desc' };
+    const state = sellerSummarySort[groupClass] || { key: 'net_booking', direction: 'desc' };
     return rows.slice().sort((a, b) => compareSortValues(a[state.key], b[state.key], state.direction));
   }
 
@@ -636,7 +640,7 @@
     // Set state defaults
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = 'all';
+    selectedOrderStatus  = 'not_canceled';
 
     // ---- ตำแหน่ง dropdown ----
     const jobPositionOptions = [
@@ -669,7 +673,7 @@
     renderSellerDropdown();
 
     // ---- สถานะ Order dropdown ----
-    const defaultStatus = 'all';
+    const defaultStatus = 'not_canceled';
     const statusOptions = [
       { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all') },
       { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled') },
@@ -678,7 +682,7 @@
 
     FilterSortDropdownComponent.initDropdown({
       containerId: 'crp-dd-status',
-      defaultLabel: 'ทั้งหมด',
+      defaultLabel: 'ไม่ยกเลิก',
       defaultIcon: getStatusIcon(defaultStatus),
       options: statusOptions,
       onChange: function (val) {
@@ -716,7 +720,7 @@
     paidPeriodState = { mode: 'all' };
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = 'all';
+    selectedOrderStatus  = 'not_canceled';
     createdCancelRelation = 'all';
 
     mountPeriodSelectors();
@@ -1033,7 +1037,7 @@
 
       results.querySelectorAll('.crp-summary-table').forEach(table => {
         const group = table.getAttribute('data-group');
-        const state = sellerSummarySort[group] || { key: 'net_amount', direction: 'desc' };
+        const state = sellerSummarySort[group] || { key: 'net_booking', direction: 'desc' };
         window.SharedSortableHeader.bindTable(table, {
           headerSelector  : 'thead th[data-sort]',
           sortKey         : state.key,
@@ -1145,8 +1149,12 @@
     const myId   = currentUser ? String(currentUser.id || '') : '';
     const MASKED = '* * * * * *';
 
+    const totalNetAmount = orders.reduce((sum, o) => sum + (parseFloat(o.net_amount) || 0), 0);
+
     function buildGroupTable(title, groupClass, groupOrders) {
       const aggregateRows = buildSellerAggregate(groupOrders);
+      const groupNetAmount = groupOrders.reduce((sum, o) => sum + (parseFloat(o.net_amount) || 0), 0);
+      const sharePct = totalNetAmount > 0 ? ((groupNetAmount / totalNetAmount) * 100).toFixed(2) : '0.00';
       const sorted = sortSellerAggregate(aggregateRows, groupClass);
       const rows = sorted.map((s, i) => {
         const rank = i + 1;
@@ -1166,15 +1174,42 @@
             <td class="right">${formatNumber(s.orders, 0)}</td>
             <td class="right">${formatNumber(s.net_amount, 0)}</td>
             <td class="right ${canceledAmt > 0 ? 'crp-canceled-amt' : ''}">${canceledAmt > 0 ? '-' + formatNumber(canceledAmt, 0) : formatNumber(0, 0)}</td>
+            <td class="right">${formatNumber(s.net_booking, 0)}</td>
             <td class="right">${formatNumber(s.discount, 0)}</td>
             <td class="right ${s.net_commission >= 0 ? 'crp-positive' : 'crp-negative'}">${formatNumber(s.net_commission, 0)}</td>
           </tr>`;
       }).join('');
+      const totals = sorted.reduce((acc, s) => {
+        const canceledAmt = canceledReferenceBySellerMap.get(s.seller) || 0;
+        acc.orders         += parseFloat(s.orders || 0);
+        acc.net_amount     += parseFloat(s.net_amount || 0);
+        acc.canceled_amt   += canceledAmt;
+        acc.net_booking    += parseFloat(s.net_booking || 0);
+        acc.discount       += parseFloat(s.discount || 0);
+        acc.net_commission += parseFloat(s.net_commission || 0);
+        return acc;
+      }, { orders: 0, net_amount: 0, canceled_amt: 0, net_booking: 0, discount: 0, net_commission: 0 });
+      const totalNetComClass = totals.net_commission >= 0 ? 'crp-positive' : 'crp-negative';
+      const totalRow = sorted.length ? `
+        <tr class="crp-summary-row--total">
+          <td>รวม</td>
+          <td class="right">${formatNumber(totals.orders, 0)}</td>
+          <td class="right">${formatNumber(totals.net_amount, 0)}</td>
+          <td class="right ${totals.canceled_amt > 0 ? 'crp-canceled-amt' : ''}">${totals.canceled_amt > 0 ? '-' + formatNumber(totals.canceled_amt, 0) : formatNumber(0, 0)}</td>
+          <td class="right">${formatNumber(totals.net_booking, 0)}</td>
+          <td class="right">${formatNumber(totals.discount, 0)}</td>
+          <td class="right ${totalNetComClass}">${formatNumber(totals.net_commission, 0)}</td>
+        </tr>` : '';
       return `
         <div class="crp-summary-group crp-summary-group--${groupClass}">
           <div class="crp-summary-group-header">
             <span class="crp-summary-group-title">${escHtml(title)}</span>
-            <span class="crp-summary-group-count">${sorted.length} คน · ${formatNumber(groupOrders.length, 0)} orders</span>
+            <span class="crp-summary-group-count">
+              <span class="crp-summary-group-count-item">ยอดจอง ${formatNumber(groupNetAmount, 0)}</span>
+              <span class="crp-summary-group-count-item">${sharePct}% ของยอดจองทั้งหมด</span>
+              <span class="crp-summary-group-count-item">${sorted.length} คน</span>
+              <span class="crp-summary-group-count-item">${formatNumber(groupOrders.length, 0)} Orders</span>
+            </span>
           </div>
           <table class="crp-summary-table" data-group="${groupClass}">
             <thead>
@@ -1183,11 +1218,13 @@
                 <th class="right" data-sort="orders" data-type="number">ออเดอร์</th>
                 <th class="right" data-sort="net_amount" data-type="number">ยอดจอง</th>
                 <th class="right">ยอดยกเลิก</th>
+                <th class="right" data-sort="net_booking" data-type="number">ยอดจองสุทธิ</th>
                 <th class="right" data-sort="discount" data-type="number">ส่วนลด</th>
                 <th class="right" data-sort="net_commission" data-type="number">คอมสุทธิ</th>
               </tr>
             </thead>
-            <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:16px">ไม่มีข้อมูล</td></tr>'}</tbody>
+            ${totalRow ? `<tfoot>${totalRow}</tfoot>` : ''}
           </table>
         </div>`;
     }
