@@ -757,17 +757,11 @@
       order_status:    selectedOrderStatus,
     };
 
-    if (createdCancelRelation !== 'all') {
-      const firstDay = firstDayOfMonth();
-      const lastDay  = lastDayOfCurrentMonth();
-      if (createdCancelRelation === 'before') {
-        filters.created_at_from = '';
-        filters.created_at_to   = addDays(firstDay, -1);
-      } else if (createdCancelRelation === 'same') {
-        filters.created_at_from = firstDay;
-        filters.created_at_to   = lastDay;
-      }
+    if (createdCancelRelation === 'before') {
+      filters.created_at_from = '';
+      filters.created_at_to   = created.dateFrom ? addDays(created.dateFrom, -1) : '';
     }
+    // 'same' leaves the already-set period dates unchanged.
 
     return filters;
   }
@@ -1154,8 +1148,9 @@
   // ---- Table ----
   function renderTableSection(orders) {
     const visibleOrders = getVisibleOrders(orders);
-    const firstDay = firstDayOfMonth();
-    const lastDay  = lastDayOfCurrentMonth();
+    const periodRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
+    const periodFrom = periodRange.dateFrom || '';
+    const periodTo   = periodRange.dateTo   || '';
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
@@ -1163,8 +1158,8 @@
       const canceledDatePart = (o.canceled_at || '').substring(0, 10);
       const createdDatePart  = (o.created_at  || '').substring(0, 10);
       const isRelevantCancel = isCanceled
-        && canceledDatePart >= firstDay && canceledDatePart <= lastDay
-        && createdDatePart < firstDay;
+        && canceledDatePart >= periodFrom && canceledDatePart <= periodTo
+        && createdDatePart < periodFrom;
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>

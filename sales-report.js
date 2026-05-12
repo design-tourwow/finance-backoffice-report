@@ -947,17 +947,12 @@
       order_status:    selectedOrderStatus,
     };
 
-    // Apply created-cancel relation filter using current month as reference.
-    if (createdCancelRelation !== 'all') {
-      const { firstDay, lastDay } = getCurrentMonthRange();
-      if (createdCancelRelation === 'before') {
-        filters.created_at_from = '';
-        filters.created_at_to   = addDays(firstDay, -1);
-      } else if (createdCancelRelation === 'same') {
-        filters.created_at_from = firstDay;
-        filters.created_at_to   = lastDay;
-      }
+    // Apply created-cancel relation filter relative to the selected period.
+    if (createdCancelRelation === 'before') {
+      filters.created_at_from = '';
+      filters.created_at_to   = created.dateFrom ? addDays(created.dateFrom, -1) : '';
     }
+    // 'same' leaves the already-set period dates unchanged.
 
     return filters;
   }
@@ -1256,17 +1251,19 @@
   // ---- Table ----
   function renderTableSection(orders) {
     const visibleOrders = getVisibleOrders(orders);
-    const { firstDay, lastDay } = getCurrentMonthRange();
+    const periodRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
+    const periodFrom = periodRange.dateFrom || '';
+    const periodTo   = periodRange.dateTo   || '';
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
       const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
       const canceledDatePart = (o.canceled_at || '').substring(0, 10);
       const createdDatePart  = (o.created_at  || '').substring(0, 10);
-      // Relevant cancel = canceled this month + created before this month (installment 1 already enforced by backend)
+      // Relevant cancel = canceled within selected period + created before selected period start
       const isRelevantCancel = isCanceled
-        && canceledDatePart >= firstDay && canceledDatePart <= lastDay
-        && createdDatePart < firstDay;
+        && canceledDatePart >= periodFrom && canceledDatePart <= periodTo
+        && createdDatePart < periodFrom;
       const amtClass = isRelevantCancel ? 'crp-canceled-amt' : '';
       const comClass = isRelevantCancel ? 'crp-canceled-amt' : (netCom >= 0 ? 'crp-positive' : 'crp-negative');
       const fmtAmt = v => isRelevantCancel ? '-' + formatNumber(Math.abs(v), 0) : formatNumber(v, 0);
@@ -1348,7 +1345,9 @@
     }
 
     const workbook = window.XLSX.utils.book_new();
-    const { firstDay, lastDay } = getCurrentMonthRange();
+    const exportPeriodRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
+    const exportPeriodFrom = exportPeriodRange.dateFrom || '';
+    const exportPeriodTo   = exportPeriodRange.dateTo   || '';
     const worksheets = [
       {
         name: 'sales-report',
@@ -1361,8 +1360,8 @@
           const canceledDatePart = (o.canceled_at || '').substring(0, 10);
           const createdDatePart  = (o.created_at  || '').substring(0, 10);
           const isRelevantCancel = isCanceled
-            && canceledDatePart >= firstDay && canceledDatePart <= lastDay
-            && createdDatePart < firstDay;
+            && canceledDatePart >= exportPeriodFrom && canceledDatePart <= exportPeriodTo
+            && createdDatePart < exportPeriodFrom;
           const sign = isRelevantCancel ? -1 : 1;
           return [
             o.seller_nick_name || '',
