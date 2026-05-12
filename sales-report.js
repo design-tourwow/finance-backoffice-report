@@ -1317,7 +1317,7 @@
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
-          <td class="${isRelevantCancel ? 'crp-canceled-amt' : ''}">${isRelevantCancel ? formatDate(o.canceled_at) : ''}</td>
+          <td class="${isRelevantCancel ? 'crp-canceled-amt' : ''}">${isCanceled ? formatDate(o.canceled_at) : ''}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td>${escHtml(o.country_name_th || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
@@ -1412,7 +1412,7 @@
             o.seller_nick_name || '',
             o.order_code || '',
             formatDate(o.created_at),
-            isRelevantCancel ? formatDate(o.canceled_at) : '',
+            isCanceled ? formatDate(o.canceled_at) : '',
             o.customer_name || '',
             o.country_name_th || '',
             o.product_period_snapshot || '',
