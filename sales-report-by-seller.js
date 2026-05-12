@@ -35,6 +35,7 @@
   // Selected values from FilterSortDropdown instances
   let selectedSellerId = '';
   let selectedOrderStatus = 'not_canceled';
+  let createdCancelRelation = 'all';
   let mainTableQuery = '';
   // Toggle for the "นับ Order ที่มีผู้เดินทางเท่านั้น" checkbox above the
   // main table. Default checked → only count orders with room_quantity > 0.
@@ -502,12 +503,16 @@
         <!-- Filter Bar -->
         <div class="filter-wrap filter-wrap-stacked">
 
-          <!-- แถว 1: วันที่สร้าง Order (period selector) -->
+          <!-- แถว 1: วันที่สร้าง Order (period selector) + created-cancel relation -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">วันที่สร้าง Order</span>
               <div class="crp-filter-control" id="crp-created-mode-host"></div>
               <div class="crp-filter-control" id="crp-created-value-host"></div>
+            </div>
+            <div class="crp-filter-field">
+              <span class="time-granularity-label crp-filter-label">วันที่สร้าง Order (เทียบกับช่วงที่ยกเลิก)</span>
+              <div class="crp-filter-control" id="crp-created-cancel-relation-host"></div>
             </div>
           </div>
 
@@ -574,6 +579,8 @@
       }
     });
 
+    renderCreatedCancelRelationDropdown();
+
     // Action buttons — SharedFilterActions mounts ค้นหา + เริ่มใหม่ into
     // the host. Reset clears filter UI back to defaults only; the user
     // still has to press ค้นหา to re-query, so we never overwrite the
@@ -595,8 +602,9 @@
   function resetFiltersToDefault() {
     const sellerId = getEffectiveUserId();
     createdPeriodState = getDefaultMonthlyPeriodState();
-    selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = 'not_canceled';
+    selectedSellerId      = isAdmin() ? '' : sellerId;
+    selectedOrderStatus   = 'not_canceled';
+    createdCancelRelation = 'all';
 
     mountPeriodSelectors();
 
@@ -615,6 +623,7 @@
       onChange: function (val) { selectedOrderStatus = val; }
     });
 
+    renderCreatedCancelRelationDropdown();
   }
 
 
@@ -627,10 +636,30 @@
     return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
   }
 
+  function getCalendarIcon() {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+  }
+
   function getStatusIcon(status) {
     if (status === 'canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
     if (status === 'not_canceled') return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
     return getAllIcon();
+  }
+
+  function renderCreatedCancelRelationDropdown() {
+    const options = [
+      { value: 'all',    label: 'ทั้งหมด',             icon: getAllIcon(),       active: createdCancelRelation === 'all'    },
+      { value: 'before', label: 'ก่อนช่วงยกเลิก',      icon: getCalendarIcon(), active: createdCancelRelation === 'before' },
+      { value: 'same',   label: 'ช่วงเดียวกับยกเลิก',  icon: getCalendarIcon(), active: createdCancelRelation === 'same'   },
+    ];
+    const active = options.find(o => o.active) || options[0];
+    window.FilterSortDropdownComponent.initDropdown({
+      containerId : 'crp-created-cancel-relation-host',
+      defaultLabel: active.label,
+      defaultIcon : active.icon,
+      options     : options,
+      onChange    : function (val) { createdCancelRelation = val; }
+    });
   }
 
   // ---- Load Report ----
@@ -713,7 +742,7 @@
 
   function buildFilters() {
     const created = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
-    return {
+    const filters = {
       created_at_from: created.dateFrom || '',
       created_at_to:   created.dateTo   || '',
       // Send the effective role so the API hint matches the view-as state.
@@ -727,6 +756,20 @@
       seller_id:       isAdmin() ? selectedSellerId : '',
       order_status:    selectedOrderStatus,
     };
+
+    if (createdCancelRelation !== 'all') {
+      const firstDay = firstDayOfMonth();
+      const lastDay  = lastDayOfCurrentMonth();
+      if (createdCancelRelation === 'before') {
+        filters.created_at_from = '';
+        filters.created_at_to   = addDays(firstDay, -1);
+      } else if (createdCancelRelation === 'same') {
+        filters.created_at_from = firstDay;
+        filters.created_at_to   = lastDay;
+      }
+    }
+
+    return filters;
   }
 
   function buildCanceledReferenceFilters() {

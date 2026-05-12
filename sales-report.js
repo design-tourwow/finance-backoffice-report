@@ -570,7 +570,7 @@
             </div>
           </div>
 
-          <!-- แถว 2: วันชำระงวด 1 (period selector) -->
+          <!-- แถว 2: วันชำระงวด 1 + สถานะ Order -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <div class="crp-filter-label-row">
@@ -585,11 +585,16 @@
               <div class="crp-filter-control" id="crp-paid-mode-host"></div>
               <div class="crp-filter-control" id="crp-paid-value-host"></div>
             </div>
+
+            <div class="crp-filter-field">
+              <span class="time-granularity-label crp-filter-label">สถานะ Order</span>
+              <div class="crp-filter-control" id="crp-dd-status"></div>
+            </div>
           </div>
 
           <div class="filter-row-divider"></div>
 
-          <!-- แถว 2: Dropdown Pair 1 -->
+          <!-- แถว 3: Dropdown Pair — ตำแหน่ง + ชื่อผู้จอง -->
           <div class="filter-row crp-filter-row">
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">ตำแหน่ง</span>
@@ -599,14 +604,6 @@
             <div class="crp-filter-field">
               <span class="time-granularity-label crp-filter-label">ชื่อผู้จอง</span>
               <div class="crp-filter-control" id="crp-dd-seller"></div>
-            </div>
-          </div>
-
-          <!-- แถว 3: Dropdown Pair 2 -->
-          <div class="filter-row crp-filter-row">
-            <div class="crp-filter-field">
-              <span class="time-granularity-label crp-filter-label">สถานะ Order</span>
-              <div class="crp-filter-control" id="crp-dd-status"></div>
             </div>
           </div>
 
