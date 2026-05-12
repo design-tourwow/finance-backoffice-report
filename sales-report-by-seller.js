@@ -1111,14 +1111,23 @@
   // ---- Table ----
   function renderTableSection(orders) {
     const visibleOrders = getVisibleOrders(orders);
+    const firstDay = firstDayOfMonth();
+    const lastDay  = lastDayOfCurrentMonth();
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
+      const isCanceled = String(o.order_status || '').toLowerCase() === 'canceled';
+      const canceledDatePart = (o.canceled_at || '').substring(0, 10);
+      const createdDatePart  = (o.created_at  || '').substring(0, 10);
+      const isRelevantCancel = isCanceled
+        && canceledDatePart >= firstDay && canceledDatePart <= lastDay
+        && createdDatePart < firstDay;
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
           <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
+          <td class="${isRelevantCancel ? 'crp-canceled-amt' : ''}">${isRelevantCancel ? formatDate(o.canceled_at) : ''}</td>
           <td>${escHtml(o.customer_name || '-')}</td>
           <td>${escHtml(o.country_name_th || '-')}</td>
           <td><span class="crp-period-text" title="${escHtml(o.product_period_snapshot || '')}">${escHtml(o.product_period_snapshot || '-')}</span></td>
@@ -1130,7 +1139,7 @@
           <td class="right group-start">${formatNumber(o.discount, 0)}</td>
           <td class="right">${formatPercentValue(discountPercent)}</td>
         </tr>`;
-    }).join('') || '<tr><td colspan="13" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
+    }).join('') || '<tr><td colspan="14" style="text-align:center;color:#9ca3af;padding:16px">ไม่พบข้อมูล</td></tr>';
 
     return `
       <div class="dashboard-table-header">
@@ -1154,7 +1163,7 @@
           <thead>
             <tr class="group-row">
               <th class="group-header">เซลล์</th>
-              <th colspan="5" class="group-header">Order</th>
+              <th colspan="6" class="group-header">Order</th>
               <th colspan="3" class="group-header">ยอดจอง</th>
               <th colspan="2" class="group-header">คอมมิชชั่น</th>
               <th colspan="2" class="group-header">ส่วนลด</th>
@@ -1163,6 +1172,7 @@
               <th data-sort="seller" data-type="string">เซลล์</th>
               <th class="group-start" data-sort="order_code" data-type="string">รหัส Order</th>
               <th data-sort="created_at" data-type="date">จองวันที่</th>
+              <th data-sort="canceled_at" data-type="date">วันที่ยกเลิก</th>
               <th data-sort="customer_name" data-type="string">ลูกค้า</th>
               <th data-sort="country_name" data-type="string">ประเทศ</th>
               <th data-sort="travel_period" data-type="string">เดินทาง</th>
@@ -1197,7 +1207,7 @@
     const worksheets = [
       {
         name: 'sales-report',
-        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม', 'เปอร์เซ็นต์'],
+        headers: ['เซลล์', 'รหัส Order', 'จองวันที่', 'วันที่ยกเลิก', 'ลูกค้า', 'ประเทศ', 'เดินทาง', 'ยอดจอง', 'ผู้เดินทาง', 'วันชำระงวด 1', 'คอมรวม', 'คอม (หักส่วนลด)', 'ส่วนลดรวม', 'เปอร์เซ็นต์'],
         rows: getVisibleOrders(currentOwnOrders).map(function (o) {
           const commission = parseFloat(o.supplier_commission || 0);
           const discount = parseFloat(o.discount || 0);
@@ -1206,6 +1216,7 @@
             o.seller_nick_name || '',
             o.order_code || '',
             formatDate(o.created_at),
+            formatDate(o.canceled_at),
             o.customer_name || '',
             o.country_name_th || '',
             o.product_period_snapshot || '',
