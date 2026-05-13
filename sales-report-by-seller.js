@@ -563,6 +563,7 @@
     // Set state defaults
     selectedSellerId     = isAdmin() ? '' : sellerId;
     selectedOrderStatus  = 'not_canceled';
+    countWithTravelers   = getEffectiveRole() !== 'ts';
 
     // ---- เซลล์ผู้จอง dropdown ----
     renderSellerDropdown();
@@ -610,6 +611,7 @@
     createdPeriodState = getDefaultMonthlyPeriodState();
     selectedSellerId      = isAdmin() ? '' : sellerId;
     selectedOrderStatus   = 'not_canceled';
+    countWithTravelers    = getEffectiveRole() !== 'ts';
     createdCancelRelation = 'all';
     mainTableQuery = '';
     mainTableSort  = { key: 'order_code', direction: 'asc' };
@@ -1165,9 +1167,6 @@
   // ---- Table ----
   function renderTableSection(orders) {
     const visibleOrders = getVisibleOrders(orders);
-    const periodRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
-    const periodFrom = periodRange.dateFrom || '';
-    const periodTo   = periodRange.dateTo   || '';
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);

@@ -1298,9 +1298,6 @@
   // ---- Table ----
   function renderTableSection(orders) {
     const visibleOrders = getVisibleOrders(orders);
-    const periodRange = window.SharedPeriodSelector.toDateRange(createdPeriodState, availablePeriods);
-    const periodFrom = periodRange.dateFrom || '';
-    const periodTo   = periodRange.dateTo   || '';
     const rows = visibleOrders.map(o => {
       const netCom = parseFloat(o.supplier_commission || 0) - parseFloat(o.discount || 0);
       const discountPercent = getDiscountPercentValue(o.discount, o.net_amount);
