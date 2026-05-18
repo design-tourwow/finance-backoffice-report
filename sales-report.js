@@ -1308,7 +1308,7 @@
       return `
         <tr>
           <td><span class="crp-seller-badge">${escHtml(o.seller_nick_name || '-')}</span></td>
-          <td class="group-start"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
+          <td class="group-start ${isCanceled ? 'crp-canceled-amt' : ''}"><span class="crp-order-code">${escHtml(o.order_code || '-')}</span></td>
           <td>${formatDate(o.created_at)}</td>
           <td class="${isCanceled ? 'crp-canceled-amt' : ''}">${isCanceled ? formatDate(o.canceled_at) : ''}</td>
           <td>${escHtml(o.customer_name || '-')}</td>

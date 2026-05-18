@@ -1,0 +1,77 @@
+/* Wholesale Report */
+
+.wr-empty {
+  background: #fff;
+  border-radius: 8px;
+  padding: 48px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.wr-empty svg { width: 48px; height: 48px; color: #9ca3af; margin: 0 auto 12px; display: block; }
+.wr-empty h3  { font-size: 0.9rem; font-weight: 600; color: #111827; margin: 0 0 4px; }
+.wr-empty p   { font-size: 0.875rem; margin: 0; }
+
+.page-header-subtitle {
+  font-weight: 400;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* Filter row — 3-column grid, same pattern as crp-filter-row / rcr-filter-row */
+.wr-filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 24px;
+  width: 100%;
+}
+
+.wr-filter-actions-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Filter field — 2-col internal grid (label spans both, controls each take 1 col).
+   Same as crp-filter-field / rcr-filter-field. */
+.wr-filter-field {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  min-width: 0;
+}
+
+/* Period field: has 2 sibling controls → auto-spans 2 outer columns */
+.wr-filter-row > .wr-filter-field:has(.wr-filter-control + .wr-filter-control) {
+  grid-column: span 2;
+}
+
+/* Label always spans both inner columns */
+.wr-filter-label {
+  grid-column: 1 / -1;
+}
+
+.wr-filter-control {
+  min-width: 0;
+}
+
+/* Single control (only one in the field) fills full width */
+.wr-filter-control:last-child:nth-child(2) {
+  grid-column: 1 / -1;
+}
+
+/* Full-width dropdowns inside controls */
+.wr-filter-control .filter-sort-dropdown,
+.wr-filter-control .filter-search-dd {
+  display: block;
+  width: 100%;
+}
+
+.wr-filter-control .filter-sort-btn {
+  width: 100%;
+  min-width: 0;
+}
+
+.wr-filter-control .filter-search-dd-menu {
+  min-width: 100%;
+}
+

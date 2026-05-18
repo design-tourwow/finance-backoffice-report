@@ -15,7 +15,8 @@
 .sc-table-card,
 .ds-table-card,
 .oes-table-section,
-.rd-table-card {
+.rd-table-card,
+.wr-table-card {
   background: white;
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -30,7 +31,8 @@
 .dashboard-table-header,
 .sc-table-header,
 .ds-table-header,
-.oes-table-header {
+.oes-table-header,
+.wr-table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;

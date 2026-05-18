@@ -29,7 +29,8 @@ function handleExternalLink(e, url) {
       '/order-external-summary': true,
       '/request-discount': true,
       '/order-report': true,
-      '/repeated-customer-report': true
+      '/repeated-customer-report': true,
+      '/wholesales-report': true
     },
     ts: {
       '/401': true,
@@ -48,7 +49,8 @@ function handleExternalLink(e, url) {
       '/order-external-summary': false,
       '/request-discount': false,
       '/order-report': false,
-      '/repeated-customer-report': false
+      '/repeated-customer-report': false,
+      '/wholesales-report': false
     },
     crm: {
       '/401': true,
@@ -67,7 +69,8 @@ function handleExternalLink(e, url) {
       '/order-external-summary': false,
       '/request-discount': false,
       '/order-report': false,
-      '/repeated-customer-report': false
+      '/repeated-customer-report': false,
+      '/wholesales-report': false
     }
   };
 
@@ -122,7 +125,13 @@ function handleExternalLink(e, url) {
           label: 'Canceled Orders',
           url: '/canceled-orders',
           requireAuth: true
-        }
+        },
+        {
+          id: 'wholesale-report',
+          label: 'Wholesales Report',
+          url: '/wholesales-report',
+          requireAuth: true
+        },
       ]
     },
     {

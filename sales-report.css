@@ -253,6 +253,7 @@
 .crp-positive { color: #16a34a; font-weight: 600; }
 .crp-negative { color: #dc2626; font-weight: 600; }
 .crp-canceled-amt { color: #dc2626; }
+.crp-canceled-amt .crp-order-code { color: #dc2626; }
 
 .kpi-note { font-size: 13px; line-height: 1.35; color: #6b7280; font-family: var(--font-family); }
 .kpi-note-row { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }

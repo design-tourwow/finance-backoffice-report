@@ -60,6 +60,18 @@
       title: 'Repeated Customer Report',
       description: 'รายงานลูกค้าซื้อซ้ำพร้อมจัดอันดับ Telesales / CRM',
       icon: iconRepeat()
+    },
+    {
+      href: '/canceled-orders',
+      title: 'Canceled Orders',
+      description: 'รายงาน Order ที่ถูกยกเลิก',
+      icon: iconDocument()
+    },
+    {
+      href: '/wholesales-report',
+      title: 'Wholesales Report',
+      description: 'รายงานยอดจองแยกตาม Wholesale',
+      icon: iconChart()
     }
   ];
 

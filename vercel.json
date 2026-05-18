@@ -71,6 +71,10 @@
     {
       "source": "/repeated-customer-report",
       "destination": "/repeated-customer-report.html"
+    },
+    {
+      "source": "/wholesales-report",
+      "destination": "/wholesale-report.html"
     }
   ],
   "headers": [
