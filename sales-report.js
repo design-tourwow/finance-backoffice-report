@@ -29,7 +29,7 @@
   let mainTableQuery = '';
   // Matches /sales-report-by-seller: checked → only room_quantity > 0,
   // unchecked → include every order (not a "room_quantity = 0" mode).
-  let countWithTravelers = true;
+  let countWithTravelers = false;
   let mainTableSort = { key: 'order_code', direction: 'asc' };
   let sellerSummarySort = {
     ts: { key: 'net_booking', direction: 'desc' },
