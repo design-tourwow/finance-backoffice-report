@@ -1044,7 +1044,19 @@
     const orders = countWithTravelers
       ? rawOrders.filter(o => parseFloat(o.room_quantity || 0) > 0)
       : rawOrders;
+
+    // คำนวณ gross/canceled จาก orders ทั้งหมดโดยไม่สนใจ order_status filter
+    // เพื่อให้ ยอดจองสุทธิ = ยอดจองรวม - ยอดจองที่ยกเลิก ถูกต้องเสมอ
+    let _grossTotal = 0, _canceledTotal = 0;
+    orders.forEach(function(o) {
+      const amt = parseFloat(o.net_amount || 0);
+      _grossTotal += amt;
+      if (String(o.order_status || '').toLowerCase() === 'canceled') _canceledTotal += amt;
+    });
+
     const summary = computeSummary(getVisibleOrders(orders));
+    summary._grossTotal = _grossTotal;
+    summary._canceledTotal = _canceledTotal;
 
     results.innerHTML = renderSummary(summary) + renderSellerSummary(orders) + renderTableSection(orders);
 
@@ -1194,9 +1206,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
           <div class="kpi-content">
-            <div class="kpi-label">ยอดจองที่จ่ายจริง</div>
-            <div class="kpi-value" style="color:#388e3c">${formatNumber(summary.total_active_amount, 0)}</div>
-            <div class="kpi-subtext">${formatNumber(summary.total_active_orders, 0)} Orders${summary.total_canceled_orders > 0 ? ` · ยกเลิก ${formatNumber(summary.total_canceled_orders, 0)} (${formatNumber(summary.total_canceled_amount, 0)} บาท)` : ''}</div>
+            <div class="kpi-label">ยอดจองสุทธิ</div>
+            <div class="kpi-value" style="color:#388e3c">${formatNumber(summary._grossTotal - summary._canceledTotal, 0)}</div>
+            <div class="kpi-subtext" style="color:#9ca3af">ยอดจองรวม - ยอดจองที่ยกเลิก</div>
+            <div class="kpi-subtext">${formatNumber(summary._grossTotal, 0)} − ${formatNumber(summary._canceledTotal, 0)} บาท</div>
           </div>
         </div>
         ${adminCards}
