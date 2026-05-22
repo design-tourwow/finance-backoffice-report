@@ -129,18 +129,22 @@
   }
 
   function computeSummary(orders) {
-    return (orders || []).reduce(function (acc, o) {
+    const statusCounts = {};
+    const result = (orders || []).reduce(function (acc, o) {
       acc.total_orders += 1;
       acc.total_net_amount += parseFloat(o.net_amount || 0);
       acc.total_commission += parseFloat(o.supplier_commission || 0);
       acc.total_discount += parseFloat(o.discount || 0);
       const s = String(o.order_status || '').toLowerCase();
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
       if (s === 'completed' || s === 'completed_traveled') {
         acc.total_completed_amount += parseFloat(o.net_amount || 0);
         acc.total_completed_orders += 1;
       }
       return acc;
     }, { total_orders: 0, total_net_amount: 0, total_commission: 0, total_discount: 0, total_completed_amount: 0, total_completed_orders: 0 });
+    console.log('[by-ching] order_status breakdown:', statusCounts);
+    return result;
   }
 
   function getDiscountPercentValue(discountValue, netAmountValue) {
