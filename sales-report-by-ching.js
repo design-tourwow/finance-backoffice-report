@@ -25,7 +25,7 @@
   // Selected values from FilterSortDropdown instances
   let selectedJobPosition = 'admin';
   let selectedSellerId = '';
-  let selectedOrderStatus = 'not_canceled';
+  let selectedOrderStatus = 'all';
   let mainTableQuery = '';
   // Matches /sales-report-by-seller: checked → only room_quantity > 0,
   // unchecked → include every order (not a "room_quantity = 0" mode).
@@ -682,7 +682,7 @@
     // Set state defaults
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = 'not_canceled';
+    selectedOrderStatus  = 'all';
 
     // ---- ตำแหน่ง dropdown ----
     const jobPositionOptions = [
@@ -762,7 +762,7 @@
     paidPeriodState = { mode: 'all' };
     selectedJobPosition  = jobPos;
     selectedSellerId     = isAdmin() ? '' : sellerId;
-    selectedOrderStatus  = 'not_canceled';
+    selectedOrderStatus  = 'all';
     createdCancelRelation = 'all';
     mainTableQuery = '';
     mainTableSort  = { key: 'order_code', direction: 'asc' };
