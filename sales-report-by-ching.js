@@ -1194,7 +1194,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
           <div class="kpi-content">
-            <div class="kpi-label">ยอดสุทธิ (หักยกเลิก)</div>
+            <div class="kpi-label">ยอดจองที่จ่ายจริง</div>
             <div class="kpi-value" style="color:#388e3c">${formatNumber(summary.total_active_amount, 0)}</div>
             <div class="kpi-subtext">${formatNumber(summary.total_active_orders, 0)} Orders${summary.total_canceled_orders > 0 ? ` · ยกเลิก ${formatNumber(summary.total_canceled_orders, 0)} (${formatNumber(summary.total_canceled_amount, 0)} บาท)` : ''}</div>
           </div>
