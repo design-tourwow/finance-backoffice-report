@@ -1578,7 +1578,7 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <title>Sales Report</title>
+    <title>Sales Report by Admin</title>
     ${APP_FONT_STYLESHEET_TAG}
     <style>
       @page { size: A4 landscape; margin: 10mm; }
@@ -1748,7 +1748,7 @@
     <div class="crp-print-shell">
       <div class="crp-print-header">
         <div>
-          <h1 class="crp-print-title">Sales Report</h1>
+          <h1 class="crp-print-title">Sales Report by Admin</h1>
           <p class="crp-print-subtitle">พิมพ์เมื่อ ${escHtml(new Date().toLocaleString('th-TH'))}</p>
         </div>
         <div class="crp-print-count">${escHtml(countText || '')}</div>
@@ -1824,7 +1824,7 @@
     title.style.borderBottom = '2px solid #335f8a';
     title.innerHTML = `
       <div>
-        <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Sales Report</div>
+        <div style="font-size:22px;font-weight:700;color:#0f172a;line-height:1.2;">Sales Report by Admin</div>
       </div>
     `;
 

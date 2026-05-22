@@ -20,7 +20,7 @@ function handleExternalLink(e, url) {
       '/tour-image-manager': true,
       '/sales-by-country': true,
       '/wholesale-destinations': true,
-      '/sales-report': true,
+      '/sales-report-by-admin': true,
       '/sales-report-by-seller': true,
       '/canceled-orders': true,
       '/work-list': true,
@@ -40,7 +40,7 @@ function handleExternalLink(e, url) {
       '/tour-image-manager': false,
       '/sales-by-country': false,
       '/wholesale-destinations': false,
-      '/sales-report': false,
+      '/sales-report-by-admin': false,
       '/sales-report-by-seller': true,
       '/canceled-orders': true,
       '/work-list': false,
@@ -60,7 +60,7 @@ function handleExternalLink(e, url) {
       '/tour-image-manager': false,
       '/sales-by-country': false,
       '/wholesale-destinations': false,
-      '/sales-report': false,
+      '/sales-report-by-admin': false,
       '/sales-report-by-seller': true,
       '/canceled-orders': true,
       '/work-list': false,
@@ -109,9 +109,9 @@ function handleExternalLink(e, url) {
           requireAuth: true
         },
         {
-          id: 'sales-report',
-          label: 'Sales Report',
-          url: '/sales-report',
+          id: 'sales-report-by-admin',
+          label: 'Sales Report by Admin',
+          url: '/sales-report-by-admin',
           requireAuth: true
         },
         {

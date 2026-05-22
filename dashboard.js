@@ -20,8 +20,8 @@
       icon: iconMap()
     },
     {
-      href: '/sales-report',
-      title: 'Sales Report',
+      href: '/sales-report-by-admin',
+      title: 'Sales Report by Admin',
       description: 'รายงานยอดจองระดับออเดอร์พร้อมฟิลเตอร์ละเอียด',
       icon: iconReceipt()
     },
