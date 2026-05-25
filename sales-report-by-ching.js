@@ -715,7 +715,7 @@
     renderSellerDropdown();
 
     // ---- สถานะ Order dropdown ----
-    const defaultStatus = 'not_canceled';
+    const defaultStatus = selectedOrderStatus;
     const statusOptions = [
       { value: 'all',          label: 'ทั้งหมด',   icon: getStatusIcon('all') },
       { value: 'not_canceled', label: 'ไม่ยกเลิก', icon: getStatusIcon('not_canceled') },
@@ -724,7 +724,7 @@
 
     FilterSortDropdownComponent.initDropdown({
       containerId: 'crp-dd-status',
-      defaultLabel: 'ไม่ยกเลิก',
+      defaultLabel: defaultStatus === 'not_canceled' ? 'ไม่ยกเลิก' : defaultStatus === 'canceled' ? 'ยกเลิก' : 'ทั้งหมด',
       defaultIcon: getStatusIcon(defaultStatus),
       options: statusOptions,
       onChange: function (val) {
