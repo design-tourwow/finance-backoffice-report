@@ -1168,28 +1168,7 @@
             <div class="kpi-value">${formatNumber(summary.total_discount, 0)}</div>
           </div>
         </div>`;
-    const adminCards = isAdmin() ? `
-        <div class="dashboard-kpi-card kpi-top-country">
-          <div class="kpi-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">คอมรวม</div>
-            <div class="kpi-value">${formatNumber(summary.total_commission, 0)}</div>
-          </div>
-        </div>
-        <div class="dashboard-kpi-card kpi-growth">
-          <div class="kpi-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">คอม (หักส่วนลด)</div>
-            <div class="kpi-value" style="color:${netColor}">${formatNumber(netCommission, 0)}</div>
-          </div>
-        </div>
-        ${discountCard}` : discountCard;
-    return `
-      <div class="dashboard-kpi-cards">
+    const grossBookingCard = `
         <div class="dashboard-kpi-card kpi-travelers">
           <div class="kpi-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1200,7 +1179,8 @@
             <div class="kpi-subtext">${formatNumber(summary.total_orders, 0)} Orders</div>
             ${canceledNote}
           </div>
-        </div>
+        </div>`;
+    const netBookingCard = `
         <div class="dashboard-kpi-card kpi-completed">
           <div class="kpi-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -1211,8 +1191,38 @@
             <div class="kpi-subtext" style="color:#9ca3af">ยอดจองรวม - ยอดจองที่ยกเลิก</div>
             <div class="kpi-subtext">${formatNumber(summary._grossTotal, 0)} − ${formatNumber(summary._canceledTotal, 0)} บาท</div>
           </div>
-        </div>
-        ${adminCards}
+        </div>`;
+    const grossCommCard = `
+        <div class="dashboard-kpi-card kpi-top-country">
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">คอมรวม</div>
+            <div class="kpi-value">${formatNumber(summary.total_commission, 0)}</div>
+          </div>
+        </div>`;
+    const netCommCard = `
+        <div class="dashboard-kpi-card kpi-growth">
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">คอม (หักส่วนลด)</div>
+            <div class="kpi-value" style="color:${netColor}">${formatNumber(netCommission, 0)}</div>
+          </div>
+        </div>`;
+    // Admin: 2-row paired layout (3 cols)
+    //   Row 1: ยอดจองรวม | คอมรวม  | ส่วนลดรวม
+    //   Row 2: ยอดจองสุทธิ | คอม(หักส่วนลด) | —
+    // Non-admin: single row (3 cols)
+    //   Row 1: ยอดจองรวม | ยอดจองสุทธิ | ส่วนลดรวม
+    const cards = isAdmin()
+      ? `${grossBookingCard}${grossCommCard}${discountCard}${netBookingCard}${netCommCard}`
+      : `${grossBookingCard}${netBookingCard}${discountCard}`;
+    return `
+      <div class="dashboard-kpi-cards">
+        ${cards}
       </div>`;
   }
 

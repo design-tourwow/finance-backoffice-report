@@ -2,6 +2,11 @@
    Commission Report Plus Styles
    ======================================== */
 
+/* 3-column KPI grid for 2-row paired layout (overrides kpi-card.css 4-col default) */
+.dashboard-kpi-cards {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .report-content-section {
   background: white;
   border-radius: 12px;
