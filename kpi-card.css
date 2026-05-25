@@ -69,6 +69,11 @@
   --kpi-bg: #f3e5f5;
 }
 
+.dashboard-kpi-card.kpi-completed {
+  --kpi-color: #2e7d32;
+  --kpi-bg: #e8f5e9;
+}
+
 .dashboard-kpi-card.kpi-growth {
   --kpi-color: #388e3c;
   --kpi-bg: #e8f5e9;
